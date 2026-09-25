@@ -69,6 +69,7 @@ node render.mjs --scene=<id> --sheet=1,2.5,4,6 --cols=3 --out=out/check/a.jpg   
 node render.mjs --scene=<id> --sheet=$(python3 -c "print(','.join(f'{10+i/24:.4f}' for i in range(6)))") --cols=6   # consecutive frames
 node render.mjs --scene=<id> --clip=6:12                                          # preview MP4 of a range
 node render.mjs --modelsheet=jester_fester                                        # a character's model sheet
+node render.mjs --location=dces --character=jester_fester                         # every camera of a set, stand-in on the mark
 ```
 
 Check the first and last frame of every shot, motion across consecutive frames around each hit, every cut, and whether the text is readable. Then build with `scripts/build_scene.sh <id>`.

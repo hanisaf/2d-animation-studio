@@ -27,12 +27,15 @@ Each character's folder holds its description, look, personality and rig notes (
 |---|---|---|
 | 🎭 | [Jester Fester](characters/jester_fester/README.md) | The court jester: juggles, tells chicken jokes, gets bonked |
 | 🎭 | [Princess Pearl](characters/princess_pearl/README.md) | A plush rainbow dolphin who rules from the throne; easily bored |
+| 🎓 | [Professor Safadi](characters/safadi/README.md) | A big-headed professor in a tan suit with super explanatory powers: glowing formulas, idea bulbs, floating chalkboards |
+| 💃 | [Alma](characters/alma/README.md) | A cute girl with long purple-streaked hair and super dance powers: rainbow dance floors, sparkles, music notes |
 
 ## Sets
 
 | | Location | In one line |
 |---|---|---|
 | 🏰 | [Throne room](locations/throne_room/README.md) | The pastel royal hall with the throne, stained glass and chandeliers |
+| 🏫 | [Dove Creek Elementary](locations/dces/README.md) | DCES seen from the street: red brick, arched entrance canopy, crosswalk and drop-off loop |
 
 ## Episodes (movie order)
 
@@ -42,6 +45,8 @@ Each scene's folder holds its synopsis, script, shot list and editing notes (`RE
 |---|---|---|---|
 | 01 | [Juggling in the throne room](scenes/scene01_juggling/README.md) | 30 s | *"I'm Jester Fester… and this is the story of my life!"* The juggling finale ends in the chandelier, then on his head |
 | 02 | [Fired!](scenes/scene02_fired/README.md) | 37 s | Pearl hates the chicken joke: *"Fester… you're FIRED! Somebody find me another jester!"* |
+| 03 | [Once a dragon](scenes/scene03_once_a_dragon/README.md) | 17.5 s | *"Once a dragon, always a dragon…"* Juggling outside Dove Creek Elementary, Fester promises a story about Big Baba Head and Alma, then winks |
+| 04 | [The healthy promise](scenes/scene04_healthy_promise/README.md) | 54.5 s | Walking Alma to school, Professor Safadi explains healthy food: *"I promise… every day!"* Then he nearly eats her lollipop: *"…Tomorrow."* |
 
 ## Where the story is heading
 

@@ -9,6 +9,7 @@
 //   node render.mjs --scene=scene01_juggling --build                                                       --frames then --encode
 //   node render.mjs --movie [--skip-build]                                                                 build every scene in REGISTRY.movie, join → out/movie.mp4
 //   node render.mjs --modelsheet=jester_fester [--t=1.1]                                                   a character's model sheet (all poses) → out/check/
+//   node render.mjs --location=dces [--character=jester_fester] [--spot=…] [--cols=3] [--w=640] [--t=1]     every camera preset of a set on one sheet → out/check/
 //   node render.mjs --doctor                                                                               check this machine: Node, Chrome, ffmpeg, fonts, a test render
 //
 // Options: --chrome=<path> (or $CHROME) · --fps=<n> overrides the scene fps · FFMPEG=<path> to use a specific ffmpeg.
@@ -123,9 +124,26 @@ if (args.doctor) {
 }
 
 const sceneId = args.scene || REGISTRY.movie[0];
-if (!args.movie && !args.modelsheet && !REGISTRY.scenes.includes(sceneId)) { console.error(`unknown scene "${sceneId}". Registered: ${REGISTRY.scenes.join(', ')}`); process.exit(1); }
+if (!args.movie && !args.modelsheet && !args.location && !REGISTRY.scenes.includes(sceneId)) { console.error(`unknown scene "${sceneId}". Registered: ${REGISTRY.scenes.join(', ')}`); process.exit(1); }
 
-if (args.modelsheet) {
+if (args.location) {
+  // Every camera preset of a location on one labelled sheet, optionally with a character on a spot (default: the stage mark).
+  const id = String(args.location), out = args.out || `out/check/location_${id}.jpg`;
+  if (!REGISTRY.locations.includes(id)) { console.error(`unknown location "${id}". Registered: ${REGISTRY.locations.join(', ')}`); process.exit(1); }
+  const { page } = await openPage(REGISTRY.movie[0]); mkdirSync(dirname(out), { recursive: true });
+  const url = await page.evaluate((id, o) => {
+    const loc = LOCATIONS[id], cams = Object.entries(loc.cameras || {}), h = Math.round(o.w * 9 / 16), sc = document.createElement('canvas');
+    sc.width = o.cols * o.w; sc.height = Math.ceil(cams.length / o.cols) * h; const c = sc.getContext('2d');
+    cams.forEach(([name, cam], i) => {
+      paintFrame(o.t, t => drawLocationView(loc, cam, t, { character: o.character, spot: o.spot }));
+      const x = (i % o.cols) * o.w, y = Math.floor(i / o.cols) * h;
+      c.drawImage(X.canvas, x, y, o.w, h); c.font = '16px sans-serif'; c.fillStyle = 'rgba(0,0,0,.65)'; c.fillRect(x, y, c.measureText(name).width + 12, 24); c.fillStyle = '#fff'; c.fillText(name, x + 6, y + 17);
+    });
+    return sc.toDataURL('image/jpeg', .88);
+  }, id, { cols: +(args.cols || 3), w: +(args.w || 640), t: +(args.t || 1), character: args.character || null, spot: args.spot || null });
+  writeFileSync(out, Buffer.from(url.slice(url.indexOf(',') + 1), 'base64'));
+  console.log(out);
+} else if (args.modelsheet) {
   // A character's model sheet (every registered pose) as a PNG: --modelsheet=jester_fester [--t=1.1] [--out=…]
   const who = String(args.modelsheet), { page } = await openPage(REGISTRY.movie[0]), out = args.out || `out/check/modelsheet_${who}.png`;
   if (!REGISTRY.characters.includes(who)) { console.error(`unknown character "${who}". Registered: ${REGISTRY.characters.join(', ')}`); process.exit(1); }

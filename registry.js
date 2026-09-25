@@ -8,8 +8,8 @@
 // Folders load in this order: characters → locations → scenes, so scenes may use any character or location.
 
 const REGISTRY = {
-  characters: ['jester_fester', 'princess_pearl'],
-  locations: ['throne_room'],
-  scenes: ['scene01_juggling', 'scene02_fired'],
-  movie: ['scene01_juggling', 'scene02_fired'],        // running order for "Export movie" / node render.mjs --movie
+  characters: ['jester_fester', 'princess_pearl', 'safadi', 'alma'],
+  locations: ['throne_room', 'dces'],
+  scenes: ['scene01_juggling', 'scene02_fired', 'scene03_once_a_dragon', 'scene04_healthy_promise'],
+  movie: ['scene01_juggling', 'scene02_fired', 'scene03_once_a_dragon', 'scene04_healthy_promise'],        // running order for "Export movie" / node render.mjs --movie
 };
