@@ -1,0 +1,19 @@
+{
+  "name": "jester-fester",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Jester Fester: a 2D cartoon animated in code (canvas), rendered in headless Chrome and encoded with ffmpeg.",
+  "scripts": {
+    "studio": "node serve.mjs --open",
+    "serve": "node serve.mjs",
+    "scene": "node render.mjs",
+    "movie": "node render.mjs --movie",
+    "doctor": "node render.mjs --doctor"
+  },
+  "dependencies": {
+    "ffmpeg-static": "^5.2.0",
+    "mp4-muxer": "^5.2.2",
+    "puppeteer-core": "^24.0.0"
+  }
+}

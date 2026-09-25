@@ -1,0 +1,49 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Jester Fester Studio</title>
+<link rel="icon" href="data:,">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@600&family=Luckiest+Guy&display=block">
+<link rel="stylesheet" href="studio/studio.css">
+</head>
+<body>
+<div id="app">
+  <aside id="side">
+    <header>Jester Fester Studio<small>scenes · characters · locations · docs</small></header>
+    <h3>Scenes</h3><ul id="list-scenes"></ul>
+    <h3>Characters</h3><ul id="list-characters"></ul>
+    <h3>Locations</h3><ul id="list-locations"></ul>
+    <h3>Project</h3><ul id="list-docs"></ul>
+    <footer>
+      <kbd>Space</kbd> play/pause · <kbd>←</kbd><kbd>→</kbd> frame · <kbd>⇧</kbd>+arrows 1 s · <kbd>Home</kbd>/<kbd>End</kbd><br>
+      Locations: drag to pan/tilt, wheel to dolly, <kbd>⇧</kbd>+wheel to zoom, <kbd>W A S D Q E</kbd> to fly
+    </footer>
+  </aside>
+  <main>
+    <div id="work">
+      <div class="stage"><canvas id="out" width="1920" height="1080"></canvas></div>
+      <section id="panel"></section>
+    </div>
+    <aside id="docs" hidden>
+      <div class="docbar"><span id="doctitle">Docs</span><a id="docraw" target="_blank" title="open the Markdown file">source</a><button id="docclose" title="close">✕</button></div>
+      <article id="doc" class="md"></article>
+    </aside>
+  </main>
+</div>
+<div id="lightbox"><img alt=""></div>
+
+<!-- the engine (the renderer loads this same page with ?render to paint frames) -->
+<script src="engine/core.js"></script>
+<script src="engine/persp.js"></script>
+<script src="engine/callout.js"></script>
+<script src="engine/timeline.js"></script>
+<script src="engine/showcase.js"></script>
+<script src="registry.js"></script>
+<!-- in-browser MP4 export -->
+<script src="node_modules/mp4-muxer/build/mp4-muxer.js"></script>
+<script src="studio/export.js"></script>
+<script src="studio/markdown.js"></script>
+<script src="studio/studio.js"></script>
+</body>
+</html>
