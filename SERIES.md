@@ -29,6 +29,7 @@ Each character's folder holds its description, look, personality and rig notes (
 | 🎭 | [Princess Pearl](characters/princess_pearl/README.md) | A plush rainbow dolphin who rules from the throne; easily bored |
 | 🎓 | [Professor Safadi](characters/safadi/README.md) | A big-headed professor in a tan suit with super explanatory powers: glowing formulas, idea bulbs, floating chalkboards |
 | 💃 | [Alma](characters/alma/README.md) | A cute girl with long purple-streaked hair and super dance powers: rainbow dance floors, sparkles, music notes |
+| 🐉 | [Dragon](characters/dragon/README.md) | A gentle, funny dragon who loves learning and can fly |
 
 ## Sets
 
@@ -47,6 +48,7 @@ Each scene's folder holds its synopsis, script, shot list and editing notes (`RE
 | 02 | [Fired!](scenes/scene02_fired/README.md) | 37 s | Pearl hates the chicken joke: *"Fester… you're FIRED! Somebody find me another jester!"* |
 | 03 | [Once a dragon](scenes/scene03_once_a_dragon/README.md) | 17.5 s | *"Once a dragon, always a dragon…"* Juggling outside Dove Creek Elementary, Fester promises a story about Big Baba Head and Alma, then winks |
 | 04 | [The healthy promise](scenes/scene04_healthy_promise/README.md) | 54.5 s | Walking Alma to school, Professor Safadi explains healthy food: *"I promise… every day!"* Then he nearly eats her lollipop: *"…Tomorrow."* |
+| 05 | [Dragon Counts by Threes](scenes/scene05_dragon_counts/README.md) | 55 s | In the throne room, Alma spots a multiplication pattern with Safadi and an accidentally helpful Dragon |
 
 ## Where the story is heading
 

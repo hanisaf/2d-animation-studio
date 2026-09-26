@@ -499,12 +499,14 @@ Paths in a manifest are relative to its folder. A scene's `id`, `title` and `aud
 | 🎭 Princess Pearl | [characters/princess_pearl/README.md](../characters/princess_pearl/README.md): personality, look and palette, spine rig, poses, API |
 | 🎓 Professor Safadi | [characters/safadi/README.md](../characters/safadi/README.md): personality, powers, look and palette, proportions, poses, rig + `safadiBoard` API |
 | 💃 Alma | [characters/alma/README.md](../characters/alma/README.md): personality, dance powers, look and palette, proportions, poses, rig + `almaDance` API |
+| 🐉 Dragon | [characters/dragon/README.md](../characters/dragon/README.md): personality, look, flight poses, rig + `dragonFlight` API |
 | 🏰 Throne room | [locations/throne_room/README.md](../locations/throne_room/README.md): description, layout and coordinates, spots, camera presets, API |
 | 🏫 Dove Creek Elementary | [locations/dces/README.md](../locations/dces/README.md): description, layout and coordinates, spots, camera presets, API |
 | 🎬 01 Juggling in the throne room | [scenes/scene01_juggling/README.md](../scenes/scene01_juggling/README.md): synopsis, script, shot list, constants |
 | 🎬 02 Fired! | [scenes/scene02_fired/README.md](../scenes/scene02_fired/README.md): synopsis, script, shot list, constants |
 | 🎬 03 Once a dragon | [scenes/scene03_once_a_dragon/README.md](../scenes/scene03_once_a_dragon/README.md): synopsis, script, shot list, constants |
 | 🎬 04 The healthy promise | [scenes/scene04_healthy_promise/README.md](../scenes/scene04_healthy_promise/README.md): synopsis, script, shot list, constants |
+| 🎬 05 Dragon Counts by Threes | [scenes/scene05_dragon_counts/README.md](../scenes/scene05_dragon_counts/README.md): synopsis, script, shot list, multiplication board |
 
 The series-level story, tone and episode list are in [SERIES.md](../SERIES.md).
 
