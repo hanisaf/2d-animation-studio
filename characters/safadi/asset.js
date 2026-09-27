@@ -5,4 +5,8 @@ asset({
   files: ['safadi.js'],                         // code, in load order
   docs: 'README.md',                            // description, look, personality, rig API
   refs: ['reference.jpg'],                      // reference art in this folder
+  voice: {
+    prompt: 'Patient, warm, low-pitched professor mumble; measured phrases with gentle falling cadences.',
+    style: 'measured', baseHz: 166, brightness: .82, level: .18, pan: -.05,
+  },
 });

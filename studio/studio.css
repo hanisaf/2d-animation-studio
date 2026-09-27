@@ -41,6 +41,7 @@ main { display: flex; min-width: 0; min-height: 0; }
 .row .spacer { flex: 1; }
 
 button, select, input[type=text] { font: inherit; color: var(--ink); background: var(--panel2); border: 1px solid var(--line); border-radius: 8px; padding: 6px 11px; }
+input[type=number] { font: inherit; color: var(--ink); background: var(--panel2); border: 1px solid var(--line); border-radius: 8px; padding: 6px 8px; width: 76px; }
 button { cursor: pointer; } button:hover { background: var(--sel); }
 button:disabled { opacity: .45; cursor: default; }
 button.primary { background: var(--accent); color: #2a1a10; border-color: var(--accent); font-weight: 700; min-width: 92px; }
@@ -68,6 +69,28 @@ input[type=range] { accent-color: var(--accent); }
 .progress .bar { height: 100%; width: 0; background: linear-gradient(90deg, var(--accent2), var(--accent)); }
 #status { font-size: 12.5px; color: var(--muted); }
 #status.ok { color: var(--ok); } #status.warn { color: var(--warn); }
+
+/* movie composer */
+#panel:has(.movie-clips) { display: block; }
+#panel:has(.movie-clips) > * { margin-bottom: 10px; }
+.movie-clips { list-style: none; display: grid; gap: 5px; margin: 0; padding: 0; max-height: 200px; overflow-y: auto; }
+.movie-clips li { display: flex; flex-wrap: wrap; align-items: center; gap: 7px; padding: 5px 7px; border: 1px solid var(--line); border-radius: 8px; background: var(--panel2); }
+.movie-clips li.on { border-color: var(--accent); }
+.movie-clips .clip-title { flex: 1 1 140px; min-width: 120px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.movie-clips .clip-title small { display: block; color: var(--muted); font-size: 11px; font-weight: 400; }
+.movie-clips label { color: var(--muted); font-size: 12px; white-space: nowrap; }
+.movie-clips button { padding: 5px 9px; }
+.movie-clips .clip-length { min-width: 50px; text-align: right; }
+#panel:has(.movie-clips) #scrub { flex: 1; min-width: 120px; }
+@media (max-width: 1100px) { .movie-clips .clip-title { flex-basis: calc(100% - 55px); } }
+
+/* shared scene links fill the browser window */
+body.play-mode #app { display: block; }
+body.play-mode #side, body.play-mode #panel, body.play-mode #docs { display: none !important; }
+body.play-mode main, body.play-mode #work, body.play-mode .stage { width: 100vw; height: 100vh; }
+body.play-mode .stage { padding: 0; }
+body.play-mode #out { border-radius: 0; box-shadow: none; }
+#sound-unlock { position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%); z-index: 12; padding: 10px 18px; background: rgba(35,26,39,.94); border-color: var(--accent); font-weight: 700; }
 
 /* lightbox for reference images */
 #lightbox { position: fixed; inset: 0; background: rgba(8,5,10,.88); display: none; align-items: center; justify-content: center; z-index: 10; cursor: zoom-out; }

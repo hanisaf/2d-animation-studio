@@ -28,6 +28,7 @@ Each character's folder holds its description, look, personality and rig notes (
 | 🎭 | [Jester Fester](characters/jester_fester/README.md) | The court jester: juggles, tells chicken jokes, gets bonked |
 | 🎭 | [Princess Pearl](characters/princess_pearl/README.md) | A plush rainbow dolphin who rules from the throne; easily bored |
 | 🎓 | [Professor Safadi](characters/safadi/README.md) | A big-headed professor in a tan suit with super explanatory powers: glowing formulas, idea bulbs, floating chalkboards |
+| ⚽ | [Housam](characters/housam/README.md) | A soccer-loving student with a quick eye for mathematical patterns |
 | 💃 | [Alma](characters/alma/README.md) | A cute girl with long purple-streaked hair and super dance powers: rainbow dance floors, sparkles, music notes |
 | 🐉 | [Dragon](characters/dragon/README.md) | A gentle, funny dragon who loves learning and can fly |
 
@@ -49,6 +50,7 @@ Each scene's folder holds its synopsis, script, shot list and editing notes (`RE
 | 03 | [Once a dragon](scenes/scene03_once_a_dragon/README.md) | 17.5 s | *"Once a dragon, always a dragon…"* Juggling outside Dove Creek Elementary, Fester promises a story about Big Baba Head and Alma, then winks |
 | 04 | [The healthy promise](scenes/scene04_healthy_promise/README.md) | 54.5 s | Walking Alma to school, Professor Safadi explains healthy food: *"I promise… every day!"* Then he nearly eats her lollipop: *"…Tomorrow."* |
 | 05 | [Dragon Counts by Threes](scenes/scene05_dragon_counts/README.md) | 55 s | In the throne room, Alma spots a multiplication pattern with Safadi and an accidentally helpful Dragon |
+| 06 | [The prime-number puzzle](scenes/scene06_riemann/README.md) | 110 s | Outside DCES, Safadi helps Housam and Alma understand the question behind the Riemann hypothesis |
 
 ## Where the story is heading
 

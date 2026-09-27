@@ -1,9 +1,9 @@
 {
-  "name": "jester-fester",
+  "name": "safadi-animation-studio",
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "description": "Jester Fester: a 2D cartoon animated in code (canvas), rendered in headless Chrome and encoded with ffmpeg.",
+  "description": "Safadi Animation Studio: 2D cartoons animated in code, rendered in headless Chrome and encoded with ffmpeg.",
   "scripts": {
     "studio": "node serve.mjs --open",
     "serve": "node serve.mjs",

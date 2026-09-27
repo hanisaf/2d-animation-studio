@@ -1,4 +1,4 @@
-# Jester Fester: project handbook
+# Safadi Animation Studio: project handbook
 
 Everything you need to pick this project up on another machine: what it is, how to move and set it up, how the pieces fit together, the full API, the scenes made so far, and step-by-step workflows for adding more.
 
@@ -259,7 +259,7 @@ node render.mjs --scene=scene01_juggling --cols=6 --w=420 \
 npm run studio          # = node serve.mjs --open → http://localhost:5173/  (Ctrl+C to stop; port: node serve.mjs 8080)
 ```
 
-You can also double-click `studio.html` (`file://`): everything works except that exports can't read scene audio files there.
+You can also double-click `studio.html` (`file://`): synthesized music works there, but exports can't read external scene audio files.
 
 The sidebar lists every asset from `registry.js`:
 
@@ -267,7 +267,7 @@ The sidebar lists every asset from `registry.js`:
 - A **shot timeline**: one block per shot, labelled with the shot function's name. Click one to jump to its start; the playing shot is highlighted.
 - A scrubber, ⏮ ◀︎ ▶ ▶︎ ⏭, speed (¼× – 2×) and loop. The readout shows time, frame number, the shot and the time inside the shot.
 - **Audio preview**: if the scene's `audio` file exists, it plays in sync (the header shows `audio: ♪ …` or `none yet`).
-- **⬇ Export scene MP4** / **⬇ Export movie MP4** (all scenes in `REGISTRY.movie` order), with a quality preset, a progress bar with an ETA, and **Cancel**. The file downloads when done. Warnings (e.g. audio skipped) show in the status line.
+- **⬇ Export scene MP4** exports the open scene. **Movie composer** lets you add any registered scene, set in/out points, move clips up or down, remove clips, preview the cut, and export only that composition. The composition is saved in this browser. **Load registry order** starts from `REGISTRY.movie` when wanted. Exports include a quality preset, a progress bar with an ETA, and **Cancel**.
 - **📷 Snapshot PNG**: the current frame at full 1920×1080.
 
 **🎭 Characters**
@@ -285,7 +285,7 @@ The sidebar lists every asset from `registry.js`:
 
 **Keys everywhere:** Space = play/pause (or animate on/off). In scenes: ←/→ = one frame, ⇧+←/→ = 1 s, Home/End.
 
-**URLs:** `/?scene=scene02_fired&t=25.9`, `/?character=princess_pearl`, `/?location=throne_room`, `/?doc=SERIES.md`.
+**URLs:** `/?scene=scene02_fired&t=25.9`, `/?scene=scene01_juggling&play=true` (autoplay in a full-window view without tools), `/?movie=1` (composer), `/?character=princess_pearl`, `/?location=throne_room`, `/?doc=SERIES.md`.
 
 If a script has an error, it's printed in red at the top of the page (and in the DevTools console).
 
@@ -507,6 +507,7 @@ Paths in a manifest are relative to its folder. A scene's `id`, `title` and `aud
 | 🎬 03 Once a dragon | [scenes/scene03_once_a_dragon/README.md](../scenes/scene03_once_a_dragon/README.md): synopsis, script, shot list, constants |
 | 🎬 04 The healthy promise | [scenes/scene04_healthy_promise/README.md](../scenes/scene04_healthy_promise/README.md): synopsis, script, shot list, constants |
 | 🎬 05 Dragon Counts by Threes | [scenes/scene05_dragon_counts/README.md](../scenes/scene05_dragon_counts/README.md): synopsis, script, shot list, multiplication board |
+| 🎬 06 The prime-number puzzle | [scenes/scene06_riemann/README.md](../scenes/scene06_riemann/README.md): DCES lesson, Riemann hypothesis diagrams, three cartoon voices |
 
 The series-level story, tone and episode list are in [SERIES.md](../SERIES.md).
 
@@ -566,7 +567,13 @@ node render.mjs --modelsheet=jester_fester          # → out/check/modelsheet_j
    - `iris()` to end.
 4. Add the scene to `SERIES.md` → Episodes, and keep its README's script and shot list in step with the code.
 
-### 9.5 Adding audio
+### 9.5 Adding music or audio
+
+For synthesized music, add a `music` object to the scene's `asset.js`. Scene 01 is the working example: its `prompt` states the creative intent, while `bpm`, `tonic`, `motif`, `chords`, `sections`, and timed `cues` define the reproducible score. The studio synthesizes the score for playback and browser exports; `render.mjs --encode` synthesizes the same score before encoding. Movie composer trims use the corresponding portion of the score. No source audio file is needed.
+
+For cartoon vocalizations, add timed `dialogue` entries with `at`, `speaker`, `text`, `cps`, and `hold` in a scene's `asset.js` or `scene({...})`. Use those same entries for `callout()` in the scene so bubble timing and syllables agree. Set each character's `voice` in its `asset.js` with a descriptive `prompt`, a `style` (`bouncy`, `measured`, `sporty`, `melodic`, `regal`, or `rumble`), and optional `baseHz`, `brightness`, `level`, and `pan`. The styles change syllable length, pitch movement and timbre; `energy` on a dialogue entry adjusts one line's intensity. The synthesizer makes vowel-like syllables, not intelligible words; speech bubbles provide the text. Music ducks during dialogue, and the combined soundtrack is used in previews and exports. `kind: 'think'` or `silent: true` keeps an entry silent.
+
+For a recorded soundtrack instead:
 
 1. Save the file as `scenes/<id>/audio.mp3` (the `audio` field in the scene's `asset.js`; any format the browser and ffmpeg can read works if you change the name there).
 2. Set `bpm` (and `beatOffset` in seconds, if the first beat isn't at 0) in `scene({...})`. Then `pulse(t)` hits on the song's beats.
@@ -620,7 +627,7 @@ node render.mjs --modelsheet=jester_fester          # → out/check/modelsheet_j
 | `studio.html` shows "no scene loaded" | The `?scene=` id is wrong, or a script failed to load (check the console) |
 | Studio export: "no WebCodecs video encoder" | Use Chrome or Edge 94+, or use `node render.mjs --build` |
 | Studio export: "mp4-muxer is not loaded" | Run `npm install` (it lives in `node_modules/mp4-muxer`) |
-| Studio export has no sound | Open the studio with `npm run studio` (http://localhost:5173), not by double-clicking `studio.html`: under `file://` the browser can't read the audio file |
+| Studio export has no sound | Synthesized `music` needs no file. For external audio, open the studio with `npm run studio` (http://localhost:5173): under `file://` the browser can't read the audio file |
 | `npm run studio`: port already in use | `node serve.mjs 8080 --open` (any free port) |
 | Studio: red error `…/asset.js is missing` | Every folder listed in `registry.js` needs an `asset.js` (copy one from `scripts/templates/<kind>/`) |
 | Studio: an asset's docs say "Couldn't load … README.md" | Create the README (or fix the `docs` field in `asset.js`) |
@@ -636,10 +643,10 @@ node render.mjs --modelsheet=jester_fester          # → out/check/modelsheet_j
 - Studio: scene player with shot timeline and audio preview; character browser (poses, model sheet, true-scale backdrop); location browser (camera presets, fly-through, copy camera, stand-ins on spots); in-browser MP4 export of a scene or the whole movie.
 - Characters: Fester (full body rig + juggling) and Pearl (spine rig: lying, sitting, pointing, turning).
 - Set: the throne room.
-- Scenes 01 and 02; the movie is 1:07.
+- Scenes 01–06; the default movie order runs 5:04.
 
 **Known limitations**
-- No soundtrack or voices yet; every scene has a silent audio track, and the beat grid is a placeholder 100 BPM.
+- Scenes 01 and 06 have synthesized music and cartoon voices. Scenes 02–05 have synthesized cartoon voices without music.
 - Fonts need internet at render time.
 - Fester is always drawn facing the camera (he turns his head, not his body). For profile or walking-away shots, add a side view to the rig.
 - Pearl has no voice-sync beyond `lipFlap`.

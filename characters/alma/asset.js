@@ -5,4 +5,8 @@ asset({
   files: ['alma.js'],                           // code, in load order
   docs: 'README.md',                            // description, look, personality, rig API
   refs: ['reference.webp'],                     // reference art in this folder
+  voice: {
+    prompt: 'Playful, musical child mumble; airy vowels rise and fall like short dance steps.',
+    style: 'melodic', baseHz: 310, brightness: 1.16, level: .16, pan: .2,
+  },
 });

@@ -7,7 +7,7 @@
 | **Length** | 17.5 s · 24 fps · 420 frames |
 | **Cast** | [Jester Fester](../../characters/jester_fester/README.md) |
 | **Location** | [Dove Creek Elementary](../../locations/dces/README.md): spot *Entrance mark* (0, 0, 2200) |
-| **Audio** | `audio.mp3` in this folder (optional; none yet) · tempo grid 100 BPM |
+| **Voice** | Fester's bouncy cartoon vocalizations accompany his speech bubbles |
 | **Movie** | #3 |
 
 ## Synopsis

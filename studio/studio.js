@@ -1,4 +1,4 @@
-// studio/studio.js: the Jester Fester studio.
+// studio/studio.js: Safadi Animation Studio.
 //
 // Loads every asset in registry.js, then offers three browsers:
 //   Scenes      play / scrub / step, shot timeline, audio preview, export the scene or the whole movie to MP4
@@ -20,7 +20,7 @@
   const q = new URLSearchParams(location.search);
   useScene(q.get('scene') || REGISTRY.movie[0]);
   window.setScene = id => { if (!useScene(id)) throw new Error('unknown scene ' + id); return sceneInfo(); };
-  window.sceneInfo = () => ({ id: SCENE.id, title: SCENE.title, duration: SCENE.duration, fps: SCENE.fps, audio: SCENE.audio || null });
+  window.sceneInfo = () => ({ id: SCENE.id, title: SCENE.title, duration: SCENE.duration, fps: SCENE.fps, audio: SCENE.audio || null, synthesizedAudio: !!(SCENE.music || SCENE.dialogue?.length) });
   window.renderAt = async (t, type = 'image/png', qual = .92) => { drawFrame(t); return canvas.toDataURL(type, qual); };
   window.renderSheet = async (times, cols = 3, w = 640) => {
     const h = Math.round(w * 9 / 16), rows = Math.ceil(times.length / cols), sc = document.createElement('canvas');
@@ -37,10 +37,27 @@
 
   // =====================================================================================
   // Interactive studio
-  const S = { mode: 'scene', id: null, t: 0, playing: false, speed: 1, loop: false, dirty: true, exporting: false,
+  const S = { mode: 'scene', id: null, t: 0, playing: false, speed: 1, loop: false, dirty: true, exporting: false, playMode: q.get('play') === 'true', movieActive: -1,
     char: { pose: null, view: 'pose', backdrop: '', zoom: 1 }, loc: { cam: null, character: '', pose: '', spot: '' } };
   const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
   const fmt = n => (Math.round(n * 100) / 100).toString();
+  const movieClips = (() => {
+    try {
+      const saved = JSON.parse(localStorage.getItem('studio.movie') || '[]');
+      return Array.isArray(saved) ? saved.filter(c => SCENES[c.id] && Number.isFinite(c.start) && Number.isFinite(c.end) && c.start >= 0 && c.end <= SCENES[c.id].duration && c.end > c.start) : [];
+    } catch { return []; }
+  })();
+  const movieDuration = () => movieClips.reduce((n, c) => n + c.end - c.start, 0);
+  function movieAt(t) {
+    let offset = 0;
+    for (let i = 0; i < movieClips.length; i++) {
+      const clip = movieClips[i], end = offset + clip.end - clip.start;
+      if (t < end || i === movieClips.length - 1) return { clip, index: i, local: clip.start + Math.max(0, Math.min(t - offset, clip.end - clip.start - 1e-6)), offset };
+      offset = end;
+    }
+    return null;
+  }
+  function saveMovie() { try { localStorage.setItem('studio.movie', JSON.stringify(movieClips)); } catch {} }
 
   // ---------- sidebar ----------
   const META = (kind, id) => ASSETS[kind][id] || { id, title: id, refs: [] };
@@ -62,10 +79,11 @@
     $('#work').hidden = mode === 'doc'; $('#docs').classList.toggle('full', mode === 'doc');
     if (mode === 'doc') { showDoc(id, (PROJECT_DOCS.find(d => d[0] === id) || [])[1] || id, true); history.replaceState(null, '', `?doc=${id}`); return; }
     if (mode === 'scene') { useScene(id); scenePanel(SCENES[id]); }
+    if (mode === 'movie') { S.movieActive = -1; moviePanel(); $('#docs').hidden = true; history.replaceState(null, '', '?movie=1'); S.dirty = true; return; }
     if (mode === 'character') { const e = CHARACTERS[id]; S.char.pose = Object.keys(e.poses || {})[0] || null; charPanel(e); play(); }
     if (mode === 'location') { const l = LOCATIONS[id]; S.loc.cam = { ...(Object.values(l.cameras || {})[0] || { x: 0, y: 150, z: 0, f: 1000, hy: 540 }) }; locPanel(l); play(); }
     const m = META(mode, id); showDoc(m.docs, m.title, S.docsOpen);
-    history.replaceState(null, '', `?${mode}=${id}`);
+    history.replaceState(null, '', `?${mode}=${id}${S.playMode && mode === 'scene' ? '&play=true' : ''}`);
     S.dirty = true;
   }
 
@@ -119,22 +137,47 @@
   // ---------- rendering ----------
   function render() {
     if (S.mode === 'scene') drawFrame(S.t, SCENES[S.id]);
+    else if (S.mode === 'movie') {
+      const at = movieAt(S.t);
+      if (at) {
+        if (S.movieActive !== at.index) { S.movieActive = at.index; setupAudio(SCENES[at.clip.id]); if (S.playing) startAudio(at.local); }
+        useScene(at.clip.id); drawFrame(at.local, SCENES[at.clip.id]);
+      } else { X.fillStyle = '#100c12'; X.fillRect(0, 0, W, H); }
+    }
     else if (S.mode === 'character') { const e = CHARACTERS[S.id]; paintFrame(S.t, t => S.char.view === 'sheet' ? drawModelSheet(e, t) : drawCharacterView(e, S.char.pose, t, { location: S.char.backdrop, zoom: S.char.zoom })); }
     else if (S.mode === 'location') paintFrame(S.t, t => drawLocationView(LOCATIONS[S.id], S.loc.cam, t, { character: S.loc.character, pose: S.loc.pose, spot: S.loc.spot }));
+    paintedFrame = frameKey();
     hud();
   }
-  let last = performance.now();
+  function frameKey() {
+    if (S.mode === 'scene') return `scene:${S.id}:${Math.floor(S.t * SCENES[S.id].fps)}`;
+    if (S.mode === 'movie') { const at = movieAt(S.t); return at ? `movie:${at.index}:${Math.floor(at.local * SCENES[at.clip.id].fps)}` : 'movie:empty'; }
+    return null;
+  }
+  let last = performance.now(), paintedFrame = null;
   function loop(now) {
     const dt = Math.min(.1, (now - last) / 1000); last = now;
     if (!S.exporting) {
       if (S.playing) {
-        S.t += dt * (S.mode === 'scene' ? S.speed : 1);
         if (S.mode === 'scene') {
           const d = SCENES[S.id].duration;
-          if (S.t >= d) { if (S.loop) { S.t = 0; syncAudio(true); } else { S.t = d - 1e-3; pause(); } }
-          syncAudio();
-        }
-        S.dirty = true;
+          // Follow the media clock once sound starts; repeated audio seeks cause audible gaps on slow frames.
+          S.t = audio && audioOk && !audio.paused ? audio.currentTime : S.t + dt * S.speed;
+          if (S.t >= d) {
+            if (S.loop) { S.t = 0; startAudio(0); }
+            else {
+              S.t = d - 1e-3; pause();
+              if (S.playMode) { const button = $('#sound-unlock'); button.textContent = audioOk ? '▶ Replay with sound' : '▶ Replay scene'; button.hidden = false; }
+            }
+          }
+        } else if (S.mode === 'movie') {
+          const at = movieAt(S.t);
+          S.t = at && S.movieActive === at.index && audio && audioOk && !audio.paused
+            ? at.offset + audio.currentTime - at.clip.start : S.t + dt * S.speed;
+          const d = movieDuration();
+          if (S.t >= d) { if (S.loop && d) { S.t = 0; S.movieActive = -1; } else { S.t = d; pause(); } }
+        } else S.t += dt;
+        S.dirty ||= (S.mode === 'scene' || S.mode === 'movie') ? frameKey() !== paintedFrame : true;
       }
       if (S.dirty) { render(); S.dirty = false; }
     }
@@ -142,27 +185,57 @@
   }
 
   // ---------- playback + audio ----------
-  let audio = null, audioOk = false;
+  let audio = null, audioOk = false, audioURL = null, audioGeneration = 0, audioLabel = '';
   function setupAudio(sc) {
+    const generation = ++audioGeneration;
     if (audio) { audio.pause(); audio = null; } audioOk = false;
-    const tag = $('#aud'); if (!tag) return;
-    if (!sc.audio) { tag.textContent = 'none'; return; }
-    tag.textContent = 'loading…';
-    audio = new Audio(sc.audio); audio.preload = 'auto';
-    audio.oncanplay = () => { audioOk = true; tag.textContent = '♪ ' + sc.audio; };
-    audio.onerror = () => { audioOk = false; tag.textContent = `none yet (add ${sc.audio})`; };
+    if (audioURL) { URL.revokeObjectURL(audioURL); audioURL = null; }
+    const tag = $('#aud');
+    const attach = (src, label) => {
+      if (generation !== audioGeneration) return;
+      audio = new Audio(src); audio.preload = 'auto'; audioLabel = label;
+      audio.oncanplay = () => { if (audioOk) return; audioOk = true; if (tag) tag.textContent = label; if (S.playing) startAudio(S.mode === 'movie' ? movieAt(S.t)?.local ?? 0 : S.t); };
+      audio.onerror = () => { audioOk = false; if (tag) tag.textContent = `Could not play ${label}`; };
+    };
+    if (sc.music || sc.dialogue?.length) {
+      if (tag) tag.textContent = 'synthesizing soundtrack…';
+      synthesizeSceneAudio(sc).then(buffer => {
+        if (generation !== audioGeneration) return;
+        audioURL = URL.createObjectURL(sceneWavBlob(buffer));
+        attach(audioURL, sc.music && sc.dialogue?.length ? '♪ music + cartoon voices' : sc.dialogue?.length ? '♪ cartoon voices' : '♪ synthesized score');
+      }).catch(e => { if (tag && generation === audioGeneration) tag.textContent = `soundtrack error: ${e.message}`; console.error(e); });
+      return;
+    }
+    if (!sc.audio) { if (tag) tag.textContent = 'none'; return; }
+    if (tag) tag.textContent = 'loading…';
+    attach(sc.audio, '♪ ' + sc.audio);
   }
-  function syncAudio(force) {
-    if (!audio || !audioOk || !S.playing) return;
-    if (force || Math.abs(audio.currentTime - S.t) > .12) audio.currentTime = S.t;
-    audio.playbackRate = S.speed;
+  function startAudio(t) {
+    if (!audio || !audioOk) return;
+    audio.currentTime = t; audio.playbackRate = S.speed;
+    audio.play().then(() => {
+      $('#sound-unlock').hidden = true;
+      const button = $('#audio-action'); if (button) button.hidden = true;
+      const tag = $('#aud'); if (tag) tag.textContent = audioLabel;
+    }).catch(e => {
+      const tag = $('#aud');
+      if (e.name === 'NotAllowedError') {
+        if (S.playMode) { const prompt = $('#sound-unlock'); prompt.textContent = '🔊 Tap for sound'; prompt.hidden = false; }
+        const button = $('#audio-action'); if (button) button.hidden = false;
+        if (tag) tag.textContent = 'sound needs a click';
+      } else if (e.name !== 'AbortError' && tag) tag.textContent = `sound error: ${e.message}`;
+    });
   }
-  function play() { S.playing = true; if (S.mode === 'scene' && audio && audioOk) { audio.currentTime = S.t; audio.playbackRate = S.speed; audio.play().catch(() => {}); } playBtn(); }
+  $('#sound-unlock').onclick = () => S.playing ? startAudio(S.t) : toggle();
+  function syncAudio() { if (audio && audioOk) audio.playbackRate = S.speed; }
+  function play() { S.playing = true; if (S.mode === 'scene') startAudio(S.t); else if (S.mode === 'movie') { const at = movieAt(S.t); if (at) { if (S.movieActive !== at.index) { S.movieActive = at.index; setupAudio(SCENES[at.clip.id]); } startAudio(at.local); } } playBtn(); }
   function pause() { S.playing = false; audio?.pause(); playBtn(); }
-  function toggle() { if (S.playing) pause(); else { if (S.mode === 'scene' && S.t >= SCENES[S.id].duration - .01) S.t = 0; play(); } }
+  function toggle() { if (S.playing) pause(); else { if (S.mode === 'scene' && S.t >= SCENES[S.id].duration - .01) S.t = 0; if (S.mode === 'movie' && S.t >= movieDuration() - .01) S.t = 0; play(); } }
   function seek(t) {
-    const d = S.mode === 'scene' ? SCENES[S.id].duration - 1e-3 : Infinity;
-    S.t = clamp(t, 0, d); S.dirty = true; if (audio && audioOk && S.playing) audio.currentTime = S.t;
+    const d = S.mode === 'scene' ? SCENES[S.id].duration - 1e-3 : S.mode === 'movie' ? movieDuration() : Infinity;
+    S.t = clamp(t, 0, d); S.dirty = true;
+    if (S.mode === 'movie') { audio?.pause(); S.movieActive = -1; }
+    else if (audio && audioOk && S.playing) audio.currentTime = S.t;
   }
   function step(frames) { pause(); const fps = S.mode === 'scene' ? SCENES[S.id].fps : 24; seek(Math.round(S.t * fps + frames) / fps); }
   function playBtn() { const b = $('#play'); if (b) b.textContent = S.playing ? '❚❚ Pause' : '▶ Play'; const a = $('#anim'); if (a) a.checked = S.playing; }
@@ -173,7 +246,7 @@
   $('#lightbox').onclick = () => $('#lightbox').classList.remove('on');
   const exportRow = (sceneButtons) => `
     <div class="row">
-      ${sceneButtons ? `<button id="exp-scene" class="accent">⬇ Export scene MP4</button><button id="exp-movie">⬇ Export movie MP4</button>
+      ${sceneButtons ? `<button id="exp-scene" class="accent">⬇ Export scene MP4</button><button id="share-scene">Copy play link</button><button id="exp-movie">🎞 Movie composer</button>
       <select id="quality" title="video bitrate"><option value="16000000">High · 16 Mbps</option><option value="8000000" selected>Standard · 8 Mbps</option><option value="4000000">Small · 4 Mbps</option></select>` : ''}
       <button id="snap">📷 Snapshot PNG</button>
       <div class="progress" id="progress" hidden><div class="track"><div class="bar"></div></div><button id="cancel">Cancel</button></div>
@@ -193,7 +266,7 @@
         return `<div class="seg" data-i="${i}" data-t="${t0}" style="left:${t0 / sc.duration * 100}%;width:${(t1 - t0) / sc.duration * 100}%" title="${esc(fn.name || 'shot ' + (i + 1))} · ${fmt(t0)}–${fmt(t1)} s">${esc(fn.name || 'shot ' + (i + 1))}</div>`; }).join('')}</div>
         <input type="range" id="scrub" min="0" max="${sc.duration}" step="${1 / fps}" value="0"></div>
       <div class="row">
-        <button id="start" title="Home">⏮</button><button id="prev" title="←">◀︎</button><button id="play" class="primary">▶ Play</button><button id="next" title="→">▶︎</button><button id="end" title="End">⏭</button>
+        <button id="start" title="Home">⏮</button><button id="prev" title="←">◀︎</button><button id="play" class="primary">▶ Play</button><button id="audio-action" hidden>🔊 Enable sound</button><button id="next" title="→">▶︎</button><button id="end" title="End">⏭</button>
         <select id="speed" title="playback speed"><option value=".25">¼×</option><option value=".5">½×</option><option value="1" selected>1×</option><option value="2">2×</option></select>
         <label class="ck"><input type="checkbox" id="loopck"> loop</label>
         <span class="spacer"></span><span id="tt" class="mono"></span>
@@ -206,10 +279,50 @@
     $('#speed').value = S.speed; $('#speed').onchange = e => { S.speed = +e.target.value; syncAudio(); };
     $('#loopck').checked = S.loop; $('#loopck').onchange = e => { S.loop = e.target.checked; };
     $('#exp-scene').onclick = () => runExport([sc.id], `${sc.id}.mp4`);
-    $('#exp-movie').onclick = () => runExport(REGISTRY.movie, 'movie.mp4');
-    $('#exp-movie').title = 'All scenes in movie order: ' + REGISTRY.movie.join(' → ');
+    $('#share-scene').onclick = async () => {
+      const url = new URL(location.href); url.search = new URLSearchParams({ scene: sc.id, play: 'true' }).toString();
+      try { await navigator.clipboard.writeText(url.href); status('Play link copied', 'ok'); }
+      catch { const input = document.createElement('input'); input.value = url.href; document.body.appendChild(input); input.select(); document.execCommand('copy'); input.remove(); status('Play link copied', 'ok'); }
+    };
+    $('#exp-movie').onclick = () => select('movie', 'composer');
+    $('#audio-action').onclick = () => S.playing ? startAudio(S.t) : play();
     bindSnap(() => `${sc.id}_f${String(Math.round(S.t * fps)).padStart(5, '0')}`);
     setupAudio(sc); playBtn(); bindLinks();
+  }
+
+  function moviePanel() {
+    const duration = movieDuration();
+    $('#panel').innerHTML = `
+      <div class="head"><div class="txt"><h2>Movie composer</h2><div class="muted">Choose scenes, trim each clip, and arrange the movie in playback order. Changes are saved in this browser.</div></div></div>
+      <div class="row"><select id="add-scene" aria-label="Scene to add">${REGISTRY.scenes.filter(id => SCENES[id]).map(id => `<option value="${esc(id)}">${esc(META('scene', id).title)}</option>`).join('')}</select><button id="add-clip" class="accent">Add scene</button><button id="load-movie">Load registry order</button><button id="clear-movie" ${movieClips.length ? '' : 'disabled'}>Clear</button><span class="spacer"></span><span class="muted mono">${movieClips.length} clips · ${fmt(duration)} s</span></div>
+      <ol class="movie-clips">${movieClips.map((c, i) => `<li data-clip="${i}"><button class="clip-preview" title="Preview from this clip">▶</button><span class="clip-title">${esc(META('scene', c.id).title)}<small>${esc(c.id)}</small></span><label>In <input class="clip-in" type="number" min="0" max="${SCENES[c.id].duration}" step="0.01" value="${fmt(c.start)}" aria-label="Clip ${i + 1} in point"></label><label>Out <input class="clip-out" type="number" min="0" max="${SCENES[c.id].duration}" step="0.01" value="${fmt(c.end)}" aria-label="Clip ${i + 1} out point"></label><span class="muted mono clip-length">${fmt(c.end - c.start)} s</span><button class="clip-up" title="Move up" ${i ? '' : 'disabled'}>↑</button><button class="clip-down" title="Move down" ${i < movieClips.length - 1 ? '' : 'disabled'}>↓</button><button class="clip-remove" title="Remove clip">✕</button></li>`).join('') || '<li class="muted">Add a scene to start your movie.</li>'}</ol>
+      <div class="row"><button id="start" title="Start">⏮</button><button id="play" class="primary" ${movieClips.length ? '' : 'disabled'}>▶ Play</button><button id="audio-action" hidden>🔊 Enable sound</button><label class="ck"><input type="checkbox" id="loopck"> loop</label><input id="scrub" type="range" min="0" max="${duration}" step="0.01" value="${Math.min(S.t, duration)}" ${movieClips.length ? '' : 'disabled'}><span id="tt" class="mono"></span></div>
+      <div class="row"><button id="exp-movie" class="accent" ${movieClips.length ? '' : 'disabled'}>⬇ Export movie MP4</button><select id="quality" title="video bitrate"><option value="16000000">High · 16 Mbps</option><option value="8000000" selected>Standard · 8 Mbps</option><option value="4000000">Small · 4 Mbps</option></select><div class="progress" id="progress" hidden><div class="track"><div class="bar"></div></div><button id="cancel">Cancel</button></div><span id="status"></span></div>`;
+    $('#add-clip').onclick = () => { const id = $('#add-scene').value; movieClips.push({ id, start: 0, end: SCENES[id].duration }); movieChanged(); };
+    $('#load-movie').onclick = () => { movieClips.splice(0, movieClips.length, ...REGISTRY.movie.filter(id => SCENES[id]).map(id => ({ id, start: 0, end: SCENES[id].duration }))); movieChanged(); };
+    $('#clear-movie').onclick = () => { movieClips.length = 0; movieChanged(); };
+    document.querySelectorAll('[data-clip]').forEach(row => {
+      const i = +row.dataset.clip;
+      row.querySelector('.clip-preview').onclick = () => { pause(); seek(movieClips.slice(0, i).reduce((n, c) => n + c.end - c.start, 0)); };
+      row.querySelector('.clip-up').onclick = () => { [movieClips[i - 1], movieClips[i]] = [movieClips[i], movieClips[i - 1]]; movieChanged(); };
+      row.querySelector('.clip-down').onclick = () => { [movieClips[i + 1], movieClips[i]] = [movieClips[i], movieClips[i + 1]]; movieChanged(); };
+      row.querySelector('.clip-remove').onclick = () => { movieClips.splice(i, 1); movieChanged(); };
+      for (const [key, sel] of [['start', '.clip-in'], ['end', '.clip-out']]) row.querySelector(sel).onchange = e => {
+        const value = +e.target.value, next = { ...movieClips[i], [key]: value };
+        if (!Number.isFinite(value) || next.start < 0 || next.end > SCENES[next.id].duration || next.end <= next.start) { e.target.value = fmt(movieClips[i][key]); return; }
+        movieClips[i] = next; movieChanged();
+      };
+    });
+    $('#start').onclick = () => { pause(); seek(0); };
+    $('#play').onclick = toggle;
+    $('#audio-action').onclick = () => S.playing ? startAudio(movieAt(S.t)?.local ?? 0) : play();
+    $('#loopck').checked = S.loop; $('#loopck').onchange = e => { S.loop = e.target.checked; };
+    $('#scrub').oninput = e => { pause(); seek(+e.target.value); };
+    $('#exp-movie').onclick = () => runExport(movieClips.map(c => ({ ...c })), 'movie.mp4');
+    playBtn(); hud();
+  }
+  function movieChanged() {
+    pause(); S.t = 0; S.movieActive = -1; saveMovie(); moviePanel(); S.dirty = true;
   }
 
   function charPanel(e) {
@@ -282,6 +395,13 @@
 
   // ---------- HUD ----------
   function hud() {
+    if (S.mode === 'movie') {
+      const at = movieAt(S.t), tt = $('#tt'), sb = $('#scrub');
+      if (tt) tt.textContent = `${fmt(S.t)} / ${fmt(movieDuration())} s${at ? ' · ' + META('scene', at.clip.id).title : ''}`;
+      if (sb && document.activeElement !== sb) sb.value = S.t;
+      document.querySelectorAll('[data-clip]').forEach(row => row.classList.toggle('on', +row.dataset.clip === at?.index));
+      return;
+    }
     if (S.mode !== 'scene') return;
     const sc = SCENES[S.id], fps = sc.fps, N = Math.ceil(sc.duration * fps - 1e-6), sh = shotAt(sc, clamp(S.t, 0, sc.duration - 1e-6));
     const tt = $('#tt'); if (tt) tt.textContent = `${S.t.toFixed(2)} s · frame ${Math.min(N - 1, Math.round(S.t * fps))} / ${N - 1} · ${sh.fn.name || 'shot'} +${(S.t - sh.t0).toFixed(2)} s`;
@@ -305,7 +425,9 @@
       status(e.name === 'AbortError' ? 'Export cancelled' : '⚠ ' + e.message, 'warn'); if (e.name !== 'AbortError') console.error(e);
     } finally {
       S.exporting = false; prog.hidden = true; document.querySelectorAll('#exp-scene,#exp-movie,#snap').forEach(b => b.disabled = false);
-      useScene(S.id); S.dirty = true;
+      if (S.mode === 'scene') useScene(S.id);
+      else if (S.mode === 'movie') S.movieActive = -1;
+      S.dirty = true;
     }
   }
 
@@ -324,11 +446,18 @@
     camUI();
   }, { passive: false });
   addEventListener('keydown', e => {
-    if (e.target.matches('input[type=text], select') || S.mode === 'doc') return;
+    if (e.target.matches('input, select') || S.mode === 'doc') return;
     if (e.code === 'Space') { e.preventDefault(); toggle(); return; }
     if (S.mode === 'location') {
       const c = S.loc.cam, m = e.shiftKey ? 4 : 1, keys = { KeyW: ['z', 30], KeyS: ['z', -30], KeyA: ['x', -20], KeyD: ['x', 20], KeyQ: ['y', 15], KeyE: ['y', -15], KeyR: ['hy', 20], KeyF: ['hy', -20] };
       if (keys[e.code]) { const [k, d] = keys[e.code]; c[k] = clamp(c[k] + d * m, CAM_RANGES[k][0], CAM_RANGES[k][1]); camUI(); }
+      return;
+    }
+    if (S.mode === 'movie') {
+      if (e.code === 'ArrowLeft') { e.preventDefault(); seek(S.t - (e.shiftKey ? 1 : 1 / 24)); }
+      if (e.code === 'ArrowRight') { e.preventDefault(); seek(S.t + (e.shiftKey ? 1 : 1 / 24)); }
+      if (e.code === 'Home') seek(0);
+      if (e.code === 'End') seek(movieDuration());
       return;
     }
     if (S.mode !== 'scene') return;
@@ -340,13 +469,20 @@
 
   // ---------- start ----------
   buildSidebar();
-  if (q.has('doc')) { select('scene', REGISTRY.movie[0]); select('doc', q.get('doc')); }
+  if (S.playMode) {
+    const id = q.get('scene'); select('scene', SCENES[id] ? id : REGISTRY.movie[0]);
+    document.body.classList.add('play-mode');
+    if (q.has('t')) seek(+q.get('t'));
+    play();
+  }
+  else if (q.has('movie')) select('movie', 'composer');
+  else if (q.has('doc')) { select('scene', REGISTRY.movie[0]); select('doc', q.get('doc')); }
   else {
     const [mode, id] = q.has('character') ? ['character', q.get('character')] : q.has('location') ? ['location', q.get('location')] : ['scene', q.get('scene') || REGISTRY.movie[0]];
     const ok = (mode === 'scene' ? SCENES : mode === 'character' ? CHARACTERS : LOCATIONS)[id];
     select(ok ? mode : 'scene', ok ? id : REGISTRY.movie[0]);
   }
-  if (q.has('t')) seek(+q.get('t'));
+  if (q.has('t') && !S.playMode) seek(+q.get('t'));
   window.studio = { S, select, seek, runExport };
   requestAnimationFrame(loop);
 })().catch(e => { document.body.insertAdjacentHTML('afterbegin', `<pre id="err">${e.stack || e}</pre>`); console.error(e); });

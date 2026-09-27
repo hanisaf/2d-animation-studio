@@ -86,13 +86,24 @@ async function renderFrames(id, range, { workers = Math.max(2, Math.min(8, cpus(
   }));
   return { info, fps };
 }
+async function soundtrackPath(page, info, id) {
+  if (!info.synthesizedAudio) return info.audio && existsSync(info.audio) ? info.audio : null;
+  console.log(`synthesizing soundtrack for ${id}`);
+  const wav = await page.evaluate(sceneId => sceneWavBase64(sceneId), id);
+  const path = `out/${id}/soundtrack.wav`;
+  mkdirSync(dirname(path), { recursive: true });
+  writeFileSync(path, Buffer.from(wav, 'base64'));
+  return path;
+}
 async function encode(id) {
-  const { page, info } = await openPage(id); await page.close();
+  const { page, info } = await openPage(id);
   const fps = +(args.fps || info.fps), dir = `out/${id}/frames`, out = `out/${id}/${id}.mp4`;
   const n = readdirSync(dir).filter(f => f.endsWith('.jpg')).length;
   if (!n) throw new Error(`no frames in ${dir}: run --frames first`);
-  const audio = info.audio && existsSync(info.audio) ? ['-i', info.audio] : ['-f', 'lavfi', '-i', 'anullsrc=r=48000:cl=stereo'];
-  if (info.audio && !existsSync(info.audio)) console.log(`(audio ${info.audio} not found, using silence)`);
+  const sound = await soundtrackPath(page, info, id);
+  await page.close();
+  const audio = sound ? ['-i', sound] : ['-f', 'lavfi', '-i', 'anullsrc=r=48000:cl=stereo'];
+  if (!sound && info.audio) console.log(`(audio ${info.audio} not found, using silence)`);
   console.log(`encoding ${n} frames → ${out}`);
   await run(FFMPEG, ['-y', '-loglevel', 'error', '-stats', '-framerate', String(fps), '-i', `${dir}/f%05d.jpg`, ...audio,
     '-map', '0:v', '-map', '1:a', '-t', String(n / fps), '-c:v', 'libx264', '-preset', 'slow', '-crf', '17', '-pix_fmt', 'yuv420p',
@@ -165,14 +176,18 @@ if (args.location) {
 } else if (args.clip) {
   const { page, info } = await openPage(sceneId), fps = +(args.fps || info.fps);
   const [a, b] = String(args.clip).split(':').map(Number), out = args.out || `out/${sceneId}/clip_${a}-${b}.mp4`; mkdirSync(dirname(out), { recursive: true });
-  const ff = spawn(FFMPEG, ['-y', '-loglevel', 'error', '-f', 'image2pipe', '-framerate', String(fps), '-c:v', 'mjpeg', '-i', '-',
-    '-c:v', 'libx264', '-preset', 'veryfast', '-crf', '20', '-pix_fmt', 'yuv420p', out], { stdio: ['pipe', 'inherit', 'inherit'] });
+  if (!Number.isFinite(a) || !Number.isFinite(b) || a < 0 || b > info.duration || b <= a) throw new Error(`invalid clip range ${args.clip}`);
+  const sound = await soundtrackPath(page, info, sceneId);
   const n = Math.round((b - a) * fps), start = Date.now();
+  const ff = spawn(FFMPEG, ['-y', '-loglevel', 'error', '-f', 'image2pipe', '-framerate', String(fps), '-c:v', 'mjpeg', '-i', '-',
+    ...(sound ? ['-ss', String(a), '-i', sound, '-map', '0:v', '-map', '1:a'] : []),
+    '-t', String(n / fps), '-c:v', 'libx264', '-preset', 'veryfast', '-crf', '20', '-pix_fmt', 'yuv420p',
+    ...(sound ? ['-c:a', 'aac', '-b:a', '192k', '-ar', '48000', '-ac', '2'] : []), out], { stdio: ['pipe', 'inherit', 'inherit'] });
   for (let i = 0; i < n; i++) {
     const buf = await frameOf(page, a + i / fps, 'image/jpeg', .9);
     if (!ff.stdin.write(buf)) await new Promise(r => ff.stdin.once('drain', r));
   }
-  ff.stdin.end(); await new Promise(r => ff.on('close', r));
+  ff.stdin.end(); await new Promise((resolve, reject) => { ff.on('error', reject); ff.on('close', code => code ? reject(new Error(`ffmpeg exited ${code}`)) : resolve()); });
   console.log(`wrote ${out}  (${((Date.now() - start) / n).toFixed(0)} ms/frame)`);
 } else if (args.frames) {
   await renderFrames(sceneId, args.frames === true ? null : args.frames, { workers: args.workers && +args.workers, resume: !!args.resume });

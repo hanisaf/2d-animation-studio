@@ -2,7 +2,7 @@
 <html>
 <head>
 <meta charset="utf-8">
-<title>Jester Fester Studio</title>
+<title>Safadi Animation Studio</title>
 <link rel="icon" href="data:,">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@600&family=Luckiest+Guy&display=block">
 <link rel="stylesheet" href="studio/studio.css">
@@ -10,7 +10,8 @@
 <body>
 <div id="app">
   <aside id="side">
-    <header>Jester Fester Studio<small>scenes · characters · locations · docs</small></header>
+    <header>Safadi Animation Studio<small>movie · scenes · characters · locations · docs</small></header>
+    <h3>Movie</h3><ul id="list-movie"><li data-mode="movie" data-id="composer"><span class="ico">🎞</span>Movie composer</li></ul>
     <h3>Scenes</h3><ul id="list-scenes"></ul>
     <h3>Characters</h3><ul id="list-characters"></ul>
     <h3>Locations</h3><ul id="list-locations"></ul>
@@ -32,6 +33,7 @@
   </main>
 </div>
 <div id="lightbox"><img alt=""></div>
+<button id="sound-unlock" hidden>🔊 Tap for sound</button>
 
 <!-- the engine (the renderer loads this same page with ?render to paint frames) -->
 <script src="engine/core.js"></script>
@@ -40,6 +42,7 @@
 <script src="engine/timeline.js"></script>
 <script src="engine/showcase.js"></script>
 <script src="registry.js"></script>
+<script src="studio/music.js"></script>
 <!-- in-browser MP4 export -->
 <script src="node_modules/mp4-muxer/build/mp4-muxer.js"></script>
 <script src="studio/export.js"></script>

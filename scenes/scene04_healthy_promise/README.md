@@ -7,7 +7,7 @@
 | **Length** | 54.5 s · 24 fps · 1308 frames |
 | **Cast** | [Professor Safadi](../../characters/safadi/README.md) · [Alma](../../characters/alma/README.md) |
 | **Location** | [Dove Creek Elementary](../../locations/dces/README.md): the front sidewalk (Z ≈ 2100), then the entrance |
-| **Audio** | `audio.mp3` in this folder (optional; none yet) · tempo grid 112 BPM (Alma's dance) |
+| **Voice** | Safadi's measured and Alma's melodic cartoon vocalizations accompany their speech bubbles; the thought bubble is silent |
 | **Movie** | #4 |
 
 ## Synopsis

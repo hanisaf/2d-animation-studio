@@ -188,5 +188,6 @@
   }
 
   scene({ duration: 54.5, fps: 24, bpm: 112,                  // id, title, audio: see asset.js
+    dialogue: LINES.map(([at, who, text, o]) => ({ at, speaker: who === 'S' ? 'safadi' : 'alma', text, cps: o.cps ?? 18, hold: o.hold, kind: o.kind })),
     shots: [[0, establish], [4, walkTalk], [16.9, explainPlate], [24, trees], [28, crash], [36, dance], [41, stars], [43, promise], [50.5, tomorrow]] });
 })();

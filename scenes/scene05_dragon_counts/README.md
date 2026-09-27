@@ -7,7 +7,7 @@
 | **Length** | 55 s · 24 fps · 1320 frames |
 | **Cast** | [Professor Safadi](../../characters/safadi/README.md) · [Alma](../../characters/alma/README.md) · [Dragon](../../characters/dragon/README.md) |
 | **Location** | [Throne room](../../locations/throne_room/README.md), in front of the dais |
-| **Audio** | `audio.mp3` in this folder (optional; silence until supplied) |
+| **Voice** | Safadi and Alma have distinct synthesized cartoon vocalizations; Dragon has no spoken bubble in this scene |
 | **Movie** | #5 |
 
 ## Synopsis

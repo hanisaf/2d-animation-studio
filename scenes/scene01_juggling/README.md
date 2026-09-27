@@ -7,7 +7,8 @@
 | **Length** | 30 s · 24 fps · 720 frames |
 | **Cast** | [Jester Fester](../../characters/jester_fester/README.md) |
 | **Location** | [Throne room](../../locations/throne_room/README.md), on the stage mark (0, 0, 1200) |
-| **Audio** | `audio.mp3` in this folder (optional; none yet) · tempo grid 100 BPM |
+| **Music** | Synthesized from the scene's `music` prompt and score in `asset.js` · 100 BPM · no audio file |
+| **Voice** | Jester's cartoon syllables are synthesized from the timed `dialogue` entries in `asset.js` |
 | **Movie** | #1 |
 
 ## Synopsis
@@ -17,6 +18,14 @@ The empty throne room glows in the morning light. Jester Fester tumbles out from
 To finish, he flings all five balls up and strikes a pose… but they lodge in the chandelier. He waits. He looks up. One by one they drop onto his head: BONK, BONK, BONK, BONK. Dizzy, he recovers, straightens his hat and gives the camera a sheepish shrug. The last ball finally drops and lands perfectly balanced on his hat. Wink, thumbs up, iris-out.
 
 **Theme:** Fester's life in one routine: talent, pride, a fall, and a grin anyway.
+
+## Music prompt
+
+> Playful royal chamber music with bright bells and a bouncy bass. Begin gently, grow frantic with the five-ball juggling, pause for the chandelier, punctuate each bonk, and end with a tiny triumphant flourish. Instrumental only.
+
+The `music` field in `asset.js` turns this brief into a reproducible score. Its sections set energy at scene times; its cues synthesize the pops, chandelier ding, bonks, and finale. The studio plays it while previewing, and both browser and command-line MP4 exports render it into the video.
+
+The two `dialogue` entries drive both speech bubbles and Jester's procedural vowel-like vocalizations. His voice settings live in `characters/jester_fester/asset.js`. The music dips while he talks; the bubbles carry the words. The same mixed soundtrack is used for studio playback, movie trims, and MP4 export.
 
 ## Script
 
@@ -55,7 +64,7 @@ To finish, he flings all five balls up and strikes a pose… but they lodge in t
 | `JX, JZ` | 0, 1200 | Fester's mark (the throne room's `MARK`) |
 | `J3` | `{ n: 3, tau: .34, h: 17, t0: 7.5 }` | 3-ball cascade: throw interval, height, first throw |
 | `J5` | `{ n: 5, tau: .26, h: 24, t0: 14 - 10 * .26 }` | 5-ball cascade, already mid-pattern at the cut |
-| `HITS` | `[23.35, 23.7, 24.05, 24.4]` | bonk times (move these onto the beat when the song arrives) |
+| `HITS` | `[23.35, 23.7, 24.05, 24.4]` | bonk times, mirrored by the synthesized music cues |
 | `LAST` | `{ rel: 28.3, land: 28.75 }` | the ball that lands on his hat |
 | `ROOM.chandKick` | `[21.25, .13]` | when the chandelier gets knocked swinging |
 | `TILT` | 1600 | how far `camC` tilts up to find the chandelier |

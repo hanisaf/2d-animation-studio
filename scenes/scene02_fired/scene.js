@@ -7,6 +7,15 @@
   const PZ = R.BACK - 125, SEAT_Y = 258;                         // Pearl on the throne cushion
   const ROOM = { splitZ: FZ };
   const J3 = { n: 3, tau: .34, h: 15, t0: 21.6 };
+  const DIALOGUE = {
+    joke: { at: 5.0, speaker: 'jester_fester', text: 'Your Highness! Why did the *chicken* cross the road?', cps: 20, hold: 1.6 },
+    why: { at: 10.9, speaker: 'princess_pearl', text: '...why?', cps: 6, hold: .5, energy: .8 },
+    punch: { at: 12.8, speaker: 'jester_fester', text: 'To get to the *other side!*', cps: 20, hold: 1.1 },
+    wait: { at: 20.2, speaker: 'jester_fester', text: 'W-wait! I can *juggle!*', cps: 20, hold: .9, energy: 1.1 },
+    fired: { at: 25.45, speaker: 'princess_pearl', text: "Fester... you're *FIRED!*", cps: 18, hold: .45, energy: 1.35 },
+    another: { at: 30.95, speaker: 'princess_pearl', text: 'Somebody find me *another jester!*', cps: 20, hold: .9, energy: 1.15 },
+    ending: { at: 35.3, speaker: 'jester_fester', text: '...story of my life.', cps: 16, hold: 2, kind: 'think' },
+  };
 
   // ---------- helpers ----------
   const Fest = (P, o) => { const [sx, sy, k] = P.p(FX, 0, FZ), s = U * k; return { sx, sy, s, A: jester(sx, sy, s, o) }; };
@@ -67,7 +76,8 @@
     const P = persp(camF(t, 4.6, 9.6));
     room(P, t, 2.6, () => pearlOn(P, t, { eyes: 'bored', brows: 'flat', mouth: 'flat' }));
     const [sx, sy, k] = P.p(FX, 0, FZ), s = U * k;
-    const said = callout('Your Highness! Why did the *chicken* cross the road?', sx + 3.9 * s, sy - 16.6 * s, t - 5.0, { dx: 440, dy: -210, size: 58, maxW: 600, cps: 20, hold: 1.6 });
+    const line = DIALOGUE.joke;
+    const said = callout(line.text, sx + 3.9 * s, sy - 16.6 * s, t - line.at, { dx: 440, dy: -210, size: 58, maxW: 600, cps: line.cps, hold: line.hold });
     const jz = wob(t, 3) * .25;                                       // jazz-hand wiggle
     Fest(P, { handL: [-4.8 + jz, -13.4], handR: [4.8 - jz, -13.4], dy: .25 * pulse(t, 5), turn: .3, lookX: .6, lookY: -.25, brows: 'up',
       mouth: lipFlap(t, said.talking, 'grin'), hatSway: [wob(t, 1.5) * .4, 0], sway: .3 * wob(t, 1.5) });
@@ -80,7 +90,8 @@
     room(P, t, 1.8);
     const po = { eyes: 'bored', brows: 'flat', mouth: 'flat', blink: kf(t, [[10.0, 0], [10.25, 1], [10.55, 1], [10.8, 0]]) };
     const A0 = measure(() => pearlOn(P, t, po));
-    const said = callout('...why?', A0.mouth[0] - 40, A0.mouth[1] - 10, t - 10.9, { dx: -300, dy: -170, size: 56, cps: 6, hold: .5 });
+    const line = DIALOGUE.why;
+    const said = callout(line.text, A0.mouth[0] - 40, A0.mouth[1] - 10, t - line.at, { dx: -300, dy: -170, size: 56, cps: line.cps, hold: line.hold });
     pearlOn(P, t, { ...po, mouth: lipFlap(t, said.talking, 'flat', ['o', 'flat', 'o']) });
     R.front(P, t, ROOM);
   }
@@ -90,7 +101,8 @@
     const P = persp(camF(t, 12.6, 16.6, 60));
     room(P, t, 2.6, () => pearlOn(P, t, { eyes: 'bored', brows: 'flat', mouth: 'flat' }));
     const [sx, sy, k] = P.p(FX, 0, FZ), s = U * k;
-    const said = callout('To get to the *other side!*', sx + 3.9 * s, sy - 16.6 * s, t - 12.8, { dx: 420, dy: -210, size: 62, cps: 20, hold: 1.1 });
+    const line = DIALOGUE.punch;
+    const said = callout(line.text, sx + 3.9 * s, sy - 16.6 * s, t - line.at, { dx: 420, dy: -210, size: 62, cps: line.cps, hold: line.hold });
     const laugh = t > 14.5, shake = laugh ? Math.abs(Math.sin((t - 14.5) * 15)) : 0;
     Fest(P, laugh
       ? { handL: [-1.9, -10.6], handR: [1.9, -10.6], handPoseL: 'fist', handPoseR: 'fist', eyes: 'squeeze', mouth: shake > .5 ? 'grin' : 'open', dy: .5 * shake, lean: -.06, tilt: -.1 + .05 * shake,
@@ -115,7 +127,8 @@
     const P = persp(camF(t, 19.6, 24.2, 50));
     room(P, t, 2.6, () => pearlOn(P, t, { eyes: 'bored', brows: 'flat', mouth: 'flat', lookY: t > 22 ? -.6 : 0 }));
     const [sx, sy, k] = P.p(FX, 0, FZ), s = U * k;
-    const said = callout('W-wait! I can *juggle!*', sx + 3.9 * s, sy - 16.6 * s, t - 20.2, { dx: 420, dy: -210, size: 62, cps: 20, hold: .9 });
+    const line = DIALOGUE.wait;
+    const said = callout(line.text, sx + 3.9 * s, sy - 16.6 * s, t - line.at, { dx: 420, dy: -210, size: 62, cps: line.cps, hold: line.hold });
     const c = cascade(t, J3), toHat = ease(seg(t, 20.4, 20.7)), back = ease(seg(t, 20.95, 21.35));
     let hL = mixPt([-3.3, -8.4], [-2.9, -20.6], toHat), hR = mixPt([3.4, -8.3], [2.9, -20.6], toHat);
     hL = mixPt(hL, c.handL, back); hR = mixPt(hR, c.handR, back);
@@ -145,7 +158,8 @@
     room(P, t, 1.8);
     const yawn = t < 25.15, angry = t > 25.25, point = ease(seg(t, 25.35, 25.6));
     const probe = measure(() => pearlOn(P, t, { eyes: 'closed', mouth: 'flat' }));
-    const said = callout('Fester... you\'re *FIRED!*', probe.mouth[0] - 60, probe.mouth[1] - 20, t - 25.45, { dx: -380, dy: -200, size: 70, cps: 18, hold: .45, kind: 'shout', accent: '#D0243F' });
+    const line = DIALOGUE.fired;
+    const said = callout(line.text, probe.mouth[0] - 60, probe.mouth[1] - 20, t - line.at, { dx: -380, dy: -200, size: 70, cps: line.cps, hold: line.hold, kind: 'shout', accent: '#D0243F' });
     pearlOn(P, t, yawn
       ? { eyes: 'closed', brows: 'up', mouth: t > 24.35 ? 'yawn' : 'flat', headTilt: .3 * Math.sin(Math.PI * seg(t, 24.3, 25.15)), flipNear: -1.1 * Math.sin(Math.PI * seg(t, 24.3, 25.15)), flipFar: -.8 * Math.sin(Math.PI * seg(t, 24.3, 25.15)) }
       : { eyes: angry ? 'angry' : 'bored', brows: angry ? 'angry' : 'flat', mouth: lipFlap(t, said.talking, 'frown', ['open', 'o', 'open', 'flat']), point, pointAng: -.2,
@@ -178,7 +192,8 @@
     room(P, t, 1.8);
     const turn = lerp(1, -1, ease(seg(t, 30.5, 30.8)));                  // flip to face screen-right, away from him
     const probe = measure(() => pearlOn(P, t, { turn, eyes: 'closed', mouth: 'smirk', headTilt: .45 * ease(seg(t, 30.6, 31.0)) }));
-    const said = callout('Somebody find me *another jester!*', probe.mouth[0] + 40, probe.mouth[1] - 20, t - 30.95, { dx: 300, dy: -230, size: 58, maxW: 560, cps: 20, hold: .9 });
+    const line = DIALOGUE.another;
+    const said = callout(line.text, probe.mouth[0] + 40, probe.mouth[1] - 20, t - line.at, { dx: 300, dy: -230, size: 58, maxW: 560, cps: line.cps, hold: line.hold });
     pearlOn(P, t, { turn, eyes: t < 30.5 ? 'angry' : 'closed', brows: 'up', mouth: lipFlap(t, said.talking, 'smirk', ['open', 'o', 'smirk']),
       headTilt: .45 * ease(seg(t, 30.6, 31.0)), wag: .5 * boing(t, 30.7, 1.4, 3) + .2 * wob(t, .45), crownTilt: .05 * wob(t, .5) });
     R.front(P, t, ROOM);
@@ -198,12 +213,14 @@
     const f = easeOut(seg(t, 34.0, tap)), bx = lerp(12, 3.4, f) + .25 * boing(t, tap, 3, 6), [x, y] = loc(j, bx, -BALL_R);
     jugglerBall(x, y, BALL_R * j.s, JUGGLE_COLS[0], -(12 - bx) * 1.2);
     sfx('tap', x + j.s, y - j.s * 2.2, 34, PAL.goldLt, t - tap, { life: .5 });
-    callout('...story of my life.', j.A.head[0] + j.s * 3.8, j.A.head[1] - j.s * 2, t - 35.3, { kind: 'think', dx: 400, dy: -150, size: 52, cps: 16, hold: 2 });
+    const line = DIALOGUE.ending;
+    callout(line.text, j.A.head[0] + j.s * 3.8, j.A.head[1] - j.s * 2, t - line.at, { kind: line.kind, dx: 400, dy: -150, size: 52, cps: line.cps, hold: line.hold });
     iris(j.A.head[0], j.A.head[1] - j.s * 2, lerp(1500, 0, easeIn(seg(t, 36.25, 37))));
   }
 
   scene({
     duration: 37, fps: 24, bpm: 100,                                          // id, title, audio: see asset.js
+    dialogue: Object.values(DIALOGUE),
     shots: [[0, establish], [4.6, joke], [9.6, why], [12.6, punchline], [16.6, crickets], [19.6, juggle], [24.2, fired], [27.4, shock], [30.4, another], [33.8, alone]],
   });
 })();

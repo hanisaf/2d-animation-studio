@@ -7,7 +7,7 @@
 | **Length** | 37 s · 24 fps · 888 frames |
 | **Cast** | [Princess Pearl](../../characters/princess_pearl/README.md) (on the throne) · [Jester Fester](../../characters/jester_fester/README.md) (before the dais) |
 | **Location** | [Throne room](../../locations/throne_room/README.md): spots *Throne seat* (0, 258, 2275) and *Before the dais* (−200, 0, 1880) |
-| **Audio** | `audio.mp3` in this folder (optional; none yet) · tempo grid 100 BPM |
+| **Voice** | Fester and Pearl have distinct synthesized cartoon vocalizations; the final thought bubble is silent |
 | **Movie** | #2 |
 
 ## Synopsis

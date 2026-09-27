@@ -35,7 +35,7 @@ const SCENES = {}, CHARACTERS = {}, LOCATIONS = {};
 let SCENE = null;
 function scene(def) {
   const a = CURRENT_ASSET?.kind === 'scene' ? CURRENT_ASSET : null;
-  def.id ??= a?.id; def.title ??= a?.title; def.audio ??= a?.audio; def.dir ??= a?.dir;
+  def.id ??= a?.id; def.title ??= a?.title; def.audio ??= a?.audio; def.music ??= a?.music; def.dialogue ??= a?.dialogue; def.dir ??= a?.dir;
   def.shots.sort((x, y) => x[0] - y[0]); def.fps ??= 24; SCENES[def.id] = def; return def;
 }
 function useScene(id) { SCENE = SCENES[id] || null; if (SCENE) { BPM = SCENE.bpm ?? 100; BEAT_OFF = SCENE.beatOffset ?? 0; } return SCENE; }

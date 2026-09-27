@@ -205,6 +205,7 @@
   function patternPayoff(t) { frame(t, camLesson); }
 
   scene({ duration: 55, fps: 24, bpm: 108,
+    dialogue: LINES.map(([at, who, text, o]) => ({ at, speaker: who === 'S' ? 'safadi' : 'alma', text, cps: o.cps ?? 18, hold: o.hold })),
     shots: [[0, question], [7, showRows], [14, countFour], [23.5, dragonAddsFifth],
       [31, fiveGroups], [40, dragonAddsSixth], [49, patternPayoff]] });
 })();

@@ -5,4 +5,8 @@ asset({
   files: ['princess_pearl.js'],
   docs: 'README.md',
   refs: ['reference.webp'],
+  voice: {
+    prompt: 'Regal, dry dolphin mumble: crisp nasal notes, brief impatient pauses, sharp downward verdicts.',
+    style: 'regal', baseHz: 275, brightness: 1.34, level: .16, pan: .24,
+  },
 });

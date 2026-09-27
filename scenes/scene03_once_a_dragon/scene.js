@@ -93,5 +93,6 @@
   }
 
   scene({ duration: 17.5, fps: 24, bpm: 100,                  // id, title, audio: see asset.js
+    dialogue: LINES.map(([at, text, o]) => ({ at, speaker: 'jester_fester', text, cps: o.cps ?? 18, hold: o.hold })),
     shots: [[0, talk], [FLING, wink]] });
 })();

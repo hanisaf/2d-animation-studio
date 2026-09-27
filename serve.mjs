@@ -28,7 +28,7 @@ http.createServer((req, res) => {
   }
 }).listen(port, '127.0.0.1', () => {
   const url = `http://localhost:${port}/`;
-  console.log(`Jester Fester studio → ${url}   (Ctrl+C to stop)`);
+  console.log(`Safadi Animation Studio → ${url}   (Ctrl+C to stop)`);
   if (process.argv.includes('--open')) {
     const [cmd, args] = process.platform === 'darwin' ? ['open', [url]] : process.platform === 'win32' ? ['cmd', ['/c', 'start', '', url]] : ['xdg-open', [url]];
     spawn(cmd, args, { stdio: 'ignore', detached: true }).on('error', () => {}).unref();

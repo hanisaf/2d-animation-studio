@@ -3,23 +3,30 @@
 // Each frame is painted with the same drawFrame() the renderer uses, handed to the browser's WebCodecs H.264 encoder
 // straight from the canvas, and muxed into an MP4 by mp4-muxer (node_modules/mp4-muxer). It is frame-exact (not a
 // screen recording) and usually faster than real time. Needs Chrome / Edge 94+ (WebCodecs).
-// Audio: each scene's `audio` file is decoded, resampled to 48 kHz stereo, trimmed/padded to the scene length and
-// encoded as AAC (or Opus). Loading audio needs http:// — run `npm run studio` (serve.mjs); under file:// it is skipped.
+// Audio: scene music and cartoon voices are synthesized together, or an optional audio file is decoded. The selected range is
+// trimmed/padded to the clip length and encoded as AAC (or Opus). Audio files need http://; synthesis also works on file://.
 //
 //   const blob = await exportVideo({ scenes: ['scene01_juggling'], bitrate: 8e6, onProgress: (p, msg) => …, signal })
 
 async function exportVideo({ scenes, fps, bitrate = 8e6, onProgress = () => {}, signal } = {}) {
   if (!('VideoEncoder' in window)) throw new Error('This browser has no WebCodecs video encoder. Use Chrome or Edge, or render with: node render.mjs --build');
   if (!window.Mp4Muxer) throw new Error('mp4-muxer is not loaded. Run: npm install');
-  const list = scenes.map(id => { const s = SCENES[id]; if (!s) throw new Error('unknown scene ' + id); return s; });
-  fps = fps ?? list[0].fps ?? 24;
-  const counts = list.map(s => Math.ceil(s.duration * fps - 1e-6)), total = counts.reduce((a, b) => a + b, 0);
+  const list = scenes.map(clip => {
+    const id = typeof clip === 'string' ? clip : clip.id, scene = SCENES[id];
+    if (!scene) throw new Error('unknown scene ' + id);
+    const start = typeof clip === 'string' ? 0 : +clip.start, end = typeof clip === 'string' ? scene.duration : +clip.end;
+    if (!Number.isFinite(start) || !Number.isFinite(end) || start < 0 || end > scene.duration || end <= start) throw new Error(`invalid in/out points for ${id}`);
+    return { scene, start, end };
+  });
+  if (!list.length) throw new Error('Add at least one clip before exporting');
+  fps = fps ?? list[0].scene.fps ?? 24;
+  const counts = list.map(c => Math.ceil((c.end - c.start) * fps - 1e-6)), total = counts.reduce((a, b) => a + b, 0);
   const warnings = [], stop = () => { if (signal?.aborted) throw new DOMException('Export cancelled', 'AbortError'); };
 
   // ---- audio (optional) ----
   onProgress(0, 'Preparing audio…');
   const SR = 48000, tracks = [];
-  for (let i = 0; i < list.length; i++) tracks.push(await sceneAudio(list[i], counts[i] / fps, SR, warnings));
+  for (let i = 0; i < list.length; i++) tracks.push(await sceneAudio(list[i].scene, counts[i] / fps, SR, warnings, list[i].start));
   const hasAudio = tracks.some(tr => tr.real);
   let aCfg = null;
   if (hasAudio) {
@@ -52,10 +59,10 @@ async function exportVideo({ scenes, fps, bitrate = 8e6, onProgress = () => {}, 
   let n = 0;
   try {
     for (let si = 0; si < list.length; si++) {
-      const sc = list[si]; useScene(sc.id);
+      const { scene: sc, start } = list[si]; useScene(sc.id);
       for (let i = 0; i < counts[si]; i++, n++) {
         stop(); if (encErr) throw encErr;
-        drawFrame(i / fps, sc);
+        drawFrame(start + i / fps, sc);
         const frame = new VideoFrame(canvas, { timestamp: Math.round(n * us), duration: Math.round(us) });
         venc.encode(frame, { keyFrame: n % (fps * 2) === 0 });
         frame.close();
@@ -94,15 +101,22 @@ async function exportVideo({ scenes, fps, bitrate = 8e6, onProgress = () => {}, 
 }
 
 // One scene's sound as 48 kHz stereo, exactly `seconds` long (silence if it has none or it can't be loaded).
-async function sceneAudio(sc, seconds, SR, warnings) {
+async function sceneAudio(sc, seconds, SR, warnings, start = 0) {
   const len = Math.round(seconds * SR), silent = { L: new Float32Array(len), R: new Float32Array(len), real: false };
+  if (sc.music || sc.dialogue?.length) {
+    const buffer = await synthesizeSceneAudio(sc, SR), offset = Math.round(start * SR);
+    silent.L.set(buffer.getChannelData(0).subarray(offset, offset + len));
+    silent.R.set(buffer.getChannelData(1).subarray(offset, offset + len));
+    silent.real = true;
+    return silent;
+  }
   if (!sc.audio) return silent;
   if (location.protocol === 'file:') { warnings.push(`${sc.id}: audio skipped under file:// — open the studio with "npm run studio" to include it`); return silent; }
   try {
     const res = await fetch(sc.audio);
     if (!res.ok) { if (res.status !== 404) warnings.push(`${sc.id}: audio ${sc.audio} (${res.status})`); return silent; }
     const ctx = new OfflineAudioContext(2, len, SR), buf = await ctx.decodeAudioData(await res.arrayBuffer());
-    const src = ctx.createBufferSource(); src.buffer = buf; src.connect(ctx.destination); src.start();
+    const src = ctx.createBufferSource(); src.buffer = buf; src.connect(ctx.destination); src.start(0, start, seconds);
     const out = await ctx.startRendering();
     return { L: out.getChannelData(0), R: out.getChannelData(1), real: true };
   } catch (e) { warnings.push(`${sc.id}: could not decode ${sc.audio} (${e.message})`); return silent; }

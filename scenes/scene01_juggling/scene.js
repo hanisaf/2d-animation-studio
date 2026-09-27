@@ -6,6 +6,7 @@
   const ROOM = { splitZ: JZ, chandKick: [21.25, .13] };
   const J3 = { n: 3, tau: .34, h: 17, t0: 7.5 }, J5 = { n: 5, tau: .26, h: 24, t0: 14 - 10 * .26 };
   const HITS = [23.35, 23.7, 24.05, 24.4], FALL = .5, LAST = { rel: 28.3, land: 28.75 };
+  const LINES = ASSETS.scene.scene01_juggling.dialogue;
 
   // ---------- helpers ----------
   // The set, painted into a layer that goes soft as the camera gets close (depth of field keeps Fester and the balls readable).
@@ -129,7 +130,8 @@
       hatSway: [wob(t, 1.6) * .35, 0], hatLift: 2 * kf(t, [[13.45, 0], [13.55, 1], [13.8, 0]], easeOut), sway: .4 * Math.sin(c.s * Math.PI) };
     // first draw to find the mouth, then decide the mouth shape from the callout
     [sx, sy, k] = P.p(JX, 0, JZ), s = U * k;
-    const said = callout("I'm *Jester Fester*...", sx + 3.9 * s, sy - 16.6 * s, t - 8.2, { dx: 420, dy: -170, size: 64, hold: 2.2 });
+    const line = LINES[0];
+    const said = callout(line.text, sx + 3.9 * s, sy - 16.6 * s, t - line.at, { dx: 420, dy: -170, size: 64, cps: line.cps, hold: line.hold });
     o.mouth = t >= FL ? (phase === 1 ? 'grin' : 'o') : lipFlap(t, said.talking, 'grin');
     if (phase >= 2) { o.lookY = -1; o.eyes = 'open'; }
     const j = Jat(P, o);
@@ -151,7 +153,8 @@
     const P = persp(camB(t));
     room(P, t);
     const c = cascade(t, J5), tb = topBall(c.balls), [sx, sy, k] = P.p(JX, 0, JZ), s = U * k;
-    const said = callout('...and this is *the story of my life!*', sx + 3.9 * s, sy - 16.6 * s, t - 14.45, { dx: 430, dy: -200, size: 64, maxW: 640, hold: 2.0 });
+    const line = LINES[1];
+    const said = callout(line.text, sx + 3.9 * s, sy - 16.6 * s, t - line.at, { dx: 430, dy: -200, size: 64, maxW: 640, cps: line.cps, hold: line.hold });
     const wink = t > 19.35 && t < 20.05;
     const j = Jat(P, { dy: .25 + .25 * Math.sin(c.s * Math.PI) ** 2, handL: c.handL, handR: c.handR, handPoseL: 'cup', handPoseR: 'cup',
       lookX: wink ? 0 : tb.x / 5, lookY: wink ? 0 : -.9, eyes: wink ? 'wink' : 'open', brows: wink || said.talking ? 'up' : 'normal',
