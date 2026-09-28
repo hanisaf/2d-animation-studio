@@ -363,7 +363,7 @@
       <div class="chips" id="cams">${Object.keys(l.cameras || {}).map(c => `<button class="chip" data-c="${esc(c)}">${esc(c)}</button>`).join('')}</div>
       <div class="sliders">${Object.keys(CAM_RANGES).map(k => `<label>${CAM_LABELS[k]}<input type="range" data-k="${k}" min="${CAM_RANGES[k][0]}" max="${CAM_RANGES[k][1]}" step="${CAM_RANGES[k][2]}"><output data-o="${k}"></output></label>`).join('')}</div>
       <div class="row">
-        <input type="text" id="camtxt" readonly size="46" class="mono" title="paste into a scene: persp(<this>)"><button id="copycam">Copy camera</button>
+        <input type="text" id="camtxt" readonly size="46" class="mono" title="paste into a scene: persp(<this>)"><button id="copycam">Copy camera</button><button id="revcam" title="turn the camera around: look toward −Z (dir: -1) or +Z">⇄ Reverse</button>
         <label class="ck">Stand-in <select id="who"><option value="">none</option>${chars.map(([id]) => `<option value="${id}">${esc(META('character', id).title)}</option>`).join('')}</select></label>
         <select id="whopose" hidden></select>
         <select id="spot" hidden title="where the stand-in goes">${Object.keys(l.spots || {}).map(p => `<option>${esc(p)}</option>`).join('')}</select>
@@ -372,6 +372,7 @@
       ${exportRow(false)}`;
     document.querySelectorAll('[data-c]').forEach(b => b.onclick = () => { S.loc.cam = { ...l.cameras[b.dataset.c] }; camUI(); });
     document.querySelectorAll('[data-k]').forEach(r => r.oninput = () => { S.loc.cam[r.dataset.k] = +r.value; camUI(); });
+    $('#revcam').onclick = () => { S.loc.cam.dir = (S.loc.cam.dir ?? 1) < 0 ? 1 : -1; camUI(); };
     $('#copycam').onclick = async () => { const txt = $('#camtxt').value; try { await navigator.clipboard.writeText(txt); } catch { $('#camtxt').select(); document.execCommand('copy'); } status('Camera copied: paste it into persp(…) in a scene', 'ok'); };
     const whoUI = () => {
       const sel = $('#whopose'), e = CHARACTERS[S.loc.character]; sel.hidden = !e; $('#spot').hidden = !e || !l.spots;
@@ -388,8 +389,9 @@
   function camUI() {
     const c = S.loc.cam;
     for (const k of Object.keys(CAM_RANGES)) { const r = document.querySelector(`[data-k="${k}"]`), o = document.querySelector(`[data-o="${k}"]`); if (r) r.value = c[k]; if (o) o.textContent = Math.round(c[k]); }
-    const t = $('#camtxt'); if (t) t.value = `{ x: ${Math.round(c.x)}, y: ${Math.round(c.y)}, z: ${Math.round(c.z)}, f: ${Math.round(c.f)}, hy: ${Math.round(c.hy)} }`;
-    const l = LOCATIONS[S.id]; document.querySelectorAll('[data-c]').forEach(b => { const p = l.cameras[b.dataset.c]; b.classList.toggle('on', Object.keys(CAM_RANGES).every(k => Math.abs(p[k] - c[k]) < .5)); });
+    const t = $('#camtxt'); if (t) t.value = `{ x: ${Math.round(c.x)}, y: ${Math.round(c.y)}, z: ${Math.round(c.z)}, f: ${Math.round(c.f)}, hy: ${Math.round(c.hy)}${c.dir < 0 ? ', dir: -1' : ''} }`;
+    const l = LOCATIONS[S.id]; document.querySelectorAll('[data-c]').forEach(b => { const p = l.cameras[b.dataset.c]; b.classList.toggle('on', (p.dir ?? 1) === (c.dir ?? 1) && Object.keys(CAM_RANGES).every(k => Math.abs(p[k] - c[k]) < .5)); });
+    const rv = $('#revcam'); if (rv) rv.classList.toggle('on', c.dir < 0);
     S.dirty = true;
   }
 
@@ -435,14 +437,14 @@
   let drag = null;
   canvas.addEventListener('pointerdown', e => { if (S.mode !== 'location') return; drag = { x: e.clientX, y: e.clientY, cam: { ...S.loc.cam } }; canvas.setPointerCapture(e.pointerId); });
   canvas.addEventListener('pointermove', e => {
-    if (!drag) return; const k = W / canvas.clientWidth, dz = Math.max(200, 1200 - drag.cam.z);
-    S.loc.cam.x = clamp(drag.cam.x - (e.clientX - drag.x) * k * dz / drag.cam.f, -900, 900);
+    if (!drag) return; const k = W / canvas.clientWidth, dir = drag.cam.dir < 0 ? -1 : 1, dz = Math.max(200, (1200 - drag.cam.z) * dir);
+    S.loc.cam.x = clamp(drag.cam.x - (e.clientX - drag.x) * k * dz / drag.cam.f * dir, -900, 900);
     S.loc.cam.hy = clamp(drag.cam.hy + (e.clientY - drag.y) * k, -1000, 3000); camUI();
   });
   canvas.addEventListener('pointerup', () => { drag = null; });
   canvas.addEventListener('wheel', e => {
     if (S.mode !== 'location') return; e.preventDefault(); const c = S.loc.cam;
-    if (e.shiftKey || e.altKey) c.f = clamp(c.f * Math.exp(-(e.deltaY || e.deltaX) * .0015), 300, 3000); else c.z = clamp(c.z - e.deltaY * 1.2, -800, 2380);
+    if (e.shiftKey || e.altKey) c.f = clamp(c.f * Math.exp(-(e.deltaY || e.deltaX) * .0015), 300, 3000); else c.z = clamp(c.z - e.deltaY * 1.2 * (c.dir < 0 ? -1 : 1), -800, 2380);
     camUI();
   }, { passive: false });
   addEventListener('keydown', e => {
@@ -450,7 +452,7 @@
     if (e.code === 'Space') { e.preventDefault(); toggle(); return; }
     if (S.mode === 'location') {
       const c = S.loc.cam, m = e.shiftKey ? 4 : 1, keys = { KeyW: ['z', 30], KeyS: ['z', -30], KeyA: ['x', -20], KeyD: ['x', 20], KeyQ: ['y', 15], KeyE: ['y', -15], KeyR: ['hy', 20], KeyF: ['hy', -20] };
-      if (keys[e.code]) { const [k, d] = keys[e.code]; c[k] = clamp(c[k] + d * m, CAM_RANGES[k][0], CAM_RANGES[k][1]); camUI(); }
+      if (keys[e.code]) { const [k, d] = keys[e.code], dir = (k === 'x' || k === 'z') && c.dir < 0 ? -1 : 1; c[k] = clamp(c[k] + d * m * dir, CAM_RANGES[k][0], CAM_RANGES[k][1]); camUI(); }
       return;
     }
     if (S.mode === 'movie') {

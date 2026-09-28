@@ -278,7 +278,7 @@ The sidebar lists every asset from `registry.js`:
 **🏰 Locations**
 - **Camera presets** (chips), plus sliders for `x` pan, `y` eye height, `z` dolly, `f` focal and `hy` tilt.
 - **Mouse**: drag to pan/tilt, wheel to dolly, ⇧+wheel to zoom (focal). **Keys**: `W/S` dolly, `A/D` pan, `Q/E` up/down, `R/F` tilt, ⇧ = faster.
-- The camera readout (`{ x, y, z, f, hy }`) has **Copy camera**, ready to paste into `persp(…)` in a scene.
+- The camera readout (`{ x, y, z, f, hy }`, plus `dir: -1` for a reverse angle) has **Copy camera**, ready to paste into `persp(…)` in a scene. **⇄ Reverse** turns the camera around; the mouse and keys follow the direction it faces.
 - **Stand-in**: drop any character in any pose onto one of the location's **spots** (stage mark, before the dais, throne seat, …) to check scale and framing.
 
 **📄 Docs:** every asset's `README.md` opens beside the preview (toggle with the 📄 Docs button; the choice is remembered). Links between READMEs open the linked asset. The sidebar's **Project** section opens `README.md`, `SERIES.md`, `ANIMATION_GUIDE.md` and this handbook full-width. Docs need `npm run studio` (http); from `file://` the pane explains how to open them.
@@ -322,6 +322,7 @@ const [sx, sy, k] = P.p(X, Y, Z);      // screen point + px-per-world-unit at th
 - **Dolly**: change `z`. **Pan**: change `x`. **Tilt up**: raise `hy` (the whole world slides down the screen). **Zoom / telephoto**: raise `f`.
 - **Keep a character's feet at a fixed screen height** while the camera moves by solving `hy = feetY - y * k`, where `k = f / (Zchar - z)`. Every scene camera uses this idiom.
 - To place a character, project its floor point and scale by depth: `jester(sx, sy, JF_UNIT * k, pose)`.
+- **Reverse angle**: `dir: -1` turns the camera 180° to look toward −Z (so +X is screen-left). The world, spots and characters stay the same, so a scene can cut between the two directions. `k = f / (z - Zchar)` in that case (`P.depth(Z)` gives the distance either way). Sets drawn by `P.depth()` order, like the lecture hall, work in both directions; the throne room and DCES are built for `dir: 1` only. Rigs always face the camera, so use the reverse angle to see faces that the forward camera would see from behind.
 
 ### 6.4 Layers, depth of field and draw order
 
@@ -395,7 +396,7 @@ Rigs return screen-space **anchors** (`head`, `mouth`, `hatTip`, `handL`…). Sc
 
 | Function | Notes |
 |---|---|
-| `persp(cam)` (persp.js) | → `P` with `p(X,Y,Z)`, `k(Z)`, `visible(Z)`, `poly([[X,Y,Z]…])` (near-clipped polygon), `line(...)`, `plane(Z, fn)` (draw in world units on a screen-facing plane; local y = −Y), `floorCircle(X, Z, r, Y, n)` |
+| `persp(cam)` (persp.js) | → `P` with `p(X,Y,Z)`, `k(Z)`, `visible(Z)`, `poly([[X,Y,Z]…])` (near-clipped polygon), `line(...)`, `plane(Z, fn)` (draw in world units on a screen-facing plane; local y = −Y; mirrored when `dir: -1`, so flip text with `X.scale(P.dir, 1)`), `floorCircle(X, Z, r, Y, n)`, `depth(Z)`, `dir`. `cam.dir: -1` = reverse angle (see 6.3) |
 | `camBegin(cx, cy, zoom, rot)` / `camEnd()` | 2D screen camera over the frame (roll, shake, punch-in). One level only. `toScreen()` maps through it |
 | `shakeXY(t, amount)` | deterministic shake offset `[dx, dy]`; pass `W/2 - dx, H/2 - dy` to `camBegin` |
 | `layer(fn, { blur, filter })` | paints fn into an offscreen layer, then composites it with a CSS filter |
@@ -502,12 +503,14 @@ Paths in a manifest are relative to its folder. A scene's `id`, `title` and `aud
 | 🐉 Dragon | [characters/dragon/README.md](../characters/dragon/README.md): personality, look, flight poses, rig + `dragonFlight` API |
 | 🏰 Throne room | [locations/throne_room/README.md](../locations/throne_room/README.md): description, layout and coordinates, spots, camera presets, API |
 | 🏫 Dove Creek Elementary | [locations/dces/README.md](../locations/dces/README.md): description, layout and coordinates, spots, camera presets, API |
+| 🎓 Lecture hall | [locations/lecture_hall/README.md](../locations/lecture_hall/README.md): tiered university hall with a podium view and a classroom (reverse-angle) view, seats, boards and screen hooks, API |
 | 🎬 01 Juggling in the throne room | [scenes/scene01_juggling/README.md](../scenes/scene01_juggling/README.md): synopsis, script, shot list, constants |
 | 🎬 02 Fired! | [scenes/scene02_fired/README.md](../scenes/scene02_fired/README.md): synopsis, script, shot list, constants |
 | 🎬 03 Once a dragon | [scenes/scene03_once_a_dragon/README.md](../scenes/scene03_once_a_dragon/README.md): synopsis, script, shot list, constants |
 | 🎬 04 The healthy promise | [scenes/scene04_healthy_promise/README.md](../scenes/scene04_healthy_promise/README.md): synopsis, script, shot list, constants |
 | 🎬 05 Dragon Counts by Threes | [scenes/scene05_dragon_counts/README.md](../scenes/scene05_dragon_counts/README.md): synopsis, script, shot list, multiplication board |
 | 🎬 06 The prime-number puzzle | [scenes/scene06_riemann/README.md](../scenes/scene06_riemann/README.md): DCES lesson, Riemann hypothesis diagrams, three cartoon voices |
+| 🎬 07 The Message Comes First | [scenes/scene07_message_first/README.md](../scenes/scene07_message_first/README.md): lecture hall, cuts between podium and classroom (reverse-angle) views, silent student reactions |
 
 The series-level story, tone and episode list are in [SERIES.md](../SERIES.md).
 
@@ -643,10 +646,10 @@ For a recorded soundtrack instead:
 - Studio: scene player with shot timeline and audio preview; character browser (poses, model sheet, true-scale backdrop); location browser (camera presets, fly-through, copy camera, stand-ins on spots); in-browser MP4 export of a scene or the whole movie.
 - Characters: Fester (full body rig + juggling) and Pearl (spine rig: lying, sitting, pointing, turning).
 - Set: the throne room.
-- Scenes 01–06; the default movie order runs 5:04.
+- Scenes 01–07; the default movie order runs 6:12.
 
 **Known limitations**
-- Scenes 01 and 06 have synthesized music and cartoon voices. Scenes 02–05 have synthesized cartoon voices without music.
+- Scenes 01, 06 and 07 have synthesized music and cartoon voices. Scenes 02–05 have synthesized cartoon voices without music.
 - Fonts need internet at render time.
 - Fester is always drawn facing the camera (he turns his head, not his body). For profile or walking-away shots, add a side view to the rig.
 - Pearl has no voice-sync beyond `lipFlap`.

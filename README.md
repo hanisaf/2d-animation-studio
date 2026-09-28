@@ -38,7 +38,7 @@ npm run studio                                 # → http://localhost:5173
 - **Movie composer**: choose scenes, set in/out points, reorder or remove clips, preview the cut, and export the selected movie as MP4. The composition is saved in this browser.
 - **Characters**: every pose (on paper or standing in a location at true scale) and the full model sheet, next to the reference art.
 - **📄 Docs**: each asset's `README.md` (description, script, shot list, API) beside its preview, cross-linked (a scene ↔ its cast ↔ its locations); project docs in the sidebar.
-- **Locations**: fly a camera through the set (presets, sliders, drag/wheel, WASD), drop a character on a spot for scale, and **Copy camera** as code for your scene.
+- **Locations**: fly a camera through the set (presets, sliders, drag/wheel, WASD, **⇄ Reverse** for a reverse angle), drop a character on a spot for scale, and **Copy camera** as code for your scene.
 
 ## Compile a scene to video from the command line
 

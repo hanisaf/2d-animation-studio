@@ -38,6 +38,7 @@ Each character's folder holds its description, look, personality and rig notes (
 |---|---|---|
 | 🏰 | [Throne room](locations/throne_room/README.md) | The pastel royal hall with the throne, stained glass and chandeliers |
 | 🏫 | [Dove Creek Elementary](locations/dces/README.md) | DCES seen from the street: red brick, arched entrance canopy, crosswalk and drop-off loop |
+| 🎓 | [Lecture hall](locations/lecture_hall/README.md) | A tiered university lecture hall, shot toward the podium or back at the rows of students |
 
 ## Episodes (movie order)
 
@@ -51,6 +52,7 @@ Each scene's folder holds its synopsis, script, shot list and editing notes (`RE
 | 04 | [The healthy promise](scenes/scene04_healthy_promise/README.md) | 54.5 s | Walking Alma to school, Professor Safadi explains healthy food: *"I promise… every day!"* Then he nearly eats her lollipop: *"…Tomorrow."* |
 | 05 | [Dragon Counts by Threes](scenes/scene05_dragon_counts/README.md) | 55 s | In the throne room, Alma spots a multiplication pattern with Safadi and an accidentally helpful Dragon |
 | 06 | [The prime-number puzzle](scenes/scene06_riemann/README.md) | 110 s | Outside DCES, Safadi helps Housam and Alma understand the question behind the Riemann hypothesis |
+| 07 | [The Message Comes First](scenes/scene07_message_first/README.md) | 68 s | In the lecture hall, Safadi is tempted to make everything move, then turns his powers off: *"Give the message the spotlight."* |
 
 ## Where the story is heading
 
