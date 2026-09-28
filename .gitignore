@@ -3,7 +3,7 @@ out/
 frames/
 stills/
 *.tmp
-
+brag-output/
 # rendered animations, wherever they end up
 *.mp4
 *.mov
