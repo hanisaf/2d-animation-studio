@@ -278,11 +278,11 @@ const lectureHall = (() => {
     back(P, t, o = {}) {
       X.fillStyle = C.wall; X.fillRect(0, 0, W, H);
       ceiling(P); sideWalls(P, t); backWall(P, t); frontWall(P, t, o); pit(P);
-      const d = o.splitZ == null ? -Infinity : P.depth(o.splitZ);
+      const d = !Number.isFinite(o.splitZ) ? -Infinity : P.depth(o.splitZ);             // ±Infinity / unset = draw everything
       for (const it of items(P, t, o)) if (it.key > d) it.draw();
     },
     front(P, t, o = {}) {
-      if (o.splitZ == null) return;
+      if (!Number.isFinite(o.splitZ)) return;
       const d = P.depth(o.splitZ), stop = o.toZ == null ? -Infinity : P.depth(o.toZ);
       for (const it of items(P, t, o)) if (it.key <= d && it.key > stop) it.draw();
     },

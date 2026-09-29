@@ -12,10 +12,10 @@
 //          footL / footR: [x, y] ankle targets (rest: [∓1.25, -0.85])
 // Face     eyes: open | wide | happy | closed | squeeze | swirl | x | star | wink · lookX / lookY (-1..1) · blink (0..1, auto if unset)
 //          brows: normal | up | worried | angry · mouth: smile | grin | open | o | O | flat | frown | wobble | teeth | smirk · blush (default on)
-// Hat      hatSway [dx, dy] (tips swing) · hatDroop (0..1, the points flop down: sad) · hatAskew (rad) · hatLift · hatDrop
+// Hat      hatSway [dx, dy] (tips swing) · hatDroop (0..1, the points flop down: sad) · hatAskew (rad) · hatLift · hatDrop · noHat (see jesterHat)
 // Extras   stars (0..1 dizzy stars) · emote: '?' | '!' | '!?' | 'sweat' | 'music' | 'heart' with emoteK (0..1 pop) · boil (px)
 //
-// Returns anchors in screen px: { head, mouth, hatTip, hatTipL, hatTipR, handL, handR, belly, top }
+// Returns anchors in screen px: { head, mouth, hatTip, hatTipL, hatTipR, hatBase, handL, handR, belly, top }
 
 const JF = {
   ink: '#3B2530', skin: '#F7CBAA', skinDk: '#E3A487', cheek: '#F08A86', nose: '#F29A84', hair: '#6A3B22', hairLt: '#8E5534',
@@ -156,9 +156,12 @@ function jfHead(o, t, lw, A) {
   shape([[-2.55, -1.95], [-2.2, -1.3], [-1.75, -1.85], [-1.1, -1.1], [-.6, -1.8], [.05, -1.15], [.55, -1.8], [1.15, -1.2], [1.65, -1.85], [2.15, -1.35], [2.55, -1.95], [2.4, -2.4], [-2.4, -2.4]].map(([x, y]) => [x + tx * .4, y]),
     { fill: JF.hair, stroke: JF.ink, lw, smooth: .25 });
   // hat
-  X.save(); X.translate(0, -2.4 - (o.hatLift || 0) + (o.hatDrop || 0)); X.rotate(o.hatAskew || 0);
-  jfHat(o, t, lw, A);
-  X.restore();
+  A.hatBase = toPx(0, -2.4 - (o.hatLift || 0) + (o.hatDrop || 0));   // headband centre: where jesterHat() goes
+  if (!o.noHat) {
+    X.save(); X.translate(0, -2.4 - (o.hatLift || 0) + (o.hatDrop || 0)); X.rotate(o.hatAskew || 0);
+    jfHat(o, t, lw, A);
+    X.restore();
+  } else A.hatTip = toPx(0, -2.4);                                 // no hat: the anchor sits on the crown
   if (o.stars > .02) jfStars(o.stars, t, lw);
   A.top = toPx(0, -4);
 }
@@ -229,6 +232,15 @@ function jfMouth(kind, tx, lw) {
     line([[-1.05, 1.67], [1.05, 1.67]], { stroke: JF.ink, lw: lw * .8 });
     [-.55, 0, .55].forEach(x => line([[x, 1.32], [x, 2.02]], { stroke: JF.ink, lw: lw * .7 }));
   }
+  X.restore();
+}
+
+// The hat on its own, as a prop (knocked off, held, flying): (x, y) is the headband centre in screen px, s the jester's scale.
+// o: { rot (rad), hatSway, hatDroop, t }. Pair it with jester(..., { noHat: true }).
+function jesterHat(x, y, s, o = {}) {
+  const lw = clamp(s * .15, 1.6, 5.5) / s;
+  X.save(); X.translate(x, y); X.scale(s, s); X.rotate(o.rot || 0);
+  withBoil(o.boil ?? .7, () => jfHat(o, o.t ?? T, lw, {}));
   X.restore();
 }
 

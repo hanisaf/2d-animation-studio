@@ -78,11 +78,14 @@ const A = jester(x, y, s, {
   hatSway: [dx, dy],
   hatDroop,                    // 0..1: the points flop down (sad)
   hatAskew, hatLift, hatDrop,
+  noHat,                       // true: no hat (bald crown under the headband line); draw it free with jesterHat()
   // extras
   stars,                       // 0..1 dizzy stars
   emote, emoteK,               // '?' | '!' | '!?' | 'sweat' | 'music' | 'heart'
 });
-// A (screen px): head, mouth, hatTip (top of the middle pompom), hatTipL, hatTipR, handL, handR, belly, top
+// A (screen px): head, mouth, hatTip (top of the middle pompom), hatTipL, hatTipR, hatBase (headband centre), handL, handR, belly, top
+
+jesterHat(x, y, s, { rot, hatSway, hatDroop, t });   // the hat as a free prop: (x, y) = headband centre in screen px (knocked off, tossed, held)
 ```
 
 ## Juggling (`juggling.js`)

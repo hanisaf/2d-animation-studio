@@ -1,0 +1,41 @@
+// Scene 09: Housam's Hat Trick. Dialogue drives the bubbles, mouths and voices; music is synthesized from the score below.
+asset({
+  title: "Housam's Hat Trick",
+  logline: 'At the county soccer field, Jester Fester plays goalkeeper and Housam scores three trick goals past him while Safadi and Alma cheer. The last one knocks Fester\'s hat into the net: a real hat trick.',
+  files: ['scene.js'],
+  docs: 'README.md',
+  cast: ['housam', 'jester_fester', 'safadi', 'alma'],
+  locations: ['soccer_field'],
+  dialogue: [
+    { at: 7.2, speaker: 'jester_fester', text: 'Never fear... *Keeper Fester* is here!', cps: 19, hold: .8, energy: 1.15 },
+    { at: 11.5, speaker: 'alma', text: 'Go, Housam, go!', cps: 17, hold: .6, energy: 1.1 },
+    { at: 13.4, speaker: 'safadi', text: 'Show us some *magic*!', cps: 18, hold: .7 },
+    { at: 16.2, speaker: 'housam', text: 'Ready, Fester?', cps: 17, hold: .5 },
+    { at: 17.8, speaker: 'jester_fester', text: 'Nothing gets past *me*!', cps: 19, hold: .5, energy: 1.1 },
+    { at: 23.4, speaker: 'jester_fester', text: 'I *let* you have that one!', cps: 18, hold: .7 },
+    { at: 26.1, speaker: 'alma', text: 'GOOOAL!', cps: 12, hold: .7, kind: 'shout', energy: 1.3 },
+    { at: 28.8, speaker: 'housam', text: 'Try this... a *rainbow flick*!', cps: 20, hold: .4 },
+    { at: 35.7, speaker: 'jester_fester', text: 'Wait... where did it *go*?', cps: 18, hold: .7 },
+    { at: 38.6, speaker: 'safadi', text: 'A *chip shot*! Pure genius!', cps: 19, hold: .8, energy: 1.1 },
+    { at: 42.6, speaker: 'housam', text: 'Top corner... *27 degrees*.', cps: 18, hold: .8 },
+    { at: 52.9, speaker: 'safadi', text: "Three goals... that's a *hat trick*!", cps: 20, hold: .8, energy: 1.15 },
+    { at: 55.6, speaker: 'alma', text: 'Fester lost his *hat*!', cps: 18, hold: .5 },
+    { at: 58.0, speaker: 'housam', text: 'Good game, Keeper Fester!', cps: 20, hold: .5 },
+    { at: 60.0, speaker: 'jester_fester', text: '...and this is the story of my life.', cps: 20, hold: 1.1 },
+  ],
+  music: {
+    prompt: 'Upbeat, sporty park-soccer underscore: bouncy bass, bright bells and a driving pulse. Builds as Fester arrives, thins to a light tick-tock during each trick so the dialogue sits clear, lifts for each goal with a ding, and ends on a warm flourish as the ball lands on the hat. Instrumental under dialogue.',
+    bpm: 120, tonic: 60, motif: [0, 4, 7, 9, 7, 4, 2, 4], chords: [0, 5, 3, 4],
+    sections: [
+      { at: 0, energy: .4 }, { at: 5.2, energy: .6 }, { at: 11.2, energy: .55 }, { at: 16, energy: .3 },
+      { at: 21.9, energy: .75 }, { at: 28.6, energy: .3 }, { at: 35, energy: .6 }, { at: 42, energy: .2 },
+      { at: 46.2, energy: .5 }, { at: 47, energy: .8 }, { at: 57.3, energy: .4 }, { at: 61.7, energy: .6 }, { at: 63.4, energy: .15 },
+    ],
+    cues: [
+      { at: 6.9, type: 'ding' }, { at: 21.3, type: 'whoosh' }, { at: 21.9, type: 'ding' }, { at: 22.3, type: 'bonk' },
+      { at: 31.0, type: 'pop' }, { at: 33.3, type: 'plip' }, { at: 35.0, type: 'ding' },
+      { at: 46.2, type: 'whoosh' }, { at: 46.6, type: 'bonk' }, { at: 47.0, type: 'ding' }, { at: 51.8, type: 'ding' },
+      { at: 59.6, type: 'pop' }, { at: 61.7, type: 'plip' }, { at: 62.0, type: 'ding' },
+    ],
+  },
+});

@@ -224,7 +224,7 @@ Run from the project root. `--scene` defaults to the first entry of `REGISTRY.mo
 | `node render.mjs --doctor` | Checks the environment and renders a test frame | `out/check/doctor.png` |
 | `node render.mjs --list` | Lists registered characters, locations, scenes and the movie order | — |
 | `node render.mjs --modelsheet=<character> [--t=1.1]` | A character's model sheet (every registered pose) | `out/check/modelsheet_<id>.png` |
-| `node render.mjs --location=<id> [--character=<id>] [--spot=<name>]` | Every camera preset of a location on one labelled sheet, optionally with a stand-in on a spot | `out/check/location_<id>.jpg` |
+| `node render.mjs --location=<id> [--character=<id>] [--spot=<name>] [--only=Aerial,Keeper]` | Every camera preset of a location on one labelled sheet, optionally with a stand-in on a spot; `--only` keeps the presets whose names contain one of the comma-separated words (pair with `--cols=1 --w=1920` for full-size checks) | `out/check/location_<id>.jpg` |
 | `--scene=<id> --sheet=1,4.5,9 [--cols=3] [--w=640] [--out=path.jpg]` | **Contact sheet**: several times on one image, with per-frame ms. The main way to check work | `out/check/<id>.jpg` |
 | `--scene=<id> --stills=5,12.5 [--out=dir]` | Full-resolution PNGs | `out/<id>/stills/t5_00.png` … |
 | `--scene=<id> --clip=6:12` | Quick preview MP4 of a time range (no audio) | `out/<id>/clip_6-12.mp4` |
@@ -504,6 +504,7 @@ Paths in a manifest are relative to its folder. A scene's `id`, `title` and `aud
 | 🏰 Throne room | [locations/throne_room/README.md](../locations/throne_room/README.md): description, layout and coordinates, spots, camera presets, API |
 | 🏫 Dove Creek Elementary | [locations/dces/README.md](../locations/dces/README.md): description, layout and coordinates, spots, camera presets, API |
 | 🎓 Lecture hall | [locations/lecture_hall/README.md](../locations/lecture_hall/README.md): tiered university hall with a podium view and a classroom (reverse-angle) view, seats, boards and screen hooks, API |
+| ⚽ County soccer field | [locations/soccer_field/README.md](../locations/soccer_field/README.md): regulation pitch shot from both ends (`dir: ±1`) and from the air, goals, bleachers, shelters, snack bar, scoreboard, 16 camera presets, API |
 | 🎬 01 Juggling in the throne room | [scenes/scene01_juggling/README.md](../scenes/scene01_juggling/README.md): synopsis, script, shot list, constants |
 | 🎬 02 Fired! | [scenes/scene02_fired/README.md](../scenes/scene02_fired/README.md): synopsis, script, shot list, constants |
 | 🎬 03 Once a dragon | [scenes/scene03_once_a_dragon/README.md](../scenes/scene03_once_a_dragon/README.md): synopsis, script, shot list, constants |

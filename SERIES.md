@@ -39,6 +39,7 @@ Each character's folder holds its description, look, personality and rig notes (
 | 🏰 | [Throne room](locations/throne_room/README.md) | The pastel royal hall with the throne, stained glass and chandeliers |
 | 🏫 | [Dove Creek Elementary](locations/dces/README.md) | DCES seen from the street: red brick, arched entrance canopy, crosswalk and drop-off loop |
 | 🎓 | [Lecture hall](locations/lecture_hall/README.md) | A tiered university lecture hall, shot toward the podium or back at the rows of students |
+| ⚽ | [County soccer field](locations/soccer_field/README.md) | A county park pitch with goals, bleachers, shelters, snack bar and scoreboard, shot from both ends and from the air |
 
 ## Episodes (movie order)
 
@@ -54,6 +55,7 @@ Each scene's folder holds its synopsis, script, shot list and editing notes (`RE
 | 06 | [The prime-number puzzle](scenes/scene06_riemann/README.md) | 110 s | Outside DCES, Safadi helps Housam and Alma understand the question behind the Riemann hypothesis |
 | 07 | [The Message Comes First](scenes/scene07_message_first/README.md) | 68 s | In the lecture hall, Safadi is tempted to make everything move, then turns his powers off: *"Give the message the spotlight."* |
 | 08 | [Even the Juggler Can't Multitask](scenes/scene08_multitasking/README.md) | 82 s | In the lecture hall, Safadi has the class count Fester's juggling balls while doing mental math. At *"What is 9 × 8?"* Fester fumbles and the balls bonk them both: *"Even the juggler can't multitask!"* |
+| 09 | [Housam's Hat Trick](scenes/scene09_hat_trick/README.md) | 64 s | At the county soccer field, Housam scores three trick goals past goalkeeper Fester while Safadi and Alma cheer. The last one knocks Fester's hat into the net: *"Three goals… that's a hat trick!"* |
 
 ## Where the story is heading
 
