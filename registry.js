@@ -10,6 +10,6 @@
 const REGISTRY = {
   characters: ['jester_fester', 'princess_pearl', 'safadi', 'alma', 'dragon', 'housam'],
   locations: ['throne_room', 'dces', 'lecture_hall', 'soccer_field'],
-  scenes: ['scene01_juggling', 'scene02_fired', 'scene03_once_a_dragon', 'scene04_healthy_promise', 'scene05_dragon_counts', 'scene06_riemann', 'scene07_message_first', 'scene08_multitasking', 'scene09_hat_trick'],
-  movie: ['scene01_juggling', 'scene02_fired', 'scene03_once_a_dragon', 'scene04_healthy_promise', 'scene05_dragon_counts', 'scene06_riemann', 'scene07_message_first', 'scene08_multitasking', 'scene09_hat_trick'],        // default composer order and node render.mjs --movie
+  scenes: ['scene01_juggling', 'scene02_fired', 'scene03_once_a_dragon', 'scene04_healthy_promise', 'scene05_dragon_counts', 'scene06_riemann', 'scene07_message_first', 'scene08_multitasking', 'scene09_hat_trick', 'scene10_great_debate', 'scene11_hydration_debate'],
+  movie: ['scene01_juggling', 'scene02_fired', 'scene03_once_a_dragon', 'scene04_healthy_promise', 'scene05_dragon_counts', 'scene06_riemann', 'scene07_message_first', 'scene08_multitasking', 'scene09_hat_trick', 'scene10_great_debate', 'scene11_hydration_debate'],        // default composer order and node render.mjs --movie
 };

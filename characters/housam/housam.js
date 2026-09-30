@@ -201,6 +201,11 @@ function hoEye(cx, cy, o, t, sd, lw) {
       { stroke: HO.ink, lw: lw * 1.8, smooth: true });
     return;
   }
+  if (kind === 'squeeze') {                              // screwed shut: > <
+    const d = sd < 0 ? 1 : -1;
+    line([[cx - d * .85, cy - .6], [cx + d * .6, cy], [cx - d * .85, cy + .6]], { stroke: HO.ink, lw: lw * 1.9 });
+    return;
+  }
   const wide = kind === 'wide' ? 1.15 : 1, rx = 1.2, ry = 1.33 * wide;
   ellipse(cx, cy, rx, ry, { fill: HO.eyeWhite, stroke: HO.ink, lw });
   const ix = cx + clamp(o.lookX || 0, -1, 1) * .35, iy = cy + .08 + clamp(o.lookY || 0, -1, 1) * .3;
@@ -230,6 +235,7 @@ function hoMouth(kind, x, lw) {
   } else if (kind === 'o') ellipse(x, 3.25, .36, .5, { fill: HO.mouth, stroke: HO.ink, lw });
   else if (kind === 'flat') line([[x - .83, 3.21], [x + .83, 3.21]], { stroke: HO.mouth, lw: lw * 1.25 });
   else if (kind === 'frown') line([[x - 1, 3.55], [x, 3.04], [x + 1, 3.55]], { stroke: HO.mouth, lw: lw * 1.25, smooth: true });
+  else if (kind === 'wobble') line([[x - 1.1, 3.3], [x - .65, 3.05], [x - .2, 3.35], [x + .2, 3.05], [x + .65, 3.35], [x + 1.1, 3.1]], { stroke: HO.mouth, lw: lw * 1.3, smooth: true });
 }
 
 // Screen-space prop: x,y are the ball centre and s is Housam's pixel scale.

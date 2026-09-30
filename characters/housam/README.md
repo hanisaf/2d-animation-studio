@@ -30,7 +30,10 @@ const A = housam(x, y, s, {
   t, dy, lean, tilt, turn, rot, jump, sq, flip, breathe,
   handL, handR, footL, footR,       // [x, y] targets in local units
   handPoseL, handPoseR,             // 'open' | 'palm' | 'point' | 'fist'
-  eyes, brows, mouth, lookX, lookY, blink, blush,
+  eyes,                             // 'open' | 'wide' | 'happy' | 'closed' | 'wink' | 'squeeze'
+  brows,                            // 'normal' | 'up' | 'focused' | 'worried'
+  mouth,                            // 'smile' | 'smirk' | 'grin' | 'open' | 'o' | 'flat' | 'frown' | 'wobble'
+  lookX, lookY, blink, blush,
 });
 // A: head, mouth, top, eyeL, eyeR, chest, belly,
 //    handL, handR, footL, footR, kneeL, kneeR (screen pixels)

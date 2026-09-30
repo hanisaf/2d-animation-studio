@@ -76,6 +76,19 @@ async function buildSceneAudio(sc, sampleRate) {
       else if (cue.type === 'bonk') { thump(at, .24); bell(at + .045, 2, .055, .25); }
       else if (cue.type === 'whoosh') for (let i = 0; i < 6; i++) bell(at + i * .045, 7 + i, .045, .16);
       else if (cue.type === 'plip') { bell(at, 16, .12, .32); bell(at + .08, 21, .08, .45); }
+      else if (cue.type === 'cricket') for (let i = 0; i < 3; i++) tone(at + i * .07, .05, 4200, .05, 'square', .3, 1.2);
+      else if (cue.type === 'scratch') scratch(at);
+      else if (cue.type === 'whistle') for (let i = 0; i < 12; i++) tone(at + i * .045, .07, i % 2 ? 2950 : 2550, .06, 'sine', 0, 2);   // a referee's trill
+      else if (cue.type === 'gulp') { thump(at, .12); tone(at + .03, .12, 260, .06, 'sine', 0, 2); tone(at + .1, .1, 180, .05, 'sine', 0, 2); }
+    }
+    // a record scratch: a fast saw sweep down, then back up
+    function scratch(at) {
+      if (at < 0 || at >= sc.duration) return;
+      const osc = ctx.createOscillator(), env = ctx.createGain(), filter = ctx.createBiquadFilter(), end = Math.min(sc.duration, at + .42);
+      osc.type = 'sawtooth'; filter.type = 'bandpass'; filter.frequency.value = 1400; filter.Q.value = .7;
+      osc.frequency.setValueAtTime(900, at); osc.frequency.exponentialRampToValueAtTime(120, at + .18); osc.frequency.exponentialRampToValueAtTime(600, end);
+      env.gain.setValueAtTime(.0001, at); env.gain.linearRampToValueAtTime(.22, at + .01); env.gain.setValueAtTime(.18, at + .3); env.gain.exponentialRampToValueAtTime(.0001, end);
+      osc.connect(filter).connect(env).connect(musicBus); osc.start(at); osc.stop(end);
     }
   }
 

@@ -56,6 +56,8 @@ Each scene's folder holds its synopsis, script, shot list and editing notes (`RE
 | 07 | [The Message Comes First](scenes/scene07_message_first/README.md) | 68 s | In the lecture hall, Safadi is tempted to make everything move, then turns his powers off: *"Give the message the spotlight."* |
 | 08 | [Even the Juggler Can't Multitask](scenes/scene08_multitasking/README.md) | 82 s | In the lecture hall, Safadi has the class count Fester's juggling balls while doing mental math. At *"What is 9 × 8?"* Fester fumbles and the balls bonk them both: *"Even the juggler can't multitask!"* |
 | 09 | [Housam's Hat Trick](scenes/scene09_hat_trick/README.md) | 64 s | At the county soccer field, Housam scores three trick goals past goalkeeper Fester while Safadi and Alma cheer. The last one knocks Fester's hat into the net: *"Three goals… that's a hat trick!"* |
+| 10 | [The Great Debate](scenes/scene10_great_debate/README.md) | 128 s | From DCES to the lecture hall: Safadi says books beat video games, Housam debates him, and the audience votes for Housam. *"Fine… thirty minutes a day."* |
+| 11 | [The Great Hydration Debate](scenes/scene11_hydration_debate/README.md) | 200 s | After their win, Housam and Alma argue eight reasons for sports drinks and win, then Safadi lets them drink his "Safadi Energy Drinks": unsweetened tea |
 
 ## Where the story is heading
 

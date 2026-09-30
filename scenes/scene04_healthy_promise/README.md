@@ -8,6 +8,7 @@
 | **Cast** | [Professor Safadi](../../characters/safadi/README.md) · [Alma](../../characters/alma/README.md) |
 | **Location** | [Dove Creek Elementary](../../locations/dces/README.md): the front sidewalk (Z ≈ 2100), then the entrance |
 | **Voice** | Safadi's measured and Alma's melodic cartoon vocalizations accompany their speech bubbles; the thought bubble is silent |
+| **Music** | Synthesized sunny walk-to-school underscore (`music` in `asset.js`), at Alma's dance tempo (112 bpm); cues on the boards, the bulb, the twirl and the wink |
 | **Movie** | #4 |
 
 ## Synopsis
