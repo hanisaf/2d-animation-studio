@@ -79,3 +79,5 @@ scripts/new.sh scene scene03_auditions        # scenes/scene03_auditions/ {asset
 ```
 
 Each new folder is self-contained: describe the asset in its `README.md` (for a scene: synopsis, script, shot list), put reference art in the folder and list it in `asset.js`, then write the code. See [ANIMATION_GUIDE.md](ANIMATION_GUIDE.md) and [docs/HANDBOOK.md §8](docs/HANDBOOK.md#8-assets-characters-locations-scenes).
+
+> **Note on Naming Conflicts:** All character, location, and scene scripts are loaded into the same global environment without module isolation (no `import`/`export`). To avoid naming collisions that can cause scripts to silently overwrite each other or throw syntax errors, always namespace your internal helper functions and constants (e.g., prefixing them with `sm` for Sami, `sf` for Safadi, etc.) instead of using generic names.
