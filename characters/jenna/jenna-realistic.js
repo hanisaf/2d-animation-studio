@@ -4,11 +4,10 @@
 // jenna(x, y, s, o) → anchors. (x, y) = floor point between the feet (screen px), s = px per local unit.
 
 const JENNA_UNIT = 5.0;   // world units per local unit
-const JENNA_SCALE = 1.06; // a small overall size increase, including the face
 
 const JE = {
   ink: '#41291F',
-  skin: '#F7CBB0', skinDk: '#E4AC91', cheek: '#EAA99F', nose: '#DDA790',
+  skin: '#EFB18C', skinDk: '#D58E70', cheek: '#E39D8D', nose: '#C98D74',
   hair: '#543522', hairDk: '#392418', hairLt: '#87583B',
   shirt: '#F5D6D9', shirtDk: '#DDB0BC',
   skirtBase: '#DFA4AE', skirtTulle: '#F1C1C8',
@@ -19,7 +18,6 @@ const JE = {
 };
 
 function jenna(x, y, s, o = {}) {
-  s *= JENNA_SCALE;
   const t = o.t ?? T, A = {}, lw = clamp(s * .12, 1.2, 5.0) / s;
   X.save(); X.translate(x, y); X.scale(s * (o.flip ? -1 : 1), s);
   
@@ -31,13 +29,13 @@ function jenna(x, y, s, o = {}) {
 
   withBoil(o.boil ?? .7, () => {
     // Reference proportions: expressive child face and a knee-length tulle skirt.
-    const hipY = -10.0 + (o.dy || 0), lean = o.lean || 0, cl = Math.cos(lean), sl = Math.sin(lean);
+    const hipY = -11.5 + (o.dy || 0), lean = o.lean || 0, cl = Math.cos(lean), sl = Math.sin(lean);
     const tl = (px, py) => [px * cl - py * sl, hipY + px * sl + py * cl];
-    const headT = () => { X.translate(0, hipY); X.rotate(lean); X.translate(0, -6.0); X.rotate(o.tilt || 0); X.translate(0, -6.35); };
+    const headT = () => { X.translate(0, hipY); X.rotate(lean); X.translate(0, -6.0); X.rotate(o.tilt || 0); X.translate(0, -5.25); };
 
     // Legs
     [[-1, o.footL || [-1.25, -.65]], [1, o.footR || [1.25, -.65]]].forEach(([sd, f]) => {
-      const hp = tl(sd * 1.1, 0), { joint, end } = ik2(hp, f, 4.75, 4.75, [sd * .15, 1]);
+      const hp = tl(sd * 1.1, 0), { joint, end } = ik2(hp, f, 5.5, 5.5, [sd * .15, 1]);
       jeLimb([hp, joint, end], 1.6, JE.skin, lw);
       jeSockAndShoe(end, sd, lw);
       A[sd < 0 ? 'footL' : 'footR'] = toPx(end[0], end[1]);
@@ -85,7 +83,7 @@ function jenna(x, y, s, o = {}) {
     });
 
     // Head
-    X.save(); headT(); X.scale(1.25, 1.25);
+    X.save(); headT(); X.scale(.95, .95);
     jeHead(o, t, lw, A);
     A.top = toPx(0, -4.6);
     X.restore();
@@ -189,7 +187,7 @@ function jeHead(o, t, lw, A) {
     });
     const face = [['M', 699, 237], ['C', 674, 241, 650, 252, 621, 250],
       ['C', 580, 271, 552, 323, 546, 384], ['C', 540, 425, 544, 481, 557, 519],
-      ['C', 570, 566, 612, 602, 666, 605], ['C', 719, 608, 767, 581, 783, 550],
+      ['C', 572, 560, 627, 608, 665, 616], ['C', 700, 625, 754, 585, 783, 550],
       ['C', 809, 517, 819, 471, 818, 423], ['C', 817, 368, 804, 313, 780, 282],
       ['C', 748, 269, 711, 261, 699, 237], ['Z']];
     jePortraitPath(face, { fill: JE.skin, stroke: JE.ink, lw: edge });
@@ -197,33 +195,43 @@ function jeHead(o, t, lw, A) {
     X.save(); jePortraitPath(face); X.clip();
     jePortraitPath([['M', 556, 315], ['C', 544, 397, 548, 481, 568, 525],
       ['C', 590, 568, 624, 599, 665, 616], ['C', 619, 607, 569, 562, 551, 517],
-      ['C', 530, 453, 532, 358, 556, 315], ['Z']], { fill: JE.skinDk, stroke: null });
+      ['C', 530, 453, 532, 358, 556, 315], ['Z']], { fill: '#DB997B', stroke: null });
     jePortraitPath([['M', 781, 288], ['C', 818, 372, 818, 459, 795, 519],
       ['C', 780, 556, 750, 584, 728, 596], ['C', 778, 574, 811, 529, 829, 462],
-      ['L', 828, 319], ['Z']], { fill: JE.skinDk, stroke: null });
+      ['L', 828, 319], ['Z']], { fill: '#D99576', stroke: null });
     X.restore();
-    const blush = o.blush ?? .6;
-    if (blush > .01) [-1, 1].forEach(sd => ellipse(sd * 1.65 + tx * .5, 1.55, .65, .38,
+    const blush = o.blush ?? .12;
+    if (blush > .01) [-1, 1].forEach(sd => ellipse(sd * 1.65 + tx * .5, 1.5, .6, .32,
       { fill: rgba(JE.cheek, .35 * blush), stroke: null }));
 
     X.save(); X.translate(tx, 0);
-    // Angular, tapered brows form clear peaks above each eye.
-    const lift = -.3 + (o.brows === 'up' ? -.28 : o.brows === 'worried' ? -.12 : 0);
+    // Filled, tapered brows follow the asymmetric arches in the portrait.
+    const lift = o.brows === 'up' ? -.28 : o.brows === 'worried' ? -.12 : 0;
     X.save(); X.translate(0, lift);
-    jePortraitPath([['M', 563, 366], ['L', 598, 336], ['L', 646, 361],
-      ['L', 640, 370], ['L', 599, 350], ['L', 565, 372], ['Z']],
-      { fill: '#67422F', stroke: JE.ink, lw: edge * .5 });
-    jePortraitPath([['M', 707, 363], ['L', 753, 339], ['L', 794, 370],
-      ['L', 791, 376], ['L', 752, 353], ['L', 713, 372], ['Z']],
-      { fill: '#67422F', stroke: JE.ink, lw: edge * .5 });
+    jePortraitPath([['M', 562, 366], ['C', 569, 345, 590, 335, 609, 342],
+      ['C', 622, 346, 636, 352, 644, 360], ['C', 650, 371, 637, 370, 626, 365],
+      ['C', 602, 352, 581, 347, 562, 366], ['Z']], { fill: '#67422F', stroke: JE.ink, lw: edge * .5 });
+    jePortraitPath([['M', 707, 360], ['C', 726, 349, 749, 339, 768, 345],
+      ['C', 781, 348, 790, 359, 794, 370], ['C', 775, 351, 756, 351, 733, 363],
+      ['C', 718, 373, 704, 373, 707, 360], ['Z']], { fill: '#67422F', stroke: JE.ink, lw: edge * .5 });
     X.restore();
     jeEye((610 - 680) / 55, (395 - 400) / 55, { ...o, t }, true, edge);
     jeEye((744 - 680) / 55, (398 - 400) / 55, { ...o, t }, false, edge);
-    // Alma's simple button nose keeps the expression light and readable.
-    ellipse(-.09, 1.3, .28, .2, { fill: rgba(JE.nose, .5), stroke: null });
-    line([[-.4, 1.28], [-.35, 1.48], [-.2, 1.53]], { stroke: JE.ink, lw: edge * .9, smooth: true });
-    line([[.3, 1.28], [.25, 1.48], [.1, 1.53]], { stroke: JE.ink, lw: edge * .9, smooth: true });
-    circle(-.19, 1.18, .09, { fill: 'rgba(255,255,255,.65)', stroke: null });
+    // Subtle eyelid creases and the short inner bridge are separate from the lashes.
+    if (!['closed', 'happy'].includes(o.eyes)) {
+      jePortraitPath([['M', 575, 379], ['C', 592, 366, 616, 369, 634, 382]], { stroke: '#956447', lw: edge * .6 });
+      jePortraitPath([['M', 713, 384], ['C', 731, 370, 757, 371, 772, 383]], { stroke: '#956447', lw: edge * .6 });
+      jePortraitPath([['M', 654, 382], ['C', 660, 394, 659, 407, 657, 416]], { stroke: '#A57052', lw: edge * .6 });
+    }
+    // Rounded nose tip, restrained nostrils, and a small off-centre highlight.
+    jePortraitPath([['M', 639, 461], ['C', 633, 478, 647, 482, 658, 479],
+      ['C', 672, 489, 687, 484, 701, 478], ['C', 712, 470, 704, 464, 704, 456]],
+      { fill: '#E5A281', stroke: null });
+    jePortraitPath([['M', 640, 456], ['C', 633, 470, 640, 477, 648, 478]], { stroke: JE.ink, lw: edge * .75 });
+    jePortraitPath([['M', 705, 456], ['C', 713, 469, 706, 477, 699, 478]], { stroke: JE.ink, lw: edge * .75 });
+    jePortraitPath([['M', 646, 475], ['C', 651, 472, 657, 476, 661, 479]], { stroke: '#6B4432', lw: edge * .7 });
+    jePortraitPath([['M', 686, 480], ['C', 692, 475, 697, 474, 701, 476]], { stroke: '#6B4432', lw: edge * .7 });
+    ellipse(-.32, .96, .065, .13, { fill: '#F8CAA5', stroke: null, rot: .4 });
     X.restore();
     jeMouth(o.mouth || 'grin', tx, edge);
     A.eyeL = toPx((610 - 680) / 55 + tx, (395 - 400) / 55);
@@ -312,40 +320,54 @@ function jePortraitPath(commands, style) {
 function jeEye(cx, cy, o, isLeft, lw) {
   let kind = o.eyes || 'open';
   if (kind === 'wink') kind = isLeft ? 'open' : 'happy';
-  const rx = .67, ry = kind === 'wide' ? .8 : .64;
+  const rx = .63, ry = kind === 'wide' ? .48 : .28;
   const ph = ((o.t ?? T) + .8) % 3.4;
   const blink = clamp(o.blink ?? (ph < .16 ? Math.sin(ph / .16 * Math.PI) : 0));
   if (kind === 'happy' || kind === 'closed' || blink > .96) {
-    line([[cx - rx, cy + .12], [cx, cy + (kind === 'happy' ? -.25 : .18)], [cx + rx, cy + .12]],
-      { stroke: JE.ink, lw: lw * 1.8, smooth: true }); return;
+    line([[cx - rx, cy + .05], [cx, cy + (kind === 'happy' ? -.17 : .13)], [cx + rx, cy + .05]],
+      { stroke: JE.ink, lw: lw * 1.15, smooth: true }); return;
   }
-  ellipse(cx, cy, rx, ry, { fill: '#FFFDF7', stroke: JE.ink, lw });
-  X.save(); X.beginPath(); X.ellipse(cx, cy, rx, ry, 0, 0, TAU); X.clip();
+  const height = ry * (1 - blink);
+  const path = () => {
+    X.beginPath(); X.moveTo(cx - rx, cy + .015);
+    X.bezierCurveTo(cx - .3, cy - height * 1.3, cx + .24, cy - height * 1.5, cx + rx, cy + .045);
+    X.bezierCurveTo(cx + .26, cy + height * 1.2, cx - .27, cy + height * 1.05, cx - rx, cy + .015);
+    X.closePath();
+  };
+  path(); paintPath({ fill: '#FFFDF7', stroke: null });
+  X.save(); path(); X.clip();
   const ix = cx + clamp(o.lookX || 0, -1, 1) * .2;
-  const iy = cy + .05 + clamp(o.lookY || 0, -1, 1) * .18;
-  const ir = kind === 'wide' ? .37 : .45;
-  circle(ix, iy, ir, { fill: radGrad(ix, iy + ir * .3, ir * .2, ir, [[0, '#94633F'], [1, JE.iris]]), stroke: null });
-  circle(ix, iy, ir * .62, { fill: '#2E201B', stroke: null });
-  circle(ix - ir * .3, iy - ir * .38, ir * .26, { fill: '#FFFFFF', stroke: null });
-  circle(ix + ir * .3, iy + ir * .35, ir * .1, { fill: '#FFFFFF', stroke: null });
-  if (blink > .01) shape(rectPts(cx - rx - .1, cy - ry - .1, 2 * rx + .2, (2 * ry + .2) * blink), { fill: JE.skin, stroke: null });
+  const iy = cy + .015 + clamp(o.lookY || 0, -1, 1) * .12;
+  circle(ix, iy, .29, { fill: '#6A4836', stroke: '#422A20', lw: lw * .45 });
+  circle(ix, iy + .025, .18, { fill: '#2E201B', stroke: null });
+  circle(ix - .09, iy - .12, .075, { fill: '#FFFFFF', stroke: null });
   X.restore();
-  line([[cx - rx, cy - .04], [cx - rx * .5, cy - ry * .92], [cx + rx * .5, cy - ry * .92], [cx + rx, cy - .04]],
-    { stroke: JE.ink, lw: lw * 1.9, smooth: .9 });
-  const sd = isLeft ? -1 : 1;
-  line([[cx + sd * rx * .92, cy - .22], [cx + sd * (rx + .16), cy - .4]], { stroke: JE.ink, lw: lw * 1.4 });
+  X.beginPath(); X.moveTo(cx - rx - .025, cy);
+  X.bezierCurveTo(cx - .3, cy - height * 1.3, cx + .24, cy - height * 1.5, cx + rx + .02, cy + .045);
+  paintPath({ stroke: '#38251C', lw: lw * 1.3 });
+  X.beginPath(); X.moveTo(cx - rx, cy + .015);
+  X.bezierCurveTo(cx - .27, cy + height * 1.05, cx + .26, cy + height * 1.2, cx + rx, cy + .045);
+  paintPath({ stroke: '#9A674D', lw: lw * .45 });
 }
 
 function jeMouth(kind, tx, lw) {
   X.save(); X.translate(tx, 0);
   if (kind === 'grin') {
-    // A single tooth band and a small tongue echo Alma's cheerful cartoon grin.
-    const smile = [[-1.18, 2.02], [-.08, 2.18], [1.05, 2.02], [.73, 2.6], [-.08, 2.83], [-.88, 2.6]];
-    shape(smile, { fill: JE.mouth, stroke: JE.ink, lw: lw * 1.2, smooth: .65 });
-    X.save(); tracePath(smile, true, .65); X.clip();
-    shape(rectPts(-1.25, 1.97, 2.5, .38), { fill: '#FFFDF7', stroke: null });
-    ellipse(-.08, 2.84, .5, .22, { fill: JE.tongue, stroke: null });
-    X.restore();
+    // Sculpted lips surround one curved band of teeth, as in the reference smile.
+    jePortraitPath([['M', 605, 507], ['C', 625, 508, 641, 501, 665, 506],
+      ['C', 682, 499, 706, 511, 742, 507], ['C', 724, 532, 701, 553, 675, 558],
+      ['C', 645, 557, 619, 536, 605, 507], ['Z']], { fill: '#BC746F', stroke: null });
+    jePortraitPath([['M', 606, 508], ['C', 642, 519, 705, 521, 741, 508],
+      ['C', 724, 530, 702, 545, 674, 544], ['C', 647, 544, 622, 530, 606, 508], ['Z']],
+      { fill: '#492A22', stroke: JE.ink, lw: lw * .7 });
+    jePortraitPath([['M', 617, 515], ['C', 648, 522, 699, 524, 731, 516],
+      ['L', 721, 530], ['C', 693, 541, 653, 539, 628, 528], ['Z']],
+      { fill: '#FFFEF3', stroke: null });
+    jePortraitPath([['M', 628, 523], ['C', 635, 526, 642, 527, 650, 527]], { stroke: '#675344', lw: lw * .5 });
+    jePortraitPath([['M', 695, 529], ['C', 705, 528, 714, 527, 721, 524]], { stroke: '#675344', lw: lw * .5 });
+    jePortraitPath([['M', 655, 557], ['C', 669, 561, 686, 559, 697, 554]], { stroke: '#673D2C', lw: lw * .6 });
+    jePortraitPath([['M', 603, 500], ['C', 597, 504, 596, 510, 599, 515]], { stroke: '#734732', lw: lw * .65 });
+    jePortraitPath([['M', 745, 501], ['C', 751, 506, 752, 511, 749, 516]], { stroke: '#734732', lw: lw * .65 });
   } else if (kind === 'smile') {
     jePortraitPath([['M', 614, 516], ['C', 645, 537, 703, 539, 736, 515]], { stroke: JE.ink, lw, fill: null });
   } else if (kind === 'open') {
@@ -413,7 +435,7 @@ function jennaSkip(p, k = 1) {
 }
 
 CHARACTERS.jenna = {
-  draw: jenna, unit: JENNA_UNIT, palette: JE, size: [16, 29],
+  draw: jenna, unit: JENNA_UNIT, palette: JE, size: [14, 29],
   poses: {
     'rest': (x, y, s, t) => jenna(x, y, s, {}),
     'hi!': (x, y, s, t) => jenna(x, y, s, { handR: [4.2 + .5 * wob(t, 1.6), -19.0], handPoseR: 'palm', mouth: 'grin', brows: 'up', tilt: .06 }),
