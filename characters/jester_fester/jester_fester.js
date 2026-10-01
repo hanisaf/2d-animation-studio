@@ -13,7 +13,7 @@
 // Face     eyes: open | wide | happy | closed | squeeze | swirl | x | star | wink · lookX / lookY (-1..1) · blink (0..1, auto if unset)
 //          brows: normal | up | worried | angry · mouth: smile | grin | open | o | O | flat | frown | wobble | teeth | smirk · blush (default on)
 // Hat      hatSway [dx, dy] (tips swing) · hatDroop (0..1, the points flop down: sad) · hatAskew (rad) · hatLift · hatDrop · noHat (see jesterHat)
-// Extras   stars (0..1 dizzy stars) · emote: '?' | '!' | '!?' | 'sweat' | 'music' | 'heart' with emoteK (0..1 pop) · boil (px)
+// Extras   referee (black-and-white striped shirt and sleeves) · stars (0..1 dizzy stars) · emote: '?' | '!' | '!?' | 'sweat' | 'music' | 'heart' with emoteK (0..1 pop) · boil (px)
 //
 // Returns anchors in screen px: { head, mouth, hatTip, hatTipL, hatTipR, hatBase, handL, handR, belly, top }
 
@@ -64,7 +64,8 @@ function jester(x, y, s, o = {}) {
     // ---- arms (in front of the body) ----
     [[-1, o.handL || [-3.3, -8.4], o.handPoseL || 'open'], [1, o.handR || [3.3, -8.4], o.handPoseR || 'open']].forEach(([sd, tg, pose]) => {
       const sh = tl(sd * 1.95, -4.85), { joint, end } = ik2(sh, tg, 2.75, 2.55, [sd, .6]);
-      jfLimb([sh, joint, end], 1.1, JF.crimson, [[.12, .26], [.4, .54], [.7, .84]], JF.gold, lw);
+      if (o.referee) jfLimb([sh, joint, end], 1.1, '#26232B', [[.12, .26], [.4, .54], [.7, .84]], '#F4F2EC', lw);
+      else jfLimb([sh, joint, end], 1.1, JF.crimson, [[.12, .26], [.4, .54], [.7, .84]], JF.gold, lw);
       const ang = Math.atan2(end[1] - joint[1], end[0] - joint[0]);
       jfHand(end, ang, sd, pose, lw);
       A[sd < 0 ? 'handL' : 'handR'] = toPx(end[0], end[1]);
@@ -112,6 +113,11 @@ function jfTunic(o, t, lw) {
   X.save(); tracePath(pts, true, false); X.clip();
   const b = [-3.4, -1.95, -.62, .62, 1.95, 3.4], cols = [JF.crimson, JF.gold, JF.blue, JF.gold, JF.crimson];
   withBoil(0, () => {
+    if (o.referee) {                                                     // a referee's black-and-white striped shirt
+      for (let i = 0; i < 9; i++) { const x0 = -3.6 + i * .8; shape([[x0, -6], [x0 + .8, -6], [x0 + .8 + sw * .9, 2.6], [x0 + sw * .9, 2.6]], { fill: i % 2 ? '#26232B' : '#F4F2EC', stroke: null }); }
+      shape([[-2.4, -1.2], [2.4, -1.2], [2.6, -.6], [-2.6, -.6]], { fill: 'rgba(60,20,40,.12)', stroke: null });
+      return;
+    }
     for (let i = 0; i < 5; i++) shape([[b[i] * .72, -6], [b[i + 1] * .72, -6], [b[i + 1] * 1.22 + sw * .9, 2.6], [b[i] * 1.22 + sw * .9, 2.6]], { fill: cols[i], stroke: null });
     for (let i = 1; i < 5; i++) line([[b[i] * .72, -5.6], [b[i] * 1.22 + sw * .9, 2.4]], { stroke: 'rgba(255,240,210,.75)', lw: .07, dash: [.28, .22], cap: 'butt' });
     shape([[-2.4, -1.2], [2.4, -1.2], [2.6, -.6], [-2.6, -.6]], { fill: 'rgba(60,20,40,.12)', stroke: null });   // soft belt shadow
@@ -122,7 +128,7 @@ function jfTunic(o, t, lw) {
   [0, 2, 4, 6, 8].forEach((i, k) => jfBell(hem[i][0], hem[i][1] + .4, .36, lw, sw * .8 + wob(t, 2.1, k * .3) * .15));
   // ruffled collar
   const col = []; for (let i = 0; i <= 10; i++) { const a = Math.PI * i / 10, r = i % 2 ? 1.0 : 1.25; col.push([-Math.cos(a) * 1.6 * r, -5.35 + Math.sin(a) * .75 * r]); }
-  shape([...col, [1.3, -5.7], [-1.3, -5.7]], { fill: JF.crimson, stroke: JF.ink, lw, smooth: .5 });
+  shape([...col, [1.3, -5.7], [-1.3, -5.7]], { fill: o.referee ? '#26232B' : JF.crimson, stroke: JF.ink, lw, smooth: .5 });
   line(col.slice(2, 9).map(([x, y]) => [x * .8, y - .08]), { stroke: JF.gold, lw: .12, dash: [.2, .2], smooth: true });
 }
 

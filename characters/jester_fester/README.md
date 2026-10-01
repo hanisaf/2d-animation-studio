@@ -80,6 +80,7 @@ const A = jester(x, y, s, {
   hatAskew, hatLift, hatDrop,
   noHat,                       // true: no hat (bald crown under the headband line); draw it free with jesterHat()
   // extras
+  referee,                     // true: a referee's black-and-white striped shirt and sleeves
   stars,                       // 0..1 dizzy stars
   emote, emoteK,               // '?' | '!' | '!?' | 'sweat' | 'music' | 'heart'
 });

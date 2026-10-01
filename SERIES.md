@@ -58,6 +58,7 @@ Each scene's folder holds its synopsis, script, shot list and editing notes (`RE
 | 09 | [Housam's Hat Trick](scenes/scene09_hat_trick/README.md) | 64 s | At the county soccer field, Housam scores three trick goals past goalkeeper Fester while Safadi and Alma cheer. The last one knocks Fester's hat into the net: *"Three goals… that's a hat trick!"* |
 | 10 | [The Great Debate](scenes/scene10_great_debate/README.md) | 128 s | From DCES to the lecture hall: Safadi says books beat video games, Housam debates him, and the audience votes for Housam. *"Fine… thirty minutes a day."* |
 | 11 | [The Great Hydration Debate](scenes/scene11_hydration_debate/README.md) | 200 s | After their win, Housam and Alma argue eight reasons for sports drinks and win, then Safadi lets them drink his "Safadi Energy Drinks": unsweetened tea |
+| 13 | [Deal With It](scenes/scene13_deal_with_it/README.md) | 94 s | At the soccer field, Safadi lectures on soccer until Housam challenges him. Safadi calls in his twin, Doctor Sami (*"Deal with it."*); Housam calls in cousins Jenna and Danny (*"DEAL WITH IT!"*); referee Fester blows the whistle. *To be continued…* |
 
 ## Where the story is heading
 

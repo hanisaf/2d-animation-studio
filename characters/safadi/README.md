@@ -96,7 +96,7 @@ const A = safadi(x, y, s, {
 
 safadiBoard(x, y, w, k, t, { kind, title });   // floating chalkboard at screen (x, y), width w px
 // k 0..1: pops in (0–.2), then the drawing chalks itself on (.2–1)
-// kind: 'graph' | 'steps' | 'atom' | 'bulb' | 'story' | 'plate' (healthy plate) | 'crash' (sugar spike vs steady veggies)
+// kind: 'graph' | 'steps' | 'atom' | 'bulb' | 'story' | 'plate' (healthy plate) | 'crash' (sugar spike vs steady veggies) | 'passing' | 'dribbling' | 'shooting' | 'teamwork' (soccer lessons)
 
 safadiWalk(p, k)   // walk-cycle pose options: p = steps travelled (distance / ~58 world units), k = stride amount 0..1
 safadi(x, y, s, { ...safadiWalk(dist / 58, speedK), turn: -.3 });

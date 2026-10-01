@@ -22,7 +22,7 @@
 // Returns anchors in screen px: { head, mouth, top, eyeL, eyeR, chest, belly, handL, handR, pointerTip, bulb }
 //
 // Also: safadiBoard(x, y, w, k, t, { kind, title }): his floating holographic chalkboard (screen px; k 0..1 = appear + draw).
-//   kind: 'graph' | 'steps' | 'atom' | 'bulb' | 'story' | 'plate' (healthy plate) | 'crash' (sugar spike vs steady veggies).
+//   kind: 'graph' | 'steps' | 'atom' | 'bulb' | 'story' | 'plate' (healthy plate) | 'crash' (sugar spike vs steady veggies) | 'passing' | 'dribbling' | 'shooting' | 'teamwork' (soccer lessons).
 //   safadiWalk(p, k): walk-cycle pose options (p = steps travelled, k = stride amount).
 
 const SF = {
@@ -415,6 +415,48 @@ function safadiBoard(x, y, w, k, t, o = {}) {
     X.restore();
     if (f2 > 0) line(f2 < 1 ? polySlice(veg, 0, f2) : veg, { stroke: '#9FE08A', lwPx: Math.max(2, U * 1.1) });
     label('ZOOM!', 34, top + 1, 5.5, .3); label('CRASH', 62, 62 - 4, 5, .55); label('veggies: steady', 76, 34, 4.2, .9);
+  } else if (kind === 'passing') {                                 // three players in a triangle, passes round it
+    const P3 = [[50, top + 6], [20, top + 40], [80, top + 40]].map(([px, py]) => [px * U, py * U]);
+    P3.forEach(([px, py], i) => { const k = backOut(seg(d, i * .1, i * .1 + .15)); if (k > 0) circle(px, py, 4.5 * U * k, { fill: null, stroke: SF.chalk, lwPx: Math.max(2, U * .9) }); });
+    [[0, 1], [1, 2], [2, 0]].forEach(([a, b], i) => {
+      const [ax, ay] = P3[a], [bx, by] = P3[b], dx = bx - ax, dy = by - ay, L = Math.hypot(dx, dy), ux = dx / L, uy = dy / L;
+      const p0 = [ax + ux * 6.5 * U, ay + uy * 6.5 * U], p1 = [bx - ux * 6.5 * U, by - uy * 6.5 * U], a0 = .3 + i * .2;
+      X.save(); X.setLineDash([2.2 * U, 1.6 * U]); part([p0, p1], a0, a0 + .15); X.restore();
+      part([[p1[0] - ux * 3 * U - uy * 2 * U, p1[1] - uy * 3 * U + ux * 2 * U], p1, [p1[0] - ux * 3 * U + uy * 2 * U, p1[1] - uy * 3 * U - ux * 2 * U]], a0 + .15, a0 + .2);
+    });
+    if (d > .9) { const u = frac(t * .6), e = Math.floor(u * 3), f = frac(u * 3), [ax, ay] = P3[e], [bx, by] = P3[(e + 1) % 3];
+      circle(lerp(ax, bx, f), lerp(ay, by, f), 2 * U, { fill: SF.glowGold, stroke: SF.chalk, lwPx: 1.5 }); }
+  } else if (kind === 'dribbling') {                               // a zig-zag through four cones
+    const cones = [22, 40, 58, 76], path = [];
+    cones.forEach((cx, i) => { const k = backOut(seg(d, i * .07, i * .07 + .12)); if (k > 0) shape([[cx * U, (top + 34 - 7 * k) * U], [(cx + 3.5) * U, (top + 34) * U], [(cx - 3.5) * U, (top + 34) * U]], { fill: '#FF9A4D', stroke: SF.chalk, lwPx: 1.5 }); });
+    for (let i = 0; i <= 40; i++) { const u = i / 40; path.push([(10 + u * 82) * U, (top + 31 + 13 * Math.sin(u * Math.PI * 4.5 + Math.PI)) * U]); }
+    part(path, .3, .85);
+    if (d > .85) { const f = frac(t * .35), [bx, by] = polyAt(path, f); circle(bx, by, 2 * U, { fill: SF.glowGold, stroke: SF.chalk, lwPx: 1.5 }); }
+    label('head up!', 50, top + 6, 5, .85);
+  } else if (kind === 'shooting') {                                // a goal, the keeper, and the angle into the top corner
+    const gx0 = 56 * U, gx1 = 92 * U, gy0 = (top + 6) * U, gy1 = (top + 30) * U, sp = [14 * U, (top + 40) * U];
+    part([[gx0, gy1], [gx0, gy0], [gx1, gy0], [gx1, gy1]], 0, .25);
+    for (let i = 1; i < 6; i++) part([[gx0 + (gx1 - gx0) * i / 6, gy0], [gx0 + (gx1 - gx0) * i / 6, gy1]], .2 + i * .02, .26 + i * .02);
+    if (d > .3) { const k = backOut(seg(d, .3, .42)); circle(74 * U, (top + 24) * U, 3 * U * k, { fill: null, stroke: SF.chalk, lwPx: Math.max(2, U * .9) }); }
+    const arc = []; for (let i = 0; i <= 30; i++) { const u = i / 30; arc.push([lerp(sp[0], gx1 - 4 * U, u), lerp(sp[1], gy0 + 4 * U, u) - 12 * U * Math.sin(Math.PI * u)]); }
+    X.save(); X.setLineDash([2.2 * U, 1.6 * U]); X.shadowColor = SF.glowGold; part(arc, .45, .8); X.restore();
+    part([[sp[0] + 16 * U, sp[1]], sp], .78, .85);
+    const ang = []; for (let i = 0; i <= 10; i++) { const a = -i / 10 * .62; ang.push([sp[0] + Math.cos(a) * 10 * U, sp[1] + Math.sin(a) * 10 * U]); } part(ang, .82, .92);
+    if (d > .3) circle(sp[0], sp[1], 2 * U, { fill: SF.glowGold, stroke: SF.chalk, lwPx: 1.5 });
+    label('θ', 30, top + 36, 5.5, .9);
+  } else if (kind === 'teamwork') {                                // a ring of stick players joined by arrows, a heart in the middle
+    const cx = 50 * U, cy = (top + 24) * U, R = 17 * U, n = 5;
+    for (let i = 0; i < n; i++) {
+      const a = -Math.PI / 2 + i * TAU / n, px = cx + Math.cos(a) * R * 1.5, py = cy + Math.sin(a) * R, a0 = i * .1;
+      part([[px, py - 3 * U], [px, py + 2 * U]], a0, a0 + .08); part([[px - 2.5 * U, py - 1 * U], [px + 2.5 * U, py - 1 * U]], a0 + .04, a0 + .1);
+      part([[px, py + 2 * U], [px - 2 * U, py + 5.5 * U]], a0 + .06, a0 + .12); part([[px, py + 2 * U], [px + 2 * U, py + 5.5 * U]], a0 + .06, a0 + .12);
+      if (d > a0 + .03) circle(px, py - 4.8 * U, 1.8 * U, { fill: null, stroke: SF.chalk, lwPx: Math.max(2, U * .9) });
+      const b = a + TAU / n, m0 = a + .3, m1 = b - .3, arr = [];
+      for (let j = 0; j <= 8; j++) { const aa = lerp(m0, m1, j / 8); arr.push([cx + Math.cos(aa) * R * 1.5, cy + Math.sin(aa) * R]); }
+      part(arr, .5 + i * .06, .58 + i * .06);
+    }
+    if (d > .88) { const k = backOut(seg(d, .88, 1)) * (1 + .08 * Math.sin(t * 6)); X.save(); X.translate(cx, cy); X.scale(4 * U * k, 4 * U * k);
+      shape([[0, .9], [-1.1, -.1], [-1.05, -.75], [-.5, -1.05], [0, -.6], [.5, -1.05], [1.05, -.75], [1.1, -.1]], { fill: '#FF6F8E', stroke: SF.chalk, lwPx: 1.5, smooth: .5 }); X.restore(); }
   }
   X.restore();
   X.restore();
