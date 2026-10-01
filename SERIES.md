@@ -31,6 +31,7 @@ Each character's folder holds its description, look, personality and rig notes (
 | ⚽ | [Housam](characters/housam/README.md) | A soccer-loving student with a quick eye for mathematical patterns |
 | 💃 | [Alma](characters/alma/README.md) | A cute girl with long purple-streaked hair and super dance powers: rainbow dance floors, sparkles, music notes |
 | 🐉 | [Dragon](characters/dragon/README.md) | A gentle, funny dragon who loves learning and can fly |
+| 💜 | [Roudaynah](characters/roudaynah/README.md) | A loving, busy mom and avid programmer with superpowers of love and original ideas from her laptop |
 
 ## Sets
 
@@ -59,6 +60,7 @@ Each scene's folder holds its synopsis, script, shot list and editing notes (`RE
 | 10 | [The Great Debate](scenes/scene10_great_debate/README.md) | 128 s | From DCES to the lecture hall: Safadi says books beat video games, Housam debates him, and the audience votes for Housam. *"Fine… thirty minutes a day."* |
 | 11 | [The Great Hydration Debate](scenes/scene11_hydration_debate/README.md) | 200 s | After their win, Housam and Alma argue eight reasons for sports drinks and win, then Safadi lets them drink his "Safadi Energy Drinks": unsweetened tea |
 | 13 | [Deal With It](scenes/scene13_deal_with_it/README.md) | 94 s | At the soccer field, Safadi lectures on soccer until Housam challenges him. Safadi calls in his twin, Doctor Sami (*"Deal with it."*); Housam calls in cousins Jenna and Danny (*"DEAL WITH IT!"*); referee Fester blows the whistle. *To be continued…* |
+| 14 | [A Breath of Innovation](scenes/scene14_vent_tutor/README.md) | 68 s | Doctor Sami celebrates Vent-Tutor with a demonstration of interactive waveforms, ventilation modes, clinical scenarios, and changing settings: *"One simulated breath at a time."* |
 
 ## Where the story is heading
 

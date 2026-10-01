@@ -14,7 +14,7 @@ const JE = {
   skirtBase: '#DFA4AE', skirtTulle: '#F1C1C8',
   shoe: '#F2B8C6', shoeTop: '#E6A5B5', shoeSole: '#FFFFFF', sock: '#FFFFFF',
   clip: '#DFA0C4',
-  eyeW: '#FFFFFF', iris: '#201C19', lash: '#140A05', brow: '#302924', mouth: '#9C3D49', tongue: '#E88494', teeth: '#FFFFFF',
+  eyeW: '#FFFFFF', iris: '#201C19', lash: '#140A05', brow: '#302924', mouth: '#9C3D49', lip: '#D68A92', tongue: '#E88494', teeth: '#FFFFFF',
   graphic: { butterfly: '#D66D9F', flowerY: '#F0E675', flowerG: '#9BD687', flowerB: '#688AB5', flowerP: '#F2A2CA' }
 };
 
@@ -216,7 +216,7 @@ function jeHead(o, t, lw, A) {
     X.save(); X.translate(tx, 0);
     // Thick, gently angled brows with rounded inner ends.
     const lift = o.brows === 'up' ? -.28 : o.brows === 'worried' ? -.12 : 0;
-    X.save(); X.translate(0, lift);
+    X.save(); X.translate(0, lift - .22);
     jePortraitPath([['M', 563, 351], ['C', 583, 327, 601, 326, 620, 334],
       ['C', 635, 340, 648, 346, 647, 358], ['C', 643, 367, 629, 356, 615, 349],
       ['C', 593, 338, 577, 343, 563, 351], ['Z']],
@@ -241,7 +241,7 @@ function jeHead(o, t, lw, A) {
     jeMouth(o.mouth || 'grin', tx, edge);
     A.eyeL = toPx((610 - 680) / 55 + tx, (395 - 400) / 55);
     A.eyeR = toPx((744 - 680) / 55 + tx, (398 - 400) / 55);
-    A.mouth = toPx(tx - .07, 2.32); A.head = toPx(0, 0);
+    A.mouth = toPx(tx, 2.45); A.head = toPx(0, 0);
   });
 
   // Off-centre part and a long, loose sweep over the left temple.
@@ -318,75 +318,67 @@ function jePortraitPath(commands, style) {
   if (style) paintPath(style);
 }
 
+// Alma's rounded eyes and lashes, scaled to Jenna's portrait proportions.
 function jeEye(cx, cy, o, isLeft, lw) {
+  X.save(); X.translate(cx, cy); X.scale(.56, .56);
+  jeEyeShape(0, 0, o, isLeft, lw / .56, o.t ?? T, 1);
+  X.restore();
+}
+
+function jeEyeShape(cx, cy, o, isLeft, lw, t, narrow) {
   let kind = o.eyes || 'open';
   if (kind === 'wink') kind = isLeft ? 'open' : 'happy';
-  const rx = .72, ry = kind === 'wide' ? .68 : .40;
-  const ph = ((o.t ?? T) + .8) % 3.4;
-  const blink = clamp(o.blink ?? (ph < .16 ? Math.sin(ph / .16 * Math.PI) : 0));
-  if (kind === 'happy' || kind === 'closed' || blink > .96) {
-    line([[cx - rx, cy + .12], [cx, cy + (kind === 'happy' ? -.25 : .18)], [cx + rx, cy + .12]],
-      { stroke: JE.ink, lw: lw * 1.8, smooth: true }); return;
+  const rx = 1.28 * narrow, ry = 1.42;
+  if (kind === 'happy') return line([[cx - 1.0, cy + .35], [cx, cy - .55], [cx + 1.0, cy + .35]], { stroke: JE.lash, lw: lw * 2.2, smooth: true });
+  if (kind === 'closed') { line([[cx - 1.0, cy], [cx, cy + .45], [cx + 1.0, cy]], { stroke: JE.lash, lw: lw * 2.2, smooth: true }); return; }
+  if (kind === 'squeeze') { const d = isLeft ? 1 : -1; return line([[cx - d * .85, cy - .6], [cx + d * .6, cy], [cx - d * .85, cy + .6]], { stroke: JE.lash, lw: lw * 2.2 }); }
+  if (kind === 'star' || kind === 'heart') {
+    const pts = kind === 'star' ? starPts(cx, cy, 1.25, .5, 5) : [[cx, cy + 1.05], [cx - 1.15, cy - .05], [cx - .95, cy - .8], [cx - .35, cy - .95], [cx, cy - .45], [cx + .35, cy - .95], [cx + .95, cy - .8], [cx + 1.15, cy - .05]];
+    shape(pts, { fill: kind === 'star' ? JE.graphic.flowerY : '#F06C8E', stroke: JE.ink, lw, smooth: kind === 'heart' ? .5 : false });
+    circle(cx - .35, cy - .35, .2, { fill: '#FFFFFF', stroke: null });
+    return;
   }
-  // Curved lids give the eyes an almond silhouette rather than a round outline.
-  const lid = () => {
-    X.beginPath(); X.moveTo(cx - rx, cy + .04);
-    X.bezierCurveTo(cx - rx * .5, cy - ry * 1.35, cx + rx * .45, cy - ry * 1.3, cx + rx, cy + .05);
-    X.bezierCurveTo(cx + rx * .45, cy + ry, cx - rx * .5, cy + ry * .95, cx - rx, cy + .04);
-    X.closePath();
-  };
-  lid(); paintPath({ fill: '#FFF9F4', stroke: rgba(JE.ink, .65), lw: lw * .65 });
-  X.save(); lid(); X.clip();
-  const ix = cx + clamp(o.lookX || 0, -1, 1) * .2;
-  const iy = cy + .015 + clamp(o.lookY || 0, -1, 1) * .18;
-  const ir = kind === 'wide' ? .42 : .38;
-  circle(ix, iy, ir, { fill: radGrad(ix, iy + ir * .3, ir * .2, ir, [[0, '#79523C'], [1, JE.iris]]), stroke: null });
-  circle(ix, iy, ir * .86, { fill: '#100F0D', stroke: null });
-  circle(ix - ir * .3, iy - ir * .38, ir * .26, { fill: '#FFFFFF', stroke: null });
-  circle(ix + ir * .3, iy + ir * .35, ir * .1, { fill: '#FFFFFF', stroke: null });
-  if (blink > .01) shape(rectPts(cx - rx - .1, cy - ry - .1, 2 * rx + .2, (2 * ry + .2) * blink), { fill: JE.skin, stroke: null });
+  const R = kind === 'wide' ? 1.1 : 1;
+  ellipse(cx, cy, rx * R, ry * R, { fill: JE.eyeW, stroke: JE.ink, lw });
+  const lx = clamp(o.lookX || 0, -1, 1), ly = clamp(o.lookY || 0, -1, 1), ir = kind === 'wide' ? .78 : .95;
+  const ix = cx + lx * .32 * narrow, iy = cy + .1 + ly * .38;
+  X.save(); X.beginPath(); X.ellipse(cx, cy, rx * R, ry * R, 0, 0, TAU); X.clip();
+  withBoil(0, () => {
+    circle(ix, iy, ir, { fill: radGrad(ix, iy + ir * .3, ir * .2, ir, [[0, '#B8763A'], [1, JE.iris]]), stroke: null });
+    circle(ix, iy, ir * .62, { fill: JE.lash, stroke: null });
+    circle(ix + ir * .32, iy - ir * .38, ir * .3, { fill: '#FFFFFF', stroke: null });
+    circle(ix - ir * .3, iy + ir * .35, ir * .12, { fill: '#FFFFFF', stroke: null });
+    const ph = (t + 2.1 + (o.blinkSeed || 0)) % 3.1, b = o.blink ?? (ph < .15 ? Math.sin(ph / .15 * Math.PI) : 0);
+    if (b > .02) shape(rectPts(cx - 1.6, cy - 1.7, 3.2, .3 + 3.2 * b), { fill: JE.skin, stroke: null });
+  });
   X.restore();
-  line([[cx - rx, cy - .04], [cx - rx * .5, cy - ry * .9], [cx + rx * .5, cy - ry * .9], [cx + rx, cy - .04]],
-    { stroke: JE.ink, lw: lw * 1.9, smooth: .9 });
+  // upper lid with lashes and a little flick at the outer corner
   const sd = isLeft ? -1 : 1;
-  line([[cx + sd * rx * .92, cy], [cx + sd * (rx + .1), cy - .12]], { stroke: JE.ink, lw: lw * 1.4 });
+  line([[cx - rx * R, cy - .1], [cx - rx * .5 * R, cy - ry * R * .92], [cx + rx * .5 * R, cy - ry * R * .92], [cx + rx * R, cy - .1]], { stroke: JE.lash, lw: lw * 2.3, smooth: .9 });
+  line([[cx + sd * rx * R * .92, cy - .45], [cx + sd * (rx * R + .45), cy - .85]], { stroke: JE.lash, lw: lw * 1.9 });
+  line([[cx + sd * rx * R * .72, cy - .95], [cx + sd * (rx * R + .25), cy - 1.35]], { stroke: JE.lash, lw: lw * 1.5 });
 }
 
 function jeMouth(kind, tx, lw) {
-  X.save(); X.translate(tx, 0);
-  if (kind === 'grin') {
-    // Broad white smile, a pink lip edge, and small dimples from the illustration.
-    const smile = [[-1.28, 1.94], [-.15, 2.15], [1.12, 1.99], [.72, 2.58], [-.1, 2.74], [-.86, 2.5]];
-    shape(smile.map(([x, y]) => [x, y + .035]),
-      { fill: '#D88980', stroke: null, smooth: .65 });
-    shape(smile, { fill: '#60342D', stroke: JE.ink, lw, smooth: .65 });
-    X.save(); tracePath(smile, true, .65); X.clip();
-    shape([[-1.21, 2.0], [-.12, 2.19], [1.06, 2.05], [.72, 2.48],
-      [-.08, 2.61], [-.85, 2.39]], { fill: '#FFFDF6', stroke: JE.ink, lw: lw * .6, smooth: .6 });
+  // Match Alma's smile shapes while keeping them below Jenna's nose.
+  X.save(); X.translate(tx, 1.1); X.scale(.72, .72); lw /= .72;
+  const dark = { fill: JE.mouth, stroke: JE.ink, lw };
+  if (kind === 'smile') {
+    line([[-1.75, 1.2], [-.9, 1.65], [0, 1.78], [.9, 1.65], [1.75, 1.2]], { stroke: JE.ink, lw: lw * 1.3, smooth: true });
+    ellipse(0, 1.95, .7, .15, { fill: rgba(JE.lip, .45), stroke: null });
+    [-1, 1].forEach(sd => line([[sd * 1.72, 1.05], [sd * 1.9, 1.35]], { stroke: JE.ink, lw: lw * .9 }));
+  } else if (kind === 'grin' || kind === 'open') {
+    const pts = kind === 'grin' ? [[-1.5, 1.2], [0, 1.4], [1.5, 1.2], [1.0, 2.2], [0, 2.5], [-1.0, 2.2]] : [[-.75, 1.3], [0, 1.2], [.75, 1.3], [.75, 2.0], [0, 2.55], [-.75, 2.0]];
+    X.save(); tracePath(pts, true, .8); X.fillStyle = JE.mouth; X.fill(); X.clip();
+    withBoil(0, () => { shape(rectPts(-1.7, 1.05, 3.4, kind === 'grin' ? .45 : .32), { fill: JE.teeth, stroke: null }); ellipse(0, 2.5, .75, .45, { fill: JE.tongue, stroke: null }); });
     X.restore();
-    line([[-1.36, 1.87], [-1.46, 2.05], [-1.43, 2.2]], { stroke: JE.ink, lw: lw * .8, smooth: true });
-    line([[1.19, 1.94], [1.28, 2.08], [1.24, 2.27]], { stroke: JE.ink, lw: lw * .8, smooth: true });
-    line([[-.52, 2.89], [-.12, 2.98], [.23, 2.94]], { stroke: JE.ink, lw: lw * .7, smooth: true });
-  } else if (kind === 'smile') {
-    // Soft pink lips and gently raised corners match the reference's quiet smile.
-    jePortraitPath([['M', 614, 518], ['C', 637, 521, 653, 512, 672, 518],
-      ['C', 690, 512, 714, 523, 736, 517], ['C', 718, 534, 692, 543, 670, 543],
-      ['C', 647, 541, 627, 532, 614, 518], ['Z']],
-      { fill: '#D68A92', stroke: null });
-    jePortraitPath([['M', 614, 518], ['C', 647, 530, 703, 533, 736, 517]],
-      { stroke: '#99535A', lw: lw * .8 });
-    jePortraitPath([['M', 648, 536], ['C', 665, 540, 688, 540, 704, 534]],
-      { stroke: 'rgba(255,235,230,.45)', lw: lw * .55 });
-  } else if (kind === 'open') {
-    ellipse(-.07, 2.4, .64, .65, { fill: '#492A22', stroke: JE.ink, lw });
-    X.save(); X.beginPath(); X.ellipse(-.07, 2.4, .64, .65, 0, 0, TAU); X.clip();
-    shape(rectPts(-.8, 1.76, 1.5, .26), { fill: JE.teeth, stroke: null });
-    ellipse(-.07, 2.94, .4, .22, { fill: JE.tongue, stroke: null }); X.restore();
-  } else if (kind === 'o') {
-    ellipse(-.07, 2.3, .26, .34, { fill: '#492A22', stroke: JE.ink, lw });
-  } else {
-    line([[-.65, 2.2], [.5, 2.2]], { stroke: JE.ink, lw });
-  }
+    shape(pts, { stroke: JE.ink, lw, smooth: .8 });
+  } else if (kind === 'o') ellipse(0, 1.7, .32, .38, dark);
+  else if (kind === 'O') ellipse(0, 1.85, .58, .72, dark);
+  else if (kind === 'flat') line([[-.8, 1.6], [.8, 1.6]], { stroke: JE.ink, lw: lw * 1.4 });
+  else if (kind === 'frown') line([[-1.1, 2.0], [-.55, 1.6], [0, 1.5], [.55, 1.6], [1.1, 2.0]], { stroke: JE.ink, lw: lw * 1.4, smooth: true });
+  else if (kind === 'smirk') line([[-1.0, 1.6], [0, 1.72], [1.15, 1.25]], { stroke: JE.ink, lw: lw * 1.4, smooth: true });
+  else if (kind === 'wobble') line([[-1, 1.7], [-.6, 1.45], [-.2, 1.75], [.2, 1.45], [.6, 1.75], [1, 1.5]], { stroke: JE.ink, lw: lw * 1.3, smooth: true });
   X.restore();
 }
 
