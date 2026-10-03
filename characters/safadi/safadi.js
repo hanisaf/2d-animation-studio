@@ -22,7 +22,7 @@
 // Returns anchors in screen px: { head, mouth, top, eyeL, eyeR, chest, belly, handL, handR, pointerTip, bulb }
 //
 // Also: safadiBoard(x, y, w, k, t, { kind, title }): his floating holographic chalkboard (screen px; k 0..1 = appear + draw).
-//   kind: 'graph' | 'steps' | 'atom' | 'bulb' | 'story' | 'plate' (healthy plate) | 'crash' (sugar spike vs steady veggies) | 'passing' | 'dribbling' | 'shooting' | 'teamwork' (soccer lessons).
+//   kind: 'graph' | 'steps' | 'atom' | 'bulb' | 'story' | 'plate' (healthy plate) | 'crash' (sugar spike vs steady veggies) | 'passing' | 'dribbling' | 'shooting' | 'teamwork' (soccer lessons) | 'offside'.
 //   safadiWalk(p, k): walk-cycle pose options (p = steps travelled, k = stride amount).
 
 const SF = {
@@ -444,6 +444,24 @@ function safadiBoard(x, y, w, k, t, o = {}) {
     const ang = []; for (let i = 0; i <= 10; i++) { const a = -i / 10 * .62; ang.push([sp[0] + Math.cos(a) * 10 * U, sp[1] + Math.sin(a) * 10 * U]); } part(ang, .82, .92);
     if (d > .3) circle(sp[0], sp[1], 2 * U, { fill: SF.glowGold, stroke: SF.chalk, lwPx: 1.5 });
     label('θ', 30, top + 36, 5.5, .9);
+  } else if (kind === 'offside') {                                 // top-down: the pass, YOU, (1) the keeper, (2)? the missing defender
+    const y0 = top + 3, y1 = 57, X0 = 8, X1 = 92, at = (x, y) => [x * U, y * U];
+    part([at(X0, y0), at(X1, y0), at(X1, y1), at(X0, y1), at(X0, y0)], 0, .08);
+    part([at(50, y0), at(50, y1)], .05, .1);
+    part([at(X1, 22 + top / 2), at(X1 - 9, 22 + top / 2), at(X1 - 9, 46), at(X1, 46)], .08, .14);
+    const ex = (x, y, r, a, b, dash) => { X.save(); if (dash) X.setLineDash([1.2 * U, 1 * U]); part([at(x - r, y - r), at(x + r, y + r)], a, (a + b) / 2); part([at(x + r, y - r), at(x - r, y + r)], (a + b) / 2, b); X.restore(); };
+    if (d > .02) circle(30 * U, 44 * U, 3 * U * backOut(seg(d, .02, .1)), { fill: null, stroke: SF.chalk, lwPx: Math.max(2, U * .9) });
+    if (d > .1) circle(34 * U, 46 * U, 1.3 * U, { fill: SF.glowGold, stroke: SF.chalk, lwPx: 1.2 });
+    X.save(); X.setLineDash([2 * U, 1.4 * U]); part([at(34, 45), at(68, 34)], .12, .3); X.restore();
+    part([at(65, 32), at(68, 34), at(65.5, 36.5)], .28, .32);
+    if (d > .22) circle(72 * U, 33 * U, 3 * U * backOut(seg(d, .22, .32)), { fill: null, stroke: SF.chalk, lwPx: Math.max(2, U * .9) });
+    label('YOU', 72, 26, 4.2, .3);
+    ex(86, 36, 2.6, .38, .5); label('1', 86, 30, 5, .48);
+    ex(78, 44, 2.6, .58, .7, true); label('2?', 78, 51, 5, .68);
+    ex(16, 30, 2.6, .78, .86);
+    X.save(); X.setLineDash([1.6 * U, 1.2 * U]); part([at(74, 46), at(22, 33)], .84, .94); X.restore();
+    label('way over there!', 26, 24, 3.8, .9);
+    label('OFFSIDE!', 50, 60, 4.6, .96);
   } else if (kind === 'teamwork') {                                // a ring of stick players joined by arrows, a heart in the middle
     const cx = 50 * U, cy = (top + 24) * U, R = 17 * U, n = 5;
     for (let i = 0; i < n; i++) {

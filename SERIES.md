@@ -59,6 +59,8 @@ Each scene's folder holds its synopsis, script, shot list and editing notes (`RE
 | 10 | [The Great Debate](scenes/scene10_great_debate/README.md) | 128 s | From DCES to the lecture hall: Safadi says books beat video games, Housam debates him, and the audience votes for Housam. *"Fine… thirty minutes a day."* |
 | 11 | [The Great Hydration Debate](scenes/scene11_hydration_debate/README.md) | 200 s | After their win, Housam and Alma argue eight reasons for sports drinks and win, then Safadi lets them drink his "Safadi Energy Drinks": unsweetened tea |
 | 13 | [Deal With It](scenes/scene13_deal_with_it/README.md) | 94 s | At the soccer field, Safadi lectures on soccer until Housam challenges him. Safadi calls in his twin, Doctor Sami (*"Deal with it."*); Housam calls in cousins Jenna and Danny (*"DEAL WITH IT!"*); referee Fester blows the whistle. *To be continued…* |
+| 14 | [The Offside Trap](scenes/scene14_offside_trap/README.md) | 105 s | The first half: the twins spring the offside trap. Danny scores (offside), Alma saves, Housam's backflip bicycle kick (offside again). *"WHY???"* Fester explains offside Safadi-style until Safadi cuts him off. Half-time, 0–0 |
+| 15 | [The Second Half](scenes/scene15_second_half/README.md) | 180 s | The kids beat the offside trap by dribbling (*"OFFSIDE!"* *"NOT!"*), Alma survives an ice-cream daydream, the twins fight back with two penalties and a wonder bounce, and Housam wins it 4–3. At the cooler, the twins keep the real drinks this time. **The End.** |
 
 ## Where the story is heading
 
