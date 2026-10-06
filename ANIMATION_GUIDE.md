@@ -43,7 +43,7 @@ Every asset is a self-contained folder (see `docs/HANDBOOK.md` §8): a scene is 
   - Easings: `ease`, `easeIn`, `easeOut`, `backOut` (overshoot), `elasticOut`.
   - `kick(t, t0, decay)` is an impulse, and `boing(t, t0, freq, decay)` is a damped wobble.
   - `wob(t, freq, phase)` is a sine, and `pulse(t)` hits on the beat of `bpm`.
-- **Callouts:** `callout(text, ax, ay, age, { dx, dy, size, cps, hold, kind: 'talk' | 'shout' | 'think' })` draws a speech bubble whose tail points at (ax, ay). Wrap `*words*` in asterisks to colour them. It returns `{ talking }`; feed that to `lipFlap(t, talking, restMouth)` for the mouth.
+- **Callouts:** `callout(text, ax, ay, age, { dx, dy, size, cps, hold, kind: 'talk' | 'shout' | 'think' | 'whisper' | 'robot' })` draws a speech bubble whose tail points at (ax, ay). Wrap `*words*` in asterisks to colour them. It returns `{ talking }`; feed that to `lipFlap(t, talking, restMouth)` for the mouth.
 - **Effects:**
   - `sfx(txt, x, y, size, colour, age)` is a comic sound effect that pops in and fades out.
   - `flash(k)` is a full-frame flash, and `iris(cx, cy, r)` is an iris-out.

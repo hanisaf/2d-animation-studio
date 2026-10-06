@@ -4,20 +4,22 @@
 // jenna(x, y, s, o) → anchors. (x, y) = floor point between the feet (screen px), s = px per local unit.
 
 const JENNA_UNIT = 5.0;   // world units per local unit
+const JENNA_SCALE = 1.06; // a small overall size increase, including the face
 
 const JE = {
-  ink: '#3B2530',
-  skin: '#dabaa8', skinDk: '#ceb7ac', cheek: '#E39D8D', nose: '#C98D74',
-  hair: '#4E372A', hairDk: '#30231D', hairLt: '#785640',
-  shirt: '#F2CCD2', shirtDk: '#DDB0BC',
+  ink: '#29221F',
+  skin: '#F4C09E', skinDk: '#CC8F76', cheek: '#DE9991', nose: '#BB806A',
+  hair: '#302924', hairDk: '#201C19', hairLt: '#51443A',
+  shirt: '#F5D6D9', shirtDk: '#DDB0BC',
   skirtBase: '#DFA4AE', skirtTulle: '#F1C1C8',
   shoe: '#F2B8C6', shoeTop: '#E6A5B5', shoeSole: '#FFFFFF', sock: '#FFFFFF',
   clip: '#DFA0C4',
-  eyeW: '#FFFFFF', iris: '#80502B', lash: '#140A05', brow: '#382012', mouth: '#9C3D49', tongue: '#E88494', teeth: '#FFFFFF',
+  eyeW: '#FFFFFF', iris: '#201C19', lash: '#140A05', brow: '#302924', mouth: '#9C3D49', lip: '#D68A92', tongue: '#E88494', teeth: '#FFFFFF',
   graphic: { butterfly: '#D66D9F', flowerY: '#F0E675', flowerG: '#9BD687', flowerB: '#688AB5', flowerP: '#F2A2CA' }
 };
 
 function jenna(x, y, s, o = {}) {
+  s *= JENNA_SCALE;
   const t = o.t ?? T, A = {}, lw = clamp(s * .12, 1.2, 5.0) / s;
   X.save(); X.translate(x, y); X.scale(s * (o.flip ? -1 : 1), s);
   
@@ -29,13 +31,13 @@ function jenna(x, y, s, o = {}) {
 
   withBoil(o.boil ?? .7, () => {
     // Reference proportions: expressive child face and a knee-length tulle skirt.
-    const hipY = -11.5 + (o.dy || 0), lean = o.lean || 0, cl = Math.cos(lean), sl = Math.sin(lean);
+    const hipY = -10.0 + (o.dy || 0), lean = o.lean || 0, cl = Math.cos(lean), sl = Math.sin(lean);
     const tl = (px, py) => [px * cl - py * sl, hipY + px * sl + py * cl];
-    const headT = () => { X.translate(0, hipY); X.rotate(lean); X.translate(0, -6.0); X.rotate(o.tilt || 0); X.translate(0, -4.0); };
+    const headT = () => { X.translate(0, hipY); X.rotate(lean); X.translate(0, -6.0); X.rotate(o.tilt || 0); X.translate(0, -6.35); };
 
     // Legs
     [[-1, o.footL || [-1.25, -.65]], [1, o.footR || [1.25, -.65]]].forEach(([sd, f]) => {
-      const hp = tl(sd * 1.1, 0), { joint, end } = ik2(hp, f, 5.5, 5.5, [sd * .15, 1]);
+      const hp = tl(sd * 1.1, 0), { joint, end } = ik2(hp, f, 4.75, 4.75, [sd * .15, 1]);
       jeLimb([hp, joint, end], 1.6, JE.skin, lw);
       jeSockAndShoe(end, sd, lw);
       A[sd < 0 ? 'footL' : 'footR'] = toPx(end[0], end[1]);
@@ -44,42 +46,52 @@ function jenna(x, y, s, o = {}) {
     // Torso & Skirt
     X.save(); X.translate(0, hipY); X.rotate(lean);
     // Neck
-    shape(rectPts(-.6, -7.0, 1.2, 1.5), { fill: JE.skin, stroke: JE.ink, lw });
+    shape([[-.95, -8.3], [.95, -8.3], [1.15, -6.7], [0, -6.3], [-1.15, -6.7]], { fill: JE.skin, stroke: JE.ink, lw, smooth: .4 });
+    shape([[-.95, -8.3], [.95, -8.3], [.9, -7.5], [0, -7.15]], { fill: JE.skinDk, stroke: null, smooth: .4 });
     // Skirt back/underskirt
-    const skirtW = 3.15;
+    const skirtW = 3.65;
     const skirtL = 5.5; 
-    shape([[-1.8, -0.5], [1.8, -0.5], [skirtW, skirtL], [-skirtW, skirtL]], { fill: JE.skirtBase, stroke: JE.ink, lw, smooth: .2 });
+    shape([[-2.5, -0.5], [2.5, -0.5], [skirtW, skirtL], [-skirtW, skirtL]], { fill: JE.skirtBase, stroke: JE.ink, lw, smooth: .2 });
     // Tulle skirt layers
-    shape([[-1.8, -0.5], [1.8, -0.5], [skirtW + 0.3, skirtL + 0.3], [-(skirtW + 0.3), skirtL + 0.3]], { fill: rgba(JE.skirtTulle, .85), stroke: JE.ink, lw, smooth: .2 });
+    shape([[-2.5, -0.5], [2.5, -0.5], [skirtW + 0.3, skirtL + 0.3], [-(skirtW + 0.3), skirtL + 0.3]], { fill: rgba(JE.skirtTulle, .85), stroke: JE.ink, lw, smooth: .2 });
     X.save();
-    tracePath([[-1.8, -.5], [1.8, -.5], [skirtW + .3, skirtL + .3], [-skirtW - .3, skirtL + .3]], true, .2); X.clip();
+    tracePath([[-2.5, -.5], [2.5, -.5], [skirtW + .3, skirtL + .3], [-skirtW - .3, skirtL + .3]], true, .2); X.clip();
     for (let i = -4; i <= 4; i++) {
-      line([[i * .4, 0], [i * .76, skirtL + .4]], { stroke: rgba(JE.skirtBase, .6), lw: .22 });
-      line([[i * .4 + .12, 0], [i * .76 + .17, skirtL + .4]], { stroke: rgba('#FFF3EF', .45), lw: .14 });
+      line([[i * .53, 0], [i * .85, skirtL + .4]], { stroke: rgba(JE.skirtBase, .6), lw: .22 });
+      line([[i * .53 + .12, 0], [i * .85 + .17, skirtL + .4]], { stroke: rgba('#FFF3EF', .45), lw: .14 });
     }
     X.restore();
     // Shirt
-    jeShirt(lw);
+    X.save(); X.scale(1.4, 1.15); jeShirt(lw / 1.4); X.restore();
     A.chest = toPx(0, -5.5); A.belly = toPx(0, -2);
     X.restore();
 
+    // The plush follows the left hand through every pose and the whole-body transform.
+    const hasGiraffe = o.giraffe !== false;
     // Arms (in front)
-    [[-1, o.handL || [-2.05, -12.0], o.handPoseL || 'fist'], [1, o.handR || [2.05, -12.0], o.handPoseR || 'fist']].forEach(([sd, tg, pose]) => {
-      const sh = tl(sd * 2.2, -5.5), { joint, end } = ik2(sh, tg, 3.5, 3.5, [sd * 1, 0.5]);
-      jeLimb([sh, joint, end], 1.2, JE.skin, lw);
+    [[-1, o.handL || tl(hasGiraffe ? -1.6 : -2.65, hasGiraffe ? -3.4 : -1.1), o.handPoseL || (hasGiraffe ? 'grip' : 'hip')], [1, o.handR || tl(2.65, -1.1), o.handPoseR || 'hip']].forEach(([sd, tg, pose]) => {
+      const sh = tl(sd * 3.0, -6.3), { joint, end } = ik2(sh, tg, 3.5, 3.5, [sd * 1, 0.5]);
+      jeLimb([sh, joint, end], 1.05, JE.skin, lw);
       // Sleeve (over upper arm)
       const slvEnd = mixPt(sh, joint, .45);
-      const slvW = 1.4;
+      const slvW = 1.65;
       line([sh, slvEnd], { stroke: JE.ink, lw: slvW + lw * 2, lineCap: 'round' });
       line([sh, slvEnd], { stroke: JE.shirt, lw: slvW, lineCap: 'round' });
+      const sleeveAngle = Math.atan2(joint[1] - sh[1], joint[0] - sh[0]);
+      const cuff = [-Math.sin(sleeveAngle) * slvW * .46, Math.cos(sleeveAngle) * slvW * .46];
+      line([[slvEnd[0] - cuff[0], slvEnd[1] - cuff[1]], [slvEnd[0] + cuff[0], slvEnd[1] + cuff[1]]], { stroke: JE.shirtDk, lw: lw * .8 });
       // Hand
       const ang = Math.atan2(end[1] - joint[1], end[0] - joint[0]);
-      jeHand(end, ang, sd, pose, lw);
+      if (sd < 0 && hasGiraffe) {
+        X.save(); X.translate(end[0] + .3, end[1]); X.rotate(lean);
+        jeGiraffe(lw); A.giraffe = toPx(0, -2.55); X.restore();
+        jeHand(end, 0, sd, 'grip', lw);
+      } else jeHand(end, ang, sd, pose, lw);
       A[sd < 0 ? 'handL' : 'handR'] = toPx(end[0] + Math.cos(ang)*.5, end[1] + Math.sin(ang)*.5);
     });
 
     // Head
-    X.save(); headT(); X.scale(1.17, 1.08);
+    X.save(); headT(); X.scale(1.25, 1.25);
     jeHead(o, t, lw, A);
     A.top = toPx(0, -4.6);
     X.restore();
@@ -128,8 +140,8 @@ function jeButterfly(x, y, size, ang = 0) {
     shape([[0, .05], [sd * .8, .18], [sd * .68, .92], [sd * .3, .83]],
       { fill: JE.graphic.flowerP, stroke: null, smooth: .6 });
     line([[sd * .1, -.02], [sd * .67, -.75], [sd * .88, -.7], [sd * .35, -.2]],
-      { stroke: '#EFB7CC', lw: .05, smooth: true });
-    line([[sd * .08, .12], [sd * .42, .66]], { stroke: '#E1A6BA', lw: .05 });
+      { stroke: '#A94478', lw: .055, smooth: true });
+    line([[sd * .08, .12], [sd * .42, .66]], { stroke: '#B45080', lw: .055 });
     line([[0, -.08], [sd * .15, -.42]], { stroke: '#7FAA82', lw: .04 });
   });
   line([[0, -.14], [0, .6]], { stroke: '#7FAA82', lw: .1 });
@@ -140,7 +152,7 @@ function jeShirt(lw) {
   const body = [[-1.8, -.5], [-2.05, -1.5], [-1.9, -3], [-2.2, -6], [-1.2, -6.5],
     [0, -6.2], [1.2, -6.5], [2.2, -6], [1.9, -3], [2.05, -1.5], [1.8, -.5], [0, -.3]];
   shape(body, { fill: JE.shirt, stroke: JE.ink, lw, smooth: .4 });
-  line([[-.75, -6.4], [0, -6.07], [.75, -6.4]], { stroke: JE.shirtDk, lw: .17, smooth: true });
+  shape([[-1.05, -6.42], [-.95, -5.95], [0, -5.7], [.95, -5.95], [1.05, -6.42], [0, -6.12]], { fill: JE.shirt, stroke: JE.ink, lw: lw * .8, smooth: .5 });
   X.save(); tracePath(body, true, .4); X.clip();
   withBoil(0, () => {
     line([[-1.85, -.75], [0, -.62], [1.85, -.75]], { stroke: JE.shirtDk, lw: .09, smooth: true });
@@ -165,121 +177,252 @@ function jeHead(o, t, lw, A) {
   // Hair is tied back, leaving both ears visible.
   shape([[0, -4.35], [2.05, -3.9], [3.05, -2.2], [2.87, 1.0], [-2.87, 1.0], [-3.05, -2.2], [-2.05, -3.9]],
     { fill: JE.hair, stroke: JE.ink, lw, smooth: .65 });
-  [-1, 1].forEach(sd => {
-    ellipse(sd * 2.86 - turn * .2, .8, .55, .84, { fill: JE.skin, stroke: JE.ink, lw });
-    ellipse(sd * 2.98 - turn * .2, .85, .23, .44, { fill: rgba(JE.skinDk, .55), stroke: null });
-  });
+  // Portrait curves use landmarks from the supplied reference (55 px per head unit).
+  // Keep the facial curves steady while the surrounding rig retains its drawing boil.
+  withBoil(0, () => {
+    const edge = lw * .65;
+    [-1, 1].forEach(sd => {
+      X.save(); X.translate(-turn * .2, 0);
+      if (sd > 0) { X.translate(.12, 0); X.scale(-1, 1); }
+      jePortraitPath([['M', 544, 399], ['C', 525, 375, 508, 390, 510, 422],
+        ['C', 510, 460, 518, 488, 541, 495], ['C', 554, 496, 556, 473, 551, 451], ['Z']],
+        { fill: JE.skin, stroke: JE.ink, lw: edge });
+      jePortraitPath([['M', 522, 406], ['C', 516, 423, 526, 444, 536, 453],
+        ['C', 524, 455, 532, 470, 536, 476]], { stroke: JE.ink, lw: edge * .7 });
+      jePortraitPath([['M', 524, 407], ['C', 533, 408, 542, 425, 545, 440]],
+        { stroke: JE.ink, lw: edge * .7 });
+      X.restore();
+    });
+    // A broad forehead and gently tapered oval jaw match the illustrated portrait.
+    const face = [['M', 731, 244], ['C', 700, 234, 654, 239, 623, 255],
+      ['C', 574, 277, 549, 327, 546, 384], ['C', 542, 432, 547, 485, 561, 521],
+      ['C', 580, 558, 623, 586, 670, 590], ['C', 714, 593, 753, 572, 778, 540],
+      ['C', 805, 516, 817, 470, 814, 423], ['C', 814, 365, 800, 313, 777, 283],
+      ['C', 760, 264, 746, 249, 731, 244], ['Z']];
+    jePortraitPath(face, { fill: JE.skin, stroke: JE.ink, lw: edge });
+    // Narrow temple and jaw shadows give the face the reference's warm volume.
+    X.save(); jePortraitPath(face); X.clip();
+    jePortraitPath([['M', 556, 315], ['C', 544, 397, 548, 481, 568, 525],
+      ['C', 590, 568, 624, 599, 665, 616], ['C', 619, 607, 569, 562, 551, 517],
+      ['C', 530, 453, 532, 358, 556, 315], ['Z']], { fill: JE.skinDk, stroke: null });
+    jePortraitPath([['M', 781, 288], ['C', 818, 372, 818, 459, 795, 519],
+      ['C', 780, 556, 750, 584, 728, 596], ['C', 778, 574, 811, 529, 829, 462],
+      ['L', 828, 319], ['Z']], { fill: JE.skinDk, stroke: null });
+    X.restore();
+    const blush = o.blush ?? .18;
+    if (blush > .01) [-1, 1].forEach(sd => ellipse(sd * 1.65 + tx * .5, 1.55, .65, .38,
+      { fill: rgba(JE.cheek, .35 * blush), stroke: null }));
 
-  // Face Shape: Wider, squarer/rounder jawline
-  const face = [[0, -3.0], [2.2, -2.5], [2.8, 0], [2.5, 2.5], [1.2, 3.5], [0, 3.8], [-1.2, 3.5], [-2.5, 2.5], [-2.8, 0], [-2.2, -2.5]];
-  shape(face, { fill: JE.skin, stroke: JE.ink, lw, smooth: true });
-  
-  // Cheeks
-  const bl = o.blush ?? .8;
-  if (bl > .01) [-1, 1].forEach(sd => ellipse(sd * 1.8 + tx * .5, 1.4, .9, .6, { fill: rgba(JE.cheek, .4 * bl), stroke: null }));
-
-  // Eyes: Almond shaped, wider spacing
-  const eyeX = [-1.1 + tx, 1.1 + tx];
-  eyeX.forEach((ex, i) => jeEye(ex, -.2, { ...o, t }, i === 0, lw));
-  A.eyeL = toPx(eyeX[0], -0.2); A.eyeR = toPx(eyeX[1], -0.2);
-
-  // Soft arched eyebrows and a small shaded nose.
-  eyeX.forEach(ex => {
+    X.save(); X.translate(tx, 0);
+    // Thick, gently angled brows with rounded inner ends.
     const lift = o.brows === 'up' ? -.28 : o.brows === 'worried' ? -.12 : 0;
-    line([[ex - .65, -1.3 + lift], [ex, -1.55 + lift], [ex + .65, -1.3 + lift]],
-      { stroke: JE.hairLt, lw: .2, smooth: true });
+    X.save(); X.translate(0, lift - .22);
+    jePortraitPath([['M', 563, 351], ['C', 583, 327, 601, 326, 620, 334],
+      ['C', 635, 340, 648, 346, 647, 358], ['C', 643, 367, 629, 356, 615, 349],
+      ['C', 593, 338, 577, 343, 563, 351], ['Z']],
+      { fill: JE.brow, stroke: JE.ink, lw: edge * .5 });
+    jePortraitPath([['M', 710, 354], ['C', 709, 343, 724, 340, 740, 340],
+      ['C', 769, 339, 786, 347, 792, 368], ['C', 777, 351, 754, 354, 727, 357],
+      ['C', 718, 359, 711, 359, 710, 354], ['Z']],
+      { fill: JE.brow, stroke: JE.ink, lw: edge * .5 });
+    X.restore();
+    jeEye((610 - 680) / 55, (395 - 400) / 55, { ...o, t }, true, edge);
+    jeEye((744 - 680) / 55, (398 - 400) / 55, { ...o, t }, false, edge);
+    // A gentle bridge and rounded tip, with subtle nostril marks.
+    jePortraitPath([['M', 677, 421], ['C', 675, 442, 664, 461, 664, 474]],
+      { stroke: rgba(JE.nose, .45), lw: edge * .65 });
+    ellipse(-.07, 1.38, .38, .23, { fill: rgba(JE.nose, .38), stroke: null });
+    line([[-.43, 1.43], [-.27, 1.57], [-.12, 1.58]],
+      { stroke: JE.ink, lw: edge * .8, smooth: true });
+    line([[.32, 1.44], [.21, 1.57], [.08, 1.58]],
+      { stroke: JE.ink, lw: edge * .8, smooth: true });
+    ellipse(-.07, 1.26, .13, .065, { fill: 'rgba(255,255,255,.28)', stroke: null });
+    X.restore();
+    jeMouth(o.mouth || 'grin', tx, edge);
+    A.eyeL = toPx((610 - 680) / 55 + tx, (395 - 400) / 55);
+    A.eyeR = toPx((744 - 680) / 55 + tx, (398 - 400) / 55);
+    A.mouth = toPx(tx, 2.45); A.head = toPx(0, 0);
   });
-  ellipse(tx * 1.1, 1.12, .34, .25, { fill: rgba(JE.nose, .65), stroke: null });
-  ellipse(tx * 1.1 - .08, 1.02, .15, .08, { fill: '#F2C7AA', stroke: null });
 
-  // Mouth: Wide, toothy smile
-  jeMouth(o.mouth || 'grin', tx, lw);
-  A.mouth = toPx(tx, 2.4); A.head = toPx(0, 0);
-
-  // Short waves around the forehead, with a part just right of centre.
-  shape([[.6, -3.65], [-.6, -4.48], [-2.0, -4.17], [-2.9, -3.18], [-2.88, -.45],
-    [-2.5, -1.12], [-2.25, -2.33], [-1.4, -2.5], [-.6, -2.91], [.18, -3.12]],
-    { fill: JE.hair, stroke: JE.ink, lw, smooth: .5 });
-  shape([[.5, -3.65], [1.4, -4.17], [2.54, -3.58], [3, -2.34], [2.76, -.38],
-    [2.48, -1.3], [2.03, -2.45], [1.2, -2.94]],
-    { fill: JE.hair, stroke: JE.ink, lw, smooth: .55 });
-  line([[-2.58, -2.6], [-2.0, -3.45], [-1.0, -3.73], [-.3, -3.37]], { stroke: JE.hairLt, lw: .14, smooth: true });
-  line([[.9, -3.66], [1.9, -3.3], [2.55, -2.23]], { stroke: JE.hairLt, lw: .14, smooth: true });
-  line([[-1.55, -2.58], [-.92, -2.48], [-.3, -3.05]], { stroke: JE.hairDk, lw: .13, smooth: true });
-
-  // Curly side ponytail rests over her right shoulder.
-  shape([[2.42, 2.03], [3.6, 2.38], [4.05, 4.6], [3.7, 6.83], [2.85, 7.1], [2.32, 5.5], [2.21, 3.35]],
-    { fill: JE.hair, stroke: JE.ink, lw, smooth: .6 });
-  [[2.7, 2.65], [3.35, 3.0], [2.75, 3.7], [3.65, 3.9], [2.9, 4.7], [3.65, 5.1], [2.75, 5.8], [3.35, 6.3]].forEach(([cx, cy], i) => {
-    ellipse(cx, cy, .5, .62, { fill: i % 2 ? JE.hair : JE.hairLt, stroke: JE.hairDk, lw: lw * .65 });
-    line([[cx - .18, cy - .3], [cx + .2, cy - .18], [cx + .21, cy + .2], [cx - .12, cy + .29]],
-      { stroke: i % 2 ? JE.hairLt : JE.hair, lw: .12, smooth: true });
+  // Off-centre part and a long, loose sweep over the left temple.
+  jePortraitPath([['M', 736, 166], ['C', 695, 143, 643, 148, 603, 172],
+    ['C', 557, 185, 531, 222, 519, 260], ['C', 503, 293, 507, 331, 503, 365],
+    ['C', 496, 393, 515, 428, 540, 440], ['C', 523, 414, 531, 383, 550, 359],
+    ['C', 572, 327, 583, 298, 607, 280], ['C', 639, 258, 677, 259, 705, 241],
+    ['C', 718, 229, 728, 217, 735, 203], ['C', 739, 191, 741, 178, 736, 166], ['Z']],
+    { fill: JE.hair, stroke: JE.ink, lw: lw * .65 });
+  jePortraitPath([['M', 736, 166], ['C', 777, 161, 814, 188, 831, 222],
+    ['C', 853, 252, 857, 286, 849, 317], ['C', 857, 352, 843, 389, 816, 425],
+    ['C', 823, 391, 811, 357, 801, 327], ['C', 787, 305, 774, 282, 768, 259],
+    ['C', 760, 239, 743, 234, 731, 244], ['C', 739, 215, 744, 186, 736, 166], ['Z']],
+    { fill: JE.hair, stroke: JE.ink, lw: lw * .65 });
+  const waves = [
+    [['M', 725, 174], ['C', 673, 160, 601, 192, 568, 236]],
+    [['M', 721, 190], ['C', 676, 181, 618, 210, 590, 246]],
+    [['M', 713, 211], ['C', 675, 234, 615, 237, 585, 277]],
+    [['M', 580, 236], ['C', 541, 269, 544, 305, 522, 343]],
+    [['M', 574, 286], ['C', 562, 322, 526, 347, 527, 384]],
+    [['M', 746, 181], ['C', 786, 189, 815, 218, 821, 259]],
+    [['M', 750, 210], ['C', 786, 230, 779, 279, 810, 313]],
+    [['M', 818, 282], ['C', 842, 326, 822, 362, 831, 380]],
+  ];
+  waves.forEach(path => jePortraitPath(path, { stroke: JE.hairDk, lw: lw * .75 }));
+  waves.slice(0, 6).forEach(path => {
+    X.save(); X.translate(.08, -.08);
+    jePortraitPath(path, { stroke: rgba(JE.hairLt, .65), lw: lw * .4 }); X.restore();
   });
-  jeClip(-2.4, -2.72, -.42, lw);
-  jeClip(2.55, -1.96, .3, lw);
+  // Smooth low ponytail falls over her right shoulder (viewer left).
+  shape([[-2.35, 1.5], [-3.15, 2.3], [-3.55, 3.75], [-3.35, 5.0],
+    [-2.8, 5.65], [-3.0, 6.8], [-2.65, 8.1], [-1.9, 8.8], [-1.95, 7.35],
+    [-2.25, 6.1], [-2.0, 5.25], [-1.85, 3.9], [-2.0, 2.7]],
+    { fill: JE.hair, stroke: JE.ink, lw: lw * .85, smooth: .65 });
+  [[-2.9, -2.55], [-2.5, -2.2]].forEach(([outer, inner]) => {
+    line([[inner, 2.2], [outer, 3.75], [outer + .15, 4.8], [-2.55, 5.55]],
+      { stroke: JE.hairLt, lw: .11, smooth: .8 });
+    line([[-2.6, 5.95], [outer + .2, 7.1], [-2.1, 8.3]],
+      { stroke: JE.hairLt, lw: .09, smooth: .8 });
+  });
+  // Pink ribbon tied around the ponytail.
+  shape([[-2.62, 5.65], [-3.65, 5.25], [-3.8, 5.8], [-3.4, 6.15], [-2.62, 5.85]],
+    { fill: '#EE9CB8', stroke: JE.ink, lw: lw * .7, smooth: .45 });
+  shape([[-2.6, 5.7], [-1.65, 5.2], [-1.4, 5.8], [-1.85, 6.1], [-2.6, 5.85]],
+    { fill: '#EE9CB8', stroke: JE.ink, lw: lw * .7, smooth: .45 });
+  shape([[-2.7, 5.9], [-3.25, 7.3], [-2.8, 7.1], [-2.5, 7.4], [-2.4, 6.0]],
+    { fill: '#EE9CB8', stroke: JE.ink, lw: lw * .7 });
+  shape([[-2.5, 5.9], [-1.6, 6.95], [-1.65, 6.45], [-1.3, 6.4], [-2.35, 5.8]],
+    { fill: '#EE9CB8', stroke: JE.ink, lw: lw * .7 });
+  circle(-2.55, 5.75, .2, { fill: '#E988A8', stroke: JE.ink, lw: lw * .7 });
+
 }
 
-function jeClip(x, y, ang, lw) {
+function jeClip(x, y, ang, lw, color = JE.clip) {
   X.save(); X.translate(x, y); X.rotate(ang);
   [-1, 1].forEach(sd => {
-    ellipse(sd * .18, -.12, .17, .27, { fill: JE.clip, stroke: null });
-    ellipse(sd * .17, .2, .15, .19, { fill: '#E9B2D2', stroke: null });
+    ellipse(sd * .18, -.12, .15, .28, { fill: color, stroke: JE.ink, lw: lw * .6, rot: sd * .35 });
+    ellipse(sd * .16, .2, .12, .18, { fill: color, stroke: JE.ink, lw: lw * .6, rot: -sd * .3 });
   });
-  line([[0, -.26], [0, .31]], { stroke: '#EED999', lw: .08 });
+  line([[0, -.26], [0, .31]], { stroke: JE.hairDk, lw: .065 });
   X.restore();
 }
 
+// Draw cubic portrait paths in reference-image coordinates, mapped into the existing head rig.
+function jePortraitPath(commands, style) {
+  X.beginPath();
+  for (const [kind, ...p] of commands) {
+    const q = p.map((v, i) => (v - (i % 2 ? 400 : 680)) / 55);
+    if (kind === 'M') X.moveTo(...q);
+    else if (kind === 'L') X.lineTo(...q);
+    else if (kind === 'C') X.bezierCurveTo(...q);
+    else if (kind === 'Z') X.closePath();
+  }
+  if (style) paintPath(style);
+}
+
+// Alma's rounded eyes and lashes, scaled to Jenna's portrait proportions.
 function jeEye(cx, cy, o, isLeft, lw) {
+  X.save(); X.translate(cx, cy); X.scale(.56, .56);
+  jeEyeShape(0, 0, o, isLeft, lw / .56, o.t ?? T, 1);
+  X.restore();
+}
+
+function jeEyeShape(cx, cy, o, isLeft, lw, t, narrow) {
   let kind = o.eyes || 'open';
   if (kind === 'wink') kind = isLeft ? 'open' : 'happy';
-  const rx = .92, ry = kind === 'wide' ? .9 : .75;
-  if (kind === 'happy' || kind === 'closed') {
-    line([[cx - rx, cy + .12], [cx, cy + (kind === 'happy' ? -.22 : .18)], [cx + rx, cy + .12]],
-      { stroke: JE.lash, lw: lw * 1.5, smooth: true }); return;
+  const rx = 1.28 * narrow, ry = 1.42;
+  if (kind === 'happy') return line([[cx - 1.0, cy + .35], [cx, cy - .55], [cx + 1.0, cy + .35]], { stroke: JE.lash, lw: lw * 2.2, smooth: true });
+  if (kind === 'closed') { line([[cx - 1.0, cy], [cx, cy + .45], [cx + 1.0, cy]], { stroke: JE.lash, lw: lw * 2.2, smooth: true }); return; }
+  if (kind === 'squeeze') { const d = isLeft ? 1 : -1; return line([[cx - d * .85, cy - .6], [cx + d * .6, cy], [cx - d * .85, cy + .6]], { stroke: JE.lash, lw: lw * 2.2 }); }
+  if (kind === 'star' || kind === 'heart') {
+    const pts = kind === 'star' ? starPts(cx, cy, 1.25, .5, 5) : [[cx, cy + 1.05], [cx - 1.15, cy - .05], [cx - .95, cy - .8], [cx - .35, cy - .95], [cx, cy - .45], [cx + .35, cy - .95], [cx + .95, cy - .8], [cx + 1.15, cy - .05]];
+    shape(pts, { fill: kind === 'star' ? JE.graphic.flowerY : '#F06C8E', stroke: JE.ink, lw, smooth: kind === 'heart' ? .5 : false });
+    circle(cx - .35, cy - .35, .2, { fill: '#FFFFFF', stroke: null });
+    return;
   }
-  ellipse(cx, cy, rx, ry, { fill: JE.eyeW, stroke: JE.ink, lw: lw * .7 });
-  X.save(); X.beginPath(); X.ellipse(cx, cy, rx, ry, 0, 0, TAU); X.clip();
-  const ix = cx + clamp(o.lookX || 0, -1, 1) * .22, iy = cy + .06 + clamp(o.lookY || 0, -1, 1) * .17;
-  circle(ix, iy, .56, { fill: JE.iris, stroke: null });
-  circle(ix, iy, .34, { fill: JE.lash, stroke: null });
-  circle(ix - .18, iy - .22, .16, { fill: '#FFFFFF', stroke: null });
-  circle(ix + .18, iy + .17, .06, { fill: '#FFFFFF', stroke: null });
-  const ph = ((o.t ?? T) + .8) % 3.4;
-  const blink = clamp(o.blink ?? (ph < .16 ? Math.sin(ph / .16 * Math.PI) : 0));
-  if (blink > .01) shape(rectPts(cx - 1, cy - ry - .1, 2, (ry * 2 + .2) * blink), { fill: JE.skin, stroke: null });
+  const R = kind === 'wide' ? 1.1 : 1;
+  ellipse(cx, cy, rx * R, ry * R, { fill: JE.eyeW, stroke: JE.ink, lw });
+  const lx = clamp(o.lookX || 0, -1, 1), ly = clamp(o.lookY || 0, -1, 1), ir = kind === 'wide' ? .78 : .95;
+  const ix = cx + lx * .32 * narrow, iy = cy + .1 + ly * .38;
+  X.save(); X.beginPath(); X.ellipse(cx, cy, rx * R, ry * R, 0, 0, TAU); X.clip();
+  withBoil(0, () => {
+    circle(ix, iy, ir, { fill: radGrad(ix, iy + ir * .3, ir * .2, ir, [[0, '#B8763A'], [1, JE.iris]]), stroke: null });
+    circle(ix, iy, ir * .62, { fill: JE.lash, stroke: null });
+    circle(ix + ir * .32, iy - ir * .38, ir * .3, { fill: '#FFFFFF', stroke: null });
+    circle(ix - ir * .3, iy + ir * .35, ir * .12, { fill: '#FFFFFF', stroke: null });
+    const ph = (t + 2.1 + (o.blinkSeed || 0)) % 3.1, b = o.blink ?? (ph < .15 ? Math.sin(ph / .15 * Math.PI) : 0);
+    if (b > .02) shape(rectPts(cx - 1.6, cy - 1.7, 3.2, .3 + 3.2 * b), { fill: JE.skin, stroke: null });
+  });
   X.restore();
-  line([[cx - rx, cy -.1], [cx -.35, cy - ry], [cx + .3, cy - ry], [cx + rx, cy -.1]],
-    { stroke: JE.hairDk, lw: lw * 1.2, smooth: true });
+  // upper lid with lashes and a little flick at the outer corner
+  const sd = isLeft ? -1 : 1;
+  line([[cx - rx * R, cy - .1], [cx - rx * .5 * R, cy - ry * R * .92], [cx + rx * .5 * R, cy - ry * R * .92], [cx + rx * R, cy - .1]], { stroke: JE.lash, lw: lw * 2.3, smooth: .9 });
+  line([[cx + sd * rx * R * .92, cy - .45], [cx + sd * (rx * R + .45), cy - .85]], { stroke: JE.lash, lw: lw * 1.9 });
+  line([[cx + sd * rx * R * .72, cy - .95], [cx + sd * (rx * R + .25), cy - 1.35]], { stroke: JE.lash, lw: lw * 1.5 });
 }
 
 function jeMouth(kind, tx, lw) {
-  X.save(); X.translate(tx, 2.4);
+  // Match Alma's smile shapes while keeping them below Jenna's nose.
+  X.save(); X.translate(tx, 1.1); X.scale(.72, .72); lw /= .72;
+  const dark = { fill: JE.mouth, stroke: JE.ink, lw };
   if (kind === 'smile') {
-    line([[-.8, -.1], [0, .1], [.8, -.1]], { stroke: JE.ink, lw: lw * 1.5, smooth: true });
-    line([[-.7, -.15], [-.8, -.1]], { stroke: JE.ink, lw: lw });
-    line([[.7, -.15], [.8, -.1]], { stroke: JE.ink, lw: lw });
+    line([[-1.75, 1.2], [-.9, 1.65], [0, 1.78], [.9, 1.65], [1.75, 1.2]], { stroke: JE.ink, lw: lw * 1.3, smooth: true });
+    ellipse(0, 1.95, .7, .15, { fill: rgba(JE.lip, .45), stroke: null });
+    [-1, 1].forEach(sd => line([[sd * 1.72, 1.05], [sd * 1.9, 1.35]], { stroke: JE.ink, lw: lw * .9 }));
   } else if (kind === 'grin' || kind === 'open') {
-    // Wide toothy smile
-    const pts = kind === 'grin' ? [[-1.1, 0], [0, .1], [1.1, 0], [.75, .6], [0, .8], [-.75, .6]] : [[-.6, .1], [0, 0], [.6, .1], [.5, .8], [0, 1.0], [-.5, .8]];
-    shape(pts, { fill: JE.mouth, stroke: JE.ink, lw, smooth: .4 });
-    X.save(); tracePath(pts, true, .4); X.clip();
-    // Teeth block
-    shape(rectPts(-1.2, -.1, 2.4, kind === 'grin' ? .3 : .25), { fill: JE.teeth, stroke: null });
-    // Teeth separator
-    line([[-1.0, .2], [1.0, .2]], { stroke: rgba(JE.ink, .3), lw: lw*.8 });
-    ellipse(0, .8, .5, .3, { fill: JE.tongue, stroke: null });
+    const pts = kind === 'grin' ? [[-1.5, 1.2], [0, 1.4], [1.5, 1.2], [1.0, 2.2], [0, 2.5], [-1.0, 2.2]] : [[-.75, 1.3], [0, 1.2], [.75, 1.3], [.75, 2.0], [0, 2.55], [-.75, 2.0]];
+    X.save(); tracePath(pts, true, .8); X.fillStyle = JE.mouth; X.fill(); X.clip();
+    withBoil(0, () => { shape(rectPts(-1.7, 1.05, 3.4, kind === 'grin' ? .45 : .32), { fill: JE.teeth, stroke: null }); ellipse(0, 2.5, .75, .45, { fill: JE.tongue, stroke: null }); });
     X.restore();
-  } else if (kind === 'o') {
-    ellipse(0, .2, .25, .3, { fill: JE.mouth, stroke: JE.ink, lw });
-  } else {
-    line([[-.6, .1], [.6, .1]], { stroke: JE.ink, lw: lw * 1.5 });
-  }
+    shape(pts, { stroke: JE.ink, lw, smooth: .8 });
+  } else if (kind === 'o') ellipse(0, 1.7, .32, .38, dark);
+  else if (kind === 'O') ellipse(0, 1.85, .58, .72, dark);
+  else if (kind === 'flat') line([[-.8, 1.6], [.8, 1.6]], { stroke: JE.ink, lw: lw * 1.4 });
+  else if (kind === 'frown') line([[-1.1, 2.0], [-.55, 1.6], [0, 1.5], [.55, 1.6], [1.1, 2.0]], { stroke: JE.ink, lw: lw * 1.4, smooth: true });
+  else if (kind === 'smirk') line([[-1.0, 1.6], [0, 1.72], [1.15, 1.25]], { stroke: JE.ink, lw: lw * 1.4, smooth: true });
+  else if (kind === 'wobble') line([[-1, 1.7], [-.6, 1.45], [-.2, 1.75], [.2, 1.45], [.6, 1.75], [1, 1.5]], { stroke: JE.ink, lw: lw * 1.3, smooth: true });
   X.restore();
+}
+
+// Yellow plush giraffe, drawn upright with the hand wrapped around its long neck.
+function jeGiraffe(lw) {
+  const yellow = '#F9D64E', gold = '#F4AE38', cream = '#F4E6AF';
+  const style = { fill: yellow, stroke: JE.ink, lw: lw * .9, smooth: .65 };
+  // Four soft legs and orange hooves sit below the pear-shaped body.
+  [-1, 1].forEach(sd => {
+    ellipse(sd * .82, 3.25, .43, .93, { ...style, rot: sd * -.22 });
+    ellipse(sd * .86, 3.84, .43, .46, { fill: gold, stroke: JE.ink, lw: lw * .8, rot: sd * -.2 });
+  });
+  shape([[-.43, -1.55], [.43, -1.55], [.48, .65], [1.03, 2.35], [.82, 3.5],
+    [0, 3.8], [-.85, 3.48], [-1.02, 2.36], [-.5, .65]], style);
+  [-1, 1].forEach(sd => {
+    ellipse(sd * .46, -.05, .17, .26, { fill: gold, stroke: null, rot: sd * .3 });
+    ellipse(sd * .8, 2.25, .22, .35, { fill: gold, stroke: null, rot: sd * -.4 });
+    ellipse(sd * .56, 3.6, .46, .69, { ...style, rot: sd * -.18 });
+    ellipse(sd * .58, 4.0, .45, .43, { fill: gold, stroke: JE.ink, lw: lw * .85 });
+    // Orange ossicones and wide, floppy ears.
+    ellipse(sd * .38, -3.0, .18, .46, { fill: gold, stroke: JE.ink, lw: lw * .85, rot: sd * .25 });
+    shape([[sd * .55, -2.45], [sd * 1.19, -2.98], [sd * 1.28, -2.55], [sd * .78, -1.95]], style);
+  });
+  ellipse(0, -2.05, .83, .91, style);
+  [-1, 1].forEach(sd => ellipse(sd * .29, -2.35, .07, .13, { fill: JE.ink, stroke: null }));
+  ellipse(0, -1.72, .76, .63, { fill: cream, stroke: JE.ink, lw: lw * .85 });
+  [-1, 1].forEach(sd => ellipse(sd * .2, -1.92, .045, .07, { fill: JE.ink, stroke: null }));
+  line([[-.52, -1.64], [-.3, -1.38], [0, -1.3], [.3, -1.38], [.52, -1.64]],
+    { stroke: JE.ink, lw: lw * .85, smooth: .8 });
+  line([[-.65, 2.75], [-.38, 3.08]], { stroke: '#D4A22E', lw: lw * .65 });
+  line([[.65, 2.75], [.38, 3.08]], { stroke: '#D4A22E', lw: lw * .65 });
 }
 
 function jeHand(p, ang, sd, pose, lw) {
   X.save(); X.translate(p[0], p[1]); X.rotate(ang); if (sd < 0) X.scale(1, -1);
-  if (pose === 'fist') {
+  if (pose === 'grip') {
+    shape([[-.2, -.35], [.25, -.48], [.83, -.36], [1.05, -.1], [.96, .18],
+      [.62, .36], [.15, .4], [-.2, .26]], { fill: JE.skin, stroke: JE.ink, lw, smooth: .65 });
+    line([[.2, -.12], [.85, -.06]], { stroke: JE.skinDk, lw: lw * .7 });
+    line([[.2, .12], [.78, .16]], { stroke: JE.skinDk, lw: lw * .7 });
+  } else if (pose === 'hip') {
+    shape([[0, -.35], [.45, -.3], [.85, -.12], [1, .12], [.8, .24], [.35, .2], [0, .3]], { fill: JE.skin, stroke: JE.ink, lw, smooth: .5 });
+    line([[.35, -.1], [.78, .08]], { stroke: JE.skinDk, lw: lw * .7 });
+  } else if (pose === 'fist') {
      shape([[.1, -.3], [.4, -.4], [.7, -.2], [.8, 0], [.7, .2], [.3, .3], [.1, .2]], { fill: JE.skin, stroke: JE.ink, lw, smooth: .6 });
   } else {
      const f = pose === 'palm' ? [[-.4, .4], [-.1, .5], [.2, .4], [.5, .3], [-1.0, .3]] : [[-.2, .3], [0, .4], [.2, .4], [.4, .3], [-1.0, .2]];
@@ -326,7 +469,7 @@ function jennaSkip(p, k = 1) {
 }
 
 CHARACTERS.jenna = {
-  draw: jenna, unit: JENNA_UNIT, palette: JE, size: [14, 28],
+  draw: jenna, unit: JENNA_UNIT, palette: JE, size: [16, 29],
   poses: {
     'rest': (x, y, s, t) => jenna(x, y, s, {}),
     'hi!': (x, y, s, t) => jenna(x, y, s, { handR: [4.2 + .5 * wob(t, 1.6), -19.0], handPoseR: 'palm', mouth: 'grin', brows: 'up', tilt: .06 }),

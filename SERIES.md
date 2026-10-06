@@ -40,6 +40,7 @@ Each character's folder holds its description, look, personality and rig notes (
 | 🏫 | [Dove Creek Elementary](locations/dces/README.md) | DCES seen from the street: red brick, arched entrance canopy, crosswalk and drop-off loop |
 | 🎓 | [Lecture hall](locations/lecture_hall/README.md) | A tiered university lecture hall, shot toward the podium or back at the rows of students |
 | ⚽ | [County soccer field](locations/soccer_field/README.md) | A county park pitch with goals, bleachers, shelters, snack bar and scoreboard, shot from both ends and from the air |
+| 🏠 | [House](locations/house/README.md) | A two-storey red-brick family home across its front lawn: cream gable, columned porch, clover |
 
 ## Episodes (movie order)
 
@@ -61,6 +62,7 @@ Each scene's folder holds its synopsis, script, shot list and editing notes (`RE
 | 13 | [Deal With It](scenes/scene13_deal_with_it/README.md) | 94 s | At the soccer field, Safadi lectures on soccer until Housam challenges him. Safadi calls in his twin, Doctor Sami (*"Deal with it."*); Housam calls in cousins Jenna and Danny (*"DEAL WITH IT!"*); referee Fester blows the whistle. *To be continued…* |
 | 14 | [The Offside Trap](scenes/scene14_offside_trap/README.md) | 105 s | The first half: the twins spring the offside trap. Danny scores (offside), Alma saves, Housam's backflip bicycle kick (offside again). *"WHY???"* Fester explains offside Safadi-style until Safadi cuts him off. Half-time, 0–0 |
 | 15 | [The Second Half](scenes/scene15_second_half/README.md) | 180 s | The kids beat the offside trap by dribbling (*"OFFSIDE!"* *"NOT!"*), Alma survives an ice-cream daydream, the twins fight back with two penalties and a wonder bounce, and Housam wins it 4–3. At the cooler, the twins keep the real drinks this time. **The End.** |
+| 16 | [The Spooky Plan](scenes/scene16_spooky_plan/README.md) | 100 s | At Alma's house, she and Jenna plan Halloween decorations (a vampire dolphin! a mummy giraffe!). Safadi learns it's all about the candy and lectures on healthy food, while the girls whisper up Robo-Safadi with glowing red eyes. *"What's so funny?"* *"You shall see!"* *To be continued…* |
 
 ## Where the story is heading
 

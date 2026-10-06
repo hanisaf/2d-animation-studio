@@ -381,7 +381,7 @@
   function jennaPose(t, ctx) {
     const { o, talk, to } = common('jenna', t, ctx, { handL: [-2.6, -11.6], handR: [2.6, -11.6], handPoseL: 'fist', handPoseR: 'fist', brows: 'up' });
     if (t < 31) {                                                            // crouched over her drawing, stick in hand
-      Object.assign(o, { dy: 4.6, footL: [-2.4, -.6], footR: [2.4, -.6], handR: [3.8, -3.2 + .5 * Math.sin(t * 7) * on(t, 12.4, 16.5, .2)], handL: [-3, -9], lookY: .8, lookX: .3, mouth: talk ? o.mouth : 'flat' });
+      Object.assign(o, { dy: 3.1, footL: [-2.4, -.6], footR: [2.4, -.6], handR: [3.8, -3.2 + .5 * Math.sin(t * 7) * on(t, 12.4, 16.5, .2)], handL: [-3, -9], lookY: .8, lookX: .3, mouth: talk ? o.mouth : 'flat' });
       if (t > 18.4) Object.assign(o, { lookY: -.1, lookX: ctx.look('housam'), brows: 'up', mouth: talk ? o.mouth : 'o' });
       if (t > 28.4) Object.assign(o, UP.jenna, { dy: 0, footL: [-1.25, -.65], footR: [1.25, -.65], jump: 1.6 * kick(t, 28.6, 5), eyes: 'happy', mouth: talk ? o.mouth : 'grin' });
     }

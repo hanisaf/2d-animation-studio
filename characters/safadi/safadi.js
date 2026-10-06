@@ -22,7 +22,7 @@
 // Returns anchors in screen px: { head, mouth, top, eyeL, eyeR, chest, belly, handL, handR, pointerTip, bulb }
 //
 // Also: safadiBoard(x, y, w, k, t, { kind, title }): his floating holographic chalkboard (screen px; k 0..1 = appear + draw).
-//   kind: 'graph' | 'steps' | 'atom' | 'bulb' | 'story' | 'plate' (healthy plate) | 'crash' (sugar spike vs steady veggies) | 'passing' | 'dribbling' | 'shooting' | 'teamwork' (soccer lessons) | 'offside'.
+//   kind: 'graph' | 'steps' | 'atom' | 'bulb' | 'story' | 'plate' (healthy plate) | 'crash' (sugar spike vs steady veggies) | 'sugarbugs' (a tooth, candy and wiggling sugar bugs) | 'passing' | 'dribbling' | 'shooting' | 'teamwork' (soccer lessons) | 'offside'.
 //   safadiWalk(p, k): walk-cycle pose options (p = steps travelled, k = stride amount).
 
 const SF = {
@@ -415,6 +415,35 @@ function safadiBoard(x, y, w, k, t, o = {}) {
     X.restore();
     if (f2 > 0) line(f2 < 1 ? polySlice(veg, 0, f2) : veg, { stroke: '#9FE08A', lwPx: Math.max(2, U * 1.1) });
     label('ZOOM!', 34, top + 1, 5.5, .3); label('CRASH', 62, 62 - 4, 5, .55); label('veggies: steady', 76, 34, 4.2, .9);
+  } else if (kind === 'sugarbugs') {                               // a molar, candy, and the sugar bugs that feast on it
+    const cx = 50 * U, cy = (top + 19) * U, R = 11 * U;
+    const tooth = [[cx - R, cy - R * .9], [cx - R * .45, cy - R * 1.2], [cx, cy - R * .95], [cx + R * .45, cy - R * 1.2], [cx + R, cy - R * .9],
+      [cx + R * 1.05, cy], [cx + R * .7, cy + R * .7], [cx + R * .55, cy + R * 1.6], [cx + R * .2, cy + R * 1.65], [cx, cy + R * .8],
+      [cx - R * .2, cy + R * 1.65], [cx - R * .55, cy + R * 1.6], [cx - R * .7, cy + R * .7], [cx - R * 1.05, cy], [cx - R, cy - R * .9]];
+    X.save(); X.lineJoin = 'round'; part(tooth, 0, .3); X.restore();
+    if (d > .3) { X.globalAlpha = .55 * seg(d, .3, .45); shape(tooth.slice(0, -1), { fill: SF.chalk, stroke: null, smooth: .5 }); X.globalAlpha = 1; }
+    // candy that feeds them: a wrapped sweet and a lollipop
+    const sweet = k => { if (k <= 0) return; X.save(); X.translate(19 * U, (top + 14) * U); X.scale(k, k); X.rotate(-.3);
+      ellipse(0, 0, 4.4 * U, 3 * U, { fill: '#FF9BC4', stroke: SF.chalk, lwPx: 1.5 });
+      for (const sd of [-1, 1]) shape([[sd * 4 * U, 0], [sd * 8 * U, -2.6 * U], [sd * 8 * U, 2.6 * U]], { fill: '#FFC7DD', stroke: SF.chalk, lwPx: 1.5 }); X.restore(); };
+    const pop = k => { if (k <= 0) return; X.save(); X.translate(82 * U, (top + 12) * U); X.scale(k, k);
+      line([[0, 0], [0, 13 * U]], { stroke: SF.chalk, lwPx: Math.max(2, U * .8) });
+      circle(0, 0, 5 * U, { fill: '#9FE0FF', stroke: SF.chalk, lwPx: 1.5 });
+      const sw = []; for (let i = 0; i <= 24; i++) { const a = i / 24 * TAU * 1.6, r = i / 24 * 4.2 * U; sw.push([Math.cos(a) * r, Math.sin(a) * r]); } line(sw, { stroke: '#FF9BC4', lwPx: 1.5 }); X.restore(); };
+    sweet(backOut(seg(d, .3, .42))); pop(backOut(seg(d, .36, .48)));
+    // the bugs: green, grinning, wiggling, each with a little fork
+    [[-7, -5], [6, -7], [-2, 3], [8, 3], [-9, 8]].forEach(([bx, by], i) => {
+      const k = backOut(seg(d, .45 + i * .08, .57 + i * .08)); if (k <= 0) return;
+      const wx = Math.sin(t * 7 + i * 1.7) * .8 * U, wy = Math.abs(Math.sin(t * 9 + i)) * -.8 * U;
+      X.save(); X.translate(cx + bx * U + wx, cy + by * U + wy); X.scale(k, k); X.rotate(Math.sin(t * 5 + i) * .15);
+      for (let j = -1; j <= 1; j++) for (const sd of [-1, 1]) line([[sd * 1.6 * U, j * U], [sd * 3.2 * U, j * 1.4 * U + Math.sin(t * 14 + j + i) * .5 * U]], { stroke: SF.chalk, lwPx: 1.4 });
+      line([[-1 * U, -2.2 * U], [-1.8 * U, -4 * U]], { stroke: SF.chalk, lwPx: 1.4 }); line([[1 * U, -2.2 * U], [1.8 * U, -4 * U]], { stroke: SF.chalk, lwPx: 1.4 });
+      ellipse(0, 0, 2.3 * U, 2.6 * U, { fill: '#8EE07A', stroke: SF.chalk, lwPx: 1.5 });
+      circle(-.8 * U, -.7 * U, .55 * U, { fill: SF.ink, stroke: null }); circle(.8 * U, -.7 * U, .55 * U, { fill: SF.ink, stroke: null });
+      line([[-1 * U, .6 * U], [0, 1.2 * U], [1 * U, .6 * U]], { stroke: SF.ink, lwPx: 1.4 });
+      X.restore();
+    });
+    label('sugar bugs!', 50, 59, 5, .9);
   } else if (kind === 'passing') {                                 // three players in a triangle, passes round it
     const P3 = [[50, top + 6], [20, top + 40], [80, top + 40]].map(([px, py]) => [px * U, py * U]);
     P3.forEach(([px, py], i) => { const k = backOut(seg(d, i * .1, i * .1 + .15)); if (k > 0) circle(px, py, 4.5 * U * k, { fill: null, stroke: SF.chalk, lwPx: Math.max(2, U * .9) }); });

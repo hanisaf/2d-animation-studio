@@ -138,7 +138,7 @@ JesterFester/
 ├── engine/                    shared code, loaded before everything else
 │   ├── core.js                canvas globals, math, timing, jitter, shapes, IK, 2D camera, overlays, SFX, iris, layers, measure
 │   ├── persp.js               3D one-point perspective camera for sets
-│   ├── callout.js             speech / shout / thought bubbles + lip-flap
+│   ├── callout.js             speech / shout / thought / whisper / robot bubbles + lip-flap
 │   ├── timeline.js            scene registry, CHARACTERS/LOCATIONS registries, paintFrame/drawFrame, grain
 │   └── showcase.js            model sheets, character views, location views (used by the studio + test scenes)
 │
@@ -414,7 +414,7 @@ const said = callout(text, ax, ay, age, {
   maxW: 720,       // wrap width px
   cps: 18,         // typing speed, chars per second
   hold: 1.6,       // seconds the full line stays up after typing (or dur: total)
-  kind: 'talk',    // 'talk' | 'shout' (spiky) | 'think' (cloud with dots)
+  kind: 'talk',    // 'talk' | 'shout' (spiky) | 'think' (cloud with dots) | 'whisper' (small, dashed, grey) | 'robot' (riveted panel, monospaced)
   accent,          // colour for *asterisked* words
 });
 jester(..., { mouth: lipFlap(t, said.talking, 'grin') });
@@ -505,6 +505,7 @@ Paths in a manifest are relative to its folder. A scene's `id`, `title` and `aud
 | 🏫 Dove Creek Elementary | [locations/dces/README.md](../locations/dces/README.md): description, layout and coordinates, spots, camera presets, API |
 | 🎓 Lecture hall | [locations/lecture_hall/README.md](../locations/lecture_hall/README.md): tiered university hall with a podium view and a classroom (reverse-angle) view, seats, boards and screen hooks, API |
 | ⚽ County soccer field | [locations/soccer_field/README.md](../locations/soccer_field/README.md): regulation pitch shot from both ends (`dir: ±1`) and from the air, goals, bleachers, shelters, snack bar, scoreboard, 16 camera presets, API |
+| 🏠 House | [locations/house/README.md](../locations/house/README.md): two-storey brick home from the front lawn, porch, wing, garden and clover, 9 camera presets, API |
 | 🎬 01 Juggling in the throne room | [scenes/scene01_juggling/README.md](../scenes/scene01_juggling/README.md): synopsis, script, shot list, constants |
 | 🎬 02 Fired! | [scenes/scene02_fired/README.md](../scenes/scene02_fired/README.md): synopsis, script, shot list, constants |
 | 🎬 03 Once a dragon | [scenes/scene03_once_a_dragon/README.md](../scenes/scene03_once_a_dragon/README.md): synopsis, script, shot list, constants |
