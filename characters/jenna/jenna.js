@@ -9,7 +9,7 @@ const JENNA_SCALE = 1.06; // a small overall size increase, including the face
 const JE = {
   ink: '#29221F',
   skin: '#F4C09E', skinDk: '#CC8F76', cheek: '#DE9991', nose: '#BB806A',
-  hair: '#302924', hairDk: '#201C19', hairLt: '#51443A',
+  hair: '#543722', hairDk: '#201C19', hairLt: '#51443A',
   shirt: '#F5D6D9', shirtDk: '#DDB0BC',
   skirtBase: '#DFA4AE', skirtTulle: '#F1C1C8',
   shoe: '#F2B8C6', shoeTop: '#E6A5B5', shoeSole: '#FFFFFF', sock: '#FFFFFF',
