@@ -18,7 +18,9 @@ About 27 local units tall. `JENNA_UNIT = 5.0` makes her about 135 world units ta
 
 ## Poses
 
-Registered in `jenna.js` (`CHARACTERS.jenna.poses`): rest · hi! · talk · giggle · surprised · wink · shy · sad · skip · dance: bounce · dance: disco · dance: twirl · dance: star jump · dance: floss · super dance.
+Registered in `jenna.js` (`CHARACTERS.jenna.poses`): rest · hi! · talk · giggle · surprised · wink · shy · sad · skip · brainstorming:comics · dance: bounce · dance: disco · dance: twirl · dance: star jump · dance: floss · super dance.
+
+**brainstorming:comics** loops every eight seconds: Jenna pulls out a spiral sketch pad and draws comic panels with a pencil. A light bulb glows above her head, and two thought bubbles appear with illustrated ideas inside: **Super Cat!** (a masked cat with a cape) and **Moon Quest!** (a rocket and the Moon). Those ideas gradually appear on the pad, followed by “POW!” and “Next stop: the Moon!” The pose returns the usual screen-pixel anchors. Preview bounds include the bulb and idea bubbles.
 
 ## Rig API (`jenna.js`)
 

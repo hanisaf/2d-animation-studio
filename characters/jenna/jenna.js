@@ -468,8 +468,125 @@ function jennaSkip(p, k = 1) {
   };
 }
 
+// Tiny story illustrations shared by the thought bubbles and the sketch pad.
+function jeComicIdea(kind, progress = 1) {
+  X.save(); X.beginPath(); X.rect(-1.65, -1.5, 3.3 * clamp(progress), 3); X.clip();
+  const ink = { stroke: JE.ink, lw: .08 };
+  if (kind === 'cat') {
+    shape([[-.4, -.1], [-1.4, .4], [-1.05, 1.0], [.35, .55]], { fill: '#E97F9E', ...ink });
+    ellipse(0, .35, .42, .6, { fill: '#EDB75D', ...ink });
+    shape([[-.6, -.25], [-.57, -1.1], [-.15, -.78], [.2, -.78], [.58, -1.1], [.6, -.25]],
+      { fill: '#EDB75D', ...ink });
+    ellipse(0, -.35, .62, .5, { fill: '#EDB75D', ...ink });
+    shape(rectPts(-.49, -.57, .98, .22), { fill: '#8667C9', stroke: null });
+    [-1, 1].forEach(sd => circle(sd * .25, -.46, .065, { fill: '#FFFFFF', stroke: null }));
+    line([[-.18, -.15], [0, -.05], [.18, -.15]], ink);
+    line([[.4, .45], [.9, .75], [1.15, .35]], { stroke: '#EDB75D', lw: .16, smooth: true });
+    line([[-1.4, -.8], [-.95, -.8]], { stroke: '#8667C9', lw: .09 });
+  } else {
+    circle(.9, -.65, .48, { fill: '#F6DF8A', ...ink });
+    circle(1.02, -.76, .1, { fill: '#D5B965', stroke: null });
+    circle(.75, -.49, .07, { fill: '#D5B965', stroke: null });
+    X.save(); X.translate(-.35, .05); X.rotate(.45);
+    shape([[-.24, .62], [0, 1.2], [.24, .62]], { fill: '#FFB64E', stroke: null });
+    shape([[-.35, .15], [-.7, .75], [0, .52], [.7, .75], [.35, .15]], { fill: '#DC85A9', ...ink });
+    shape([[0, -1.1], [.4, -.45], [.35, .65], [-.35, .65], [-.4, -.45]], { fill: '#E5EFF9', ...ink });
+    circle(0, -.2, .2, { fill: '#83B9DC', ...ink }); X.restore();
+    [[-1.2, -.9], [1.35, .6]].forEach(([px, py]) => shape(starPts(px, py, .15), { fill: '#C7A057', stroke: null }));
+  }
+  X.restore();
+}
+
+function jeComicPad(x, y, s, progress) {
+  X.save(); X.translate(x, y); X.scale(s, s);
+  const lw = clamp(s * .1, 1.2, 4) / s;
+  shape(rectPts(-3.85, -3.15, 7.7, 6.3), { fill: '#9A79B9', stroke: JE.ink, lw });
+  shape(rectPts(-3.6, -2.95, 7.05, 5.85), { fill: '#FFFCF2', stroke: JE.ink, lw: lw * .65 });
+  for (let i = 0; i < 9; i++) {
+    line([[-3.98, -2.6 + i * .61], [-3.46, -2.6 + i * .61]], { stroke: '#5C526B', lw: .13 });
+  }
+  X.fillStyle = '#8667C9'; X.font = 'bold .42px sans-serif'; X.textAlign = 'center'; X.textBaseline = 'middle';
+  X.fillText('JENNA’S COMICS', 0, -2.47);
+  [[-3.12, 'cat'], [.22, 'space']].forEach(([px, kind], i) => {
+    shape(rectPts(px, -1.9, 3.05, 3.05), { fill: '#FFFFFF', stroke: JE.ink, lw: .09 });
+    X.save(); X.translate(px + 1.53, -.38); X.scale(.83, .83);
+    jeComicIdea(kind, seg(progress, i * .35, i * .35 + .35)); X.restore();
+  });
+  const final = seg(progress, .7, 1);
+  if (final > 0) {
+    X.save(); X.beginPath(); X.rect(-3.15, 1.35, 6.4 * final, 1.15); X.clip();
+    shape(starPts(-1.85, 1.94, .55, .7, 9), { fill: '#FFE382', stroke: '#B68449', lw: .05 });
+    X.fillStyle = JE.ink; X.font = 'bold .29px sans-serif'; X.fillText('POW!', -1.85, 1.94);
+    X.font = 'bold .31px sans-serif'; X.fillText('Next stop: the Moon!', 1.0, 1.94); X.restore();
+  }
+  X.restore();
+}
+
+function jeComicThought(x, y, s, kind, pop, t) {
+  if (pop < .01) return;
+  X.save(); X.translate(x, y); X.scale(s * pop, s * pop);
+  const pts = Array.from({ length: 48 }, (_, i) => {
+    const a = i * TAU / 48, bump = 1 + .05 * Math.cos(a * 12);
+    return [Math.cos(a) * 3.5 * bump, Math.sin(a) * 2.45 * bump];
+  });
+  const style = { fill: '#FFFDFA', stroke: '#8C6A9C', lw: .11 };
+  shape(pts, { ...style, smooth: true });
+  const sd = kind === 'cat' ? 1 : -1;
+  circle(sd * 2.55, 2.2, .32, style); circle(sd * 2.05, 2.9, .17, style);
+  X.save(); X.translate(0, -.25 + .07 * wob(t, .7)); jeComicIdea(kind); X.restore();
+  X.fillStyle = '#68507C'; X.textAlign = 'center'; X.textBaseline = 'middle'; X.font = 'bold .44px sans-serif';
+  X.fillText(kind === 'cat' ? 'SUPER CAT!' : 'MOON QUEST!', 0, 1.57);
+  X.restore();
+}
+
+function jeComicBulb(x, y, s, t, glow) {
+  X.save(); X.translate(x, y); X.scale(s, s);
+  circle(0, 0, 1.65, { fill: rgba('#FFD969', (.14 + .03 * wob(t)) * glow), stroke: null });
+  ellipse(0, -.15, .77, .91, { fill: mixCol('#E5DDBF', '#FFE481', glow), stroke: JE.ink, lw: .1 });
+  shape(rectPts(-.36, .54, .72, .48), { fill: '#B9B1C8', stroke: JE.ink, lw: .1 });
+  line([[-.25, -.17], [0, .1], [.25, -.17]], { stroke: '#CB923A', lw: .1 });
+  line([[-.32, .78], [.32, .78]], { stroke: '#756B83', lw: .1 });
+  for (let i = 0; i < 5; i++) {
+    const a = Math.PI + i * Math.PI / 4;
+    line([[Math.cos(a) * 1.2, Math.sin(a) * 1.2], [Math.cos(a) * 1.65, Math.sin(a) * 1.65]],
+      { stroke: '#DDA237', lw: .14, alpha: glow });
+  }
+  X.restore();
+}
+
+// Eight-second story loop. Props use the rig's internal scale and screen anchors.
+function jennaBrainstormComics(x, y, s, t) {
+  const p = ((t % 8) + 8) % 8, ps = s * JENNA_SCALE;
+  const pull = ease(seg(p, 0, .9)) * (1 - ease(seg(p, 7.1, 8)));
+  const drawing = ease(seg(p, 1, 1.3)) * (1 - ease(seg(p, 6.7, 7.1)));
+  const progress = seg(p, 1.3, 6.5);
+  const padX = lerp(-5.0, -.35, pull), padY = lerp(-9, -12.5, pull);
+  const strokeX = lerp(-2.4, 2.1, frac(progress * 3)) + .1 * wob(t, 3);
+  const strokeY = progress < .7 ? -13.2 + .3 * wob(t, 2) : -10.7 + .12 * wob(t, 2);
+  const A = jenna(x, y, s, { t, giraffe: false,
+    handL: mixPt([-3.4, -10.8], [padX - 3.65, padY + .3], pull), handPoseL: 'grip',
+    handR: mixPt([3.2, -11.3], [strokeX + .55, strokeY - .55], drawing), handPoseR: 'grip',
+    lookY: .8 * drawing, brows: drawing ? 'focused' : 'up', mouth: 'smile' });
+  X.save(); X.globalAlpha *= pull;
+  jeComicPad(x + padX * ps, y + padY * ps, ps, progress);
+  // Redraw the supporting hand above the pad's spiral binding.
+  X.save(); X.translate(A.handL[0], A.handL[1]); X.scale(ps, ps);
+  jeHand([0, 0], -.15, -1, 'grip', .1); X.restore();
+  X.save(); X.translate(A.handR[0], A.handR[1]); X.scale(ps, ps);
+  line([[-.65, .65], [1.05, -1.05]], { stroke: JE.ink, lw: .25 });
+  line([[-.49, .49], [.9, -.9]], { stroke: '#F4CC65', lw: .17 });
+  line([[.91, -.91], [1.08, -1.08]], { stroke: '#E88FA8', lw: .22 });
+  jeHand([-.45, -.05], -.6, 1, 'grip', .1); X.restore(); X.restore();
+  const fade = 1 - ease(seg(p, 6.9, 7.5));
+  jeComicBulb(A.top[0], A.top[1] - 2.1 * ps, ps, t, ease(seg(p, .65, 1.4)) * fade);
+  jeComicThought(A.top[0] - 8 * ps, A.top[1] - .7 * ps, ps, 'cat', ease(seg(p, 1.4, 1.9)) * fade, t);
+  jeComicThought(A.top[0] + 8 * ps, A.top[1] - .7 * ps, ps, 'space', ease(seg(p, 2.5, 3)) * fade, t);
+  return A;
+}
+
 CHARACTERS.jenna = {
-  draw: jenna, unit: JENNA_UNIT, palette: JE, size: [16, 29],
+  // Include the brainstorming thought bubbles and bulb in preview/model-sheet framing.
+  draw: jenna, unit: JENNA_UNIT, palette: JE, size: [27, 36],
   poses: {
     'rest': (x, y, s, t) => jenna(x, y, s, {}),
     'hi!': (x, y, s, t) => jenna(x, y, s, { handR: [4.2 + .5 * wob(t, 1.6), -19.0], handPoseR: 'palm', mouth: 'grin', brows: 'up', tilt: .06 }),
@@ -480,6 +597,7 @@ CHARACTERS.jenna = {
     'shy': (x, y, s, t) => jenna(x, y, s, { handL: [-.5, -12.0], handR: [.5, -12.0], handPoseL: 'fist', handPoseR: 'fist', lookX: -.6, lookY: .5, mouth: 'smile', tilt: -.12, blush: 1, footR: [.5, -.9] }),
     'sad': (x, y, s, t) => jenna(x, y, s, { mouth: 'o', lookY: .7, dy: .2, tilt: .08 }),
     'skip': (x, y, s, t) => jenna(x, y, s, { ...jennaSkip(t * 2.4), handR: [3.1, -14.0], handPoseR: 'fist', mouth: 'grin', eyes: 'happy', turn: .15 }),
+    'brainstorming:comics': jennaBrainstormComics,
     'dance: bounce': (x, y, s, t) => jenna(x, y, s, jennaDance(t, 'bounce')),
     'dance: disco': (x, y, s, t) => jenna(x, y, s, jennaDance(t, 'disco')),
     'dance: twirl': (x, y, s, t) => jenna(x, y, s, jennaDance(t, 'twirl')),

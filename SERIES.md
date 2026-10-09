@@ -62,6 +62,8 @@ Each scene's folder holds its synopsis, script, shot list and editing notes (`RE
 | 13 | [Deal With It](scenes/scene13_deal_with_it/README.md) | 94 s | At the soccer field, Safadi lectures on soccer until Housam challenges him. Safadi calls in his twin, Doctor Sami (*"Deal with it."*); Housam calls in cousins Jenna and Danny (*"DEAL WITH IT!"*); referee Fester blows the whistle. *To be continued…* |
 | 14 | [A Breath of Innovation](scenes/scene14_vent_tutor/README.md) | 68 s | Doctor Sami celebrates Vent-Tutor with a demonstration of interactive waveforms, ventilation modes, clinical scenarios, and changing settings: *"One simulated breath at a time."* |
 
+| 16 | [The Etiquette of Employment](scenes/scene16_employment_etiquette/README.md) | 42 s | Workplace satire: Sami asks to transfer clinics. Dr. P's ominous warning becomes a drone delivering one massive etiquette textbook by parachute. |
+
 ## Where the story is heading
 
 - **Next:** the auditions. A parade of replacement jesters (new characters) fail spectacularly in front of Pearl, and Fester sneaks back in disguise.

@@ -36,7 +36,9 @@ dannyDribble(p, k);                 // Pure pose options; p = distance / stride.
 
 Hands and feet use independent two-bone IK. The block and ball are optional props, so scenes can use the same outfit for soccer, building, or comedy. All poses are deterministic functions of time.
 
-Registered poses: rest, hello, pockets, ready, dribble, kick, builder, block tower, goofy, goal!, laugh, surprised.
+Registered poses: rest, hello, pockets, ready, dribble, kick, builder, block tower, programmer, goofy, goal!, laugh, surprised.
+
+The **programmer** pose loops every six seconds: Danny pulls out a laptop, opens it, types in Scratch, then tucks it away. The screen shows colorful coding blocks and an orange cat, while a light bulb above his head glows as he programs. Like the other poses, it returns the character's screen-pixel anchors and can be used in scenes through `CHARACTERS.danny.poses.programmer(x, y, s, t)`.
 
 | File | Purpose |
 |---|---|

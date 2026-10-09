@@ -8,8 +8,8 @@
 // Folders load in this order: characters → locations → scenes, so scenes may use any character or location.
 
 const REGISTRY = {
-  characters: ['jester_fester', 'princess_pearl', 'safadi', 'alma', 'dragon', 'housam', 'danny', 'sami', 'jenna', 'sarah', 'roudaynah'],
-  locations: ['throne_room', 'dces', 'lecture_hall', 'soccer_field', 'umn', 'meadow-ridge-elementary-school'],
-  scenes: ['scene01_juggling', 'scene02_fired', 'scene03_once_a_dragon', 'scene04_healthy_promise', 'scene05_dragon_counts', 'scene06_riemann', 'scene07_message_first', 'scene08_multitasking', 'scene09_hat_trick', 'scene10_great_debate', 'scene11_hydration_debate', 'scene12_umn', 'scene13_deal_with_it', 'scene14_vent_tutor', 'meadow-ridge-elementary-school', 'scene15_jenna_division'],
-  movie: ['scene01_juggling', 'scene02_fired', 'scene03_once_a_dragon', 'scene04_healthy_promise', 'scene05_dragon_counts', 'scene06_riemann', 'scene07_message_first', 'scene08_multitasking', 'scene09_hat_trick', 'scene10_great_debate', 'scene11_hydration_debate', 'scene12_umn', 'scene13_deal_with_it', 'scene14_vent_tutor'],        // default composer order and node render.mjs --movie
+  characters: ['jester_fester', 'princess_pearl', 'safadi', 'alma', 'dragon', 'housam', 'danny', 'sami', 'jenna', 'sarah', 'roudaynah', 'patrick'],
+  locations: ['throne_room', 'dces', 'lecture_hall', 'soccer_field', 'umn', 'meadow-ridge-elementary-school', 'home_clinic'],
+  scenes: ['scene01_juggling', 'scene02_fired', 'scene03_once_a_dragon', 'scene04_healthy_promise', 'scene05_dragon_counts', 'scene06_riemann', 'scene07_message_first', 'scene08_multitasking', 'scene09_hat_trick', 'scene10_great_debate', 'scene11_hydration_debate', 'scene12_umn', 'scene13_deal_with_it', 'scene14_vent_tutor', 'meadow-ridge-elementary-school', 'scene15_jenna_division', 'scene16_employment_etiquette'],
+  movie: ['scene01_juggling', 'scene02_fired', 'scene03_once_a_dragon', 'scene04_healthy_promise', 'scene05_dragon_counts', 'scene06_riemann', 'scene07_message_first', 'scene08_multitasking', 'scene09_hat_trick', 'scene10_great_debate', 'scene11_hydration_debate', 'scene12_umn', 'scene13_deal_with_it', 'scene14_vent_tutor', 'scene16_employment_etiquette'],        // default composer order and node render.mjs --movie
 };
