@@ -501,11 +501,14 @@ Paths in a manifest are relative to its folder. A scene's `id`, `title` and `aud
 | 🎓 Professor Safadi | [characters/safadi/README.md](../characters/safadi/README.md): personality, powers, look and palette, proportions, poses, rig + `safadiBoard` API |
 | 💃 Alma | [characters/alma/README.md](../characters/alma/README.md): personality, dance powers, look and palette, proportions, poses, rig + `almaDance` API |
 | 🐉 Dragon | [characters/dragon/README.md](../characters/dragon/README.md): personality, look, flight poses, rig + `dragonFlight` API |
+| 🤖 Robo-Safadi | [characters/robo_safadi/README.md](../characters/robo_safadi/README.md): personality, powers (activate, scan, hover, steam, glitch), look and palette, proportions, poses, rig + march API, the `robot` voice |
+| 🟧 Clawd | [characters/clawd/README.md](../characters/clawd/README.md): the LLM, ported from PDoomVideo; look and palette, proportions, poses, rig API (moods, `holo` hologram look) |
 | 🏰 Throne room | [locations/throne_room/README.md](../locations/throne_room/README.md): description, layout and coordinates, spots, camera presets, API |
 | 🏫 Dove Creek Elementary | [locations/dces/README.md](../locations/dces/README.md): description, layout and coordinates, spots, camera presets, API |
 | 🎓 Lecture hall | [locations/lecture_hall/README.md](../locations/lecture_hall/README.md): tiered university hall with a podium view and a classroom (reverse-angle) view, seats, boards and screen hooks, API |
 | ⚽ County soccer field | [locations/soccer_field/README.md](../locations/soccer_field/README.md): regulation pitch shot from both ends (`dir: ±1`) and from the air, goals, bleachers, shelters, snack bar, scoreboard, 16 camera presets, API |
 | 🏠 House | [locations/house/README.md](../locations/house/README.md): two-storey brick home from the front lawn, porch, wing, garden and clover, 9 camera presets, API |
+| 🔬 Science room | [locations/science_room/README.md](../locations/science_room/README.md): DCES science lab with a teacher view and a classroom (reverse-angle) view, lab benches, demo-bench experiments (`bubbling`), whiteboard hook, 12 camera presets, API |
 | 🎬 01 Juggling in the throne room | [scenes/scene01_juggling/README.md](../scenes/scene01_juggling/README.md): synopsis, script, shot list, constants |
 | 🎬 02 Fired! | [scenes/scene02_fired/README.md](../scenes/scene02_fired/README.md): synopsis, script, shot list, constants |
 | 🎬 03 Once a dragon | [scenes/scene03_once_a_dragon/README.md](../scenes/scene03_once_a_dragon/README.md): synopsis, script, shot list, constants |

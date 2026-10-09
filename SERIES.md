@@ -31,6 +31,8 @@ Each character's folder holds its description, look, personality and rig notes (
 | ⚽ | [Housam](characters/housam/README.md) | A soccer-loving student with a quick eye for mathematical patterns |
 | 💃 | [Alma](characters/alma/README.md) | A cute girl with long purple-streaked hair and super dance powers: rainbow dance floors, sparkles, music notes |
 | 🐉 | [Dragon](characters/dragon/README.md) | A gentle, funny dragon who loves learning and can fly |
+| 🤖 | [Robo-Safadi](characters/robo_safadi/README.md) | The robot professor Alma and Jenna dreamed up for Halloween: LED eyes that ACTIVATE red, a scanning beam, hover jets, and one mission: *EAT. YOUR. BROCCOLI.* |
+| 🟧 | [Clawd](characters/clawd/README.md) | A little clay-orange block of an AI: the large language model that lives in Housam's laptop and pops out as a hologram. Give him a prompt and expect the unexpected |
 
 ## Sets
 
@@ -40,7 +42,8 @@ Each character's folder holds its description, look, personality and rig notes (
 | 🏫 | [Dove Creek Elementary](locations/dces/README.md) | DCES seen from the street: red brick, arched entrance canopy, crosswalk and drop-off loop |
 | 🎓 | [Lecture hall](locations/lecture_hall/README.md) | A tiered university lecture hall, shot toward the podium or back at the rows of students |
 | ⚽ | [County soccer field](locations/soccer_field/README.md) | A county park pitch with goals, bleachers, shelters, snack bar and scoreboard, shot from both ends and from the air |
-| 🏠 | [House](locations/house/README.md) | A two-storey red-brick family home across its front lawn: cream gable, columned porch, clover |
+| 🏠 | [House](locations/house/README.md) | A two-storey red-brick family home across its front lawn: cream gable, columned porch, clover; autumn and night versions |
+| 🔬 | [Science room](locations/science_room/README.md) | The DCES science lab, shot toward the demo bench or back at the lab benches: bubbling flasks, Mr. Bones the skeleton, fume hood, aquarium, solar-system mobile |
 
 ## Episodes (movie order)
 
@@ -63,6 +66,10 @@ Each scene's folder holds its synopsis, script, shot list and editing notes (`RE
 | 14 | [The Offside Trap](scenes/scene14_offside_trap/README.md) | 105 s | The first half: the twins spring the offside trap. Danny scores (offside), Alma saves, Housam's backflip bicycle kick (offside again). *"WHY???"* Fester explains offside Safadi-style until Safadi cuts him off. Half-time, 0–0 |
 | 15 | [The Second Half](scenes/scene15_second_half/README.md) | 180 s | The kids beat the offside trap by dribbling (*"OFFSIDE!"* *"NOT!"*), Alma survives an ice-cream daydream, the twins fight back with two penalties and a wonder bounce, and Housam wins it 4–3. At the cooler, the twins keep the real drinks this time. **The End.** |
 | 16 | [The Spooky Plan](scenes/scene16_spooky_plan/README.md) | 100 s | At Alma's house, she and Jenna plan Halloween decorations (a vampire dolphin! a mummy giraffe!). Safadi learns it's all about the candy and lectures on healthy food, while the girls whisper up Robo-Safadi with glowing red eyes. *"What's so funny?"* *"You shall see!"* *To be continued…* |
+| 17 | [The Broccoli Directive](scenes/scene17_broccoli_directive/README.md) | 116 s | A music video. On Halloween night Robo-Safadi chases Housam, Alma, Jenna and Danny, swaps every candy for broccoli, then catches the Safadi twins in the confiscated-candy bowl. *"Everybody eats broccoli."* |
+| 18 | [Some Assembly Required](scenes/scene18_some_assembly/README.md) | 102 s | In the science room, Alma and Jenna build Robo-Safadi (*trick* gets you broccoli, *treat* gets you candy) but he won't switch on. Safadi pokes his head in (*"explaining is my job!"*) until Danny shoves him out: *"It's a SECRET!"* Housam explains hardware, software and programming: *"Danny and I will help you!"* *"HOORAY!"* *To be continued…* |
+| 19 | [If, Else, Explain!](scenes/scene19_if_else_explain/README.md) | 110 s | Housam and Danny program Robo-Safadi: an if/else for trick or treat, then a large language model (Clawd!) with the prompt *"Do something interesting and surprising! Robot goes haywire!"*, triggered by Professor Safadi's favorite word: *"EXPLAIN!"* *To be continued…* |
+| 20 | [The Infinite Candy Glitch](scenes/scene20_halloween_night/README.md) | 100 s | Halloween night at Alma's house: the grown-ups crack Robo-Safadi's program (trick → broccoli, treat → candy) and everyone triggers an infinite candy glitch, until Safadi says *"Let me explain…"* Clawd wakes inside the robot: red eyes, *"BEEP. BOOP."* *To be continued…* |
 
 ## Where the story is heading
 

@@ -16,6 +16,8 @@ A suburban two-storey home on a sunny late afternoon, seen from the front lawn. 
 - **Motion:** trees, bushes, clover and grass sway, and clouds drift. Pass `wind` (0–2).
 - **Autumn:** pass `season: 'autumn'` for orange, red and gold trees, a warmer lawn, fallen leaves on the grass, and leaves drifting down in front of everything (drawn by `house.front`). Used by scene 16.
 
+- **Night:** pass `night: 1` (0–1) for a starry night sky with a full moon (on the far plane, so it parallaxes like the clouds), the whole set tinted night-blue, and the windows, door glass and porch lantern glowing warm. Pass it to both `house.back` and `house.front`. Used by scene 20 (with `season: 'autumn'`).
+
 **Mood:** warm, homey and ordinary. It's a family home.
 
 ## Layout (world units; a person is about 170 tall, 1 unit ≈ 1 cm)
@@ -66,8 +68,8 @@ In the studio's location browser (click one, then **Copy camera**), or `node ren
 ## API (`house.js`)
 
 ```js
-house.back(P, t, { splitZ, wind, season })    // sky, lawn, walk, the house and every prop farther than splitZ
-house.front(P, t, { splitZ, wind, season })   // props nearer than splitZ (bushes, clover, grass), over the characters
+house.back(P, t, { splitZ, wind, season, night })    // sky, lawn, walk, the house and every prop farther than splitZ
+house.front(P, t, { splitZ, wind, season, night })   // props nearer than splitZ (bushes, clover, grass), over the characters
 house.MARK, house.FZ (facade Z), house.WALK, house.PORCH, house.WING, house.spots, house.cameras
 ```
 

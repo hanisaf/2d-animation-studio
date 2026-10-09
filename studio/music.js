@@ -142,20 +142,20 @@ function cartoonSyllable(ctx, bus, at, dur, voice, seed, vowel) {
   const first = ctx.createBiquadFilter(), second = ctx.createBiquadFilter();
   const mix1 = ctx.createGain(), mix2 = ctx.createGain();
   const style = voice.style || 'bouncy', variation = Math.sin(seed * 12.9898 + 3.4);
-  const notes = { measured: [0, 0, -1, 1, -2], sporty: [0, 3, -1, 4, 1], melodic: [0, 3, 5, 2, 7, 4], bouncy: [0, 2, -1, 4], regal: [0, -2, -1, -3, -4], rumble: [0, 1, -2, 2, -1] }[style] || [0, 2, -1, 4];
-  const pitch = (voice.baseHz ?? 220) * 2 ** ((notes[seed % notes.length] + variation * (style === 'measured' ? .35 : .8)) / 12);
-  const bend = { measured: 1.018, sporty: 1.12, melodic: 1.15, bouncy: 1.07, regal: .98, rumble: 1.035 }[style] ?? 1.07;
-  osc.type = style === 'sporty' || style === 'regal' ? 'square' : 'sawtooth';
-  osc.frequency.setValueAtTime(pitch * (style === 'melodic' ? .96 : .91), at);
+  const notes = { measured: [0, 0, -1, 1, -2], sporty: [0, 3, -1, 4, 1], melodic: [0, 3, 5, 2, 7, 4], bouncy: [0, 2, -1, 4], regal: [0, -2, -1, -3, -4], rumble: [0, 1, -2, 2, -1], robot: [0, 0, 0, -5, 0, 0, 7] }[style] || [0, 2, -1, 4];
+  const pitch = (voice.baseHz ?? 220) * 2 ** ((notes[seed % notes.length] + (style === 'robot' ? 0 : variation * (style === 'measured' ? .35 : .8))) / 12);   // robot: a flat monotone
+  const bend = { measured: 1.018, sporty: 1.12, melodic: 1.15, bouncy: 1.07, regal: .98, rumble: 1.035, robot: 1 }[style] ?? 1.07;
+  osc.type = style === 'sporty' || style === 'regal' || style === 'robot' ? 'square' : 'sawtooth';
+  osc.frequency.setValueAtTime(pitch * (style === 'melodic' ? .96 : style === 'robot' ? 1 : .91), at);
   osc.frequency.linearRampToValueAtTime(pitch * bend, Math.min(end, at + dur * .46));
-  osc.frequency.linearRampToValueAtTime(pitch * (style === 'measured' ? .97 : 1), end);
+  osc.frequency.linearRampToValueAtTime(pitch * (style === 'measured' ? .97 : 1), end);   // (robot: bend 1, so it stays flat)
   first.type = second.type = 'bandpass'; first.Q.value = .8; second.Q.value = 1.1;
   first.frequency.value = shape[0] * (voice.brightness ?? 1);
   second.frequency.value = shape[1] * (voice.brightness ?? 1);
   mix1.gain.value = .8; mix2.gain.value = .34;
   envelope.gain.setValueAtTime(.0001, at);
-  const attack = style === 'sporty' ? .008 : style === 'measured' || style === 'rumble' ? .026 : .018;
-  const release = style === 'sporty' || style === 'regal' ? .024 : style === 'measured' || style === 'rumble' ? .06 : .045;
+  const attack = style === 'robot' ? .004 : style === 'sporty' ? .008 : style === 'measured' || style === 'rumble' ? .026 : .018;
+  const release = style === 'robot' ? .008 : style === 'sporty' || style === 'regal' ? .024 : style === 'measured' || style === 'rumble' ? .06 : .045;
   envelope.gain.linearRampToValueAtTime(voice.level ?? .13, Math.min(end, at + attack));
   envelope.gain.setValueAtTime(voice.level ?? .13, Math.max(at + attack, end - release));
   envelope.gain.exponentialRampToValueAtTime(.0001, end);

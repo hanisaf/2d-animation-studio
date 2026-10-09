@@ -1,0 +1,81 @@
+// Scene 20: The Infinite Candy Glitch. Dialogue drives the bubbles, mouths and voices; music is synthesized from the score below.
+// A `group` on a line draws one bubble for everyone in it (the other speakers' entries are silentBubble, so they still voice).
+asset({
+  title: 'The Infinite Candy Glitch',
+  logline: 'Halloween night at Alma\'s house. Robo-Safadi stands by the porch; the grown-ups (and Dragon) poke at him until they crack his program: trick gets broccoli, treat gets candy. TREAT! TREAT! TREAT! An infinite candy glitch, until Safadi says "Let me explain…" and Clawd wakes up inside the robot. Red eyes. "BEEP BOOP." To be continued…',
+  files: ['decor.js', 'scene.js'],              // the Halloween decorations, then the shots (also uses scene 16's doodles and scene 17's props)
+  docs: 'README.md',                            // synopsis, script, shot list, notes for editing
+  cast: ['jester_fester', 'safadi', 'sami', 'dragon', 'alma', 'jenna', 'housam', 'danny', 'robo_safadi', 'clawd'],
+  locations: ['house'],
+  dialogue: [
+    // arrival
+    { at: 3.0, speaker: 'jester_fester', text: 'Happy *Halloween*, everybody!', cps: 16, hold: .4, energy: 1.2 },
+    { at: 5.4, speaker: 'alma', text: 'Happy Halloween!', cps: 14, hold: .5, energy: 1.2, group: ['alma', 'jenna', 'housam', 'danny'] },
+    { at: 5.4, speaker: 'jenna', text: 'Happy Halloween!', cps: 14, hold: .5, energy: 1.2, silentBubble: true },
+    { at: 5.4, speaker: 'housam', text: 'Happy Halloween!', cps: 14, hold: .5, energy: 1.1, silentBubble: true },
+    { at: 5.4, speaker: 'danny', text: 'Happy Halloween!', cps: 14, hold: .5, energy: 1.2, silentBubble: true },
+    // who is that?
+    { at: 7.6, speaker: 'safadi', text: 'Wait... is that... *me*?!', cps: 14, hold: .5, energy: 1.1 },
+    { at: 10.2, speaker: 'sami', text: 'Brother... it has your *hair*!', cps: 15, hold: .4, energy: 1.1 },
+    { at: 12.6, speaker: 'jester_fester', text: 'And your *tie*! But what does it *do*?', cps: 17, hold: .4 },
+    { at: 15.4, speaker: 'dragon', text: 'Does it breathe *fire*?', cps: 14, hold: .5 },
+    { at: 17.8, speaker: 'alma', text: "You'll have to find out *yourselves*!", cps: 17, hold: .4 },
+    { at: 20.4, speaker: 'jenna', text: 'Hint: it loves *Halloween words*!', cps: 16, hold: .4 },
+    { at: 23.0, speaker: 'danny', text: '*Magic* Halloween words!', cps: 14, hold: .4, energy: 1.15 },
+    { at: 25.2, speaker: 'housam', text: "But we're not telling *which* ones!", cps: 17, hold: .6 },
+    // messing with the robot
+    { at: 28.6, speaker: 'jester_fester', text: '*BOO!*', cps: 8, hold: .5, kind: 'shout', energy: 1.3 },
+    { at: 30.8, speaker: 'dragon', text: '*Spooky*...?', cps: 10, hold: .5 },
+    { at: 32.8, speaker: 'sami', text: '*Pumpkin*! *Ghost*! *Candy corn*?', cps: 13, hold: .4, energy: 1.1 },
+    { at: 36.6, speaker: 'safadi', text: 'Hmm... Halloween words...', cps: 14, hold: .3, energy: .9 },
+    { at: 39.4, speaker: 'safadi', text: 'Of course! *Trick*!', cps: 12, hold: .4, energy: 1.15 },
+    { at: 42.4, speaker: 'safadi', text: 'Broccoli! An *excellent* choice!', cps: 16, hold: .6 },
+    { at: 45.2, speaker: 'jester_fester', text: 'My turn! *Treat*!', cps: 13, hold: .3, energy: 1.2 },
+    { at: 47.4, speaker: 'jester_fester', text: 'CANDY!!', cps: 9, hold: .5, kind: 'shout', energy: 1.35 },
+    { at: 49.2, speaker: 'sami', text: '*Trick*!', cps: 9, hold: .3 },
+    { at: 51.0, speaker: 'sami', text: '...Broccoli. Hmm.', cps: 12, hold: .4, energy: .8 },
+    { at: 52.8, speaker: 'dragon', text: '*Treat*!', cps: 9, hold: .5, energy: 1.2 },
+    { at: 55.4, speaker: 'safadi', text: 'Trick... broccoli. Treat... candy...', cps: 13, hold: .3 },
+    { at: 58.6, speaker: 'sami', text: '*If* trick, then broccoli...', cps: 15, hold: .2 },
+    { at: 61.0, speaker: 'safadi', text: '...*else if* treat, candy! A *conditional*!', cps: 17, hold: .5, energy: 1.15 },
+    { at: 63.8, speaker: 'housam', text: 'They figured it *out*!', cps: 15, hold: .3, kind: 'whisper', energy: .5 },
+    { at: 65.8, speaker: 'danny', text: 'Took them long enough!', cps: 15, hold: .4, kind: 'whisper', energy: .5 },
+    // the infinite candy glitch
+    { at: 68.0, speaker: 'jester_fester', text: 'Wait... so if I say treat *again*...', cps: 16, hold: .2 },
+    { at: 70.8, speaker: 'jester_fester', text: 'TREAT! TREAT! TREAT!', cps: 14, hold: .3, kind: 'shout', energy: 1.35 },
+    { at: 73.4, speaker: 'jester_fester', text: 'TREAT! TREAT! TREAT!', cps: 12, hold: .6, kind: 'shout', energy: 1.4, group: ['jester_fester', 'sami', 'dragon', 'housam', 'danny', 'alma', 'jenna'] },
+    { at: 73.4, speaker: 'sami', text: 'TREAT! TREAT! TREAT!', cps: 12, hold: .6, energy: 1.3, silentBubble: true },
+    { at: 73.5, speaker: 'dragon', text: 'TREAT! TREAT! TREAT!', cps: 12, hold: .6, energy: 1.2, silentBubble: true },
+    { at: 73.4, speaker: 'housam', text: 'TREAT! TREAT! TREAT!', cps: 12, hold: .6, energy: 1.3, silentBubble: true },
+    { at: 73.5, speaker: 'danny', text: 'TREAT! TREAT! TREAT!', cps: 12, hold: .6, energy: 1.3, silentBubble: true },
+    { at: 73.4, speaker: 'alma', text: 'TREAT! TREAT! TREAT!', cps: 12, hold: .6, energy: 1.3, silentBubble: true },
+    { at: 73.5, speaker: 'jenna', text: 'TREAT! TREAT! TREAT!', cps: 12, hold: .6, energy: 1.3, silentBubble: true },
+    { at: 76.8, speaker: 'danny', text: "It's an *infinite candy glitch*!", cps: 16, hold: .6, kind: 'shout', energy: 1.35 },
+    { at: 79.6, speaker: 'alma', text: 'CANDY! CANDY! CANDY!', cps: 13, hold: .5, kind: 'shout', energy: 1.35, group: ['alma', 'jenna', 'housam', 'danny'] },
+    { at: 79.6, speaker: 'jenna', text: 'CANDY! CANDY! CANDY!', cps: 13, hold: .5, energy: 1.3, silentBubble: true },
+    { at: 79.6, speaker: 'housam', text: 'CANDY! CANDY! CANDY!', cps: 13, hold: .5, energy: 1.3, silentBubble: true },
+    { at: 79.6, speaker: 'danny', text: 'CANDY! CANDY! CANDY!', cps: 13, hold: .5, energy: 1.3, silentBubble: true },
+    // the professor gets uneasy
+    { at: 84.2, speaker: 'safadi', text: 'Hmm... wait a moment, children.', cps: 15, hold: .3, energy: .9 },
+    { at: 86.6, speaker: 'safadi', text: 'Let me *explain* that this amount of candy is not hea—', cps: 18, hold: .3 },
+    { at: 90.4, speaker: 'robo_safadi', text: 'BEEP. BOOP.', cps: 7, hold: 1.4, kind: 'robot', energy: 1.5 },
+  ],
+  music: {
+    prompt: 'A spooky-fun Halloween night theme: plucky pizzicato and a creaky organ over a walking bass, a theremin "ooo" on the reveal of the robot, curious tiptoe stabs while everyone pokes at him (with a blank "..." blip each time nothing happens), a bright ding and a mechanical zip on every trick or treat, a frantic galloping polka for the infinite candy glitch, a record scratch when Safadi frowns, a hush under "Let me explain", a deep power-up hum and two loud beeps for BEEP BOOP, and a sting into the to-be-continued.',
+    bpm: 120, tonic: 57, motif: [0, 3, 7, 6, 3, 0, 10, 7], chords: [0, 5, 3, 7],
+    sections: [
+      { at: 0, energy: .5 }, { at: 7.4, energy: .3 }, { at: 17.6, energy: .45 }, { at: 28.4, energy: .35 }, { at: 36.4, energy: .2 },
+      { at: 39.6, energy: .6 }, { at: 45.0, energy: .65 }, { at: 55.2, energy: .4 }, { at: 63.6, energy: .3 }, { at: 68.0, energy: .55 },
+      { at: 70.8, energy: .8 }, { at: 73.4, energy: 1 }, { at: 83.0, energy: .1 }, { at: 86.6, energy: .05 }, { at: 87.8, energy: .4 },
+      { at: 90.4, energy: .9 }, { at: 92.2, energy: .1 }, { at: 94.4, energy: .9 }, { at: 95.6, energy: .5 }, { at: 99.4, energy: 0 },
+    ],
+    cues: [
+      { at: 8.0, type: 'ding' }, { at: 28.7, type: 'plip' }, { at: 29.4, type: 'pop' }, { at: 31.4, type: 'pop' }, { at: 34.4, type: 'pop' },
+      { at: 40.2, type: 'whoosh' }, { at: 40.6, type: 'ding' }, { at: 45.9, type: 'whoosh' }, { at: 46.3, type: 'ding' }, { at: 49.8, type: 'whoosh' },
+      { at: 50.2, type: 'ding' }, { at: 53.4, type: 'whoosh' }, { at: 53.8, type: 'bonk' }, { at: 61.6, type: 'ding' }, { at: 71.2, type: 'ding' },
+      { at: 71.6, type: 'ding' }, { at: 72.0, type: 'ding' }, { at: 73.4, type: 'whoosh' }, { at: 83.0, type: 'scratch' }, { at: 87.5, type: 'whoosh' },
+      { at: 88.0, type: 'pop' }, { at: 88.6, type: 'plip' }, { at: 89.6, type: 'scratch' }, { at: 90.5, type: 'ding' }, { at: 91.2, type: 'ding' },
+      { at: 94.4, type: 'ding' },
+    ],
+  },
+});

@@ -3,7 +3,8 @@
 // An outdoor 3D set in one-point perspective (engine/persp.js). World units: a person is ~170 tall (1 unit ≈ 1 cm).
 //   house.back(P, t, o)    sky, lawn, the house and everything farther than o.splitZ (default: everything). Call first.
 //   house.front(P, t, o)   props nearer than o.splitZ (bushes, clover, flowers, grass tufts). Call after the characters.
-// o: { splitZ, wind (0..2, default 1: tree, bush and flower sway), season ('summer' default | 'autumn': orange, red and gold
+// o: { splitZ, night (0..1: a starry night sky and moon, the set tinted night-blue, lit windows, door and lantern glowing),
+//      wind (0..2, default 1: tree, bush and flower sway), season ('summer' default | 'autumn': orange, red and gold
 //      trees, a warmer lawn, fallen leaves on the grass and leaves drifting down in front of everything) }
 //
 // Layout (world): the main block's facade is the plane Z = 3000, X −760…380, eaves Y 560, side-gabled roof with its ridge
@@ -33,6 +34,8 @@ const house = (() => {
     line: '#3D2E30',
   };
   const S = (pts, o) => shape(pts, { stroke: C.line, lwPx: 1.2, ...o });
+  let LIT = null;                                                       // at night: lit windows / lamps to glow after the tint
+  const lit = (x, y, w, h, kind = 'win') => { if (LIT) LIT.push({ m: X.getTransform(), x, y, w, h, kind }); };
   const px2 = (k, w) => clamp(w * k, .8, 7);
   const lwAt = (P, z, w) => clamp(w * P.k(z), .8, 9);
 
@@ -73,7 +76,8 @@ const house = (() => {
     for (let i = 1; i < 8; i++) line([[x - w / 2 - 6 + i * (w + 12) / 8, y1 - 20], [x - w / 2 - 6 + i * (w + 12) / 8, y1]], { stroke: C.mortar, lwPx: px2(k, 1), alpha: .7 });
     S(rectPts(x - w / 2, y1, w, h), { fill: C.trim, lwPx: px2(k, 1.4) });
     const gx = x - w / 2 + 7, gw = w - 14, gy = y1 + 7, gh = h - 14;
-    S(rectPts(gx, gy, gw, gh), { fill: linGrad(0, gy, 0, gy + gh, [[0, C.glassLt], [.35, C.glass], [1, '#1F2A33']]), stroke: null });
+    S(rectPts(gx, gy, gw, gh), { fill: LIT ? linGrad(0, gy, 0, gy + gh, [[0, '#FFE6A6'], [1, '#F2A84A']]) : linGrad(0, gy, 0, gy + gh, [[0, C.glassLt], [.35, C.glass], [1, '#1F2A33']]), stroke: null });
+    lit(gx, gy, gw, gh);
     for (const sd of [-1, 1]) {                                                                       // curtains
       const cx = sd < 0 ? gx : gx + gw, cw = gw * .3 * sd;
       S([[cx, gy], [cx + cw, gy], [cx + cw * .55, gy + gh * .45], [cx + cw * .8, gy + gh], [cx, gy + gh]], { fill: C.curtain, stroke: null, alpha: .9, smooth: true });
@@ -96,7 +100,8 @@ const house = (() => {
     S(rectPts(x - w / 2 - 60, y1 - 38, w + 120, 14), { fill: C.trim, lwPx: px2(k, 1.2) });
     for (const sd of [-1, 1]) { const sx = x + sd * (w / 2 + 25); S(rectPts(sx - 15, y1 + 10, 30, h - 30), { fill: linGrad(0, y1, 0, -25, [[0, C.glassLt], [1, C.glass]]), lwPx: px2(k, 1) }); }
     S(rectPts(x - w / 2, y1, w, h), { fill: C.door, lwPx: px2(k, 1.4) });
-    S(rectPts(x - w / 2 + 12, y1 + 12, w - 24, h * .55), { fill: linGrad(0, y1, 0, y1 + h * .55, [[0, C.glassLt], [1, C.glass]]), lwPx: px2(k, 1) });
+    S(rectPts(x - w / 2 + 12, y1 + 12, w - 24, h * .55), { fill: LIT ? '#F7C46A' : linGrad(0, y1, 0, y1 + h * .55, [[0, C.glassLt], [1, C.glass]]), lwPx: px2(k, 1) });
+    lit(x - w / 2 + 12, y1 + 12, w - 24, h * .55);
     for (const f of [1 / 3, 2 / 3]) line([[x - w / 2 + 12 + (w - 24) * f, y1 + 12], [x - w / 2 + 12 + (w - 24) * f, y1 + 12 + h * .55]], { stroke: C.door, lwPx: px2(k, 3) });
     line([[x - w / 2 + 12, y1 + 12 + h * .275], [x + w / 2 - 12, y1 + 12 + h * .275]], { stroke: C.door, lwPx: px2(k, 3) });
     for (const yy of [y1 + h * .7, y1 + h * .86]) S(rectPts(x - w / 2 + 14, yy, w - 28, h * .12), { fill: null, stroke: C.trimDk, lwPx: px2(k, 1) });
@@ -106,7 +111,8 @@ const house = (() => {
   }
   function lantern(x, y, k, t) {
     S(rectPts(x - 4, y - 8, 8, 14), { fill: C.shutter, stroke: null });
-    S([[x - 14, y + 6], [x + 14, y + 6], [x + 11, y + 42], [x - 11, y + 42]], { fill: '#F4D98A', lwPx: px2(k, 1) });
+    S([[x - 14, y + 6], [x + 14, y + 6], [x + 11, y + 42], [x - 11, y + 42]], { fill: LIT ? '#FFF1B8' : '#F4D98A', lwPx: px2(k, 1) });
+    lit(x - 14, y + 6, 28, 36, 'lamp');
     S([[x - 18, y + 6], [x, y - 6], [x + 18, y + 6]], { fill: C.shutter, lwPx: px2(k, 1) });
     S(rectPts(x - 13, y + 42, 26, 5), { fill: C.shutter, stroke: null });
   }
@@ -351,6 +357,32 @@ const house = (() => {
     a.push({ x: -420, z: 1700, s: 1.6, bloom: true, seed: 901 }, { x: -340, z: 1740, s: 1.4, bloom: true, seed: 902 }, { x: -520, z: 1760, s: 1.5, bloom: false, seed: 903 }, { x: 1150, z: 1780, s: 1.3, bloom: false, seed: 904 });
     return a;
   })();
+  // ---------- night ----------
+  function nightSky(P, t, nt) {
+    X.fillStyle = linGrad(0, P.cam.hy - 1300, 0, P.cam.hy, [[0, mixCol(C.sky, '#0A0E2E', nt)], [.7, mixCol(C.skyLo, '#26285E', nt)], [1, mixCol(C.skyLo, '#4A3A6E', nt)]]); X.fillRect(0, 0, W, H);
+    P.plane(60000, () => {                                                // stars and the moon sit on a far plane, so they parallax like the clouds
+      for (let i = 0; i < 160; i++) { const x = -70000 + hash(i * 3.1) * 140000, y = 6000 + hash(i * 7.7) * 42000, tw = .6 + .4 * Math.sin(t * (1 + hash(i)) * 3 + i);
+        circle(x, -y, (90 + 120 * hash(i * 1.3)) * tw, { fill: rgba('#FFF8E0', .9 * nt), stroke: null }); }
+      const mx = 15000, my = -27000;
+      circle(mx, my, 9000, { fill: radGrad(mx, my, 2500, 9000, [[0, rgba('#FFF2C4', .35 * nt)], [1, rgba('#FFF2C4', 0)]]), stroke: null });
+      circle(mx, my, 2600, { fill: rgba('#FFF2C4', nt), stroke: null });
+      for (const [dx, dy, r] of [[-700, -500, 420], [500, 300, 300], [-200, 800, 220]]) circle(mx + dx, my + dy, r, { fill: rgba('#E8D9A6', .8 * nt), stroke: null });
+    });
+  }
+  function nightTint(nt) {                                                  // inside a layer: darken and blue only what was painted
+    X.save(); X.setTransform(1, 0, 0, 1, 0, 0); X.globalCompositeOperation = 'source-atop';
+    X.fillStyle = `rgba(14,18,60,${(.62 * nt).toFixed(3)})`; X.fillRect(0, 0, W, H); X.restore();
+  }
+  function nightLights(nt, t) {                                             // warm light back on top: windows, the door, the lantern
+    for (const L of LIT) {
+      const flick = L.kind === 'lamp' ? .9 + .1 * Math.sin(t * 13 + L.x) : 1;
+      X.save(); X.setTransform(L.m); X.globalCompositeOperation = 'lighter';
+      X.fillStyle = `rgba(255,170,70,${(.5 * nt * flick).toFixed(3)})`; X.fillRect(L.x, L.y, L.w, L.h);
+      const cx = L.x + L.w / 2, cy = L.y + L.h / 2, r = Math.max(L.w, L.h) * (L.kind === 'lamp' ? 4 : 1.3);
+      X.fillStyle = radGrad(cx, cy, 0, r, [[0, `rgba(255,170,70,${(.35 * nt * flick).toFixed(3)})`], [1, 'rgba(255,170,70,0)']]); X.fillRect(cx - r, cy - r, 2 * r, 2 * r);
+      X.restore();
+    }
+  }
   const near = (P, x0, x1, z0, z1) => Math.hypot(clamp(P.cam.x, x0, x1) - P.cam.x, clamp(P.cam.z, z0, z1) - P.cam.z);
   function items(P, t, o) {
     const L = [], wind = o.wind ?? 1, add = (x0, x1, z0, z1, draw) => L.push({ z: z0, d: near(P, x0, x1, z0, z1), draw });
@@ -377,15 +409,17 @@ const house = (() => {
   return {
     MARK: { x: 0, z: 2000 }, FZ, WALK, PORCH: PO, WING: WG,
     back(P, t, o = {}) {
-      X.fillStyle = linGrad(0, P.cam.hy - 1300, 0, P.cam.hy, [[0, C.sky], [1, C.skyLo]]); X.fillRect(0, 0, W, H);
-      clouds(P, t); ground(P, t, o.season === 'autumn');
-      const split = o.splitZ ?? -Infinity;
-      for (const it of items(P, t, o)) if (it.z > split) it.draw();
+      const nt = clamp(o.night || 0), split = o.splitZ ?? -Infinity;
+      if (nt > 0) nightSky(P, t, nt);
+      else { X.fillStyle = linGrad(0, P.cam.hy - 1300, 0, P.cam.hy, [[0, C.sky], [1, C.skyLo]]); X.fillRect(0, 0, W, H); clouds(P, t); }
+      const body = () => { ground(P, t, o.season === 'autumn'); for (const it of items(P, t, o)) if (it.z > split) it.draw(); };
+      if (nt > 0) { LIT = []; layer(() => { body(); nightTint(nt); }, { filter: `saturate(${(1 - .3 * nt).toFixed(2)})` }); nightLights(nt, t); LIT = null; }
+      else body();
     },
     front(P, t, o = {}) {
-      const split = o.splitZ ?? -Infinity;
-      for (const it of items(P, t, o)) if (it.z <= split) it.draw();
-      if (o.season === 'autumn') fallingLeaves(P, t, o.wind ?? 1);
+      const nt = clamp(o.night || 0), split = o.splitZ ?? -Infinity;
+      const body = () => { for (const it of items(P, t, o)) if (it.z <= split) it.draw(); if (o.season === 'autumn') fallingLeaves(P, t, o.wind ?? 1); };
+      if (nt > 0) layer(() => { body(); nightTint(nt); }, { filter: `saturate(${(1 - .3 * nt).toFixed(2)})` }); else body();
     },
   };
 })();
