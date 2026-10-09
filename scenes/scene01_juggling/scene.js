@@ -129,7 +129,7 @@
       lookX: t < FL ? tb.x / 4 : 0, lookY: wink ? 0 : -.85, eyes: wink ? 'wink' : 'open', brows: wink ? 'up' : 'normal',
       hatSway: [wob(t, 1.6) * .35, 0], hatLift: 2 * kf(t, [[13.45, 0], [13.55, 1], [13.8, 0]], easeOut), sway: .4 * Math.sin(c.s * Math.PI) };
     // first draw to find the mouth, then decide the mouth shape from the callout
-    [sx, sy, k] = P.p(JX, 0, JZ), s = U * k;
+    const [sx, sy, k] = P.p(JX, 0, JZ), s = U * k;
     const line = LINES[0];
     const said = callout(line.text, sx + 3.9 * s, sy - 16.6 * s, t - line.at, { dx: 420, dy: -170, size: 64, cps: line.cps, hold: line.hold });
     o.mouth = t >= FL ? (phase === 1 ? 'grin' : 'o') : lipFlap(t, said.talking, 'grin');

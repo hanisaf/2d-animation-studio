@@ -81,3 +81,63 @@ scripts/new.sh scene scene03_auditions        # scenes/scene03_auditions/ {asset
 Each new folder is self-contained: describe the asset in its `README.md` (for a scene: synopsis, script, shot list), put reference art in the folder and list it in `asset.js`, then write the code. See [ANIMATION_GUIDE.md](ANIMATION_GUIDE.md) and [docs/HANDBOOK.md §8](docs/HANDBOOK.md#8-assets-characters-locations-scenes).
 
 > **Note on Naming Conflicts:** All character, location, and scene scripts are loaded into the same global environment without module isolation (no `import`/`export`). To avoid naming collisions that can cause scripts to silently overwrite each other or throw syntax errors, always namespace your internal helper functions and constants (e.g., prefixing them with `sm` for Sami, `sf` for Safadi, etc.) instead of using generic names.
+
+## Embed a scene in a web page
+
+Select a scene in the studio and choose **Export JavaScript (without sound)** or
+**Export JavaScript (with sound)**. Each download includes the drawing engine,
+shared character and location code, the selected scene, and embedded fonts.
+The sound version renders the scene's music and cartoon voices during export and
+embeds the finished WAV soundtrack (or its existing audio file). Long tracks render
+in short overlapping sections to keep soundtrack preparation responsive. Downloaded players
+need no audio synthesis: Unmute starts the embedded track at the current scene time.
+Sound exports take longer to create and contain the full audio data, making them
+larger than silent exports. The silent version keeps speech bubbles and omits audio. No studio server, CDN, or extra files are required by the downloaded player.
+Export from the studio served by npm run studio; font embedding needs an internet
+connection during export. A failed font or soundtrack download stops the export.
+
+Put the downloaded JavaScript file beside index.html (or use its correct relative
+path), then embed it with the following. Use your actual exported filename:
+
+~~~html
+<div id="animation"></div>
+<script src="scene01_juggling.silent.js"
+        data-mount="#animation" data-loop="true"></script>
+~~~
+
+The script mounts its own scene, so no scene identifier is needed. This also works
+with async or defer and scripts placed in the head: it waits for the page content.
+Set data-autoplay="false" or data-controls="false" as needed.
+
+For manual control of a single export, load the script before calling:
+
+~~~javascript
+const player = await MyScene.mount('#animation', { loop: true });
+// player.pause(); player.seek(8); await player.play(); player.destroy();
+~~~
+
+MyScene always refers to the most recently loaded export. For multiple exports,
+use SafadiScenes['the-exact-scene-id'].mount(...). The scene ID is printed in the
+first line of the downloaded file and is available as MyScene.id. For IDs containing
+hyphens, use bracket notation. Do not keep scene01_juggling in manual code when
+loading a different scene. An undefined mount error means that scene ID is absent
+from the registry, or the downloaded script has not loaded yet. Check the script
+filename/path and browser Network/Console errors. With manual code and async/defer,
+wait for the script load event before calling mount.
+
+
+For sound, change the script filename to scene01_juggling.with-sound.js.
+Exported players start **muted**, play immediately without waiting for sound
+preparation, and provide compact Play/Pause, a seek slider,
+elapsed/total time, Mute/Unmute, and playback speed (0.5x–2x). Silent exports
+disable the sound button. Re-export existing files to get the updated controls.
+Use `data-muted="false"` to start with sound or `data-speed="1.5"` for a different
+initial speed. Browsers may block audible autoplay; click Play to enable sound.
+Each mount has independent playback and drawing state; several scenes or instances
+can coexist. mount returns a promise for a player with play, pause, seek(seconds),
+destroy, setMuted(boolean), setPlaybackRate(number), canvas, currentTime, duration,
+playing, muted, and playbackRate. Manual mount options also accept muted (default
+true) and playbackRate (default 1; supported range 0.25–4). Set autoplay: false for a still
+first frame, or controls: false when providing your own controls. The canvas scales
+to the container's width. Loading both variants for the same scene makes the last
+loaded variant the one used by subsequent mounts.

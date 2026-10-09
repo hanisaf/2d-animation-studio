@@ -64,6 +64,8 @@ Each scene's folder holds its synopsis, script, shot list and editing notes (`RE
 
 | 16 | [The Etiquette of Employment](scenes/scene16_employment_etiquette/README.md) | 42 s | Workplace satire: Sami asks to transfer clinics. Dr. P's ominous warning becomes a drone delivering one massive etiquette textbook by parachute. |
 
+| 17 | [Dr. Sami Explains Access Recirculation](scenes/scene17_access_recirculation/README.md) | 168 s | Dr. Sami follows the local dialysis shortcut, explains access causes and sampling pitfalls, then calculates recirculation from three BUN values. |
+
 ## Where the story is heading
 
 - **Next:** the auditions. A parade of replacement jesters (new characters) fail spectacularly in front of Pearl, and Fester sneaks back in disguise.

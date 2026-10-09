@@ -247,7 +247,7 @@
   $('#lightbox').onclick = () => $('#lightbox').classList.remove('on');
   const exportRow = (sceneButtons, gif = false) => `
     <div class="row">
-      ${sceneButtons ? `<button id="exp-scene" class="accent">⬇ Export scene MP4</button><button id="share-scene">Copy play link</button><button id="exp-movie">🎞 Movie composer</button>
+      ${sceneButtons ? `<button id="exp-scene" class="accent">⬇ Export scene MP4</button><button id="exp-js-silent">Export JavaScript (without sound)</button><button id="exp-js-sound">Export JavaScript (with sound)</button><button id="share-scene">Copy play link</button><button id="exp-movie">🎞 Movie composer</button>
       <select id="quality" title="video bitrate"><option value="16000000">High · 16 Mbps</option><option value="8000000" selected>Standard · 8 Mbps</option><option value="4000000">Small · 4 Mbps</option></select>` : ''}
       <button id="snap">📷 Snapshot PNG</button>
       ${gif ? `<button id="exp-gif" title="Export the current character view as a looping 960×540 animation at 20 fps">⬇ Export GIF</button>
@@ -282,6 +282,8 @@
     $('#speed').value = S.speed; $('#speed').onchange = e => { S.speed = +e.target.value; syncAudio(); };
     $('#loopck').checked = S.loop; $('#loopck').onchange = e => { S.loop = e.target.checked; };
     $('#exp-scene').onclick = () => runExport([sc.id], `${sc.id}.mp4`);
+    $('#exp-js-silent').onclick = () => runJavaScriptExport(sc.id, false);
+    $('#exp-js-sound').onclick = () => runJavaScriptExport(sc.id, true);
     $('#share-scene').onclick = async () => {
       const url = new URL(location.href); url.search = new URLSearchParams({ scene: sc.id, play: 'true' }).toString();
       try { await navigator.clipboard.writeText(url.href); status('Play link copied', 'ok'); }
@@ -417,6 +419,28 @@
 
   // ---------- export ----------
   let ctrl = null;
+  async function runJavaScriptExport(id, sound) {
+    if (S.exporting) return;
+    pause(); S.exporting = true; ctrl = new AbortController();
+    const controls = [...document.querySelectorAll('#panel button, #panel input, #panel select')]
+      .filter(el => el.id !== 'cancel').map(el => [el, el.disabled]);
+    controls.forEach(([el]) => el.disabled = true);
+    const prog = $('#progress'), bar = prog.querySelector('.bar'); prog.hidden = false;
+    $('#cancel').onclick = () => ctrl.abort();
+    try {
+      const blob = await exportSceneJavaScript({ id, sound, signal: ctrl.signal,
+        onProgress: (p, msg) => { bar.style.width = (p * 100).toFixed(1) + '%'; status(msg); } });
+      const name = id + (sound ? '.with-sound.js' : '.silent.js');
+      downloadBlob(blob, name);
+      status('Saved ' + name + ' · ' + (blob.size / 1e6).toFixed(1) + ' MB · Embed with <script src="' + name + '" data-mount="#animation"></script>', 'ok');
+    } catch (e) {
+      status(e.name === 'AbortError' ? 'Export cancelled' : '⚠ ' + e.message, 'warn');
+      if (e.name !== 'AbortError') console.error(e);
+    } finally {
+      S.exporting = false; prog.hidden = true;
+      controls.forEach(([el, disabled]) => el.disabled = disabled); S.dirty = true;
+    }
+  }
   async function runGifExport(name) {
     if (S.exporting) return;
     const options = { entry: CHARACTERS[S.id], ...S.char, backdrop: S.char.backdrop,
@@ -447,7 +471,7 @@
     if (S.exporting) return;
     pause(); S.exporting = true; ctrl = new AbortController();
     const prog = $('#progress'), bar = prog.querySelector('.bar');
-    prog.hidden = false; bar.style.width = '0%'; document.querySelectorAll('#exp-scene,#exp-movie,#snap').forEach(b => b.disabled = true);
+    prog.hidden = false; bar.style.width = '0%'; document.querySelectorAll('#exp-scene,#exp-movie,#exp-js-silent,#exp-js-sound,#snap').forEach(b => b.disabled = true);
     $('#cancel').onclick = () => ctrl.abort();
     try {
       const blob = await exportVideo({ scenes: ids, bitrate: +$('#quality').value, signal: ctrl.signal, onProgress: (p, msg) => { bar.style.width = (p * 100).toFixed(1) + '%'; status(msg); } });
@@ -456,7 +480,7 @@
     } catch (e) {
       status(e.name === 'AbortError' ? 'Export cancelled' : '⚠ ' + e.message, 'warn'); if (e.name !== 'AbortError') console.error(e);
     } finally {
-      S.exporting = false; prog.hidden = true; document.querySelectorAll('#exp-scene,#exp-movie,#snap').forEach(b => b.disabled = false);
+      S.exporting = false; prog.hidden = true; document.querySelectorAll('#exp-scene,#exp-movie,#exp-js-silent,#exp-js-sound,#snap').forEach(b => b.disabled = false);
       if (S.mode === 'scene') useScene(S.id);
       else if (S.mode === 'movie') S.movieActive = -1;
       S.dirty = true;
