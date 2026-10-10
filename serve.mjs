@@ -6,6 +6,7 @@ import { createReadStream, statSync } from 'node:fs';
 import { extname, join, normalize, resolve, sep } from 'node:path';
 import { spawn } from 'node:child_process';
 
+const host = process.env.HOST || '127.0.0.1';
 const root = resolve('.'), port = +(process.argv.find(a => /^\d+$/.test(a)) || process.env.PORT || 5173);
 const MIME = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.mjs': 'text/javascript; charset=utf-8', '.css': 'text/css; charset=utf-8',
   '.json': 'application/json', '.md': 'text/markdown; charset=utf-8', '.png': 'image/png', '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg', '.webp': 'image/webp', '.gif': 'image/gif',
@@ -26,7 +27,7 @@ http.createServer((req, res) => {
     res.writeHead(200, { 'Content-Type': type, 'Content-Length': st.size, 'Accept-Ranges': 'bytes', 'Cache-Control': 'no-store' });
     createReadStream(f).pipe(res);
   }
-}).listen(port, '127.0.0.1', () => {
+}).listen(port, host, () => {
   const url = `http://localhost:${port}/`;
   console.log(`Safadi Animation Studio → ${url}   (Ctrl+C to stop)`);
   if (process.argv.includes('--open')) {

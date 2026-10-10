@@ -40,3 +40,6 @@ desktop.ini
 *.swp
 .env
 %SystemDrive%
+# Local container credentials
+.env.*
+!.env.example

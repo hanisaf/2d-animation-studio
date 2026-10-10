@@ -28,6 +28,120 @@ npm install
 node render.mjs --doctor      # checks Node, Chrome, ffmpeg and fonts, and renders a test frame
 ```
 
+## Docker
+
+Install Docker Desktop with Linux containers and Docker Compose v2. The image
+includes Node.js 24, Chromium, ffmpeg, fonts, Git, and the Codex, Claude Code,
+and Gemini CLIs. Internet access is needed for the build, AI services, and web fonts.
+
+### Start the studio
+
+Run Compose commands from the project folder, where `compose.yaml` lives.
+For this checkout in PowerShell:
+
+~~~powershell
+cd C:\Users\samisaf\GitHub\2d-animation-studio
+docker compose up --build -d studio
+~~~
+
+Open http://localhost:5173. The first build may take several minutes. Source edits
+appear immediately through the project mount, and renders are saved in `out/`
+on your computer. Container dependencies are stored in a separate Linux volume.
+
+### Start the coding agents
+
+Start both the studio and the tools container, then launch the CLI you want:
+
+~~~sh
+docker compose --profile tools up --build -d
+docker compose exec agents codex
+docker compose exec agents claude
+docker compose exec agents gemini
+~~~
+
+Run each CLI in its own terminal. For a container shell, use
+`docker compose exec agents bash`. Agents can edit the mounted project and run
+rendering commands. Settings and logins persist in the `agent_home` volume.
+
+For Codex account login:
+
+~~~sh
+docker compose exec agents codex login --device-auth
+~~~
+
+Open the printed URL on your computer and enter the code. Enable device code login
+in your account or workspace settings if required. For Claude and Gemini, follow
+their CLI login prompts. Use an API key if a browser callback cannot reach the container.
+
+For API-key authentication, copy `.env.example` to `.env` (PowerShell:
+`Copy-Item .env.example .env`) and fill in the relevant `OPENAI_API_KEY`,
+`ANTHROPIC_API_KEY`, or `GEMINI_API_KEY`. Recreate the tools container after changing
+keys with `docker compose --profile tools up -d agents`. Do not commit real keys.
+The agents can read `.env` through the project mount.
+
+For Codex API-key login:
+
+~~~sh
+docker compose exec agents sh -c 'printenv OPENAI_API_KEY | codex login --with-api-key'
+~~~
+
+Claude uses `ANTHROPIC_API_KEY`; in Gemini, select **Use Gemini API Key**.
+
+### Default permissions
+
+The tools container installs missing settings from
+[`docker/agent-defaults/`](docker/agent-defaults/) into its persistent home directory:
+
+| Agent | Default | Container settings file |
+|---|---|---|
+| Codex | Workspace writes, on-request approvals, outbound network access | `/home/node/.codex/config.toml` |
+| Claude | Automatically accept file edits; other actions retain permission checks | `/home/node/.claude/settings.json` |
+| Gemini | Automatically approve edit tools; other actions retain permission checks | `/home/node/.gemini/settings.json` |
+
+Existing settings files and logins are preserved. To enable newly added templates,
+rebuild with `docker compose --profile tools up --build -d agents`. If a settings
+file already exists, merge the desired template values into it and restart the CLI.
+Agents modify the actual checkout, so container isolation does not undo file edits.
+
+### Render and check the environment
+
+~~~sh
+docker compose exec studio npm run doctor
+docker compose exec studio node render.mjs --scene=scene01_juggling --sheet=1,4,8,12
+docker compose exec studio node render.mjs --scene=scene01_juggling --clip=0:2
+docker compose exec studio npm run movie
+~~~
+
+Inspect the doctor's output and `out/check/doctor.png`: the doctor currently exits
+successfully even when a check fails.
+
+### Updates and shutdown
+
+After changing `package.json` or `package-lock.json`, refresh the shared dependency
+volume; rebuilding alone does not replace its contents:
+
+~~~sh
+docker compose --profile tools stop
+docker compose run --rm --no-deps studio npm ci
+docker compose --profile tools up --build -d
+~~~
+
+Set `STUDIO_PORT` in `.env` to change the host port. Set `CODEX_VERSION`,
+`CLAUDE_VERSION`, and `GEMINI_VERSION` to exact npm versions to pin the CLIs.
+To refresh CLIs using `latest`, run `docker compose build --no-cache studio`,
+then `docker compose --profile tools up -d`.
+
+Stop the containers with:
+
+~~~sh
+docker compose --profile tools down
+~~~
+
+This preserves dependencies, settings, and logins. Adding `--volumes` deletes both
+named volumes, including saved credentials. Rendered files in the checkout remain.
+
+See [docs/DOCKER.md](docs/DOCKER.md) for standalone Docker commands and container details.
+
 ## The studio
 
 ```bash
