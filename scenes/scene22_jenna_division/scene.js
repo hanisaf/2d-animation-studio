@@ -1,6 +1,6 @@
 (() => {
   const school = LOCATIONS['meadow-ridge-elementary-school'];
-  const lines = ASSETS.scene.scene15_jenna_division.dialogue;
+  const lines = ASSETS.scene.scene22_jenna_division.dialogue;
   const ink = '#352A42', pink = '#A74476', blue = '#246799';
   const colors = ['#ED7374', '#E6B544', '#5BA6DE', '#76BC89'];
   const windowK = (t, a, b) => ease(seg(t, a, a + .5)) * (1 - ease(seg(t, b - .5, b)));

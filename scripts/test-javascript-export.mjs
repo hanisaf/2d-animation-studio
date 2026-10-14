@@ -152,18 +152,18 @@ try {
     window.testOfflineContexts = [];
     const NativeOffline = window.OfflineAudioContext;
     window.OfflineAudioContext = class extends NativeOffline { constructor(...args) { super(...args); testOfflineContexts.push(this); } };
-    studio.select('scene', 'scene17_access_recirculation');
+    studio.select('scene', 'scene24_access_recirculation');
   });
   await studio.click('#exp-js-sound');
   try {
-    await studio.waitForFunction(() => document.querySelector('#status').textContent.startsWith('Saved scene17_access_recirculation.with-sound.js'), { timeout: 60000 });
+    await studio.waitForFunction(() => document.querySelector('#status').textContent.startsWith('Saved scene24_access_recirculation.with-sound.js'), { timeout: 60000 });
   } catch(error) {
     console.error(await studio.evaluate(() => ({ status: document.querySelector('#status').textContent, contexts: testOfflineContexts.map(c => ({ state: c.state, currentTime: c.currentTime, length: c.length })) })));
     throw error;
   }
   let lesson;
   for (let i = 0; i < 100; i++) {
-    try { lesson = await readFile(resolve(output, 'scene17_access_recirculation.with-sound.js'), 'utf8'); break; }
+    try { lesson = await readFile(resolve(output, 'scene24_access_recirculation.with-sound.js'), 'utf8'); break; }
     catch { await new Promise(r => setTimeout(r, 100)); }
   }
   assert.ok(lesson?.includes('data:audio/wav;base64,'));

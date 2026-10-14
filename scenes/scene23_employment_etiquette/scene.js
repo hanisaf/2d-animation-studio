@@ -1,5 +1,5 @@
 (() => {
-  const set = LOCATIONS.home_clinic, lines = ASSETS.scene.scene16_employment_etiquette.dialogue;
+  const set = LOCATIONS.home_clinic, lines = ASSETS.scene.scene23_employment_etiquette.dialogue;
   const ink = '#352A42';
   const box = (x, y, w, h, fill, stroke = ink) => shape(rectPts(x, y, w, h), { fill, stroke, lwPx: 3, smooth: .06 });
   function label(s, x, y, size, color = ink) {

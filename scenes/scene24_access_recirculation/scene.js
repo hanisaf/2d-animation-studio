@@ -1,6 +1,6 @@
-// Scene 17: a deterministic, time-seekable clinical teaching board.
+// Scene 24: a deterministic, time-seekable clinical teaching board.
 (() => {
-  const ID = 'scene17_access_recirculation', LINES = ASSETS.scene[ID].dialogue;
+  const ID = 'scene24_access_recirculation', LINES = ASSETS.scene[ID].dialogue;
   const HALL = LOCATIONS.lecture_hall;
   const C = { dark: '#173644', mint: '#8AE5B3', fresh: '#FFA680', clear: '#83D8FF', gold: '#FFD684', white: '#EDF9F6', muted: '#BCD2D7' };
   const titles = ["Good flow. Poor clearance?","First: the normal route","The short circuit","Fresh inflow cannot keep up","Why an AV access recirculates","Why a catheter recirculates","Local loop versus heart–lung loop","Measure the right phenomenon","A and V: sample at full flow","S: the revised slow–stop method","Turn three BUN values into a percentage","Interpret carefully. Investigate the access."];

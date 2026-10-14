@@ -18,8 +18,8 @@ All movement is a deterministic function of time. Dialogue bubbles and synthesiz
 
 Cast: [Dr. Sami](../../characters/sami/README.md), [Dr. P](../../characters/patrick/README.md). Set: [Home and Clinic Office](../../locations/home_clinic/README.md).
 
-Play: `studio.html?scene=scene16_employment_etiquette&play=true`.
+Play: `studio.html?scene=scene23_employment_etiquette&play=true`.
 
-Contact sheet: `node render.mjs --scene=scene16_employment_etiquette --sheet=4,9,13,19,25,29,32,35.9,39 --cols=3`.
+Contact sheet: `node render.mjs --scene=scene23_employment_etiquette --sheet=4,9,13,19,25,29,32,35.9,39 --cols=3`.
 
-Build: `scripts/build_scene.sh scene16_employment_etiquette`.
+Build: `scripts/build_scene.sh scene23_employment_etiquette`.

@@ -1,4 +1,4 @@
-# Scene 14: A Breath of Innovation
+# Scene 21: A Breath of Innovation
 
 > Doctor Sami introduces Vent-Tutor in the lecture hall: a professional mechanical ventilation simulator that makes patient–ventilator interactions visible through interactive waveforms. His enthusiasm turns a software demonstration into a playful invitation to experiment.
 
@@ -44,6 +44,6 @@ Dialogue timings and wording are defined in `asset.js`; the same entries drive b
 Open the scene in the studio, or render a contact sheet:
 
 ```bash
-node render.mjs --scene=scene14_vent_tutor --sheet=3,13,19,24,29,34,40,47,52,57,65 --cols=3 --out=out/scene14_vent_tutor/contact-sheet.jpg
-scripts/build_scene.sh scene14_vent_tutor
+node render.mjs --scene=scene21_vent_tutor --sheet=3,13,19,24,29,34,40,47,52,57,65 --cols=3 --out=out/scene21_vent_tutor/contact-sheet.jpg
+scripts/build_scene.sh scene21_vent_tutor
 ```

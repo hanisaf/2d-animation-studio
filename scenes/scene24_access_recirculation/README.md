@@ -48,7 +48,7 @@ Do not substitute an opposite-arm peripheral venous sample: arterial–periphera
 
 ## Playback and export
 
-Open `studio.html?scene=scene17_access_recirculation` in the running studio. The scene uses existing synthesized cartoon vocalizations, with the actual words in speech bubbles; it is not a recorded spoken narration. Standard scene MP4 and standalone JavaScript exports work through the studio. All motion is a deterministic function of scene time, with private IIFE helpers.
+Open `studio.html?scene=scene24_access_recirculation` in the running studio. The scene uses existing synthesized cartoon vocalizations, with the actual words in speech bubbles; it is not a recorded spoken narration. Standard scene MP4 and standalone JavaScript exports work through the studio. All motion is a deterministic function of scene time, with private IIFE helpers.
 
 ## Validation
 

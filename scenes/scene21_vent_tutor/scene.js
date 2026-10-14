@@ -1,7 +1,7 @@
 // A staged, illustrative app demo. Every interaction and trace is a pure function of time.
 (() => {
   const HALL = LOCATIONS.lecture_hall;
-  const LINES = ASSETS.scene.scene14_vent_tutor.dialogue;
+  const LINES = ASSETS.scene.scene21_vent_tutor.dialogue;
   const MINT = '#8AE5B3', CYAN = '#83D8FF', GOLD = '#FFD684', DARK = '#173644';
   const MODES = ['Volume control', 'Pressure control', 'Pressure support'];
   const speaking = t => LINES.some(l => {

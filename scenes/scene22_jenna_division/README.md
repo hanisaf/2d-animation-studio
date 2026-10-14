@@ -51,8 +51,8 @@ A gentle MIDI-style instrumental plays throughout all 235 seconds: synthesized b
 
 Cast: [Jenna](../../characters/jenna/README.md), [Danny](../../characters/danny/README.md). Set: [Meadow Ridge Elementary School](../../locations/meadow-ridge-elementary-school/README.md).
 
-Preview in the studio: `studio.html?scene=scene15_jenna_division&play=true`.
+Preview in the studio: `studio.html?scene=scene22_jenna_division&play=true`.
 
-Contact sheet: `node render.mjs --scene=scene15_jenna_division --sheet=60,148,191,199,205,212,215.7,216.5,219.7,220.5,223.5,228,234.9 --cols=4`.
+Contact sheet: `node render.mjs --scene=scene22_jenna_division --sheet=60,148,191,199,205,212,215.7,216.5,219.7,220.5,223.5,228,234.9 --cols=4`.
 
-Full video: `node render.mjs --scene=scene15_jenna_division --clip=0:235 --out=out/scene15_jenna_division/scene15_jenna_division.mp4`.
+Full video: `node render.mjs --scene=scene22_jenna_division --clip=0:235 --out=out/scene22_jenna_division/scene22_jenna_division.mp4`.
