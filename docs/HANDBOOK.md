@@ -509,6 +509,7 @@ Paths in a manifest are relative to its folder. A scene's `id`, `title` and `aud
 | ⚽ County soccer field | [locations/soccer_field/README.md](../locations/soccer_field/README.md): regulation pitch shot from both ends (`dir: ±1`) and from the air, goals, bleachers, shelters, snack bar, scoreboard, 16 camera presets, API |
 | 🏠 House | [locations/house/README.md](../locations/house/README.md): two-storey brick home from the front lawn, porch, wing, garden and clover, 9 camera presets, API |
 | 🔬 Science room | [locations/science_room/README.md](../locations/science_room/README.md): DCES science lab with a teacher view and a classroom (reverse-angle) view, lab benches, demo-bench experiments (`bubbling`), whiteboard hook, 12 camera presets, API |
+| 📚 School library | [locations/school_library/README.md](../locations/school_library/README.md): DCES library with a desk view and a reading-room (reverse-angle) view, reading tables, bookcases, story corner, sunbeams (`sun`), table lamps (`lamps`), desk bell (`ding`), BOOK OF THE MONTH board hook, 15 camera presets, API |
 | 🎬 01 Juggling in the throne room | [scenes/scene01_juggling/README.md](../scenes/scene01_juggling/README.md): synopsis, script, shot list, constants |
 | 🎬 02 Fired! | [scenes/scene02_fired/README.md](../scenes/scene02_fired/README.md): synopsis, script, shot list, constants |
 | 🎬 03 Once a dragon | [scenes/scene03_once_a_dragon/README.md](../scenes/scene03_once_a_dragon/README.md): synopsis, script, shot list, constants |
