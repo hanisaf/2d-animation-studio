@@ -9,7 +9,34 @@ function synthesizeSceneAudio(sc, sampleRate = 48000) {
   return SCENE_AUDIO_CACHE.get(key);
 }
 
+// Bound the active oscillator graph for long lessons. Overlap retains note releases
+// across joins; each section keeps the original music phase and dialogue seeds.
 async function buildSceneAudio(sc, sampleRate) {
+  if (sc.duration <= 16) return buildSceneAudioChunk(sc, sampleRate);
+  const output = new AudioBuffer({ numberOfChannels: 2, length: Math.ceil(sc.duration * sampleRate), sampleRate });
+  const overlap = Math.max(2, 60 / (sc.music?.bpm || 100) * 1.25);
+  const dialogue = [...(sc.dialogue || [])].sort((a, b) => a.at - b.at).map((line, audioIndex) => ({ ...line, audioIndex }));
+  for (let first = 0; first < output.length; first += 12 * sampleRate) {
+    const last = Math.min(output.length, first + 12 * sampleRate);
+    const lead = Math.min(first, Math.ceil(overlap * sampleRate)), offset = (first - lead) / sampleRate;
+    const end = last / sampleRate;
+    let music;
+    if (sc.music) {
+      const sections = [...(sc.music.sections || [{ at: 0, energy: .5 }])].sort((a, b) => a.at - b.at);
+      const current = sections.filter(section => section.at <= offset).at(-1) || sections[0];
+      music = { ...sc.music, sections: [{ ...current, at: 0 }, ...sections.filter(section => section.at > offset && section.at < end).map(section => ({ ...section, at: section.at - offset }))],
+        cues: (sc.music.cues || []).filter(cue => cue.at >= offset && cue.at < end).map(cue => ({ ...cue, at: cue.at - offset })) };
+    }
+    const part = { ...sc, duration: end - offset, music,
+      dialogue: dialogue.filter(line => line.at < end && line.at + .2 + line.text.replace(/\*/g, '').length / (line.cps ?? 18) + .5 > offset)
+        .map(line => ({ ...line, at: line.at - offset })) };
+    const buffer = await buildSceneAudioChunk(part, sampleRate, offset);
+    for (let channel = 0; channel < 2; channel++) output.getChannelData(channel).set(buffer.getChannelData(channel).subarray(lead, lead + last - first), first);
+  }
+  return output;
+}
+
+async function buildSceneAudioChunk(sc, sampleRate, musicOffset = 0) {
   const ctx = new OfflineAudioContext(2, Math.ceil(sc.duration * sampleRate), sampleRate);
   const master = ctx.createGain(), musicBus = ctx.createGain(), voiceBus = ctx.createGain(), limiter = ctx.createDynamicsCompressor();
   master.gain.value = 1.8;
@@ -53,8 +80,8 @@ async function buildSceneAudio(sc, sampleRate) {
     const beat = 60 / (score.bpm || 100), motif = score.motif || [0, 2, 4, 2, 5, 4, 2, 1], chords = score.chords || [0, 3, 4, 0];
     const sections = [...(score.sections || [{ at: 0, energy: .5 }])].sort((a, b) => a.at - b.at);
     const sectionAt = t => { let current = sections[0]; for (const section of sections) { if (section.at > t) break; current = section; } return current; };
-    for (let step = 0; step * beat / 2 < sc.duration; step++) {
-      const at = step * beat / 2, section = sectionAt(at), energy = section.energy ?? .5;
+    for (let step = Math.ceil(musicOffset * 2 / beat); step * beat / 2 - musicOffset < sc.duration; step++) {
+      const at = step * beat / 2 - musicOffset, section = sectionAt(at), energy = section.energy ?? .5;
       if (energy <= 0) continue;
       const bar = Math.floor(step / 8), chord = chords[bar % chords.length], halfBeat = step % 2;
       if (!halfBeat) {
@@ -110,7 +137,7 @@ async function buildSceneAudio(sc, sampleRate) {
         const style = voice.style || 'bouncy';
         const length = { measured: 1.08, sporty: .67, melodic: 1, bouncy: .85, regal: .76, rumble: 1.14 }[style] ?? .85;
         const dur = Math.min(.28, Math.max(.07, spacing * length));
-        cartoonSyllable(ctx, voiceBus, at, dur, { ...voice, level: (voice.level ?? .13) * (line.energy ?? 1) }, lineIndex * 97 + syllableIndex++, vowels[i]?.[0] || 'a');
+        cartoonSyllable(ctx, voiceBus, at, dur, { ...voice, level: (voice.level ?? .13) * (line.energy ?? 1) }, (line.audioIndex ?? lineIndex) * 97 + syllableIndex++, vowels[i]?.[0] || 'a');
       }
     }
   }
@@ -121,8 +148,10 @@ async function buildSceneAudio(sc, sampleRate) {
     for (const line of lines) {
       if (line.kind === 'think' || line.silent) continue;
       const end = Math.min(sc.duration, line.at + .2 + line.text.replace(/\*/g, '').length / (line.cps ?? 18) + .18);
-      if (ranges.length && line.at <= ranges[ranges.length - 1][1] + .25) ranges[ranges.length - 1][1] = Math.max(end, ranges[ranges.length - 1][1]);
-      else ranges.push([line.at, end]);
+      if (end <= 0) continue;
+      const start = Math.max(0, line.at);
+      if (ranges.length && start <= ranges[ranges.length - 1][1] + .25) ranges[ranges.length - 1][1] = Math.max(end, ranges[ranges.length - 1][1]);
+      else ranges.push([start, end]);
     }
     for (const [start, end] of ranges) {
       musicBus.gain.setValueAtTime(1, start);

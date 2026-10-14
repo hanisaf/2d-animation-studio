@@ -23,6 +23,7 @@ A stylised bobble-head identical in proportion to his twin brother Safadi.
 - **Head:** same as Safadi, with a kind and playful expression.
 - **Face:** thick, dark, tapered brows; warm brown almond eyes; a broad, soft nose; a calm closed-mouth smile.
 - **Clothes:** a white doctor's coat over blue scrubs, with a stethoscope around his neck.
+- **Stethoscope:** metal earpieces, dark Y-shaped tubing, and a silver chest piece resting on his coat. In the examine pose, he grips the chest piece while the tubing stays connected to his neck.
 - **Shoes:** comfortable white sneakers.
 
 | Part | Colour |
@@ -89,7 +90,7 @@ const A = sami(x, y, s, {
   // extras
   emote, emoteK,               // '?' | '!' | 'sweat' | 'music' | 'heart'
 });
-// A (screen px): head, mouth, top, eyeL, eyeR, chest, belly, handL, handR, bulb
+// A (screen px): head, mouth, top, eyeL, eyeR, chest, belly, handL, handR, stethoscope, bulb
 
 samiBoard(x, y, w, k, t, { kind, title });   // floating medical chart at screen (x, y), width w px
 // k 0..1: pops in (0–.2), then the drawing chalks itself on (.2–1)

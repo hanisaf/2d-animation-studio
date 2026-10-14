@@ -33,6 +33,7 @@ Each character's folder holds its description, look, personality and rig notes (
 | 🐉 | [Dragon](characters/dragon/README.md) | A gentle, funny dragon who loves learning and can fly |
 | 🤖 | [Robo-Safadi](characters/robo_safadi/README.md) | The robot professor Alma and Jenna dreamed up for Halloween: LED eyes that ACTIVATE red, a scanning beam, hover jets, and one mission: *EAT. YOUR. BROCCOLI.* |
 | 🟧 | [Clawd](characters/clawd/README.md) | A little clay-orange block of an AI: the large language model that lives in Housam's laptop and pops out as a hologram. Give him a prompt and expect the unexpected |
+| 💜 | [Roudaynah](characters/roudaynah/README.md) | A loving, busy mom and avid programmer with superpowers of love and original ideas from her laptop |
 
 ## Sets
 
@@ -73,6 +74,9 @@ Each scene's folder holds its synopsis, script, shot list and editing notes (`RE
 | 18 | [Some Assembly Required](scenes/scene18_some_assembly/README.md) | 102 s | In the science room, Alma and Jenna build Robo-Safadi (*trick* gets you broccoli, *treat* gets you candy) but he won't switch on. Safadi pokes his head in (*"explaining is my job!"*) until Danny shoves him out: *"It's a SECRET!"* Housam explains hardware, software and programming: *"Danny and I will help you!"* *"HOORAY!"* *To be continued…* |
 | 19 | [If, Else, Explain!](scenes/scene19_if_else_explain/README.md) | 110 s | Housam and Danny program Robo-Safadi: an if/else for trick or treat, then a large language model (Clawd!) with the prompt *"Do something interesting and surprising! Robot goes haywire!"*, triggered by Professor Safadi's favorite word: *"EXPLAIN!"* *To be continued…* |
 | 20 | [The Infinite Candy Glitch](scenes/scene20_halloween_night/README.md) | 100 s | Halloween night at Alma's house: the grown-ups crack Robo-Safadi's program (trick → broccoli, treat → candy) and everyone triggers an infinite candy glitch, until Safadi says *"Let me explain…"* Clawd wakes inside the robot: red eyes, *"BEEP. BOOP."* *To be continued…* |
+| 14 | [A Breath of Innovation](scenes/scene14_vent_tutor/README.md) | 68 s | Doctor Sami celebrates Vent-Tutor with a demonstration of interactive waveforms, ventilation modes, clinical scenarios, and changing settings: *"One simulated breath at a time."* |
+| 16 | [The Etiquette of Employment](scenes/scene16_employment_etiquette/README.md) | 42 s | Workplace satire: Sami asks to transfer clinics. Dr. P's ominous warning becomes a drone delivering one massive etiquette textbook by parachute. |
+| 17 | [Dr. Sami Explains Access Recirculation](scenes/scene17_access_recirculation/README.md) | 168 s | Dr. Sami follows the local dialysis shortcut, explains access causes and sampling pitfalls, then calculates recirculation from three BUN values. |
 
 ## Where the story is heading
 

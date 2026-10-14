@@ -1,0 +1,28 @@
+asset({
+  title: 'A Breath of Innovation',
+  logline: 'Doctor Sami celebrates Vent-Tutor: professional patient–ventilator simulation, interactive waveforms, ventilation modes, and clinical scenarios you can explore by changing settings.',
+  files: ['scene.js'],
+  docs: 'README.md',
+  cast: ['sami'],
+  locations: ['lecture_hall'],
+  dialogue: [
+    { at: .8, speaker: 'sami', text: 'Meet *Vent-Tutor*—a breath of innovation!', cps: 20, hold: 1.0 },
+    { at: 5.2, speaker: 'sami', text: 'A *professional simulator* for mechanical ventilation.', cps: 22, hold: 1.2 },
+    { at: 10.4, speaker: 'sami', text: 'Explore how a *patient and ventilator* interact.', cps: 21, hold: 1.3 },
+    { at: 15.6, speaker: 'sami', text: '*Interactive waveforms!* Every breath tells a story.', cps: 21, hold: 1.3 },
+    { at: 22.4, speaker: 'sami', text: 'Explore *different ventilation modes*...', cps: 20, hold: 1.3 },
+    { at: 27.6, speaker: 'sami', text: '...and watch the simulation respond as you switch!', cps: 21, hold: 1.4 },
+    { at: 36.4, speaker: 'sami', text: 'Try a *clinical scenario*. Change the lung mechanics.', cps: 21, hold: 1.5 },
+    { at: 44.4, speaker: 'sami', text: 'Adjust the *settings*. Compare the waveforms.', cps: 20, hold: 1.2 },
+    { at: 49.2, speaker: 'sami', text: 'Ask *what if?* Then try it and see!', cps: 19, hold: 1.1 },
+    { at: 54.2, speaker: 'sami', text: 'And reset! This patient has *infinite patience*.', cps: 22, hold: 1.1 },
+    { at: 59.4, speaker: 'sami', text: '*Vent-Tutor.* Turn curiosity into understanding...', cps: 22, hold: 1.0 },
+    { at: 63.6, speaker: 'sami', text: '...one *simulated breath* at a time.', cps: 19, hold: 1.5 },
+  ],
+  music: {
+    prompt: 'Warm, optimistic software demonstration with soft marimba, sparse bright bells and a gentle bass pulse. Curious and playful, with quiet space for Doctor Sami and a small resolving chime at the end.',
+    bpm: 100, tonic: 60, motif: [0, 2, 4, 7, 4, 2, 5, 4], chords: [0, 5, 3, 4],
+    sections: [{ at: 0, energy: .26 }, { at: 15.6, energy: .36 }, { at: 36, energy: .22 }, { at: 54, energy: .32 }, { at: 59, energy: .2 }, { at: 66.5, energy: .08 }],
+    cues: [{ at: 1, type: 'ding' }, { at: 22.8, type: 'plip' }, { at: 27.8, type: 'plip' }, { at: 32.8, type: 'plip' }, { at: 38, type: 'ding' }, { at: 55.2, type: 'plip' }, { at: 66, type: 'ding' }],
+  },
+});

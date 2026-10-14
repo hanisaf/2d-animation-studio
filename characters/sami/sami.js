@@ -10,7 +10,7 @@
 // Pose     dy (hip drop; + = crouch) · lean (torso, rad) · tilt (head, rad) · turn (head −1..1) · rot (whole body, about the belly)
 //          jump (units off the floor) · sq (squash; negative stretches) · flip · breathe (default on)
 // Limbs    handL / handR: [x, y] wrist targets in local units (L = screen-left) · footL / footR: ankle targets (rest [∓1.25, −0.8])
-//          handPoseL / handPoseR: 'open' | 'palm' (spread, presenting) | 'point' (index finger) | 'fist' | 'thumb' | 'pointer'
+//          handPoseL / handPoseR: 'open' | 'palm' (spread, presenting) | 'point' (index finger) | 'fist' | 'thumb' | 'pointer' | 'stethoscope'
 //          pointerAng (screen angle of the pointer stick, rad; default up and outward) · pointerLen (units, default 7.5)
 // Face     eyes: open | wide | happy | closed | wink | squeeze | narrow | glow · lookX / lookY (−1..1) · blink (0..1, auto if unset)
 //          brows: normal | up | worried | angry | quizzical | focused · mouth: smile | grin | open | o | O | flat | frown | smirk | teeth | wobble
@@ -19,7 +19,7 @@
 //          bulb (0..1): an idea light bulb pops on above his head
 // Extras   emote: '?' | '!' | 'sweat' | 'music' | 'heart' with emoteK (0..1 pop) · boil (px)
 //
-// Returns anchors in screen px: { head, mouth, top, eyeL, eyeR, chest, belly, handL, handR, pointerTip, bulb }
+// Returns anchors in screen px: { head, mouth, top, eyeL, eyeR, chest, belly, handL, handR, pointerTip, stethoscope, bulb }
 //
 // Also: samiBoard(x, y, w, k, t, { kind, title }): his floating holographic chalkboard (screen px; k 0..1 = appear + draw).
 //   kind: 'graph' | 'steps' | 'atom' | 'bulb' | 'story' | 'plate' (healthy plate) | 'crash' (sugar spike vs steady veggies).
@@ -52,6 +52,18 @@ function sami(x, y, s, o = {}) {
     const hipY = SM_HIP + (o.dy || 0), lean = o.lean || 0, cl = Math.cos(lean), sl = Math.sin(lean);
     const tl = (px, py) => [px * cl - py * sl, hipY + px * sl + py * cl];   // torso-local → body-local
     const br = o.breathe === false ? 0 : wob(t, .22) * .06;
+    const arms = [[-1, o.handL || [-4.4, -8.1], o.handPoseL || 'open'], [1, o.handR || [4.4, -8.1], o.handPoseR || 'open']].map(([sd, tg, pose]) => {
+      const sh = tl(sd * 2.95, -7.2), { joint, end } = ik2(sh, tg, 3.75, 3.45, [sd * .25, 1]);
+      const ang = Math.atan2(end[1] - joint[1], end[0] - joint[0]);
+      return { sd, pose, sh, joint, end, ang };
+    });
+    const held = arms.find(a => a.pose === 'stethoscope');
+    let chestPiece = [1.95, -3.6];
+    if (held) {
+      const px = held.end[0] + Math.cos(held.ang) * .7 + held.sd * .65;
+      const py = held.end[1] + Math.sin(held.ang) * .7 - hipY;
+      chestPiece = [(px * cl + py * sl) / (1 + br * .3), (-px * sl + py * cl) / (1 + br)];
+    }
 
     // ---- legs + shoes ----
     [[-1, o.footL || [-1.25, -.8]], [1, o.footR || [1.25, -.8]]].forEach(([sd, f]) => {
@@ -71,18 +83,19 @@ function sami(x, y, s, o = {}) {
     X.save(); X.translate(0, -8.9); X.rotate(o.tilt || 0); X.scale(1.1, 1.1); X.translate(0, -5.55);
     smHead(o, t, lw, A);
     X.restore();
+    smStethoscope(lw, chestPiece, !!held);
+    A.stethoscope = toPx(...chestPiece);
     X.restore();
 
     // ---- arms (in front of the body) ----
-    [[-1, o.handL || [-4.4, -8.1], o.handPoseL || 'open'], [1, o.handR || [4.4, -8.1], o.handPoseR || 'open']].forEach(([sd, tg, pose]) => {
-      const sh = tl(sd * 2.95, -7.2), { joint, end } = ik2(sh, tg, 3.75, 3.45, [sd * .25, 1]);
+    arms.forEach(({ sd, pose, sh, joint, end, ang }) => {
       smLimb([sh, joint, end], 1.55, SM.suit, lw);
       line([[sh[0] - sd * .1, sh[1] + .5], [joint[0] - sd * .35, joint[1]]], { stroke: SM.suitDk, lw: lw * .8 });
-      const ang = Math.atan2(end[1] - joint[1], end[0] - joint[0]);
       if (pw > .01) circle(end[0] + Math.cos(ang) * .6, end[1] + Math.sin(ang) * .6, 2.2, { fill: radGrad(end[0] + Math.cos(ang) * .6, end[1] + Math.sin(ang) * .6, 0, 2.2, [[0, rgba(SM.glow, .55 * pw)], [1, rgba(SM.glow, 0)]]), stroke: null });
       const tip = smHand(end, ang, sd, pose, lw, o, pw);
       A[sd < 0 ? 'handL' : 'handR'] = toPx(end[0] + Math.cos(ang) * .6, end[1] + Math.sin(ang) * .6);
       if (tip) A.pointerTip = tip;
+      if (tip && pose === 'stethoscope') A.stethoscope = tip;
     });
   });
   if (pw > .01) smGlyphs(pw, t, true);
@@ -137,6 +150,31 @@ function smJacket(lw) {
   // pocket flaps + breast welt
   [-1, 1].forEach(sd => shape(rectPts(sd * 1.95 - .8, -1.95, 1.6, .5), { fill: SM.suit, stroke: SM.ink, lw: lw * .8 }));
   line([[1.55, -5.75], [2.45, -5.95]], { stroke: SM.ink, lw: lw * .9 });
+}
+
+// Neck earpieces join a rubber Y-tube; the chest piece rests on the coat or follows the gripping hand.
+function smStethoscope(lw, chestPiece, held) {
+  withBoil(0, () => {
+    [-1, 1].forEach(sd => {
+      const metal = [[sd * 1.05, -8.35], [sd * 1.5, -8.05], [sd * 1.65, -7.15]];
+      line(metal, { stroke: SM.ink, lw: .24 + lw * 2, smooth: true });
+      line(metal, { stroke: '#CBD5E1', lw: .24, smooth: true });
+      ellipse(sd * 1.05, -8.35, .22, .3, { fill: '#334155', stroke: SM.ink, lw: lw * .6 });
+    });
+    const fork = [[-1.65, -7.15], [-1.55, -5.95], [0, -4.95], [1.55, -5.95], [1.65, -7.15]];
+    const tube = [[0, -4.95], [0, -3.35], [chestPiece[0] * .5, Math.max(-2.8, chestPiece[1] + 1.2)], chestPiece];
+    [fork, tube].forEach(pts => {
+      line(pts, { stroke: SM.ink, lw: .32 + lw * 2, smooth: true });
+      line(pts, { stroke: '#334155', lw: .32, smooth: true });
+    });
+    if (!held) smChestPiece(chestPiece, lw);
+  });
+}
+
+function smChestPiece(p, lw) {
+  circle(p[0], p[1], .72, { fill: '#CBD5E1', stroke: SM.ink, lw });
+  circle(p[0], p[1], .46, { fill: '#94A3B8', stroke: '#F8FAFC', lw: lw * .5 });
+  ellipse(p[0] - .16, p[1] - .2, .16, .09, { fill: '#F8FAFC', stroke: null });
 }
 
 function smHead(o, t, lw, A) {
@@ -289,15 +327,9 @@ function smHand(p, ang, sd, pose, lw, o, pw) {
       shape(ellPts(c[0], c[1], .62, .6, 12), { fill: SM.skin, stroke: SM.ink, lw, smooth: true });     // fingers wrapped over it
     } else if (pose === 'stethoscope') {
       X.restore(); X.save(); X.translate(p[0], p[1]);
-      const a = o.pointerAng ?? (sd > 0 ? -1.05 : -Math.PI + 1.05), L = o.pointerLen ?? 5.5, c = [Math.cos(ang) * .7, Math.sin(ang) * .7];
-      const e = [c[0] + Math.cos(a) * L, c[1] + Math.sin(a) * L], b0 = [c[0] - Math.cos(a) * .9, c[1] - Math.sin(a) * .9];
+      const c = [Math.cos(ang) * .7, Math.sin(ang) * .7], e = [c[0] + sd * .65, c[1]];
       withBoil(0, () => {
-        // Draw rubber tube
-        const tubeMid = mixPt(b0, e, 0.5);
-        line([b0, [tubeMid[0], tubeMid[1] + 2], e], { stroke: '#334155', lw: .5 + lw * 2, smooth: true });
-        // Draw metal chest piece
-        circle(e[0], e[1], 1.0, { fill: '#CBD5E1', stroke: SM.ink, lw });
-        circle(e[0], e[1], 0.5, { fill: '#94A3B8', stroke: null });
+        smChestPiece(e, lw);
         if (pw > .01) circle(e[0], e[1], 1.3, { fill: radGrad(e[0], e[1], 0, 1.3, [[0, rgba(SM.glow, .8 * pw)], [1, rgba(SM.glow, 0)]]), stroke: null });
       });
       tip = toPx(e[0], e[1]);
@@ -453,7 +485,7 @@ CHARACTERS.sami = {
   poses: {
     'rest': (x, y, s, t) => sami(x, y, s, {}),
     'talk': (x, y, s, t) => sami(x, y, s, { mouth: smTalk(t), brows: 'up', handR: [5.3, -12.6], handPoseR: 'palm', turn: .2, tilt: .03 * wob(t, .7) }),
-    'examine': (x, y, s, t) => sami(x, y, s, { handR: [4.4, -12.2], handPoseR: 'stethoscope', pointerAng: -.95 + .08 * wob(t, .8), mouth: 'smile', brows: 'focused', lookX: .6, lookY: .2, tilt: .05 }),
+    'examine': (x, y, s, t) => sami(x, y, s, { handR: [4.4, -12.2 + .15 * wob(t, .8)], handPoseR: 'stethoscope', mouth: 'smile', brows: 'focused', lookX: .6, lookY: .2, tilt: .05 }),
     'explain': (x, y, s, t) => sami(x, y, s, { mouth: smTalk(t), brows: 'up', handL: [-5.3 - .3 * wob(t, 1.2), -12.4], handR: [5.3 + .3 * wob(t, 1.2, .5), -12.4], handPoseL: 'palm', handPoseR: 'palm', lean: .03 }),
     'point up': (x, y, s, t) => sami(x, y, s, { handR: [5.8, -21.4], handPoseR: 'point', mouth: 'open', brows: 'up', lookX: .5, lookY: -.8, tilt: -.05 }),
     'pointer': (x, y, s, t) => sami(x, y, s, { handR: [4.4, -12.2], handPoseR: 'pointer', pointerAng: -.95 + .08 * wob(t, .8), mouth: 'smile', brows: 'up', lookX: .6, lookY: -.5 }),

@@ -273,6 +273,7 @@ The sidebar lists every asset from `registry.js`:
 **🎭 Characters**
 - **Pose** view: pick any registered pose chip. The **Backdrop** is Paper, or a location at true scale (standing on its stage mark, background softened). Adjust **Zoom**, and toggle **animate** (boil, blinks, idle motion).
 - **Model sheet** view: every pose on one page (also `node render.mjs --modelsheet=<id>`).
+- **⬇ Export GIF**, beside **📷 Snapshot PNG**, saves the current pose or model sheet as a looping animation, including the selected backdrop and zoom. Choose a **GIF length** of 2, 4 (default), 6, or 10 seconds. GIFs are 960×540 at 20 fps, with progress and **Cancel**. Export captures motion even with **animate** paused and restores your preview afterward. Start with `npm run studio` to use GIF export.
 - The reference image sits beside the pose chips; click it to enlarge.
 
 **🏰 Locations**
