@@ -44,6 +44,7 @@ Each character's folder holds its description, look, personality and rig notes (
 | ⚽ | [County soccer field](locations/soccer_field/README.md) | A county park pitch with goals, bleachers, shelters, snack bar and scoreboard, shot from both ends and from the air |
 | 🏠 | [House](locations/house/README.md) | A two-storey red-brick family home across its front lawn: cream gable, columned porch, clover; autumn and night versions |
 | 🔬 | [Science room](locations/science_room/README.md) | The DCES science lab, shot toward the demo bench or back at the lab benches: bubbling flasks, Mr. Bones the skeleton, fume hood, aquarium, solar-system mobile |
+| 📚 | [School library](locations/school_library/README.md) | The DCES library, shot toward the circulation desk or back at the reading room: green-lamp reading tables, walls of books, a sunny window seat, rainbow story rug, Hoot the owl, a dragon-reading mural |
 
 ## Episodes (movie order)
 
