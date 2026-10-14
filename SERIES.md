@@ -46,6 +46,7 @@ Each character's folder holds its description, look, personality and rig notes (
 | 🔬 | [Science room](locations/science_room/README.md) | The DCES science lab, shot toward the demo bench or back at the lab benches: bubbling flasks, Mr. Bones the skeleton, fume hood, aquarium, solar-system mobile |
 | 📚 | [School library](locations/school_library/README.md) | The DCES library, shot toward the circulation desk or back at the reading room: green-lamp reading tables, walls of books, a sunny window seat, rainbow story rug, Hoot the owl, a dragon-reading mural |
 | 🪑 | [Professor Safadi's study](locations/safadi_study/README.md) | Safadi's study at home, shot toward his desk and chalkboard or back at the fireside: crackling fire, leather armchairs and chess, a library ladder, Newton's cradle, a grandfather clock; day or night |
+| 🩺 | [Dr. Sami's clinic](locations/sami_clinic/README.md) | Doctor Sami's clinic office, shot toward his desk or back at the exam table: X-ray light box, eye chart, heart monitor, fruit-and-veg mobile, privacy curtain, balance scale, giraffe growth chart, kids' corner |
 
 ## Episodes (movie order)
 
