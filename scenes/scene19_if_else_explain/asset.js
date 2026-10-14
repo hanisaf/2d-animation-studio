@@ -4,6 +4,7 @@ asset({
   title: 'If, Else, Explain!',
   logline: 'Housam and Danny program Robo-Safadi: an if/else for trick or treat, then a large language model (Clawd!) to make him less predictable. The prompt: "Do something interesting and surprising! Robot goes haywire!" The trigger: Professor Safadi\'s favorite word. "EXPLAIN!" To be continued…',
   files: ['props.js', 'scene.js'],              // the cart, laptop, hologram panel and code editor, then the shots
+  uses: ['scene18_some_assembly'],              // saMarker, from scene 18's props.js
   docs: 'README.md',                            // synopsis, script, shot list, notes for editing
   cast: ['housam', 'danny', 'clawd', 'robo_safadi'],
   locations: ['science_room'],
