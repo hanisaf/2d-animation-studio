@@ -479,12 +479,15 @@ asset({
   audio: 'audio.mp3',                               // scenes: soundtrack (optional; silence if missing)
   cast: ['princess_pearl', 'jester_fester'],        // scenes: character ids (the studio cross-links them)
   locations: ['throne_room'],                       // scenes: location ids
+  uses: ['scene01_juggling'],                       // scenes: earlier scenes whose helper files this one borrows (optional)
 });
 ```
 
 Paths in a manifest are relative to its folder. A scene's `id`, `title` and `audio` come from its manifest, so `scene.js` only declares `duration`, `fps`, `bpm` and `shots`.
 
 **Loading.** For each folder in `registry.js` (characters → locations → scenes), the studio loads `asset.js` and then the files it lists. So a scene can use any character or location.
+
+A scene can also call helpers defined in an earlier scene's files (scene 20 draws scene 17's Halloween props). The studio loads every scene, so that just works there; list those scenes in `uses` so **Export JavaScript**, which bundles one scene on its own, includes their helper files (everything but their `scene.js`).
 
 **The code registers the runtime parts:**
 - `CHARACTERS.<id> = { draw, unit, size, poses }`: poses appear as the studio's pose chips and the model sheet.

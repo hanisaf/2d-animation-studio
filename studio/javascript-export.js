@@ -22,8 +22,15 @@ async function exportSceneJavaScript({ id, sound = false, signal, onProgress = (
   const code = await Promise.all(['engine/core.js', 'engine/persp.js', 'engine/callout.js', 'engine/timeline.js'].map(read));
   // Rigs and sets can share helpers outside their declared cast. Include the shared library
   // in studio load order, but only the selected scene. Each mount gets its own private scope.
+  // A scene that borrows helpers from earlier scenes lists them in its asset.js `uses`; their
+  // helper files (everything but scene.js, so no extra scene registers) load just before it.
+  const uses = (ASSETS.scene[id].uses || []).map(dep => {
+    const a = ASSETS.scene[dep];
+    if (!a) throw new Error(id + ' uses unknown scene ' + dep);
+    return { ...a, files: a.files.filter(f => f !== 'scene.js') };
+  });
   const assets = [...REGISTRY.characters.map(id => ASSETS.character[id]),
-    ...REGISTRY.locations.map(id => ASSETS.location[id]), ASSETS.scene[id]];
+    ...REGISTRY.locations.map(id => ASSETS.location[id]), ...uses, ASSETS.scene[id]];
   for (let i = 0; i < assets.length; i++) {
     const a = assets[i], meta = { ...a, refs: [], docs: null, audio: null };
     if (!sound) delete meta.music; // dialogue text is also used by speech bubbles
