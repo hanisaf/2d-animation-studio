@@ -6,10 +6,10 @@
 
 | | |
 |---|---|
-| **Length** | ≈ 180 s, cut to the song (`audio.mp3`, not generated yet). The song script is in [`SONG.md`](SONG.md) |
+| **Length** | 192 s, cut to a 120 BPM scratch arrangement until the real song (`audio.mp3`) exists. The song script for Gemini is in [`SONG.md`](SONG.md) |
 | **Cast (all eleven)** | [Professor Safadi](../../characters/safadi/README.md) · [Princess Pearl](../../characters/princess_pearl/README.md) (the judge) · [Jester Fester](../../characters/jester_fester/README.md) · [Housam](../../characters/housam/README.md) · [Alma](../../characters/alma/README.md) · [Jenna](../../characters/jenna/README.md) · [Danny](../../characters/danny/README.md) · [Doctor Sami](../../characters/sami/README.md) · [Dragon](../../characters/dragon/README.md) · [Robo-Safadi](../../characters/robo_safadi/README.md) · [Clawd](../../characters/clawd/README.md) (inside the robot) |
 | **Locations** | [School library](../../locations/school_library/README.md), dressed for the Book Fair: bunting, book stalls, a stage on the story rug, and Pearl's pink-and-gold throne wheeled in from the [throne room](../../locations/throne_room/README.md). Big musical moments cut to motion-graphics backdrops (sunbursts, flying pages, spotlights) as in [scene 17](../scene17_broccoli_directive/README.md) |
-| **Sound** | The song is the whole soundtrack and every character's voice. Lyrics run as karaoke like scene 17 |
+| **Sound** | The song is the whole soundtrack and every character's voice; karaoke runs along the bottom with the singer's name. For now: a synthesized scratch score and cartoon-voice scratch vocals |
 | **Movie** | #22 |
 
 ## Why it should travel
@@ -22,31 +22,51 @@
 
 ## Song map and shot list
 
-Times assume 120 BPM (one bar = 2 s) and are estimates; once `audio.mp3` exists they are replaced by measured word times and a beat grid, like scene 17's `lyrics.js`.
+Times are seconds into the scratch arrangement (120 BPM, one bar = 2 s) that the scene is cut to now. The lyric rows and their times live in [`lyrics.js`](lyrics.js); the story beats in `T_` at the top of [`scene.js`](scene.js) are read from them. Once `audio.mp3` exists, re-time `lyrics.js` to it (as scene 17 did) and the shots, mouths and karaoke follow.
 
-| Time | Section | Lyric | Shot |
+| Time | Section | Lyric | Shot (`scene.js`) |
 |---|---|---|---|
-| 0:00–0:10 | Intro | *"By royal decree… the Book Fair is open. Dazzle me."* *"Beep. Boop."* | **fairOpen**: a music-box twinkle over a slow push through the library doors: bunting, book stalls, a banner reading **DCES BOOK FAIR · WRITING COMPETITION**. On the fanfare the crowd parts and Pearl's throne is wheeled to the judge's spot. Slow blink. On *Beep. Boop.* a cut to Robo-Safadi at a stall, eyes cyan |
-| 0:10–0:30 | Verse 1 (Safadi) | *"Ladies and gentlemen, children of all ages…"* | **safadiStall**: Safadi at his stall, powers on (aura, orbiting formulas). The three books fan out like playing cards on *Mathematics! Physics! Astronomy!*, each with his giant face on the cover. On *footnotes have footnotes* the floating chalkboard fills with tiny text. On *I don't like to brag* the kids lean into frame: *"Oh, he's gonna brag!"* He drops a trophy into a briefcase labelled PROFESSOR |
-| 0:30–0:40 | Pre-chorus | *"Is everybody ready?" "Is the ball up on the ladder?"* *"What are you planning?"* *"YOU SHALL SEE!"* | **huddle**: the four kids huddled behind a bookcase, whispering. Pan up the library ladder: Danny's head and a juggling ball peek over the top shelf, then duck. Safadi turns, a sweat drop. Four sweet smiles straight to camera |
-| 0:40–0:56 | Chorus 1 | *"You shall see! Turn the page…"* | **pageTurn**: every shot is a giant page flip that wipes to the next. Alma's rainbow floor lights up on the story rug, Jenna's sketches come alive on the pages, Housam keeps the ball up, Danny stacks books like blocks. On *BONK!* a book slams shut on camera |
-| 0:56–1:06 | Verse 2a (Sami) | *"Doctor Sami's Big Book of Boogers!"* | **samiPitch**: Sami on the stage with the floating chart: a sneeze diagram, then a burp diagram. The kids in the crowd crack up. Cut to Pearl: *"…Ew. Next."* A flipper waves him off |
-| 1:06–1:14 | Verse 2b (Dragon) | *"A pop-up book that counts by threes!"* | **dragonPitch**: Dragon proudly opens a pop-up book: 3, 6 and 9 spring up as paper towers. Ah… ah… ACHOO: a puff of flame and a smoking, crispy book. Pearl: *"…It's on fire. Next."* |
-| 1:14–1:24 | Verse 2c (Robo + Clawd) | *"PROMPT. RECEIVED. WRITE. A. BEST. SELL. ER."* | **roboPitch**: Robo-Safadi's eyes go red; Clawd's hologram pops out of his chest, star-eyed, chirping. Robo's mouth turns into a printer and pages blast out faster and faster until they bury the stage. A close-up of one page: *Chapter 9,999: EAT YOUR BROCCOLI.* Pearl, half-buried in pages: *"…Why?"* |
-| 1:24–1:34 | Pre-chorus 2 (Pearl) | *"Bored, bored, I'm so royally bored…"* | **pearlBored**: a purple spotlight on the throne. Pearl slumps further with each line, heavy lids and a legendary yawn. On *make me feel something!* she hits the throne's arm. The four kids step into her light: *"Your Majesty… YOU SHALL SEE!"* |
-| 1:34–1:50 | Chorus 2 | (chorus) | **chorusParty**: the whole crowd dances: Alma's rainbow floor spreads across the library, Sami and Dragon join in, Robo does his stiff robot dance. Pearl is the only one not moving. Intercut: Danny climbing the ladder, ball in hand |
-| 1:50–2:02 | Bridge (Fester) | *"Hi… it's me. The jester you fired."* | **festerSpotlight**: the band drops out. A single spotlight. Fester steps onto the stage hatless and sheepish, holding a handmade book: *THE STORY OF MY LIFE, by Jester Fester (and friends)*. Gasps. Pearl's eyes narrow. On *Jenna drew the pictures…* the book's pages animate: Jenna's drawings, Alma dancing in the margins, Danny's joke balloons |
-| 2:02–2:10 | Bridge rap (Housam) | *"The ladder's two meters, gravity's nine-point-eight…"* | **mathRap**: Housam raps in front of a Safadi-style floating chalkboard he has borrowed: the ladder, a dotted arc, *h = 2 m*, *g = 9.8*, *t = √(2h/g) ≈ 0.64 s*. Safadi beams with pride, not realising it's a trap. The chalkboard zooms to Danny on the ladder, ball held over the stage |
-| 2:10–2:20 | Build | *"Chapter one: a ball fell on my head…"* *"Allow me to EXPLAIN—"* *"…now."* | **theSetup**: Fester reads; each chapter title appears as a flash card. Safadi steps up, finger raised, powers flaring: *EXPLAIN*. On that word Robo's eyes flash red (a nod to scene 20) and Danny lets go. The ball falls in slow motion past the shelves… |
-| 2:20 | Silence | — | **freeze**: one frame of total stillness. Everyone looks up |
-| 2:20–2:36 | Drop | **BONK!** *"HA-HA-HA-HA!"* *"SHE LAUGHED!"* *"Fester… you're… HIRED!"* | **pearlLaughs**: BONK on the downbeat with a big *BONK!* sound-effect card. Cut to Pearl: a twitch, a snort, then she falls off her throne laughing. Confetti cannons, the beat drops, everyone jumps. Pearl places the crown-shaped trophy on Fester's head (with a fresh jester hat beneath it). Fester to camera, beaming: *"…and THIS is the story of my life!"* |
-| 2:36–2:52 | Final chorus (key change) | *"You shall see! (Eat your broccoli!)"* | **finale**: everyone dances: Fester juggles five balls (none land on his head), Dragon flies laps with pages streaming like confetti, Alma's rainbow floor fills the room, Robo sings the *"Eat your broccoli!"* counter-line with his eyes happy, Clawd bounces on Robo's head, and the Safadi twins dance badly in sync. On the last *You shall seeeee!* the camera pulls up into a top shot of everyone in a star formation |
-| 2:52–3:00 | Outro / tag | *"Nobody wants my books?"* *"I'll take all three!"* *"…ANOTHER PROFESSOR."* *"Beep. Boop."* | **tag**: after the party, Safadi stands alone at his stall with three books. Dragon swoops in and hugs all three. Safadi lights up, pointer out: *"Now, let me explain chapter one—"* Smash cut to Pearl, deadpan, flipper raised: *"Somebody… find me… ANOTHER PROFESSOR."* Record scratch. Robo-Safadi leans into the lens: *"Beep. Boop."* Iris out. **THE END** |
+| 0–5.8 | Intro | *"By royal decree… the Book Fair is open."* | **fairOpen**: a push down the library from the desk: bunting, the DCES BOOK FAIR banner, Pearl's pink-and-gold throne by the mural, Safadi's and Robo's stalls on the front tables. YOU / SHALL / SEE! slam in on the fanfare |
+| 5.8–8.2 | | *"Dazzle me."* | **pearlDecree**: the throne; Pearl, nose up, eyes shut |
+| 8.2–10 | | *"Beep. Boop."* | **roboBeep**: Robo's stall, Clawd's hologram on the table, BEEP / BOOP |
+| 10–15 | Verse 1 (Safadi) | *"Ladies and gentlemen…"* | **safStall**: Safadi behind his stall, his three books stacked in front; the kids watch from the aisle |
+| 15–20 | | *"Mathematics! (Ooh!) Physics! (Ahh!) Astronomy too…"* | **safadiBooksShot**: a gold sunburst; powers on; the three books slam in on their words, then spin to show his face |
+| 20–25 | | *"The judge is a princess, the prize is a crown… footnotes"* | **crownShot**: Pearl on her throne and the crown trophy; a FOOTNOTES¹ board and footnotes on footnotes |
+| 25–30 | | *"I don't like to brag — (Oh, he's gonna brag!)"* | **safBrag**: the kids cup their mouths; the trophy drops into his PROFESSOR bag, wink |
+| 30–35 | Pre-chorus | *"Is everybody ready?" "Is the ball up on the ladder?" "Steady!"* | **huddle** / **ladderUp**: the kids huddle by the back bookcase; Danny climbs the library ladder with a juggling ball |
+| 35–37.9 | | *"Children… what exactly are you planning?"* | **safSuspicious**: Safadi, palms up, a sweat drop |
+| 37.9–40 | | *"YOU SHALL SEE!"* | **kidsShout**: the kids jump; Danny grins from the top of the ladder |
+| 40–56 | Chorus 1 | *"You shall see! Turn the page… Hey! Hey!… Read it! Write it! Flip it! (BONK!)"* | **chorus(0)**: six motion-graphics panels with page-turn wipes: the kids point at the lens; Alma's rainbow floor and a giant flipping book; Sami and Dragon on *Hey!*; Safadi baffled (*?*); READ IT (Housam, *City Spies*) / WRITE IT (Jenna) / FLIP IT (Danny somersaults) / a book slams shut: BONK!; everyone, YOU SHALL SEE! |
+| 56–57.5 | Verse 2 | *"Contestant two."* | **pearlCU** |
+| 57.5–63.5 | | *"Doctor Sami's Big Book of Boogers!"* | **samiPitch**: Sami on the rug with his green book; AH-CHOO! on *sneezes*, BUUURP! on *burps* |
+| 63.5–65.9 | | *"…Ew. Next."* | **pearlMed**: a flipper waves him off; Safadi smug by the throne |
+| 65.9–72.2 | | *"A pop-up book that counts by threes!… ACHOO!"* | **dragonPitch**: 3, 6, 9 pop up as paper towers; the sneeze-flame chars the book |
+| 72.2–74.1 | | *"…It's on fire. Next."* | **pearlCU** |
+| 74.1–84 | | *"PROMPT. RECEIVED. WRITE. A. BEST. SELL. ER."* | **roboPitch**: Robo goes red; Clawd's hologram pops out; pages blast from his mouth faster and faster, EAT YOUR BROCCOLI on every one, until CHAPTER 9,999 fills the lens |
+| 84–85.5 | | *"…Why?"* | **pearlBuried**: Pearl under a drift of pages |
+| 85.5–94 | Pre-chorus 2 (Pearl) | *"Bored, bored, I'm so royally bored…"* | **pearlBored**: a purple spotlight; she sinks lower each line, yawns, smacks the armrest on *something*; the kids rise into her light: *"Your Majesty… YOU SHALL SEE!"* |
+| 94–110 | Chorus 2 | (chorus) | **chorus(1)**: the same six panels in blue; Pearl stays unmoved (*…*); a last-second polaroid of Danny up the ladder, ball in hand, winking |
+| 110–117.5 | Bridge (Fester) | *"Hi… it's me. The jester you fired."* | **festerSpot**: the library darkens to one spotlight: Fester, hatless, holding his handmade book; Danny crouched on the ladder right above him |
+| 117.5–122 | | *"Jenna drew the pictures, Alma made it dance, Danny wrote the jokes"* | **bookPages**: inside the book: Jenna's sketch of Fester draws itself, Alma dances in the margin, Danny's chicken joke ends in BONK! |
+| 122–131.5 | Housam's rap | *"The ladder's two meters, gravity's nine-point-eight…"* | **mathRap**: Housam at a borrowed chalkboard: the ladder, the dotted fall, h = 2 m, g = 9.8, t = √(2h/g) ≈ 0.64 s circled; an inset of Danny waiting |
+| 131.5–139.6 | Build | *"It's called… The Story of My Life. Chapter one: a ball fell on my head…"* | **reading** / **audience** / **reading**: Fester reads; CHAPTER cards pop; the kids and Pearl watch |
+| 139.6–141.0 | | *"Ah! Allow me to EXPLAIN —"* | **explainCU**: Safadi steps in, powers flaring, bulb on: EXPLAIN! |
+| 141.0–141.5 | | *"…now."* | **ladderCU**: Danny lets go |
+| 141.5–142 | Silence | — | **fallWide**: the colour drains; everyone looks up; the ball falls Housam's 0.64 s |
+| 142–143 | Drop | **BONK!** | **bonkCU**: swirl eyes, stars, a giant BONK!, a white flash |
+| 143–146.4 | | *"Ha… ha-ha… HA-HA-HA-HA-HA!"* | **pearlLaugh**: a twitch, a snort, then she laughs so hard she rolls off the throne |
+| 146.4–151.5 | | *"SHE LAUGHED! The princess LAUGHED!"* | **party**: everyone jumps; confetti and pages rain; Fester walks over to Pearl |
+| 151.5–154.4 | | *"Fester… you're… HIRED!"* | **hired**: Fester kneels; the crown flips from her flipper onto his head: HIRED! |
+| 154.4–158 | | *"I'm Jester Fester — and THIS is the story of my life!"* | **triumph**: Fester, crowned, ta-da |
+| 158–176.3 | Final chorus | *"You shall see! (Eat your broccoli!)…"* | **finale**: everyone on Alma's rainbow floor: Pearl on her throne, Robo with Clawd on his head singing the counter-line, the Safadi twins, the kids, Fester juggling five balls (none land on his head), Dragon flying laps; YOU SHALL SEE! |
+| 176.3–181.1 | Tag | *"…So. Nobody wants my books?" (crickets) "I'll take all three!"* | **tagStall**: Safadi alone at his stall; Dragon swoops in and hugs all three books |
+| 181.1–183.5 | | *"Splendid! Now, let me explain chapter one —"* | **tagExplain**: pointer out, powers on |
+| 183.5–187.3 | | *"Somebody… find me… ANOTHER PROFESSOR."* | **tagPearl**: deadpan, flipper raised; record scratch |
+| 187.3–192 | | *"Beep. Boop."* | **roboTag**: Robo leans into the lens; iris on his eye; THE END (…or is it? You shall see!) |
 
 ## Notes for building
 
-- **Generate the song first** from [`SONG.md`](SONG.md) and save it here as `audio.mp3`. Then measure the beat grid and word times (as in scene 17) and replace the estimated times above.
-- **Reuse:** scene 17's karaoke (`lyrics.js`), beat `pulse(t)` and backdrop props (`halloween.js`, prefix `bd`); Fester's juggling (`characters/jester_fester/juggling.js`); Pearl's throne from `locations/throne_room/`.
-- **Props to build:** book-fair bunting and stalls; Safadi's three books with his face on the covers; Sami's chart pages; Dragon's pop-up book (whole, then charred); Robo's printer mouth and the page avalanche; Fester's handmade book; the crown trophy; the *BONK!* card; page-flip wipes.
-- **The rules still hold:** something happens in every shot; Pearl's laugh is animated in stages (twitch, snort, collapse), never snapped; Fester ends on a grin to camera.
-- **Not in `registry.js` yet.** Add it with `asset.js` and `scene.js` once the song exists.
+- **The soundtrack is a scratch until the real song exists.** `asset.js` has a synthesized 120 BPM `music` score (with the silence before the BONK and the cues), and `scene.js` passes `dialogue: YS_DIALOGUE`, which gives every lyric line cartoon-voice syllables in the singer's voice. To switch to the Gemini song: save it as `audio.mp3`, set `audio: 'audio.mp3'` in `asset.js` and delete `music`, remove the `dialogue` line from `scene({...})`, set `bpm`/`beatOffset` from beat tracking, and re-time `lyrics.js` to the recording.
+- **Files:** `props.js` (prefix `ys`: backdrops, the banner, throne, ladder, books, pop-up book, pages, crown and trophy, the maths board, page-turn wipes), `lyrics.js` (the song rows, the singing test that drives mouths, the karaoke), `scene.js` (blocking in `PATH`, poses per character, cameras in `CAM`, the shots).
+- **Blocking** (world, library reading view, so +X is screen-left): stage = the story rug (−330, 240); Fester reads at (−430, 190) under the ladder at X −470; Danny perches on the ladder (rung .62, about 155 up); Pearl's throne (170, 270); the kids' audience row at Z 330–345; Safadi's stall = reading table 1 right, Robo's = table 1 left.
+- **Check frames** with `node render.mjs --scene=scene22_you_shall_see --sheet=…` and build with `scripts/build_scene.sh scene22_you_shall_see`.

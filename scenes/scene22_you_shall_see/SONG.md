@@ -120,7 +120,7 @@ Chapter one: a ball fell on my head.
 Chapter two: a ball fell on my head.
 Chapter three —
 [Professor Safadi, cutting in, delighted]
-Ah! Allow me to EXPLAIN the recurring motif —
+Ah! Allow me to EXPLAIN —
 [Kids, whispering]
 …now.
 
@@ -144,9 +144,6 @@ Turn the page, turn the page, there's a twist in the story!
 You shall see! (Eat your broccoli!)
 Nobody knows the ending — not you, not me!
 Read it! Write it! Flip it! (BONK!)
-You shall see! (You shall see!)
-Turn the page, turn the page, there's a twist in the story!
-You shall see! (Beep! Boop!)
 The best part of the story is the part you never see —
 You shall seeeeee!
 
