@@ -504,6 +504,88 @@ function safadiBoard(x, y, w, k, t, o = {}) {
     }
     if (d > .88) { const k = backOut(seg(d, .88, 1)) * (1 + .08 * Math.sin(t * 6)); X.save(); X.translate(cx, cy); X.scale(4 * U * k, 4 * U * k);
       shape([[0, .9], [-1.1, -.1], [-1.05, -.75], [-.5, -1.05], [0, -.6], [.5, -1.05], [1.05, -.75], [1.1, -.1]], { fill: '#FF6F8E', stroke: SF.chalk, lwPx: 1.5, smooth: .5 }); X.restore(); }
+  } else if (kind === 'brain') {                                   // a brain whose wires light up one by one: focus
+    const cx = 50 * U, cy = (top + 21) * U, ring = [];
+    for (let i = 0; i <= 48; i++) { const a = i / 48 * TAU, r = 1 + .07 * Math.sin(a * 9); ring.push([cx + Math.cos(a) * 27 * U * r, cy + Math.sin(a) * 18 * U * r]); }
+    part(ring, 0, .3);
+    part([[cx, cy - 17 * U], [cx - 2 * U, cy - 8 * U], [cx + 2 * U, cy], [cx - 1 * U, cy + 9 * U]], .25, .35);
+    const N = [[-18, -4], [-9, -11], [-11, 5], [-3, 0], [8, -9], [10, 6], [19, -2], [4, 12]].map(([x, y]) => [cx + x * U, cy + y * U]);
+    const E = [[0, 1], [1, 3], [0, 2], [2, 3], [3, 4], [3, 5], [4, 6], [5, 6], [5, 7], [2, 7]];
+    E.forEach(([a, b], i) => { const f = seg(d, .35 + i * .05, .42 + i * .05); if (f > 0) line([N[a], mixPt(N[a], N[b], f)], { stroke: SF.glow, lwPx: Math.max(2, U * .8) }); });
+    N.forEach((n, i) => { const on = seg(d, .35 + i * .065, .4 + i * .065); circle(n[0], n[1], 1.5 * U * (.6 + .4 * on), { fill: on > 0 ? mixCol(SF.chalk, SF.glowGold, on) : null, stroke: SF.chalk, lwPx: 1.5 }); });
+    label('FOCUS', 50, top + 46, 6.5, .92);
+  } else if (kind === 'words') {                                   // big words float up out of an open book: vocabulary
+    const cx = 50 * U, by = (top + 37) * U;
+    part([[cx, by - 6 * U], [cx - 12 * U, by - 8 * U], [cx - 24 * U, by - 6 * U], [cx - 24 * U, by + 6 * U], [cx - 12 * U, by + 4 * U], [cx, by + 6 * U], [cx, by - 6 * U]], 0, .2);
+    part([[cx, by - 6 * U], [cx + 12 * U, by - 8 * U], [cx + 24 * U, by - 6 * U], [cx + 24 * U, by + 6 * U], [cx + 12 * U, by + 4 * U], [cx, by + 6 * U]], .1, .25);
+    [['MAGNIFICENT', 30, 8, .3], ['PERPLEXED', 72, 15, .5], ['CATASTROPHE', 40, 23, .7]].forEach(([w, lx, ly, a], i) => {
+      const rise = 4 * (1 - easeOut(seg(d, a, a + .2))); label(w, lx, top + ly + rise + .6 * Math.sin(t * 2 + i), 6.2, a);
+    });
+  } else if (kind === 'imagine') {                                 // a castle and a little dragon rise out of a book: imagination
+    const cx = 50 * U, by = (top + 39) * U;
+    part([[cx, by - 5 * U], [cx - 22 * U, by - 7 * U], [cx - 22 * U, by + 5 * U], [cx, by + 7 * U], [cx + 22 * U, by + 5 * U], [cx + 22 * U, by - 7 * U], [cx, by - 5 * U], [cx, by + 7 * U]], 0, .2);
+    const g = by - 7 * U, cs = [[-12, 0], [-12, -16], [-9, -16], [-9, -13], [-6, -13], [-6, -16], [-3, -16], [-3, -22], [0, -26], [3, -22], [3, -16], [6, -16], [6, -13], [9, -13], [9, -16], [12, -16], [12, 0]];
+    part(cs.map(([x, y]) => [cx + x * U, g + y * U]), .2, .55);
+    part([[cx - 2 * U, g], [cx - 2 * U, g - 5 * U], [cx + 2 * U, g - 5 * U], [cx + 2 * U, g]], .5, .6);
+    part([[cx, g - 26 * U], [cx, g - 31 * U], [cx + 4 * U, g - 30 * U], [cx, g - 29 * U]], .55, .62);
+    const fx = cx + 28 * U + 1.2 * U * Math.sin(t * 1.6), fy = g - 20 * U + 1.5 * U * Math.sin(t * 2.1);  // the dragon, flying
+    part([[fx - 8 * U, fy + 2 * U], [fx - 3 * U, fy], [fx + 2 * U, fy - 1 * U], [fx + 6 * U, fy - 4 * U], [fx + 8 * U, fy - 3 * U], [fx + 6 * U, fy - 1 * U], [fx + 2 * U, fy + 2 * U], [fx - 3 * U, fy + 3 * U], [fx - 8 * U, fy + 2 * U]], .62, .82);
+    const fl = 3 * U * Math.sin(t * 7); part([[fx - 2 * U, fy], [fx - 4 * U, fy - 7 * U - fl], [fx + 2 * U, fy - 1 * U]], .78, .88);
+    if (d > .9) [[-30, -18], [-24, -28], [34, -2]].forEach(([dx, dy], i) => shape(starPts(cx + dx * U, g + dy * U, 2.6 * U * backOut(seg(d, .9 + i * .03, 1)), .45, 5), { fill: SF.glowGold, stroke: SF.chalk, lwPx: 1.2 }));
+  } else if (kind === 'shoes') {                                   // footprints walk into a book; a heart pops out: empathy
+    const bx = 76 * U, by = (top + 28) * U;
+    part([[bx, by - 8 * U], [bx - 10 * U, by - 10 * U], [bx - 10 * U, by + 8 * U], [bx, by + 10 * U], [bx + 10 * U, by + 8 * U], [bx + 10 * U, by - 10 * U], [bx, by - 8 * U], [bx, by + 10 * U]], 0, .2);
+    for (let i = 0; i < 6; i++) {
+      const a0 = .2 + i * .1; if (d < a0) continue;
+      const fx = (12 + i * 8.5) * U, fy = (top + 34 + (i % 2 ? -3 : 3) - i * .8) * U, k2 = backOut(seg(d, a0, a0 + .08));
+      X.save(); X.translate(fx, fy); X.rotate(-.25); X.scale(k2, k2);
+      shape(ellPts(0, 0, 2.6 * U, 1.4 * U, 16), { fill: null, stroke: SF.chalk, lwPx: Math.max(2, U * .8) });
+      circle(3.6 * U, 0, .9 * U, { fill: null, stroke: SF.chalk, lwPx: Math.max(1.5, U * .6) });
+      X.restore();
+    }
+    if (d > .82) { const k3 = backOut(seg(d, .82, .95)) * (1 + .06 * Math.sin(t * 6)); X.save(); X.translate(bx, by - 16 * U); X.scale(4 * U * k3, 4 * U * k3);
+      shape([[0, .9], [-1.1, -.1], [-1.05, -.75], [-.5, -1.05], [0, -.6], [.5, -1.05], [1.05, -.75], [1.1, -.1]], { fill: '#FF6F8E', stroke: SF.chalk, lwPx: 1.5, smooth: .5 }); X.restore(); }
+    label('EMPATHY', 34, top + 46, 6.5, .9);
+  } else if (kind === 'history') {                                 // clay tablet → scroll → book → laptop
+    const cy = (top + 22) * U, xs = [14, 38, 62, 86].map(v => v * U), a = i => .05 + i * .23;
+    const tab = xs[0];                                             // the clay tablet, with wedge marks
+    part([[tab - 7 * U, cy - 10 * U], [tab + 7 * U, cy - 10 * U], [tab + 8 * U, cy + 10 * U], [tab - 8 * U, cy + 10 * U], [tab - 7 * U, cy - 10 * U]], a(0), a(0) + .12);
+    for (let r = 0; r < 4; r++) for (let c = 0; c < 3; c++) { const w0 = a(0) + .1 + (r * 3 + c) * .008; if (d > w0) shape([[tab + (-5 + c * 4.5) * U, cy + (-6 + r * 4.5) * U], [tab + (-3 + c * 4.5) * U, cy + (-7 + r * 4.5) * U], [tab + (-3 + c * 4.5) * U, cy + (-5 + r * 4.5) * U]], { fill: SF.chalk, stroke: null }); }
+    const sc = xs[1];                                              // the scroll
+    part([[sc - 7 * U, cy - 9 * U], [sc + 7 * U, cy - 9 * U], [sc + 7 * U, cy + 9 * U], [sc - 7 * U, cy + 9 * U], [sc - 7 * U, cy - 9 * U]], a(1), a(1) + .1);
+    part([[sc - 9 * U, cy - 11 * U], [sc + 9 * U, cy - 11 * U]], a(1) + .08, a(1) + .12); part([[sc - 9 * U, cy + 11 * U], [sc + 9 * U, cy + 11 * U]], a(1) + .1, a(1) + .14);
+    for (let i = 0; i < 4; i++) part([[sc - 5 * U, cy + (-5 + i * 3.4) * U], [sc + 5 * U, cy + (-5 + i * 3.4) * U]], a(1) + .12 + i * .02, a(1) + .15 + i * .02);
+    const bk = xs[2];                                              // the book
+    part([[bk, cy - 7 * U], [bk - 9 * U, cy - 9 * U], [bk - 9 * U, cy + 8 * U], [bk, cy + 10 * U], [bk + 9 * U, cy + 8 * U], [bk + 9 * U, cy - 9 * U], [bk, cy - 7 * U], [bk, cy + 10 * U]], a(2), a(2) + .15);
+    const lp = xs[3];                                              // the laptop
+    part([[lp - 8 * U, cy + 3 * U], [lp - 8 * U, cy - 9 * U], [lp + 8 * U, cy - 9 * U], [lp + 8 * U, cy + 3 * U]], a(3), a(3) + .1);
+    part([[lp - 11 * U, cy + 7 * U], [lp + 11 * U, cy + 7 * U], [lp + 8 * U, cy + 3 * U], [lp - 8 * U, cy + 3 * U], [lp - 11 * U, cy + 7 * U]], a(3) + .08, a(3) + .14);
+    if (d > a(3) + .12) { X.globalAlpha = .5 + .3 * Math.sin(t * 4); shape(rectPts(lp - 6.5 * U, cy - 7.5 * U, 13 * U, 9 * U), { fill: SF.glow, stroke: null }); X.globalAlpha = 1; }
+    for (let i = 0; i < 3; i++) { const mx = (xs[i] + xs[i + 1]) / 2; part([[mx - 2.5 * U, cy], [mx + 2.5 * U, cy], [mx + 1 * U, cy - 1.5 * U], [mx + 2.5 * U, cy], [mx + 1 * U, cy + 1.5 * U]], a(i) + .18, a(i) + .23); }
+    [['CLAY', 0], ['SCROLL', 1], ['BOOK', 2], ['LAPTOP', 3]].forEach(([w, i]) => label(w, xs[i] / U, top + 37, 4.4, a(i) + .1));
+    if (d > .97) label('5,000 YEARS OF IDEAS', 50, top + 45, 4.6, .97);
+  } else if (kind === 'clear') {                                   // a tangled scribble pulls straight: clear thinking
+    const cy = (top + 22) * U, f = easeOut(seg(d, .45, .9)), pts = [];
+    for (let i = 0; i <= 80; i++) { const u = i / 80, tang = 1 - f;
+      pts.push([(14 + 72 * u + tang * 9 * Math.sin(u * 47)) * U, cy + tang * (10 * Math.sin(u * 31) + 6 * Math.cos(u * 53)) * U]); }
+    const g = seg(d, 0, .45); if (g > 0) line(g < 1 ? polySlice(pts, 0, g) : pts, { stroke: f > .9 ? SF.glow : SF.chalk, lwPx: Math.max(2, U * .9) });
+    if (f > .9) part([[86 * U, cy], [82 * U, cy - 3 * U], [86 * U, cy], [82 * U, cy + 3 * U]], .9, 1);
+    if (d > .5) { X.globalAlpha = .9 * (1 - f); label('?', 22, top + 8, 8, .5); label('?!', 70, top + 34, 7, .5); X.globalAlpha = 1; }
+    label('CLEAR THINKING', 50, top + 42, 6.2, .9);
+  } else if (kind === 'remember') {                                // a pencil writes, a brain lights up
+    const cy = (top + 22) * U, w0 = seg(d, 0, .45), sq = [];
+    for (let i = 0; i <= 40; i++) { const u = i / 40; sq.push([(10 + 30 * u) * U, cy + (3 * Math.sin(u * 28)) * U + 6 * U]); }
+    if (w0 > 0) line(w0 < 1 ? polySlice(sq, 0, w0) : sq, ch);
+    const tip = w0 > 0 && w0 < 1 ? polyAt(sq, w0) : sq[sq.length - 1];
+    X.save(); X.translate(tip[0], tip[1]); X.rotate(-.6);           // the pencil
+    shape([[0, 0], [2 * U, -3 * U], [3 * U, -2 * U]], { fill: SF.chalk, stroke: null }); part([[2 * U, -3 * U], [9 * U, -14 * U]], 0, .05); part([[3 * U, -2 * U], [10 * U, -13 * U]], 0, .05);
+    X.restore();
+    part([[44 * U, cy], [52 * U, cy], [49 * U, cy - 2.5 * U], [52 * U, cy], [49 * U, cy + 2.5 * U]], .45, .55);
+    const bx = 72 * U, ring = []; for (let i = 0; i <= 40; i++) { const a = i / 40 * TAU, r = 1 + .07 * Math.sin(a * 8); ring.push([bx + Math.cos(a) * 15 * U * r, cy + Math.sin(a) * 11 * U * r]); }
+    const lit = seg(d, .6, .85);
+    if (lit > 0) { X.globalAlpha = .55 * lit * (.8 + .2 * Math.sin(t * 5)); shape(ring, { fill: SF.glowGold, stroke: null }); X.globalAlpha = 1; }
+    part(ring, .5, .7); part([[bx, cy - 10 * U], [bx - 1.5 * U, cy - 3 * U], [bx + 1.5 * U, cy + 3 * U], [bx, cy + 10 * U]], .65, .72);
+    label('REMEMBER', 50, top + 42, 6.2, .9);
   }
   X.restore();
   X.restore();

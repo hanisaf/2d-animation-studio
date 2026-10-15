@@ -396,7 +396,7 @@ const safadiStudy = (() => {
     sprite(P, -150, y, zm - 25, () => bookPile([C.curtain, C.rugNavy, C.wallDk, C.brassDk]));
     sprite(P, -15, y, zm - 8, () => paperStack());
     sprite(P, 60, y, zm + 14, () => penCup());
-    sprite(P, 110, y, zm - 10, () => mug(t, true));
+    sprite(P, 110, y, zm - 10, () => mug(t, o.tea !== false));   // o.tea: false = the tea has gone cold (no steam)
     sprite(P, 175, y, zm + 4, () => newtonsCradle(t, o.cradle !== false));
   }
   function deskChair(P) {

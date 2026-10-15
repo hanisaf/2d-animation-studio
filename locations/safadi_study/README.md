@@ -95,6 +95,7 @@ safadiStudy.MARK, .spots, .cameras, .BOARD, .DESK, .CLOCK, .FIRE, .MANTEL, .ARM,
 - **Lamps:** `lamp` from 0 to 1 (default .6) is the glow of the desk lamp, the pendant and the mantel candles (0 blows the candles out). Pass it to both.
 - **Night:** `night` from 0 to 1 (default 0) turns the window from an afternoon garden into a starry night with a crescent moon. Animate it for "it got late". It pairs well with `lamp: 1`.
 - **Newton's cradle:** `cradle: false` stops it, for a quiet moment (or a "the cradle stops" beat).
+- **Tea:** `tea: false` stops the steam from the mug (the tea has gone cold: a "worked all night" beat).
 - **Chalkboard:** `board(t)` replaces the prime-number board with your own chalk. The origin is the board's top-left, in world units, with y pointing down, and the content is clipped to the 500 × 160 board. For example:
   `board: t => { X.font = '600 44px ' + FONT_TALK; X.fillStyle = '#FFFDF4'; X.fillText('Why is the sky blue?', 30, 90); }`
 - **Several characters at different depths:** sort them far to near by `P.depth(z)` and interleave `back` / `front` with `toZ`, exactly as in the lecture hall's README.
