@@ -33,6 +33,7 @@ Each character's folder holds its description, look, personality and rig notes (
 | 🐉 | [Dragon](characters/dragon/README.md) | A gentle, funny dragon who loves learning and can fly |
 | 🤖 | [Robo-Safadi](characters/robo_safadi/README.md) | The robot professor Alma and Jenna dreamed up for Halloween: LED eyes that ACTIVATE red, a scanning beam, hover jets, and one mission: *EAT. YOUR. BROCCOLI.* |
 | 🟧 | [Clawd](characters/clawd/README.md) | A little clay-orange block of an AI: the large language model that lives in Housam's laptop and pops out as a hologram. Give him a prompt and expect the unexpected |
+| 🎒 | [Students](characters/student/README.md) | The kids of DCES: one parameterized rig (a seed picks skin, hair, clothes, glasses, caps, bows, backpacks, height) for crowds and audiences |
 
 ## Sets
 
@@ -75,6 +76,7 @@ Each scene's folder holds its synopsis, script, shot list and editing notes (`RE
 | 20 | [The Infinite Candy Glitch](scenes/scene20_halloween_night/README.md) | 100 s | Halloween night at Alma's house: the grown-ups crack Robo-Safadi's program (trick → broccoli, treat → candy) and everyone triggers an infinite candy glitch, until Safadi says *"Let me explain…"* Clawd wakes inside the robot: red eyes, *"BEEP. BOOP."* *To be continued…* |
 | 21 | [We Already Read a Lot!](scenes/scene21_already_read/README.md) | 158 s | Safadi lectures the kids on reading until they drag him into the library: *City Spies*, *Warriors*, *Wings of Fire*, *Cat Kid Comic Club*. *"We ALREADY read a lot!"* He pivots to writing and brags about his own books (*Professor Safadi Explains…*). Next week is the book fair: *"You shall see that everyone will like my books."* The kids whisper. *"What are you planning?"* *"You shall see!"* *To be continued…* |
 | 21b | [Dolphin Royalty](scenes/scene21b_dolphin_royalty/README.md) | 100 s | Housam and Danny fix Robo-Safadi; the girls test it (*"Let me EXPLAIN…"*: nothing. Sigh.). Then TA-DA: *Dolphin Royalty*, the girls' coloring book with a mini poster, starring Princess Pearl and Jester Fester. Everyone races to the library to write. *"Professor Safadi… you shall see!"* |
+| 21c | [The Book Fair](scenes/scene21c_book_fair/README.md) | 164 s | The book fair opens in the library. Students mob the kids' *Dolphin Royalty* stand. At story time Alma tells Fester's stories while Safadi's Riemann lesson puts his three listeners (and Sami) to sleep. The kids sell out; Safadi sells nothing: *"I am so proud of you."* Alma wishes Pearl and Fester were real. *"We can always imagine."* |
 | 22 | [You Shall See](scenes/scene22_you_shall_see/README.md) | 192 s | A music video for the whole cast. At the Book Fair, judged by Pearl, Safadi croons about his books; Sami, Dragon and Robo-Safadi all get *"…Next."* The kids' plan: Fester reads his memoir while Danny waits up the ladder with a ball. *"Allow me to EXPLAIN—"* **BONK.** Pearl laughs for the first time ever: *"Fester… you're… HIRED!"* Then: *"Somebody… find me… ANOTHER PROFESSOR."* |
 
 ## Where the story is heading
