@@ -586,6 +586,29 @@ function safadiBoard(x, y, w, k, t, o = {}) {
     if (lit > 0) { X.globalAlpha = .55 * lit * (.8 + .2 * Math.sin(t * 5)); shape(ring, { fill: SF.glowGold, stroke: null }); X.globalAlpha = 1; }
     part(ring, .5, .7); part([[bx, cy - 10 * U], [bx - 1.5 * U, cy - 3 * U], [bx + 1.5 * U, cy + 3 * U], [bx, cy + 10 * U]], .65, .72);
     label('REMEMBER', 50, top + 42, 6.2, .9);
+  } else if (kind === 'explicit') {                                // a book, and an atlas page: countries → capitals
+    const bx = 22 * U, by = (top + 15) * U;
+    part([[bx, by - 9 * U], [bx - 14 * U, by - 11 * U], [bx - 14 * U, by + 9 * U], [bx, by + 11 * U], [bx + 14 * U, by + 9 * U], [bx + 14 * U, by - 11 * U], [bx, by - 9 * U], [bx, by + 11 * U]], 0, .2);
+    for (let i = 0; i < 4; i++) for (const sd of [-1, 1]) part([[bx + sd * 3 * U, by + (-5 + i * 4) * U], [bx + sd * 11 * U, by + (-6 + i * 4) * U]], .18 + i * .03, .22 + i * .03);
+    const gx = 22 * U, gy = by - 1 * U, ring = [];                 // a little globe floats up off the pages
+    for (let i = 0; i <= 30; i++) { const a = i / 30 * TAU; ring.push([gx + Math.cos(a) * 4.5 * U, gy - 15 * U + Math.sin(a) * 4.5 * U]); }
+    if (d > .22) { part(ring, .22, .3); part([[gx - 4.5 * U, gy - 15 * U], [gx + 4.5 * U, gy - 15 * U]], .28, .31); part([[gx, gy - 19.5 * U], [gx - 2 * U, gy - 15 * U], [gx, gy - 10.5 * U]], .29, .33); }
+    [['FRANCE → PARIS', 0], ['JAPAN → TOKYO', 1], ['EGYPT → CAIRO', 2], ['PERU → LIMA', 3]].forEach(([s, i]) => label(s, 70, top + 3 + i * 8.5, 5.2, .35 + i * .13));
+    label('THE WHAT · IN BOOKS', 50, top + 38, 5.6, .9);
+  } else if (kind === 'tacit') {                                   // a cartwheel in four chalk figures, and a week of practice ticks
+    const cy = (top + 15) * U;
+    const fig = (cx, ang, a0) => {
+      const r = ([x, y]) => { const c = Math.cos(ang), s = Math.sin(ang); return [cx + (x * c - y * s) * U, cy + (x * s + y * c) * U]; };
+      const P2 = pts => pts.map(r);
+      if (d < a0) return;
+      const head = []; for (let i = 0; i <= 16; i++) { const a = i / 16 * TAU; head.push(r([Math.cos(a) * 2, -9 + Math.sin(a) * 2])); }
+      part(head, a0, a0 + .05); part(P2([[0, -7], [0, 1]]), a0 + .03, a0 + .07);
+      part(P2([[-5, -10], [0, -5], [5, -10]]), a0 + .05, a0 + .09); part(P2([[-4.5, 7], [0, 1], [4.5, 7]]), a0 + .07, a0 + .11);
+    };
+    [0, Math.PI / 2, Math.PI, Math.PI * 1.5].forEach((a, i) => fig((14 + i * 21) * U, a, .05 + i * .12));
+    for (let i = 0; i < 3; i++) { const x0 = (21 + i * 21) * U; part([[x0, cy - 13 * U], [x0 + 6 * U, cy - 15 * U], [x0 + 9 * U, cy - 13 * U], [x0 + 7 * U, cy - 14.5 * U]], .1 + i * .12, .16 + i * .12); }
+    ['M', 'T', 'W', 'T', 'F'].forEach((c, i) => { const x = 22 + i * 14; label(c, x, top + 29, 5, .55 + i * .06); if (d > .62 + i * .06) label('✓', x + 4.5, top + 28, 5.5, .62 + i * .06); });
+    label('THE HOW · BY PRACTICE', 50, top + 38, 5.6, .9);
   }
   X.restore();
   X.restore();

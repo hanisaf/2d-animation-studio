@@ -69,6 +69,7 @@ async function buildSceneAudio(sc, sampleRate) {
       }
     }
 
+    let noise = null;                                                     // the shared noise buffer for applause and drumrolls
     for (const cue of score.cues || []) {
       const at = cue.at;
       if (cue.type === 'pop') { bell(at, 14, .17, .22); bell(at + .075, 18, .11, .28); }
@@ -80,6 +81,27 @@ async function buildSceneAudio(sc, sampleRate) {
       else if (cue.type === 'scratch') scratch(at);
       else if (cue.type === 'whistle') for (let i = 0; i < 12; i++) tone(at + i * .045, .07, i % 2 ? 2950 : 2550, .06, 'sine', 0, 2);   // a referee's trill
       else if (cue.type === 'gulp') { thump(at, .12); tone(at + .03, .12, 260, .06, 'sine', 0, 2); tone(at + .1, .1, 180, .05, 'sine', 0, 2); }
+      else if (cue.type === 'applause') applause(at, cue.dur ?? 3, cue.level ?? 1);      // a crowd clapping: swells in, tails off
+      else if (cue.type === 'drumroll') drumroll(at, cue.dur ?? 1);                      // a snare roll that builds to the next hit
+    }
+    // filtered bursts from one shared, seeded noise buffer (deterministic: the same soundtrack every render)
+    function noiseHit(at, dur, level, freq, q = 1.2, pan = 0) {
+      if (at < 0 || at >= sc.duration) return;
+      if (!noise) { noise = ctx.createBuffer(1, sampleRate, sampleRate); const d = noise.getChannelData(0), r = mulberry(24); for (let i = 0; i < d.length; i++) d[i] = r() * 2 - 1; }
+      const src = ctx.createBufferSource(), filter = ctx.createBiquadFilter(), env = ctx.createGain(), stereo = ctx.createStereoPanner(), end = Math.min(sc.duration, at + dur);
+      src.buffer = noise; filter.type = 'bandpass'; filter.frequency.value = freq; filter.Q.value = q; stereo.pan.value = pan;
+      env.gain.setValueAtTime(.0001, at); env.gain.linearRampToValueAtTime(level, Math.min(end, at + .004)); env.gain.exponentialRampToValueAtTime(.0001, end);
+      src.connect(filter).connect(env).connect(stereo).connect(musicBus); src.start(at, hash(at * 91.7) * .9); src.stop(end);
+    }
+    function applause(at, dur, level) {
+      const n = Math.floor(dur * 70);
+      for (let i = 0; i < n; i++) {
+        const u = hash(i * 3.17 + at), when = at + u * dur, k = Math.min(1, (when - at) / .35) * (1 - Math.pow((when - at) / dur, 2));
+        noiseHit(when, .05 + .03 * hash(i * 1.3), .3 * level * k, 1100 + 1700 * hash(i * 7.7 + at), 1.4, hash(i * 5.1) * 1.6 - .8);
+      }
+    }
+    function drumroll(at, dur) {
+      for (let x = 0; x < dur - .05; x += .045) noiseHit(at + x, .07, .05 + .12 * (x / dur), 2400, .9, Math.sin(x * 40) * .2);
     }
     // a record scratch: a fast saw sweep down, then back up
     function scratch(at) {
