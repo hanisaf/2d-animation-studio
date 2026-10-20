@@ -33,6 +33,7 @@ Each character's folder holds its description, look, personality and rig notes (
 | 🐉 | [Dragon](characters/dragon/README.md) | A gentle, funny dragon who loves learning and can fly |
 | 🤖 | [Robo-Safadi](characters/robo_safadi/README.md) | The robot professor Alma and Jenna dreamed up for Halloween: LED eyes that ACTIVATE red, a scanning beam, hover jets, and one mission: *EAT. YOUR. BROCCOLI.* |
 | 🟧 | [Clawd](characters/clawd/README.md) | A little clay-orange block of an AI: the large language model that lives in Housam's laptop and pops out as a hologram. Give him a prompt and expect the unexpected |
+| 🐬 | [Neptune](characters/neptune/README.md) | A plush blue dolphin with a rainbow-striped belly who insists on being called *King* Neptune (he isn't a king). Hilarious, kind, and packing ultra-awesome water powers: a crackling trident, rainbow water blasts, an orbiting ring of water |
 | 🎒 | [Students](characters/student/README.md) | The kids of DCES: one parameterized rig (a seed picks skin, hair, clothes, glasses, caps, bows, backpacks, height) for crowds and audiences |
 
 ## Sets
