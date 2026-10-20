@@ -503,7 +503,6 @@ Paths in a manifest are relative to its folder. A scene's `id`, `title` and `aud
 | 🐉 Dragon | [characters/dragon/README.md](../characters/dragon/README.md): personality, look, flight poses, rig + `dragonFlight` API |
 | 🤖 Robo-Safadi | [characters/robo_safadi/README.md](../characters/robo_safadi/README.md): personality, powers (activate, scan, hover, steam, glitch), look and palette, proportions, poses, rig + march API, the `robot` voice |
 | 🟧 Clawd | [characters/clawd/README.md](../characters/clawd/README.md): the LLM, ported from PDoomVideo; look and palette, proportions, poses, rig API (moods, `holo` hologram look) |
-| 🐬 Neptune | [characters/neptune/README.md](../characters/neptune/README.md): the self-declared "King Neptune"; personality, water powers, look and palette, spine rig, poses, rig + `neptuneBlast` API |
 | 🏰 Throne room | [locations/throne_room/README.md](../locations/throne_room/README.md): description, layout and coordinates, spots, camera presets, API |
 | 🏫 Dove Creek Elementary | [locations/dces/README.md](../locations/dces/README.md): description, layout and coordinates, spots, camera presets, API |
 | 🎓 Lecture hall | [locations/lecture_hall/README.md](../locations/lecture_hall/README.md): tiered university hall with a podium view and a classroom (reverse-angle) view, seats, boards and screen hooks, API |
