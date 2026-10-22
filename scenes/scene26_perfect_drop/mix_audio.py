@@ -1,12 +1,13 @@
 # scenes/scene26_perfect_drop/mix_audio.py: builds audio.mp3 = song.mp3 (the Gemini song, 149.8 s) + the teaser's sound after it.
 # The song ends dead at 146.9 s; this adds the mic hitting the stage, a little PA feedback, drips, Neptune's splash, two mic taps,
-# Neptune's and Pearl's cartoon voices (vowel-like syllables, like the studio's synthesized voices; the bubbles carry the words)
-# and a bubbly sting for TO BE CONTINUED. The times match T_ in scene.js. Run from the project root:
+# Neptune's cartoon voice (vowel-like syllables, like the studio's synthesized voices; the bubbles carry the words) and a bubbly
+# sting for THE END. It also fixes the singer's "HOW-sam" (17.18 s): her vocal is ducked under the word and housam_vocal.wav
+# (a sung "Hussam", حسام, made by fix_housam.py) is laid on top. The times match T_ in scene.js. Run from the project root:
 #   python3 scenes/scene26_perfect_drop/mix_audio.py
 import os, subprocess, numpy as np
 HERE = os.path.dirname(os.path.abspath(__file__))
 FF = os.environ.get('FFMPEG') or os.path.join(HERE, '../../node_modules/ffmpeg-static/ffmpeg')
-SR, END = 48000, 163.5
+SR, END = 48000, 160.6
 raw = subprocess.run([FF, '-loglevel', 'error', '-i', os.path.join(HERE, 'song.mp3'), '-f', 'f32le', '-ac', '2', '-ar', str(SR), '-'], capture_output=True, check=True).stdout
 song = np.frombuffer(raw, np.float32).reshape(-1, 2)
 mix = np.zeros((int(END * SR), 2), np.float32); mix[:len(song)] = song[:len(mix)]
@@ -17,6 +18,15 @@ def add(t0, sig, gain=1.0, pan=0.0):
     l, r = np.cos((pan + 1) * np.pi / 4), np.sin((pan + 1) * np.pi / 4)
     mix[i:i + len(sig), 0] += sig * gain * l * 1.41; mix[i:i + len(sig), 1] += sig * gain * r * 1.41
 def tt(d): return np.arange(int(d * SR)) / SR
+def band_duck(t0, t1, lo, hi, gain):                   # turn a frequency band down between t0 and t1 (short-time FFT, overlap-add)
+    N, hop = 2048, 512; a, b = int(t0 * SR) - N, int(t1 * SR) + N; seg = mix[a:b].copy(); out = np.zeros_like(seg); wsum = np.zeros(len(seg))
+    win = np.hanning(N); f = np.fft.rfftfreq(N, 1 / SR)
+    band = np.clip(np.minimum((f - lo * .7) / (lo * .3), (hi * 1.3 - f) / (hi * .3)), 0, 1)
+    for i in range(0, len(seg) - N, hop):
+        tc = (a + i + N / 2) / SR; g = gain(tc); m = 1 - band * (1 - g)
+        for c in range(2): out[i:i + N, c] += np.fft.irfft(np.fft.rfft(seg[i:i + N, c] * win) * m, N) * win
+        wsum[i:i + N] += win ** 2
+    mix[a + N:b - N] = (out / np.maximum(wsum, 1e-3)[:, None])[N:-N]          # only the fully covered middle
 def lowpass(x, a):                                    # one-pole low-pass, a in (0, 1): smaller = darker
     y = np.empty_like(x); acc = 0.0
     for i, v in enumerate(x): acc += a * (v - acc); y[i] = acc
@@ -25,6 +35,13 @@ def echo(x, delay=.17, fb=.35, n=4):                   # the gym PA: a few slap-
     out = np.concatenate([x, np.zeros(int(delay * n * SR))]); d = int(delay * SR)
     for k in range(1, n + 1): out[k * d:k * d + len(x)] += x * fb ** k
     return out
+
+# "Housam" → "Hussam": duck the singer's vowel band under the word (hardest under "HOW"), then lay the re-sung word on top, with a
+# little room so it sits in the mix. housam_vocal.wav starts at 17.0 s.
+band_duck(17.08, 17.66, 250, 4000, lambda tc: max(.15, 1 - .8 * np.clip(min((tc - 17.08) / .06, (17.42 - tc) / .06), 0, 1) - .45 * np.clip(min((tc - 17.36) / .04, (17.62 - tc) / .04), 0, 1)))
+hv = np.frombuffer(subprocess.run([FF, '-loglevel', 'error', '-i', os.path.join(HERE, 'housam_vocal.wav'), '-f', 'f32le', '-ac', '1', '-ar', str(SR), '-'], capture_output=True, check=True).stdout, np.float32)
+hv = hv + sum(np.concatenate([np.zeros(int(d * SR), np.float32), hv])[:len(hv)] * g for d, g in ((.031, .25), (.053, .18), (.079, .12), (.11, .08)))
+add(17.0, hv, .3)
 
 # the mic hits the stage: a low body thump, a gritty click, then a short PA feedback whine
 t = tt(.7); thud = np.sin(2 * np.pi * (70 * t - 30 * t * t)) * np.exp(-t * 9) + lowpass(rng.normal(0, 1, len(t)), .08) * np.exp(-t * 25) * .8
@@ -66,14 +83,12 @@ say(153.25, [(0, .16, 'e', .05, 1.0), (.2, .22, 'i', -.15, .95), (.7, .16, 'e', 
 say(155.1, [(0, .42, 'i', .25, 1.15), (.5, .14, 'e', 0, 1.0), (.66, .16, 'u', -.05, .95), (.86, .1, 'i', 0, 1.0), (1.0, .1, 'i', 0, 1.0), (1.14, .1, 'a', 0, .98), (1.3, .5, 'a', .3, 1.1)], 205, .5, pa=True)
 # Neptune cracks himself up
 say(157.0, [(0, .1, 'a', .1, 1.25), (.13, .1, 'a', .1, 1.3), (.26, .14, 'a', -.1, 1.35)], 205, .3, pa=True)
-# Pearl in the wings (clipped and regal, ~330 Hz), deadpan, rising at the end: "…KING?"
-say(158.45, [(0, .45, 'i', .35, 1.0)], 330, .45, pan=-.3)
-# the sting for TO BE CONTINUED: a rising bubbly arpeggio over a soft chord
+# the sting for THE END: a rising bubbly arpeggio over a soft chord
 for k, n in enumerate([0, 4, 7, 12, 16, 19]):
-    f = 392 * 2 ** (n / 12); t = tt(.5); add(160.6 + k * .09, np.sin(2 * np.pi * f * t) * np.exp(-t * 5), .16, -.4 + .16 * k)
-t = tt(2.6)
-pad = sum(np.sin(2 * np.pi * 196 * 2 ** (n / 12) * t) for n in (0, 4, 7, 12)) / 4 * np.minimum(1, t / .4) * np.minimum(1, (2.6 - t) / 1.2)
-add(160.7, pad, .16)
+    f = 392 * 2 ** (n / 12); t = tt(.5); add(158.9 + k * .09, np.sin(2 * np.pi * f * t) * np.exp(-t * 5), .16, -.4 + .16 * k)
+t = tt(1.6)
+pad = sum(np.sin(2 * np.pi * 196 * 2 ** (n / 12) * t) for n in (0, 4, 7, 12)) / 4 * np.minimum(1, t / .4) * np.minimum(1, (1.6 - t) / 1.0)
+add(159.0, pad, .16)
 
 peak = np.abs(mix).max()
 if peak > .98: mix *= .98 / peak

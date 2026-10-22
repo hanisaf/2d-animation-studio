@@ -56,6 +56,8 @@ Scene 01's `asset.js` contains a human-readable music prompt plus a deterministi
 
 Scene 01 also has a `dialogue` list in its `asset.js`. Each line supplies the bubble text, speaker, start time, typing speed, and hold time. Jester's `voice` in `characters/jester_fester/asset.js` defines his pitch and tone. The soundtrack synthesizer makes short vowel-like syllables as the words appear, and lowers the music during speech. The bubbles remain responsible for the actual words. Playback and both MP4 exporters use the same rendered soundtrack. Add matching `dialogue` entries and a character `voice` profile to try this in another scene.
 
+**Recorded voices (Gemini TTS):** a scene can replace the cartoon syllables with real speech. Add `tts: { model, voice, style }` to its `asset.js`, list `voice.js` in its `files`, and run `node scripts/tts_gemini.mjs <scene>` with `GEMINI_API_KEY` set. The script records each line (cached in `scenes/<scene>/voice/`), writes `voice.js`, and re-times the dialogue so each bubble types while its line is spoken. Scene 27 uses `gemini-3.1-flash-tts-preview` with the Charon voice.
+
 Every scene with spoken bubbles now uses the same vocalization system. Fester sounds bouncy, Pearl clipped and regal, Safadi measured and warm, Housam quick and percussive, and Alma melodic. Dragon has a gentle low voice profile ready for a future spoken line. Scene 06 is a 110-second lesson outside DCES.
 
 ```bash

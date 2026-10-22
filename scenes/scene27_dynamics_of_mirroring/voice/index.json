@@ -1,0 +1,238 @@
+{
+ "44f34c709156": {
+  "text": "Welcome, everyone! Today I want to walk you through a paper Amrit Tiwana and I wrote: Dynamics of Mirroring.",
+  "dur": 8.065
+ },
+ "af185ad248fe": {
+  "text": "It's about how open-source teams and their code grow up together.",
+  "dur": 4.579
+ },
+ "8d9e3ca29a42": {
+  "text": "And it ends with a surprising idea: a little misalignment can be good for a project.",
+  "dur": 6.05
+ },
+ "bb60c6395d6c": {
+  "text": "Let's start with the mirroring hypothesis.",
+  "dur": 2.871
+ },
+ "1af2839a0dd2": {
+  "text": "It says the structure of a team should mirror the structure of the product it builds.",
+  "dur": 5.24
+ },
+ "4d523fd01b6f": {
+  "text": "If Alice builds the user interface and Bob builds the data layer, they barely need to talk...",
+  "dur": 6.008
+ },
+ "7d41f11145c2": {
+  "text": "...because the interface between their modules does the coordinating for them.",
+  "dur": 4.068
+ },
+ "8587542fb5ad": {
+  "text": "Ties between people line up with dependencies between modules. That's mirroring.",
+  "dur": 5.598
+ },
+ "9e4b47c8ccd5": {
+  "text": "It saves scarce attention, and mirrored systems tend to be more successful.",
+  "dur": 4.898
+ },
+ "8b32099c1cac": {
+  "text": "But here's the puzzle. Open-source software is famously modular...",
+  "dur": 5.143
+ },
+ "6e3475750b4e": {
+  "text": "...and its developers specialize. So we'd expect strong mirroring.",
+  "dur": 4.433
+ },
+ "694813929ca0": {
+  "text": "Yet in a major review, 56% of studies of open collaboration found no support for it.",
+  "dur": 7.292
+ },
+ "e4b30c3e989c": {
+  "text": "So why does mirroring seem to vanish in open source?",
+  "dur": 4.13
+ },
+ "903bfa1fa53a": {
+  "text": "One answer: the code itself coordinates people, so they don't need to talk.",
+  "dur": 4.757
+ },
+ "e054d1e93549": {
+  "text": "Another: digital tools stand in for sitting in the same building.",
+  "dur": 4.795
+ },
+ "cc5d177089fb": {
+  "text": "We asked a different question. What if we've been looking at a snapshot...",
+  "dur": 5.485
+ },
+ "224b8bd97047": {
+  "text": "...when we should be watching the movie?",
+  "dur": 1.948
+ },
+ "f575d6f2c6df": {
+  "text": "So we separate two things. The state of mirroring is how well team and code match right now.",
+  "dur": 6.608
+ },
+ "d70747d1d328": {
+  "text": "We measure each structure's modularity, Q: zero for monolithic, one for fully modular.",
+  "dur": 7.109
+ },
+ "fb445198bb81": {
+  "text": "Mirroring is high when the two Qs are close to each other.",
+  "dur": 4.091
+ },
+ "7a2dfead8062": {
+  "text": "The dynamics are how that match changes from one quarter to the next.",
+  "dur": 4.83
+ },
+ "c6bdd8652940": {
+  "text": "When the match improves, we call it mirror focusing.",
+  "dur": 3.512
+ },
+ "62cd4c0d5db2": {
+  "text": "When it slips, we call it mirror misting, like breath fogging up a mirror.",
+  "dur": 5.204
+ },
+ "c6ab2d1c0875": {
+  "text": "Picture a two-by-two: team structure across the top, project architecture down the side.",
+  "dur": 5.649
+ },
+ "aa777bfa0902": {
+  "text": "In A, a monolithic team builds monolithic code. In D, a modular team builds modular code.",
+  "dur": 9.093
+ },
+ "ac17a5ceaa7d": {
+  "text": "Both are mirrored. B and C are the mismatches.",
+  "dur": 4.166
+ },
+ "bfdd3af808bd": {
+  "text": "Stepping out of A or D mists the mirror. Stepping back in focuses it.",
+  "dur": 5.604
+ },
+ "0a923c89b071": {
+  "text": "That's eight possible moves: four mistings and four focusings.",
+  "dur": 5.07
+ },
+ "d6ddbe47eba4": {
+  "text": "To watch this happen, we went straight to the source code.",
+  "dur": 3.414
+ },
+ "e53b5d55e7aa": {
+  "text": "We studied 1,279 Java projects on GitHub...",
+  "dur": 5.123
+ },
+ "e760b2ed7bb7": {
+  "text": "...rebuilding every codebase quarter by quarter: 25,947 project-quarters in all.",
+  "dur": 8.219
+ },
+ "a043c0a4bc78": {
+  "text": "No surveys. Every measure comes from the code and the commit logs themselves.",
+  "dur": 5.207
+ },
+ "430d5c8337ed": {
+  "text": "Each quarter, we build three networks.",
+  "dur": 2.722
+ },
+ "a7a240806729": {
+  "text": "First, the architecture: classes, linked when one uses or inherits from another.",
+  "dur": 5.934
+ },
+ "a8d9ef48d13f": {
+  "text": "Second, the activity: which developers committed to which files.",
+  "dur": 5.037
+ },
+ "93a742e5221b": {
+  "text": "Third, the team: two developers are linked when they change the same file.",
+  "dur": 5.534
+ },
+ "ab538b903db5": {
+  "text": "The modularity of the first gives us the project architecture. The third gives us the team structure.",
+  "dur": 6.119
+ },
+ "e5508c66a061": {
+  "text": "Finding one: the mirror oscillates.",
+  "dur": 3.58
+ },
+ "3f98e65c49af": {
+  "text": "As a state, mirroring is a little sticky from one quarter to the next...",
+  "dur": 5.454
+ },
+ "95b24b96e2a6": {
+  "text": "...but focusing is followed by misting, and misting by focusing. The coefficient is minus 0.41.",
+  "dur": 7.266
+ },
+ "2698144b76b0": {
+  "text": "So weak mirroring in a snapshot may really be strong dynamics in motion.",
+  "dur": 6.605
+ },
+ "4bba630f1ad8": {
+  "text": "Finding two: focusing drives evolution.",
+  "dur": 4.082
+ },
+ "8fcb89e91ea6": {
+  "text": "We measured two kinds of change. System-wide: files added or removed...",
+  "dur": 5.328
+ },
+ "a96a57afc682": {
+  "text": "...and module-level: code rewritten inside the files that stay.",
+  "dur": 4.741
+ },
+ "d82662447b1c": {
+  "text": "Mirror focusing pushes both of them up, especially change inside modules.",
+  "dur": 6.021
+ },
+ "69342bf87750": {
+  "text": "But a high, static mirroring state pushes evolution down. That's the mirroring trap.",
+  "dur": 7.007
+ },
+ "85d99d1c8965": {
+  "text": "A perfectly matched project can freeze in place.",
+  "dur": 3.913
+ },
+ "53388823d389": {
+  "text": "Finding three: direction matters.",
+  "dur": 3.169
+ },
+ "156b49637f65": {
+  "text": "Focusing pays off when it lands in D: a modular team on modular code.",
+  "dur": 6.363
+ },
+ "c5efa879e821": {
+  "text": "B to D and C to D boost both kinds of evolution.",
+  "dur": 4.481
+ },
+ "af5700cf7c2c": {
+  "text": "One exception: B to A helps change inside modules, but not across the whole system.",
+  "dur": 6.499
+ },
+ "a874122a1481": {
+  "text": "So what does it all mean?",
+  "dur": 1.947
+ },
+ "c07a6e88dc54": {
+  "text": "Misting isn't a failure. It's how developers explore, tinker, and learn other parts of the system.",
+  "dur": 7.289
+ },
+ "cb5e312c993f": {
+  "text": "Focusing is where that learning gets put to work.",
+  "dur": 3.5
+ },
+ "c0c0bc1a1040": {
+  "text": "Misting is a stressor that makes the project stronger. Taleb would call that antifragile.",
+  "dur": 7.069
+ },
+ "75abf865de3a": {
+  "text": "For managers: don't lock the mirror in place. Leave room for bottom-up tinkering.",
+  "dur": 6.02
+ },
+ "751c6b84dbb2": {
+  "text": "The future of mirroring research lies not in optimizing configurations...",
+  "dur": 5.196
+ },
+ "db13604bc094": {
+  "text": "...but in orchestrating oscillations.",
+  "dur": 2.98
+ },
+ "7876fa28bb4b": {
+  "text": "Thank you!",
+  "dur": 1.043
+ }
+}

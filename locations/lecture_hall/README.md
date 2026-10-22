@@ -38,6 +38,7 @@ X is right when facing the podium, Y is up (the pit floor is Y = 0), Z runs from
 | Table | X 330, Z 2040–2130 |
 | Boards | left X −800…−340, right X 340…800, Y 250–800 (front wall) |
 | Screen | X ±300, hangs from a roller at Y 990, 620 tall when fully down |
+| Big board (optional, `bigBoard`) | X −660…660, Y 180–860 (front wall), replacing both boards and the screen |
 | Projector | ceiling, X 0, Z 1070–1140 |
 
 ## Spots (where characters go)
@@ -48,6 +49,7 @@ X is right when facing the podium, Y is up (the pit floor is Y = 0), Z runs from
 | Lectern | (−420, 40, 1995) | behind the lectern: chest and head show above it |
 | At the left board / At the right board | (∓470, 40, 2200) | writing at a board |
 | Front floor | (0, 0, 1650) | stepping down toward the students |
+| Beside the big board | (−600, 0, 1840) | presenting at the big board, in front of the lectern |
 | Row 1 · center, Row 2 · left, Row 3 · center, Row 4 · right, Row 6 · center | `lectureHall.seat(n, x)` | a seated student: the desk hides their legs |
 | Row 3 · center (small, lifted) | `lectureHall.seat(3, 110, 30)` | a small character (Alma): raised so more than her head clears the desk |
 | Aisle, row 5 | (−280, 240, 640) | a student walking up or down the steps |
@@ -60,6 +62,7 @@ In the studio's location browser (click one, then **Copy camera**; **⇄ Reverse
 - **Podium · mid rows** `{ x: 120, y: 360, z: 800, f: 1000, hy: 560, dir: 1 }`
 - **Podium · lectern** `{ x: -300, y: 200, z: 1450, f: 1000, hy: 650, dir: 1 }`
 - **Podium · boards** `{ x: 0, y: 420, z: 1150, f: 900, hy: 540, dir: 1 }`
+- **Podium · big board** `{ x: 0, y: 500, z: 1350, f: 900, hy: 530, dir: 1 }`
 - **Classroom · from the stage** `{ x: 0, y: 230, z: 2250, f: 900, hy: 470, dir: -1 }`
 - **Classroom · from the lectern** `{ x: -380, y: 280, z: 2060, f: 900, hy: 430, dir: -1 }` (the lecturer's point of view, mic in the foreground)
 - **Classroom · front rows** `{ x: 0, y: 190, z: 1800, f: 1000, hy: 580, dir: -1 }`
@@ -68,15 +71,16 @@ In the studio's location browser (click one, then **Copy camera**; **⇄ Reverse
 ## API (`lecture_hall.js`)
 
 ```js
-lectureHall.back(P, t, { splitZ, screen: 1, projector: 1, boardL, boardR, slide })   // everything farther than splitZ
+lectureHall.back(P, t, { splitZ, screen: 1, projector: 1, boardL, boardR, slide, bigBoard })   // everything farther than splitZ
 lectureHall.front(P, t, { splitZ, toZ })          // pieces nearer than splitZ (and farther than toZ, if given)
 lectureHall.seat(n, x = 0, lift = 0)              // → { x, y, z }: a seat in row n (1 = front)
 lectureHall.rowY(n), lectureHall.rowFront(n)      // a row's step height and front edge Z
-lectureHall.MARK, .spots, .cameras, .BOARD_L, .BOARD_R, .SCREEN, .LECTERN, .STAGE, .HW, .FRONT, .CEIL
+lectureHall.MARK, .spots, .cameras, .BOARD_L, .BOARD_R, .SCREEN, .BIG_BOARD, .LECTERN, .STAGE, .HW, .FRONT, .CEIL
 ```
 
 - **Boards and slides:** `boardL(t)`, `boardR(t)` and `slide(t)` draw your own content. The origin is the surface's top-left, in world units, with y pointing down, and the content is clipped to the surface: boards are 460 × 550, and the slide area is 568 × 570. For example:
   `boardL: t => { X.font = '600 70px ' + FONT_TALK; X.fillStyle = '#F3F1E6'; X.fillText('ζ(s) = 0', 40, 120); }`
+- **Big board:** pass `bigBoard(t)` to swap both boards and the screen for one wide chalkboard (1320 × 680, `BIG_BOARD`) across the front wall. Scene 27 uses it for a full lecture.
 - **Screen:** `screen` from 0 (rolled up) to 1 (fully down) animates the pull-down. `projector` from 0 to 1 sets how brightly it glows. The slide is drawn only when the screen is fully down.
 - **Several characters in different rows:** sort them far to near by `P.depth(z)` and interleave:
 

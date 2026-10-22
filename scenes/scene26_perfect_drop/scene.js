@@ -3,7 +3,7 @@
 // sings every line, golden mic in flipper. Everyone else performs around her: Jenna's and Alma's cartwheels, Housam's bicycle
 // kick, Danny's puggle, the parents going crazy, Professor Safadi's lesson in the bridge, Fester's guitar solo (with Robo-Safadi
 // on drums), and the whole cast in the last chorus. On "MIC DROP!" she drops the mic, the music stops dead, and in the silence
-// Neptune rises from a puddle, picks it up and introduces himself: the teaser for what comes next.
+// Neptune rises from a puddle, picks it up and introduces himself. THE END.
 // Story shots are in the gym: stage view (dir −1, +X is screen-LEFT) for the concert, scoreboard view (dir 1) for the audience.
 // The choruses and the big musical moments are motion-graphics panels, as in scenes 17 and 22. Every shot is a pure function of t.
 (() => {
@@ -31,7 +31,7 @@
   T_.thud = 147.15;                                                           // the mic hits the stage, just as the music dies
   T_.drip = [148.9, 149.55, 150.15];
   T_.rise = 151.1; T_.grab = 152.35; T_.tap = [152.7, 152.95];
-  T_.testing = 153.1; T_.king = 154.9; T_.pearlKing = 158.1; T_.wink = 160.0; T_.END = 163.5;
+  T_.testing = 153.1; T_.king = 154.9; T_.wink = 157.3; T_.iris = 157.9; T_.theEnd = 158.9; T_.END = 160.6;
   T_.bonk = 124.9;                                                            // the ball that ends Fester's guitar solo
   const sing = (t, rest = 'smile') => lipFlap(t, pdSinging(t), rest, ['open', 'o', 'open', 'smile']);
   const on = (t, a, b, r = .25) => ease(seg(t, a, a + r)) * (1 - ease(seg(t, b - r, b)));
@@ -78,8 +78,11 @@
   function drawPearl(x, y, s, pose, mic = 'sing') {
     const A = pearl(x, y, s, pose);
     if (mic === 'none') return A;
-    const tip = A.flipper, ms = s * .8;
-    if (mic === 'sing') beakMic(A, s);
+    // the rig's anchors are in screen px; bring them back into the current frame (the LIVE inset draws translated and scaled)
+    const inv = X.getTransform().invertSelf(), loc = p => [inv.a * p[0] + inv.c * p[1] + inv.e, inv.b * p[0] + inv.d * p[1] + inv.f];
+    const L = { head: loc(A.head), mouth: loc(A.mouth), nose: loc(A.nose), flipper: loc(A.flipper) };
+    const tip = L.flipper, ms = s * .8;
+    if (mic === 'sing') beakMic(L, s);
     else if (mic === 'raise') pdMic(tip[0], tip[1], ms, -Math.PI / 2 - .25, { glow: .8 });
     else if (mic === 'out') pdMic(tip[0], tip[1], ms, -Math.PI / 2 + .1 * Math.sin(T * 2), { glow: 1 });
     return A;
@@ -469,13 +472,13 @@
       const x0 = (i % 2) * W / 2, y0 = Math.floor(i / 2) * H / 2;
       X.save(); X.beginPath(); X.rect(x0, y0, W / 2, H / 2); X.clip();
       ysSunburst(x0 + W / 4, y0 + H / 4, t, c1, c2, 14, .2);
-      const bx = x0 + W / 4, by = y0 + H / 2 + 30, u = frac((t - T_.practice) / 1.05);
-      if (nm === 'jenna') fig('jenna', bx + lerp(-260, 260, u), by - 20, 2.1, { ...JSTAR, _spin: TAU * u * 2 });
-      if (nm === 'alma') fig('alma', bx, by, 2.4, { ...almaDance(t - PD_BEAT0, 'star jump', { bpm: PD_BPM }), eyes: 'star', mouth: 'grin', power: .5 });
-      if (nm === 'housam') { const A = fig('housam', bx, by, 2.1, { footR: [2.4, -3.2 - 2.2 * Math.abs(Math.sin(t * 6))], handL: [-4.6, -12], handR: [4.6, -12], brows: 'focused', mouth: 'smirk', lookY: .6 });
-        housamBall(bx + 3 * HOUSAM_UNIT * 2.1, by - (6 + 9 * Math.abs(Math.sin(t * 6))) * HOUSAM_UNIT * 2.1, HOUSAM_UNIT * 2.1, { spin: t * 6 }); }
-      if (nm === 'danny') { const A = fig('danny', bx, by, 2.5, { handL: [-3.6, -15], handR: [3.6, -15], handPoseL: 'fist', handPoseR: 'fist', eyes: 'open', brows: 'focused', mouth: 'smirk', lookY: .7 });
-        cdCube((A.handL[0] + A.handR[0]) / 2, A.handL[1] - 22, 24, { solve: frac(t * .7), seed: Math.floor(t * .7), twist: Math.sin(t * 20), row: Math.floor(t * 6) % 3 }); }
+      const bx = x0 + W / 4 + (i % 2 ? 70 : -70), by = y0 + H / 2 + 30, u = frac((t - T_.practice) / 1.05), K = 1.3;   // K: the kids fill their panels
+      if (nm === 'jenna') fig('jenna', bx + lerp(-280, 280, u), by - 20, 2.1 * K, { ...JSTAR, _spin: TAU * u * 2 });
+      if (nm === 'alma') fig('alma', bx, by, 2.4 * K, { ...almaDance(t - PD_BEAT0, 'star jump', { bpm: PD_BPM }), eyes: 'star', mouth: 'grin', power: .5 });
+      if (nm === 'housam') { const hk = HOUSAM_UNIT * 2.1 * K, A = fig('housam', bx, by, 2.1 * K, { footR: [2.4, -3.2 - 2.2 * Math.abs(Math.sin(t * 6))], handL: [-4.6, -12], handR: [4.6, -12], brows: 'focused', mouth: 'smirk', lookY: .6 });
+        housamBall(bx + 3 * hk, by - (6 + 9 * Math.abs(Math.sin(t * 6))) * hk, hk, { spin: t * 6 }); }
+      if (nm === 'danny') { const A = fig('danny', bx, by, 2.5 * K, { handL: [-3.6, -15], handR: [3.6, -15], handPoseL: 'fist', handPoseR: 'fist', eyes: 'open', brows: 'focused', mouth: 'smirk', lookY: .7 });
+        cdCube((A.handL[0] + A.handR[0]) / 2, A.handL[1] - 22 * K, 24 * K, { solve: frac(t * .7), seed: Math.floor(t * .7), twist: Math.sin(t * 20), row: Math.floor(t * 6) % 3 }); }
       X.restore();
       line([[W / 2, 0], [W / 2, H]], { stroke: PD.ink, lwPx: 10 }); line([[0, H / 2], [W, H / 2]], { stroke: PD.ink, lwPx: 10 });
     });
@@ -564,16 +567,16 @@
   function perfectDropSplit(t) {
     const L = T_.dropW;
     [['jenna', '#5A1F4A', '#7A2E62'], ['alma', '#3A1B63', '#57288A'], ['housam', '#183A5A', '#22507A'], ['danny', '#123E36', '#1C5A4E']].forEach(([nm, c1, c2], i) => {
-      const x0 = (i % 2) * W / 2, y0 = Math.floor(i / 2) * H / 2, bx = x0 + W / 4, by = y0 + H / 2 + 10;
+      const x0 = (i % 2) * W / 2, y0 = Math.floor(i / 2) * H / 2, bx = x0 + W / 4 + (i % 2 ? 70 : -70), by = y0 + H / 2 + 10;
       X.save(); X.beginPath(); X.rect(x0, y0, W / 2, H / 2); X.clip();
       ysSunburst(bx, y0 + H / 4, t, c1, c2, 14, .2);
-      const u = seg(t, T_.drop + .1, L), landed = t >= L;
-      if (nm === 'jenna') fig('jenna', bx + lerp(-200, 0, u), by, 1.45, landed ? { ...KID.jenna.up, eyes: 'happy', mouth: 'grin', sq: .15 * kick(t, L, 6) } : { ...JSTAR, _spin: TAU * 2 * ease(u) });
-      if (nm === 'alma') fig('alma', bx + lerp(200, 0, u), by, 1.6, landed ? { ...KID.alma.up, eyes: 'star', mouth: 'grin', power: .7, sq: .15 * kick(t, L, 6) } : { ...ASTAR, _spin: -TAU * 2 * ease(u) });
-      if (nm === 'housam') { const A = fig('housam', bx, by, 1.45, { footR: [2.6, -3.4], handL: [-4.6, -12], handR: [4.6, -12], eyes: landed ? 'happy' : 'open', mouth: landed ? 'grin' : 'smirk', lookY: .6 });
-        housamBall(bx + 2.9 * HOUSAM_UNIT * 1.45, by - (4.2 + (landed ? 0 : 40 * (1 - u * u))) * HOUSAM_UNIT * 1.45, HOUSAM_UNIT * 1.45, { spin: landed ? 0 : t * 5 }); }
-      if (nm === 'danny') { const A = fig('danny', bx, by, 1.6, { handR: [4.4, -15], handPoseR: 'palm', eyes: landed ? 'happy' : 'open', mouth: landed ? 'grin' : 'o', lookY: landed ? 0 : -.8 });
-        cdCube(A.handR[0], A.handR[1] - 14 - (landed ? 0 : 340 * (1 - u * u)), 18, { solve: landed ? 1 : u, seed: 4, ang: landed ? 0 : t * 9, glow: landed ? 1 : 0 }); }
+      const u = seg(t, T_.drop + .1, L), landed = t >= L, K = 1.85;            // K: the kids fill their panels
+      if (nm === 'jenna') fig('jenna', bx + lerp(-260, 0, u), by, 1.45 * K, landed ? { ...KID.jenna.up, eyes: 'happy', mouth: 'grin', sq: .15 * kick(t, L, 6) } : { ...JSTAR, _spin: TAU * 2 * ease(u) });
+      if (nm === 'alma') fig('alma', bx + lerp(260, 0, u), by, 1.6 * K, landed ? { ...KID.alma.up, eyes: 'star', mouth: 'grin', power: .7, sq: .15 * kick(t, L, 6) } : { ...ASTAR, _spin: -TAU * 2 * ease(u) });
+      if (nm === 'housam') { const hk = HOUSAM_UNIT * 1.45 * K, A = fig('housam', bx, by, 1.45 * K, { footR: [2.6, -3.4], handL: [-4.6, -12], handR: [4.6, -12], eyes: landed ? 'happy' : 'open', mouth: landed ? 'grin' : 'smirk', lookY: .6 });
+        housamBall(bx + 2.9 * hk, by - (4.2 + (landed ? 0 : 40 * (1 - u * u))) * hk, hk, { spin: landed ? 0 : t * 5 }); }
+      if (nm === 'danny') { const A = fig('danny', bx, by, 1.6 * K, { handR: [4.4, -15], handPoseR: 'palm', eyes: landed ? 'happy' : 'open', mouth: landed ? 'grin' : 'o', lookY: landed ? 0 : -.8 });
+        cdCube(A.handR[0], A.handR[1] - 14 * K - (landed ? 0 : 340 * (1 - u * u)), 18 * K, { solve: landed ? 1 : u, seed: 4, ang: landed ? 0 : t * 9, glow: landed ? 1 : 0 }); }
       X.restore();
     });
     line([[W / 2, 0], [W / 2, H]], { stroke: PD.ink, lwPx: 10 }); line([[0, H / 2], [W, H / 2]], { stroke: PD.ink, lwPx: 10 });
@@ -803,42 +806,23 @@
       const [px, py, k] = P.p(nX, STAGE_Y, 180), ns = NT_UNIT * k * .8;
       X.save(); X.globalCompositeOperation = 'lighter'; cbSpot(px, -40, py + 10, 700 * k, .24, '#BDF4FF'); X.restore();
       const talk = inW(t, T_.king, T_.king + 2.4);
-      NA = neptune(px, py, ns, { sit: 1, power: .7 + .3 * Math.sin(t * 3), headTilt: .12, eyes: t > T_.king + 2.4 ? 'wink' : 'smug', brows: 'smug', mouth: lipFlap(t, talk, 'grin', ['open', 'grin', 'laugh']),
+      NA = neptune(px, py, ns, { sit: 1, power: .7 + .3 * Math.sin(t * 3), headTilt: .12, eyes: t > T_.wink ? 'wink' : 'smug', brows: 'smug', mouth: lipFlap(t, talk, 'grin', ['open', 'grin', 'laugh']),
         point: 1, pointAng: -.55, crownTilt: .15 * Math.sin(t * 6) + .2 * kick(t, T_.king + .3, 3), crownLift: .3 * kick(t, T_.king + .3, 4) });
       beakMic(NA, ns);
     } }], { set: { lights: .1 }, dark: .6, darkCol: '#1A2A4A', blur: 3.5 });
     if (NA) callout('*KING* Neptune is in the house!', NA.mouth[0] - 40, NA.mouth[1] - 30, t - T_.king, { dx: -420, dy: -230, size: 58, cps: 15, hold: 1.2, kind: 'shout', accent: '#2EB2EE' });
-  }
-  // In the wings: Pearl, one eye narrowed. "…KING?"
-  function pearlWings(t) {
-    shape(rectPts(-40, -40, W + 80, H + 80), { fill: radGrad(W * .45, H * .55, 60, 1100, [[0, '#3A2440'], [1, '#0E0812']]), stroke: null });
-    const k = 4.2, A = drawPearl(W * .4, H * 1.14, PP_UNIT * PK * k, { sit: 1, eyes: 'bored', brows: 'angry', mouth: lipFlap(t, inW(t, T_.pearlKing, T_.pearlKing + .9), 'flat', ['open', 'o', 'flat']), lookX: .8, headTilt: .05, wag: .3 * Math.sin(t * 2) }, 'none');
-    // the red stage curtain she's peeking round
-    shape([[W * .66, -40], [W + 40, -40], [W + 40, H + 40], [W * .62, H + 40], [W * .64, H * .5]], { fill: linGrad(W * .6, 0, W, 0, [[0, '#B0243A'], [.5, '#8A1A2E'], [1, '#5A0E1E']]), stroke: PD.ink, lwPx: 5, smooth: .3 });
-    for (let i = 0; i < 5; i++) line([[W * (.7 + i * .06), -40], [W * (.68 + i * .065), H + 40]], { stroke: 'rgba(40,0,10,.35)', lwPx: 6 });
-    callout('…*KING*?', A.mouth[0] - 40, A.mouth[1] - 60, t - T_.pearlKing, { dx: -420, dy: -200, size: 64, cps: 8, hold: 1.0, accent: '#E26AA6' });
-  }
-  // The wink, TO BE CONTINUED…, and an iris out on his starfish.
-  function teaser(t) {
-    shape(rectPts(-40, -40, W + 80, H + 80), { fill: radGrad(W / 2, H * .55, 80, 1300, [[0, '#1E4A7A'], [1, '#08142A']]), stroke: null });
-    ysDots('#7FE3FF', .08, 40, 6, t);
-    const lean = ease(seg(t, T_.wink - .6, T_.wink + .2)), ns = NT_UNIT * (2.4 + .9 * lean);
-    const NA = neptune(W / 2, H * (.97 + .12 * lean), ns, { sit: 1, power: .6, eyes: t > T_.wink ? 'wink' : 'smug', brows: 'up', mouth: 'grin', headTilt: .1, point: 1, pointAng: -.55, crownTilt: .1 * Math.sin(t * 3) });
-    beakMic(NA, ns);
-    if (t > T_.wink) sfx('✦', NA.head[0] + 40, NA.head[1] - 40, 90, PD.goldLt, t - T_.wink, { life: .7 });
-    const card = T_.wink + .6;
-    if (t > card) overlay(() => {
-      const c = backOut(seg(t, card, card + .4));
-      X.save(); X.translate(W / 2, 150); X.rotate(-.03); X.scale(c, c);
-      shape(rectPts(-480, -95, 960, 190), { fill: '#EAF8FF', stroke: PAL.ink, lwPx: 8, smooth: .1 });
-      X.font = `92px ${FONT_SFX}`; X.textAlign = 'center'; X.textBaseline = 'middle'; X.lineJoin = 'round';
-      X.lineWidth = 14; X.strokeStyle = PAL.ink; X.strokeText('TO BE CONTINUED...', 0, 8); X.fillStyle = '#2EB2EE'; X.fillText('TO BE CONTINUED...', 0, 8);
+    // the wink, an iris out on his starfish, and THE END
+    if (NA && t > T_.wink) sfx('✦', NA.head[0] + 40, NA.head[1] - 40, 90, PD.goldLt, t - T_.wink, { life: .7 });
+    if (NA && t > T_.iris) iris(NA.crown[0], NA.crown[1], lerp(1500, 0, easeIn(seg(t, T_.iris, T_.theEnd - .1))));
+    if (t > T_.theEnd) overlay(() => {                                         // on black, once the iris has closed (overlays paint in order)
+      const c = backOut(seg(t, T_.theEnd, T_.theEnd + .4));
+      X.save(); X.translate(W / 2, H / 2); X.rotate(-.03); X.scale(c, c);
+      shape(rectPts(-330, -95, 660, 190), { fill: '#EAF8FF', stroke: PAL.ink, lwPx: 8, smooth: .1 });
+      X.font = `110px ${FONT_SFX}`; X.textAlign = 'center'; X.textBaseline = 'middle'; X.lineJoin = 'round';
+      X.lineWidth = 14; X.strokeStyle = PAL.ink; X.strokeText('THE END', 0, 8); X.fillStyle = '#2EB2EE'; X.fillText('THE END', 0, 8);
       X.restore();
     });
-    const it = T_.END - 1.6;
-    if (t > it) iris(NA.crown[0], NA.crown[1], lerp(1500, 0, easeIn(seg(t, it, T_.END - .3))));
   }
-
   // ================= ASSEMBLY =================
   const withTop = fn => { const g = (t, lt, dur) => { fn(t, lt, dur); pdKaraoke(t); }; Object.defineProperty(g, 'name', { value: fn.name }); return g; };
   scene({
@@ -857,7 +841,6 @@
       [T_.solo, soloWide], [113.0, roboDrums], [115.1, dragonLoops], [117.2, brosHeadbang], [119.3, rainbowDance], [121.4, festerSlide], [123.6, soloBonk],
       [C('C4', 0) - .1, chorus(3)], [FIN - .1, finale],
       [142.3, beatLow], [T_.mic - .15, micDropCU], [T_.release + .2, micFall], [148.3, silence], [T_.rise - .3, neptuneRise], [T_.king - .3, neptuneKing],
-      [T_.pearlKing - .3, pearlWings], [T_.wink - 1.0, teaser],
     ].map(([t0, fn]) => [t0, withTop(fn)]),
   });
 })();

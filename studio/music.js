@@ -119,6 +119,15 @@ async function buildSceneAudio(sc, sampleRate) {
   const lines = [...(sc.dialogue || [])].sort((a, b) => a.at - b.at);
   for (const [lineIndex, line] of lines.entries()) {
     if (line.kind === 'think' || line.silent) continue;
+    const clip = voiceClipFor(sc.id, line);
+    if (clip) {                                               // a recorded line (scripts/tts_gemini.mjs): play it as the bubble types
+      const bytes = Uint8Array.from(atob(clip.src.slice(clip.src.indexOf(',') + 1)), c => c.charCodeAt(0));
+      const src = ctx.createBufferSource(), gain = ctx.createGain(), at = line.at + .2;
+      src.buffer = await ctx.decodeAudioData(bytes.buffer);
+      gain.gain.value = (clip.level ?? sc.tts?.level ?? .6) * (line.energy ?? 1);
+      src.connect(gain).connect(voiceBus); if (at < sc.duration) src.start(at);
+      continue;
+    }
     const plain = line.text.replace(/\*/g, ''), cps = line.cps ?? 18;
     const voice = ASSETS.character[line.speaker]?.voice || {};
     const wordPattern = /[A-Za-z]+(?:'[A-Za-z]+)?/g;
@@ -142,7 +151,7 @@ async function buildSceneAudio(sc, sampleRate) {
     const ranges = [];
     for (const line of lines) {
       if (line.kind === 'think' || line.silent) continue;
-      const end = Math.min(sc.duration, line.at + .2 + line.text.replace(/\*/g, '').length / (line.cps ?? 18) + .18);
+      const clip = voiceClipFor(sc.id, line), end = Math.min(sc.duration, line.at + .2 + (clip ? clip.dur : line.text.replace(/\*/g, '').length / (line.cps ?? 18)) + .18);
       if (ranges.length && line.at <= ranges[ranges.length - 1][1] + .25) ranges[ranges.length - 1][1] = Math.max(end, ranges[ranges.length - 1][1]);
       else ranges.push([line.at, end]);
     }

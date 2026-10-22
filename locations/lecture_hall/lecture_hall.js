@@ -12,8 +12,9 @@
 //   lectureHall.seat(n, x, lift) → { x, y, z } where a student sits in row n (1 = front). The desk in front hides the legs;
 //                               lift (world units) raises a small character (Alma) so more than her head clears the desk.
 // o: { splitZ, screen: 0..1 (how far the projection screen is pulled down; default 1), projector: 0..1 (screen glow; default 1),
+//      bigBoard(t): one large chalkboard across the front wall (BIG_BOARD) in place of both boards and the screen,
 //      boardL(t), boardR(t), slide(t): draw your own chalk / slide content. Local coords: origin at the surface's top-left,
-//      world units, y down; the surface size is lectureHall.BOARD_L / BOARD_R / SCREEN (w, h). Content is clipped to it. }
+//      world units, y down; the surface size is lectureHall.BOARD_L / BOARD_R / SCREEN / BIG_BOARD (w, h). Content is clipped to it. }
 //
 // Layout (world): side walls X = ±850, back wall Z = 0, front wall Z = 2300, ceiling Y = 1150.
 // Eight tiered rows (row 1 at the front): row n's step runs Z FIRST − n·160 … FIRST − (n−1)·160 (FIRST = 1400) at Y = n·48.
@@ -29,6 +30,7 @@ const lectureHall = (() => {
   const TABLE = { x: 330, w: 260, z0: 2040, z1: 2130, h: 76 };
   const BOARD_L = { x: -800, y: 800, w: 460, h: 550 }, BOARD_R = { x: 340, y: 800, w: 460, h: 550 };   // y = top edge (world Y)
   const SCREEN = { x: -300, y: 990, w: 600, h: 620 };                                                    // fully pulled down
+  const BIG_BOARD = { x: -660, y: 860, w: 1320, h: 680 };                                                 // one wide board instead of both boards + screen
   const C = {
     wall: '#E4DDD0', wallDk: '#CFC6B6', wallLt: '#EEE9DF', ceil: '#F2EFE8', ceilDk: '#DAD4C8', lamp: '#FFFBE6',
     wood: '#B98552', woodLt: '#D2A06B', woodDk: '#8C5E34', slat: '#A5714A',
@@ -146,8 +148,8 @@ const lectureHall = (() => {
       S(rectPts(-HW, -CEIL, 2 * HW, CEIL), { fill: C.wall, stroke: null });
       S(rectPts(-HW, -170, 2 * HW, 170), { fill: C.woodLt, stroke: null });
       line([[-HW, -170], [HW, -170]], { stroke: C.woodDk, lwPx: px(P, 2.5) });
-      board(BOARD_L, o.boardL, t, 0); board(BOARD_R, o.boardR, t, 1);
-      screen(o, t);
+      if (o.bigBoard) board(BIG_BOARD, o.bigBoard, t, 2);
+      else { board(BOARD_L, o.boardL, t, 0); board(BOARD_R, o.boardR, t, 1); screen(o, t); }
       // speakers high in the corners
       for (const x of [-760, 760]) S(rectPts(x - 45, -1080, 90, 130), { fill: '#3A3F46', lwPx: 1.4 });
     });
@@ -157,7 +159,7 @@ const lectureHall = (() => {
     S(rectPts(x - 16, y - 16, b.w + 32, b.h + 32), { fill: C.alu, lwPx: 1.6 });
     S(rectPts(x, y, b.w, b.h), { fill: linGrad(x, y, x + b.w, y + b.h, [[0, C.board], [1, C.boardDk]]), stroke: C.aluDk, lwPx: 1.2 });
     X.save(); X.beginPath(); X.rect(x, y, b.w, b.h); X.clip();
-    for (let i = 0; i < 5; i++) {                                                        // old eraser smudges
+    for (let i = 0; i < 5 + 4 * (which > 1); i++) {                                      // old eraser smudges
       const cx = x + b.w * hash(i * 3.1 + which), cy = y + b.h * hash(i * 7.7 + which * 2);
       ellipse(cx, cy, 90 + 70 * hash(i + 9), 26 + 16 * hash(i + 4), { fill: 'rgba(240,240,225,.07)', stroke: null, rot: -.2 + .4 * hash(i + which) });
     }
@@ -272,7 +274,7 @@ const lectureHall = (() => {
   }
 
   return {
-    MARK: { x: 0, z: 2000 }, HW, BACK, FRONT, CEIL, FIRST, ROWS, ROW_D, RISE, BOARD_L, BOARD_R, SCREEN, LECTERN, STAGE,
+    MARK: { x: 0, z: 2000 }, HW, BACK, FRONT, CEIL, FIRST, ROWS, ROW_D, RISE, BOARD_L, BOARD_R, SCREEN, BIG_BOARD, LECTERN, STAGE,
     rowY, rowFront,
     seat: (n, x = 0, lift = 0) => ({ x, y: rowY(n) + lift, z: rowFront(n) - 112 }),   // where a student sits in row n (1 = front)
     back(P, t, o = {}) {
@@ -298,6 +300,7 @@ LOCATIONS.lecture_hall = Object.assign(lectureHall, {
     'At the left board': { x: -470, y: 40, z: 2200 },
     'At the right board': { x: 470, y: 40, z: 2200 },
     'Front floor': { x: 0, y: 0, z: 1650 },
+    'Beside the big board': { x: -600, y: 0, z: 1840 },
     'Row 1 · center': lectureHall.seat(1, 0),
     'Row 2 · left': lectureHall.seat(2, -520),
     'Row 3 · center': lectureHall.seat(3, 110),
@@ -312,6 +315,7 @@ LOCATIONS.lecture_hall = Object.assign(lectureHall, {
     'Podium · mid rows': { x: 120, y: 360, z: 800, f: 1000, hy: 560, dir: 1 },
     'Podium · lectern': { x: -300, y: 200, z: 1450, f: 1000, hy: 650, dir: 1 },
     'Podium · boards': { x: 0, y: 420, z: 1150, f: 900, hy: 540, dir: 1 },
+    'Podium · big board': { x: 0, y: 500, z: 1350, f: 900, hy: 530, dir: 1 },
     'Classroom · from the stage': { x: 0, y: 230, z: 2250, f: 900, hy: 470, dir: -1 },
     'Classroom · from the lectern': { x: -380, y: 280, z: 2060, f: 900, hy: 430, dir: -1 },
     'Classroom · front rows': { x: 0, y: 190, z: 1800, f: 1000, hy: 580, dir: -1 },

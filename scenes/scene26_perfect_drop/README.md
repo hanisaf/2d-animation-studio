@@ -1,13 +1,13 @@
 # Scene 26: The Perfect Drop
 
-> A music video, and the finale of the competition arc ([23](../scene23_secret_potion/README.md) → [24](../scene24_competition_begins/README.md) → [25](../scene25_cube_drops/README.md)). After the talent show, the curtain opens on the after-show concert, and the headliner is **Princess Pearl**: the judge who is never dazzled, finally dazzling, golden mic in flipper. She sings every line of *The Perfect Drop* while everyone else performs around her. Jenna and Alma cartwheel, Housam bicycle-kicks, Danny does the puggle, the parents go crazy, Professor Safadi explains why a shortcut does not exist, and Fester shreds a guitar solo with Robo-Safadi on drums (until a ball finds his head). On **"MIC DROP!"** she drops the mic, and the music stops dead. In the silence, water drips into the spotlight… a puddle… and **Neptune** rises out of it, picks up the mic and taps it: *"Testing… testing… KING Neptune is in the house!"* From the wings: *"…KING?"* *To be continued…*
+> A music video, and the finale of the competition arc ([23](../scene23_secret_potion/README.md) → [24](../scene24_competition_begins/README.md) → [25](../scene25_cube_drops/README.md)). After the talent show, the curtain opens on the after-show concert, and the headliner is **Princess Pearl**: the judge who is never dazzled, finally dazzling, golden mic in flipper. She sings every line of *The Perfect Drop* while everyone else performs around her. Jenna and Alma cartwheel, Housam bicycle-kicks, Danny does the puggle, the parents go crazy, Professor Safadi explains why a shortcut does not exist, and Fester shreds a guitar solo with Robo-Safadi on drums (until a ball finds his head). On **"MIC DROP!"** she drops the mic, and the music stops dead. In the silence, water drips into the spotlight… a puddle… and **Neptune** rises out of it, picks up the mic and taps it: *"Testing… testing… KING Neptune is in the house!"* He winks, the iris closes on his starfish: **THE END**.
 
-*Neptune's debut, and the teaser for what comes next.*
+*Neptune's debut.*
 
 | | |
 |---|---|
-| **Length** | 163.5 s: the song (`song.mp3`, 149.8 s, generated with Gemini; the music stops at 146.9 s) plus a 16-second silent teaser |
-| **Sound** | `audio.mp3` = the song + the teaser's sound effects and cartoon voices, mixed by [`mix_audio.py`](mix_audio.py) (`python3 scenes/scene26_perfect_drop/mix_audio.py`). Pearl's is the only singing voice; karaoke runs along the bottom with her name |
+| **Length** | 160.6 s: the song (`song.mp3`, 149.8 s, generated with Gemini; the music stops at 146.9 s) plus a 14-second silent coda with Neptune |
+| **Sound** | `audio.mp3` = the song + the teaser's sound effects and cartoon voices, mixed by [`mix_audio.py`](mix_audio.py) (`python3 scenes/scene26_perfect_drop/mix_audio.py`). The singer says "HOW-sam"; the mix ducks her under that word and lays `housam_vocal.wav` on top, a sung "Hussam" (حسام) made by [`fix_housam.py`](fix_housam.py) (macOS's Arabic voice, re-sung on the song's E4 with the WORLD vocoder). Pearl's is the only singing voice; karaoke runs along the bottom with her name |
 | **Cast** | [Princess Pearl](../../characters/princess_pearl/README.md) (the singer) · [Jenna](../../characters/jenna/README.md) · [Alma](../../characters/alma/README.md) · [Housam](../../characters/housam/README.md) · [Danny](../../characters/danny/README.md) · [Professor Safadi](../../characters/safadi/README.md) · [Doctor Sami](../../characters/sami/README.md) · [Jester Fester](../../characters/jester_fester/README.md) · [Dragon](../../characters/dragon/README.md) · [Robo-Safadi](../../characters/robo_safadi/README.md) · [Clawd](../../characters/clawd/README.md) · [Neptune](../../characters/neptune/README.md) (debut) · [Students](../../characters/student/README.md) (the parents) |
 | **Location** | [School gym](../../locations/school_gym/README.md): the stage view (`dir: -1`) for the concert, with a ★ THE PERFECT DROP ★ banner and Pearl's throne by the curtain; the scoreboard view (`dir: 1`) for the audience and the scoreboard. The choruses and the big musical moments cut to motion-graphics panels, as in [scene 17](../scene17_broccoli_directive/README.md) and [scene 22](../scene22_you_shall_see/README.md) |
 | **Borrowed props** | Scene 22's backdrops, throne, confetti and page wipes (`ys…`), scene 24's judges' table, chairs and score paddles (`cb…`) and scene 25's cube, hands and trophies (`cd…`), so those scenes must stay registered |
@@ -70,9 +70,7 @@ Times are seconds into the song. Every sung word's start time lives in [`lyrics.
 | 146.3–148.3 | | (silence) | **micFall**: the mic falls in slow motion; THUD (147.15) as the music dies; its light turns red |
 | 148.3–150.8 | Teaser | (silence) | **silence**: the empty throne, the mic in its spotlight; drip… drip… a puddle spreads |
 | 150.8–154.6 | | *"Testing… testing…"* | **neptuneRise**: SPLOOSH: Neptune rises out of the puddle, ring of water spinning, picks up the mic, tap tap |
-| 154.6–157.8 | | *"KING Neptune is in the house!"* | **neptuneKing**: nose up, crown wobbling |
-| 157.8–159.0 | | *"…KING?"* | **pearlWings**: Pearl, peeking from behind the curtain, one eye narrowed |
-| 159.0–163.5 | | — | **teaser**: Neptune winks; TO BE CONTINUED…; an iris closes on his starfish |
+| 154.6–160.6 | | *"KING Neptune is in the house!"* | **neptuneKing**: nose up, crown wobbling; he winks, an iris closes on his starfish, THE END on black |
 
 ## Notes for building
 
