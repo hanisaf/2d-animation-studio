@@ -64,7 +64,7 @@ Handy hand targets (wrists; mirror x for the left hand):
 ## Poses
 
 Registered in `sami.js` (`CHARACTERS.sami.poses`) and shown in the studio's character browser and model sheet:
-rest · talk · examine · explain · point up · thinking · idea! · super explain · surprised · laugh · wink · walk · shrug.
+rest · talk · examine · explain · point up · thinking · idea! · super explain · surprised · laugh · wink · walk · shrug · greek (the ancient-Greek outfit, for the *Eureka!* flashback in scene 29).
 
 ## Rig API (`sami.js`)
 
@@ -88,6 +88,7 @@ const A = sami(x, y, s, {
   bulb,                        // 0..1: the idea bulb pops on above his head
   // extras
   emote, emoteK,               // '?' | '!' | 'sweat' | 'music' | 'heart'
+  outfit,                      // default, or 'greek': a knee-length chiton with a gold hem, a blue sash, bare arms, sandals, a laurel wreath
 });
 // A (screen px): head, mouth, top, eyeL, eyeR, chest, belly, handL, handR, bulb
 

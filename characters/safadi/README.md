@@ -66,7 +66,7 @@ Handy hand targets (wrists; mirror x for the left hand):
 ## Poses
 
 Registered in `safadi.js` (`CHARACTERS.safadi.poses`) and shown in the studio's character browser and model sheet:
-rest · talk · explain · point up · pointer · thinking · idea! · super explain · surprised · laugh · wink · walk · shrug.
+rest · talk · explain · point up · pointer · thinking · idea! · super explain · surprised · laugh · wink · walk · shrug · greek (the ancient-Greek outfit, for the *Eureka!* flashback in scene 29).
 
 ## Rig API (`safadi.js`)
 
@@ -91,6 +91,7 @@ const A = safadi(x, y, s, {
   bulb,                        // 0..1: the idea bulb pops on above his head
   // extras
   emote, emoteK,               // '?' | '!' | 'sweat' | 'music' | 'heart'
+  outfit,                      // default, or 'greek': a knee-length chiton with a gold hem, a red sash, bare arms, sandals, a laurel wreath
 });
 // A (screen px): head, mouth, top, eyeL, eyeR, chest, belly, handL, handR, pointerTip, bulb
 

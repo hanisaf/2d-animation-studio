@@ -15,11 +15,12 @@
 //          brows: normal | up | worried | angry | quizzical · mouth: smile | grin | open | o | O | flat | frown | smirk | teeth
 //          (lipFlap works as usual: the LED mouth lights up in that shape)
 // Powers   red (0..1): ACTIVATE: the eyes, mouth and antenna switch from cool cyan to glowing red · scan (0..1): a red scanning beam
+//          hatch (0..1): his chest swings open on a hinge into a glowing storage bay (things fly into A.hatch)
 //          from the eyes to the floor in the look direction · steam (0..1): puffs from the ear vents · hover (0..1): legs tuck, jets fire,
 //          he rises · glitch (0..1): sparks, a twitch and static over the face · antenna (rad: lean of the antenna; it also bobs on jumps)
 // Extras   emote: '?' | '!' | '!?' | 'oil' (a drop of oil: his sweat) | 'music' | 'heart' with emoteK (0..1 pop) · boil (px)
 //
-// Returns anchors in screen px: { head, mouth, top, antenna, eyeL, eyeR, chest, belly, handL, handR, footL, footR }
+// Returns anchors in screen px: { head, mouth, top, antenna, eyeL, eyeR, chest, belly, hatch, handL, handR, footL, footR }
 // Also: roboSafadiWalk(p, k) → pose options for a stiff robot march (p = steps travelled, k = 0..1 amount), to spread into roboSafadi().
 
 const ROBO_SAFADI_UNIT = 6.0;   // world units per local unit (Safadi's scale)
@@ -60,6 +61,8 @@ function roboSafadi(x, y, s, o = {}) {
     // ---- torso: a tan metal box painted like Safadi's suit ----
     X.save(); X.translate(0, hipY); X.rotate(lean);
     rsTorso(lw, t, red);
+    if ((o.hatch || 0) > .01) rsHatch(clamp(o.hatch), lw, t, red);
+    A.hatch = toPx(0, -4.3);
     A.chest = toPx(0, -6.6); A.belly = toPx(0, -2.6);
     for (let i = 0; i < 3; i++) shape(rectPts(-.95 - i * .05, -9.3 + i * .38, 1.9 + i * .1, .42), { fill: i % 2 ? RS.metalDk : RS.metal, stroke: RS.ink, lw: lw * .8 });   // the accordion neck
 
@@ -130,6 +133,27 @@ function rsTorso(lw, t, red) {
   for (const by of [-2.6, -1.4]) circle(0, by, .18, { fill: RS.metalDkr, stroke: null });
   shape(rectPts(1.75, -6.6, 1.25, .75), { fill: RS.bezel, stroke: RS.ink, lw: lw * .7 });                         // the breast-pocket status panel
   for (let i = 0; i < 3; i++) { const on = hash(Math.floor(t * 3) * 7 + i) > .45; circle(2.0 + i * .38, -6.22, .12, { fill: on ? mixCol('#7CFF9B', RS.red, red) : '#2E4A3A', stroke: null }); }
+}
+
+// The chest hatch (torso-local units): the whole suit front swings open on its left hinge onto a storage bay that glows
+// cyan (red when activated) with a slow swirl: a vacuum for anything he picks up.
+function rsHatch(k, lw, t, red) {
+  const x0 = -2.55, x1 = 2.55, y0 = -7.7, y1 = -1.0, w = x1 - x0, glow = mixCol('#7FE3FF', RS.red, red);
+  shape(rectPts(x0, y0, w, y1 - y0), { fill: '#141A22', stroke: RS.ink, lw, smooth: .15 });                               // the bay
+  X.save(); X.beginPath(); X.rect(x0, y0, w, y1 - y0); X.clip();
+  circle(0, (y0 + y1) / 2, 3.2, { fill: radGrad(0, (y0 + y1) / 2, 0, 3.4, [[0, rgba(glow, .85 * k)], [.5, rgba(glow, .3 * k)], [1, rgba(glow, 0)]]), stroke: null });
+  for (let i = 0; i < 3; i++) {                                                            // the swirl
+    const pts = []; for (let j = 0; j <= 16; j++) { const a = j / 16 * 4.2 + t * 5 + i * 2.1, r = .3 + j / 16 * 2.4; pts.push([Math.cos(a) * r, (y0 + y1) / 2 + Math.sin(a) * r * .9]); }
+    line(pts, { stroke: rgba('#FFFFFF', .5 * k), lw: lw * 1.2, smooth: true });
+  }
+  X.restore();
+  for (const yy of [y0 + .3, y1 - .3]) shape(rectPts(x0 - .25, yy - .3, .5, .6), { fill: RS.metal, stroke: RS.ink, lw: lw * .7 });   // hinges
+  const dw = w * Math.cos(Math.PI * .92 * k), outside = dw >= 0, dx0 = Math.min(x0, x0 + dw), dx1 = Math.max(x0, x0 + dw);
+  if (Math.abs(dw) > .05) {                                                                // the door: suit painted outside, plain metal inside
+    shape([[dx0, y0 - .15], [dx1, y0 - .15], [dx1, y1 + .15], [dx0, y1 + .15]], { fill: outside ? RS.suit : RS.metalDk, stroke: RS.ink, lw });
+    if (outside) { const cx = x0 + dw / 2; shape([[cx - .22 * dw / w, y0], [cx + .22 * dw / w, y0], [cx + .4 * dw / w, -4.6], [cx, -3.9], [cx - .4 * dw / w, -4.6]], { fill: RS.tie, stroke: RS.ink, lw: lw * .8 }); }
+    else for (let i = 0; i < 3; i++) line([[dx0 + .3, y0 + 1.5 + i * 1.8], [dx1 - .3, y0 + 1.5 + i * 1.8]], { stroke: RS.metalDkr, lw: lw * .8 });
+  }
 }
 
 // The box head, in head-local units (origin: head centre; −5.0 is the hair line, +4.6 the chin).
@@ -306,6 +330,7 @@ CHARACTERS.robo_safadi = {
     'happy beep': (x, y, s, t) => roboSafadi(x, y, s, { t, eyes: 'happy', mouth: 'grin', brows: 'up', jump: .8 * Math.abs(Math.sin(t * 4)), handL: [-5, -15], handR: [5, -15], handPoseL: 'palm', handPoseR: 'palm', emote: 'music', emoteK: 1 }),
     'confused': (x, y, s, t) => roboSafadi(x, y, s, { t, brows: 'quizzical', mouth: 'smirk', tilt: -.12, lookX: -.5, lookY: -.4, handR: [1.4, -16.2], handPoseR: 'claw', emote: '?', emoteK: 1 }),
     'wave': (x, y, s, t) => roboSafadi(x, y, s, { t, handR: [5.8 + .6 * Math.sin(t * 6), -19.5], handPoseR: 'palm', mouth: 'grin', eyes: 'happy', brows: 'up' }),
+    'open hatch': (x, y, s, t) => roboSafadi(x, y, s, { t, red: 1, hatch: clamp(1.4 * Math.abs(Math.sin(t * .8))), eyes: 'open', mouth: 'O', brows: 'up', handL: [-5.6, -13], handR: [5.6, -13], handPoseL: 'claw', handPoseR: 'claw' }),
     'power down': (x, y, s, t) => { const u = clamp(frac(t / 4) * 1.6); return roboSafadi(x, y, s, { t, eyes: u > .7 ? 'off' : 'squint', mouth: u > .7 ? 'flat' : 'o', dy: 1.2 * ease(u), tilt: .18 * ease(u), lean: .1 * ease(u), antenna: .9 * ease(u), hum: u < .7, handL: [-3.6, -6 + 2 * ease(u)], handR: [3.6, -6 + 2 * ease(u)] }); },
   },
 };

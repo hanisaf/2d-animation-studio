@@ -18,6 +18,7 @@
 // Powers   power (0..1): the explanatory aura: golden-cyan glow, rays, glowing hands and a ring of chalk formulas orbiting him
 //          bulb (0..1): an idea light bulb pops on above his head
 // Extras   emote: '?' | '!' | 'sweat' | 'music' | 'heart' with emoteK (0..1 pop) · boil (px)
+// Outfit   outfit: 'suit' (default) | 'greek' (an ancient-Greek chiton with a gold hem, a red sash, bare arms, sandals and a laurel wreath)
 //
 // Returns anchors in screen px: { head, mouth, top, eyeL, eyeR, chest, belly, handL, handR, pointerTip, bulb }
 //
@@ -31,6 +32,7 @@ const SF = {
   suit: '#D4B68C', suitDk: '#B7966B', suitLt: '#E4CDA7', shirt: '#F8F6F1', shirtDk: '#D9D4CB', tie: '#C3222F', tieDk: '#8E1621',
   shoe: '#6E3B22', shoeDk: '#4A2515', shoeLt: '#8C5436', button: '#3A2A22', mouth: '#6E1F2E', tongue: '#EE7F8C',
   glow: '#7FE3FF', glowGold: '#FFD66B', chalk: '#FFFDF4', board: '#23433A', boardDk: '#193029',
+  robe: '#FBF6EA', robeDk: '#E2D7C2', robeTrim: '#E3B03A', sash: '#B8323F', sashDk: '#8A1D2A', leaf: '#7DB04F', leafDk: '#4F7F31', sandal: '#9A5E34', sandalDk: '#6E3B22',
 };
 const SAFADI_UNIT = 6.0;    // world units per local unit
 const SF_HIP = -8.0;
@@ -49,13 +51,14 @@ function safadi(x, y, s, o = {}) {
   if (pw > .01) { sfAura(pw, t); sfGlyphs(pw, t, false); }
 
   withBoil(o.boil ?? .7, () => {
-    const hipY = SF_HIP + (o.dy || 0), lean = o.lean || 0, cl = Math.cos(lean), sl = Math.sin(lean);
+    const hipY = SF_HIP + (o.dy || 0), lean = o.lean || 0, cl = Math.cos(lean), sl = Math.sin(lean), greek = o.outfit === 'greek';
     const tl = (px, py) => [px * cl - py * sl, hipY + px * sl + py * cl];   // torso-local → body-local
     const br = o.breathe === false ? 0 : wob(t, .22) * .06;
 
     // ---- legs + shoes ----
     [[-1, o.footL || [-1.25, -.8]], [1, o.footR || [1.25, -.8]]].forEach(([sd, f]) => {
       const hp = tl(sd * 1.15, -.2), { joint, end } = ik2(hp, f, 3.75, 3.7, [sd * .15, .1]);
+      if (greek) { sfLimb([hp, joint, end], 1.75, SF.skin, lw); sfSandal(end, sd, lw, SF); return; }
       sfLimb([hp, joint, end], 2.05, SF.suit, lw);
       line([[lerp(hp[0], joint[0], .1) + sd * .15, lerp(hp[1], joint[1], .1)], [joint[0] + sd * .12, joint[1]], [end[0] + sd * .1, end[1] - .6]], { stroke: SF.suitDk, lw: lw * .8 });
       sfShoe(end, sd, lw);
@@ -63,21 +66,25 @@ function safadi(x, y, s, o = {}) {
 
     // ---- torso: jacket, shirt, tie, vest, lapels ----
     X.save(); X.translate(0, hipY); X.rotate(lean); X.scale(1 + br * .3, 1 + br);
-    sfJacket(lw);
+    if (greek) sfChiton(lw, SF); else sfJacket(lw);
     A.chest = toPx(0, -6.5); A.belly = toPx(0, -2.5);
     shape(rectPts(-.75, -9.4, 1.5, 1.2), { fill: SF.skin, stroke: SF.ink, lw });          // neck
 
     // ---- head ----
     X.save(); X.translate(0, -8.9); X.rotate(o.tilt || 0); X.scale(1.1, 1.1); X.translate(0, -5.55);
     sfHead(o, t, lw, A);
+    if (greek) sfWreath(lw, o.turn || 0, SF);
     X.restore();
     X.restore();
 
     // ---- arms (in front of the body) ----
     [[-1, o.handL || [-4.4, -8.1], o.handPoseL || 'open'], [1, o.handR || [4.4, -8.1], o.handPoseR || 'open']].forEach(([sd, tg, pose]) => {
       const sh = tl(sd * 2.95, -7.2), { joint, end } = ik2(sh, tg, 3.75, 3.45, [sd * .25, 1]);
-      sfLimb([sh, joint, end], 1.55, SF.suit, lw);
-      line([[sh[0] - sd * .1, sh[1] + .5], [joint[0] - sd * .35, joint[1]]], { stroke: SF.suitDk, lw: lw * .8 });
+      if (greek) { sfLimb([sh, joint, end], 1.3, SF.skin, lw); sfLimb([sh, mixPt(sh, joint, .55)], 1.95, SF.robe, lw); }   // bare arm, short sleeve
+      else {
+        sfLimb([sh, joint, end], 1.55, SF.suit, lw);
+        line([[sh[0] - sd * .1, sh[1] + .5], [joint[0] - sd * .35, joint[1]]], { stroke: SF.suitDk, lw: lw * .8 });
+      }
       const ang = Math.atan2(end[1] - joint[1], end[0] - joint[0]);
       if (pw > .01) circle(end[0] + Math.cos(ang) * .6, end[1] + Math.sin(ang) * .6, 2.2, { fill: radGrad(end[0] + Math.cos(ang) * .6, end[1] + Math.sin(ang) * .6, 0, 2.2, [[0, rgba(SF.glow, .55 * pw)], [1, rgba(SF.glow, 0)]]), stroke: null });
       const tip = sfHand(end, ang, sd, pose, lw, o, pw);
@@ -137,6 +144,50 @@ function sfJacket(lw) {
   // pocket flaps + breast welt
   [-1, 1].forEach(sd => shape(rectPts(sd * 1.95 - .8, -1.95, 1.6, .5), { fill: SF.suit, stroke: SF.ink, lw: lw * .8 }));
   line([[1.55, -5.75], [2.45, -5.95]], { stroke: SF.ink, lw: lw * .9 });
+}
+
+// The Greek outfit (outfit: 'greek'), shared with Sami: C is the character's palette (ink, skin, robe, robeDk, robeTrim, sash,
+// sashDk, leaf, leafDk, sandal, sandalDk). A knee-length chiton with a gold hem and belt, and a sash over the left shoulder.
+function sfChiton(lw, C) {
+  const body = [[-3.0, -8.35], [-3.45, -6.7], [-3.05, -4.2], [-3.0, -1.6], [-3.35, 1.6], [-3.7, 3.35], [-1.8, 3.6], [0, 3.5], [1.8, 3.6], [3.7, 3.35], [3.35, 1.6], [3.0, -1.6], [3.05, -4.2], [3.45, -6.7], [3.0, -8.35], [1.25, -8.75], [-1.25, -8.75]];
+  shape(body, { fill: C.robe, stroke: C.ink, lw, smooth: .35 });
+  X.save(); tracePath(body, true, .35); X.clip();
+  withBoil(0, () => {
+    [-1, 1].forEach(sd => shape([[sd * 3.8, -8.6], [sd * 2.6, -8.6], [sd * 2.2, 3.8], [sd * 3.9, 3.8]], { fill: rgba(C.robeDk, .55), stroke: null }));
+    [-1.7, -.6, .6, 1.7].forEach((x, i) => line([[x * .9, -1.9], [x * 1.05 + (i % 2 ? .1 : -.1), 1.2], [x * 1.12, 3.3]], { stroke: C.robeDk, lw: lw * 1.1, smooth: true }));   // skirt folds
+    shape([[-3.9, 2.75], [3.9, 2.75], [3.9, 3.9], [-3.9, 3.9]], { fill: C.robeTrim, stroke: null });                                         // gold hem
+    for (let i = 0; i < 9; i++) { const x = -3.2 + i * .8; line([[x, 3.4], [x, 3.05], [x + .4, 3.05], [x + .4, 3.25]], { stroke: C.ink, lw: lw * .7 }); }   // a little meander
+  });
+  X.restore();
+  shape([[-1.15, -8.72], [0, -7.35], [1.15, -8.72]], { fill: C.skin, stroke: C.ink, lw: lw * .9, closed: false, smooth: .6 });   // the neckline
+  shape([[-3.05, -2.35], [3.05, -2.35], [3.0, -1.75], [-3.0, -1.75]], { fill: C.robeTrim, stroke: C.ink, lw: lw * .8 });            // the belt
+  const sash = [[-2.95, -8.4], [-1.55, -8.7], [3.05, -2.4], [3.15, -.9], [2.35, -.95]];
+  shape(sash, { fill: C.sash, stroke: C.ink, lw, smooth: .25 });
+  withBoil(0, () => { line([[-2.2, -8.1], [2.6, -1.7]], { stroke: C.sashDk, lw: lw * 1.1 }); line([[-1.9, -7.2], [1.0, -3.4]], { stroke: C.sashDk, lw: lw * .8 }); });
+  circle(-2.25, -8.05, .38, { fill: C.robeTrim, stroke: C.ink, lw: lw * .8 });                                                     // the brooch
+}
+// A laurel wreath round the head (head-local units, as in sfHead): two leafy branches from the temples meeting on top.
+function sfWreath(lw, turn, C) {
+  const pts = [[-4.0, -.4], [-4.15, -2.1], [-3.7, -3.8], [-2.6, -5.15], [-1.0, -5.9], [-.15, -6.05]];
+  const leaf = (x, y, ang, col) => { X.save(); X.translate(x, y); X.rotate(ang); shape(ellPts(.6, 0, .66, .3, 10), { fill: col, stroke: C.ink, lw: lw * .7, smooth: true }); X.restore(); };
+  for (const sd of [-1, 1]) {
+    const br = pts.map(([x, y]) => [sd * x - turn * .35, y]);
+    line(br, { stroke: C.leafDk, lw: lw * 1.2, smooth: true });
+    for (let i = 0; i < br.length - 1; i++) {
+      const [x0, y0] = br[i], [x1, y1] = br[i + 1], g = Math.atan2(y1 - y0, x1 - x0);         // the way the branch grows
+      leaf(x0, y0, g - sd * .75, C.leafDk); leaf(x0, y0, g + sd * .75, C.leaf);
+      leaf(lerp(x0, x1, .5), lerp(y0, y1, .5), g + sd * .6, C.leaf);
+    }
+  }
+}
+// A leather sandal: a bare foot on a sole, with straps over the toes and round the ankle.
+function sfSandal(a, sd, lw, C) {
+  X.save(); X.translate(a[0] + sd * .1, a[1]); X.scale(sd, 1);
+  shape([[-1.0, .55], [-.95, .95], [1.2, .95], [1.4, .6]], { fill: C.sandalDk, stroke: C.ink, lw, smooth: .5 });                  // the sole
+  shape([[-.85, .55], [-.8, -.3], [-.35, -.75], [.5, -.6], [1.15, -.1], [1.35, .55]], { fill: C.skin, stroke: C.ink, lw, smooth: .7 });
+  line([[-.5, -.35], [.9, .2]], { stroke: C.sandal, lw: lw * 2.4 }); line([[-.75, .05], [1.2, .45]], { stroke: C.sandal, lw: lw * 2.4 });
+  line([[-.65, -.95], [-.45, -.4]], { stroke: C.sandal, lw: lw * 2.2 });
+  X.restore();
 }
 
 function sfHead(o, t, lw, A) {
@@ -262,7 +313,7 @@ function sfHand(p, ang, sd, pose, lw, o, pw) {
   let tip = null;
   X.save(); X.translate(p[0], p[1]); X.rotate(ang); if (sd < 0) X.scale(1, -1);
   const ink = { stroke: SF.ink, lw: .38 + lw * 2 }, skin = { stroke: SF.skin, lw: .38 };
-  shape(ellPts(-.05, 0, .3, .66, 12), { fill: SF.shirt, stroke: SF.ink, lw, smooth: true });            // shirt cuff
+  if (o.outfit !== 'greek') shape(ellPts(-.05, 0, .3, .66, 12), { fill: SF.shirt, stroke: SF.ink, lw, smooth: true });            // shirt cuff
   if (pose === 'open' || pose === 'palm' || pose === 'thumb' || pose === 'point') {
     const f = pose === 'open' ? [[-.25, .8], [-.05, .9], [.15, .86], [.35, .74], [-1.1, .55]]
       : pose === 'palm' ? [[-.6, .8], [-.22, .92], [.14, .88], [.5, .72], [-1.45, .62]]
@@ -645,6 +696,7 @@ CHARACTERS.safadi = {
     'laugh': (x, y, s, t) => { const k = Math.abs(Math.sin(t * 13)); safadi(x, y, s, { handL: [-2.2, -9.5], handR: [2.2, -9.5], handPoseL: 'fist', handPoseR: 'fist', eyes: 'squeeze', mouth: k > .5 ? 'grin' : 'open', dy: .4 * k, tilt: -.08 }); },
     'wink': (x, y, s, t) => safadi(x, y, s, { eyes: 'wink', mouth: 'grin', handR: [5.2, -13.6], handPoseR: 'thumb', brows: 'up' }),
     'walk': (x, y, s, t) => safadi(x, y, s, { ...safadiWalk(t * 1.6), mouth: 'smile', turn: -.15 }),
+    'greek': (x, y, s, t) => safadi(x, y, s, { outfit: 'greek', mouth: sfTalk(t), brows: 'up', handR: [5.8, -21.4], handPoseR: 'point', handL: [-5.3, -12.4], handPoseL: 'palm' }),
     'shrug': (x, y, s, t) => safadi(x, y, s, { handL: [-5.0, -13.4], handR: [5.0, -13.4], handPoseL: 'palm', handPoseR: 'palm', brows: 'worried', mouth: 'smirk', tilt: .12, emote: '?', emoteK: 1 }),
   },
 };

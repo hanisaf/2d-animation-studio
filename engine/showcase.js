@@ -3,6 +3,7 @@
 // Characters register poses for it:  CHARACTERS.<name> = { draw, unit, size: [w, h] (local units), title, ref, poses }
 //   poses = { 'Pose name': (x, y, s, t) => { ...draw the character (and any props) standing at (x, y), scale s } }
 // Locations register cameras:        LOCATIONS.<name> = { back, front, MARK, title, refs, cameras: { name: cam }, spots: { name: { x, y, z } } }
+//   optional variants = { 'Tidy': { messy: 0 }, 'Messy': { messy: 1 } }: named option sets for back/front (the studio's version chips)
 
 const PAPER = '#F4E6D6';
 function paperBackdrop() {
@@ -42,10 +43,12 @@ function drawCharacterView(entry, pose, t, o = {}) {
   }
 }
 // A location through a free camera, optionally with a character placed on one of its spots (default: the stage mark).
+// o.variant names one of the location's variants ({ name: options for back/front }, e.g. Tidy / Messy); default: the first.
 function drawLocationView(loc, cam, t, o = {}) {
   const P = persp(cam), m = (o.spot && loc.spots?.[o.spot]) || { y: 0, ...(loc.MARK || { x: 0, z: 1200 }) };
-  loc.back(P, t, { splitZ: o.character ? m.z : -Infinity });
+  const v = loc.variants?.[o.variant] || Object.values(loc.variants || {})[0] || {};
+  loc.back(P, t, { ...v, splitZ: o.character ? m.z : -Infinity });
   if (o.character && P.visible(m.z)) { const e = CHARACTERS[o.character], [sx, sy, k] = P.p(m.x, m.y || 0, m.z); drawPose(e, o.pose, sx, sy, e.unit * k, t); }
-  if (o.character) loc.front(P, t, { splitZ: m.z });
+  if (o.character) loc.front(P, t, { ...v, splitZ: m.z });
   return P;
 }

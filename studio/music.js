@@ -83,6 +83,8 @@ async function buildSceneAudio(sc, sampleRate) {
       else if (cue.type === 'gulp') { thump(at, .12); tone(at + .03, .12, 260, .06, 'sine', 0, 2); tone(at + .1, .1, 180, .05, 'sine', 0, 2); }
       else if (cue.type === 'applause') applause(at, cue.dur ?? 3, cue.level ?? 1);      // a crowd clapping: swells in, tails off
       else if (cue.type === 'drumroll') drumroll(at, cue.dur ?? 1);                      // a snare roll that builds to the next hit
+      else if (cue.type === 'splash') splash(at, cue.level ?? 1);                       // a bath splash: a thump and a spray of water
+      else if (cue.type === 'harp') for (let i = 0; i < 12; i++) bell(at + i * .055, 2 + i, .05 + .004 * i, 1.1);   // a rising glissando (into or out of a story)
     }
     // filtered bursts from one shared, seeded noise buffer (deterministic: the same soundtrack every render)
     function noiseHit(at, dur, level, freq, q = 1.2, pan = 0) {
@@ -92,6 +94,10 @@ async function buildSceneAudio(sc, sampleRate) {
       src.buffer = noise; filter.type = 'bandpass'; filter.frequency.value = freq; filter.Q.value = q; stereo.pan.value = pan;
       env.gain.setValueAtTime(.0001, at); env.gain.linearRampToValueAtTime(level, Math.min(end, at + .004)); env.gain.exponentialRampToValueAtTime(.0001, end);
       src.connect(filter).connect(env).connect(stereo).connect(musicBus); src.start(at, hash(at * 91.7) * .9); src.stop(end);
+    }
+    function splash(at, level) {
+      thump(at, .12 * level);
+      for (let i = 0; i < 16; i++) noiseHit(at + i * .02 + hash(i * 1.7 + at) * .06, .16 + .22 * hash(i * 2.9), .24 * level * (1 - i / 18), 600 + 2200 * hash(i * 3.3 + at), .8, hash(i * 5.1) * 1.2 - .6);
     }
     function applause(at, dur, level) {
       const n = Math.floor(dur * 70);

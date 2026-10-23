@@ -18,6 +18,7 @@
 // Powers   power (0..1): the explanatory aura: golden-cyan glow, rays, glowing hands and a ring of chalk formulas orbiting him
 //          bulb (0..1): an idea light bulb pops on above his head
 // Extras   emote: '?' | '!' | 'sweat' | 'music' | 'heart' with emoteK (0..1 pop) · boil (px)
+// Outfit   outfit: 'coat' (default) | 'greek' (an ancient-Greek chiton with a blue sash, sandals and a laurel wreath; drawn by Safadi's sfChiton)
 //
 // Returns anchors in screen px: { head, mouth, top, eyeL, eyeR, chest, belly, handL, handR, pointerTip, bulb }
 //
@@ -31,6 +32,7 @@ const SM = {
   suit: '#FDFDFD', suitDk: '#E8E8E8', suitLt: '#FFFFFF', shirt: '#4C86A8', shirtDk: '#3A6B88', tie: '#2C5268', tieDk: '#1E3B4D',
   shoe: '#F0F0F0', shoeDk: '#D0D0D0', shoeLt: '#FFFFFF', button: '#3A2A22', mouth: '#6E1F2E', tongue: '#EE7F8C',
   glow: '#8AE5B3', glowGold: '#3ED982', chalk: '#E8FFF1', board: '#1A4D33', boardDk: '#0D2B1B',
+  robe: '#FBF6EA', robeDk: '#E2D7C2', robeTrim: '#E3B03A', sash: '#4C86A8', sashDk: '#2C5268', leaf: '#7DB04F', leafDk: '#4F7F31', sandal: '#9A5E34', sandalDk: '#6E3B22',
 };
 const SAMI_UNIT = 6.0;    // world units per local unit
 const SM_HIP = -8.0;
@@ -49,13 +51,14 @@ function sami(x, y, s, o = {}) {
   if (pw > .01) { smAura(pw, t); smGlyphs(pw, t, false); }
 
   withBoil(o.boil ?? .7, () => {
-    const hipY = SM_HIP + (o.dy || 0), lean = o.lean || 0, cl = Math.cos(lean), sl = Math.sin(lean);
+    const hipY = SM_HIP + (o.dy || 0), lean = o.lean || 0, cl = Math.cos(lean), sl = Math.sin(lean), greek = o.outfit === 'greek';   // Greek outfit: Safadi's sfChiton etc.
     const tl = (px, py) => [px * cl - py * sl, hipY + px * sl + py * cl];   // torso-local → body-local
     const br = o.breathe === false ? 0 : wob(t, .22) * .06;
 
     // ---- legs + shoes ----
     [[-1, o.footL || [-1.25, -.8]], [1, o.footR || [1.25, -.8]]].forEach(([sd, f]) => {
       const hp = tl(sd * 1.15, -.2), { joint, end } = ik2(hp, f, 3.75, 3.7, [sd * .15, .1]);
+      if (greek) { smLimb([hp, joint, end], 1.75, SM.skin, lw); sfSandal(end, sd, lw, SM); return; }
       smLimb([hp, joint, end], 2.05, SM.suit, lw);
       line([[lerp(hp[0], joint[0], .1) + sd * .15, lerp(hp[1], joint[1], .1)], [joint[0] + sd * .12, joint[1]], [end[0] + sd * .1, end[1] - .6]], { stroke: SM.suitDk, lw: lw * .8 });
       smShoe(end, sd, lw);
@@ -63,21 +66,25 @@ function sami(x, y, s, o = {}) {
 
     // ---- torso: jacket, shirt, tie, vest, lapels ----
     X.save(); X.translate(0, hipY); X.rotate(lean); X.scale(1 + br * .3, 1 + br);
-    smJacket(lw);
+    if (greek) sfChiton(lw, SM); else smJacket(lw);
     A.chest = toPx(0, -6.5); A.belly = toPx(0, -2.5);
     shape(rectPts(-.75, -9.4, 1.5, 1.2), { fill: SM.skin, stroke: SM.ink, lw });          // neck
 
     // ---- head ----
     X.save(); X.translate(0, -8.9); X.rotate(o.tilt || 0); X.scale(1.1, 1.1); X.translate(0, -5.55);
     smHead(o, t, lw, A);
+    if (greek) sfWreath(lw, o.turn || 0, SM);
     X.restore();
     X.restore();
 
     // ---- arms (in front of the body) ----
     [[-1, o.handL || [-4.4, -8.1], o.handPoseL || 'open'], [1, o.handR || [4.4, -8.1], o.handPoseR || 'open']].forEach(([sd, tg, pose]) => {
       const sh = tl(sd * 2.95, -7.2), { joint, end } = ik2(sh, tg, 3.75, 3.45, [sd * .25, 1]);
-      smLimb([sh, joint, end], 1.55, SM.suit, lw);
-      line([[sh[0] - sd * .1, sh[1] + .5], [joint[0] - sd * .35, joint[1]]], { stroke: SM.suitDk, lw: lw * .8 });
+      if (greek) { smLimb([sh, joint, end], 1.3, SM.skin, lw); smLimb([sh, mixPt(sh, joint, .55)], 1.95, SM.robe, lw); }   // bare arm, short sleeve
+      else {
+        smLimb([sh, joint, end], 1.55, SM.suit, lw);
+        line([[sh[0] - sd * .1, sh[1] + .5], [joint[0] - sd * .35, joint[1]]], { stroke: SM.suitDk, lw: lw * .8 });
+      }
       const ang = Math.atan2(end[1] - joint[1], end[0] - joint[0]);
       if (pw > .01) circle(end[0] + Math.cos(ang) * .6, end[1] + Math.sin(ang) * .6, 2.2, { fill: radGrad(end[0] + Math.cos(ang) * .6, end[1] + Math.sin(ang) * .6, 0, 2.2, [[0, rgba(SM.glow, .55 * pw)], [1, rgba(SM.glow, 0)]]), stroke: null });
       const tip = smHand(end, ang, sd, pose, lw, o, pw);
@@ -262,7 +269,7 @@ function smHand(p, ang, sd, pose, lw, o, pw) {
   let tip = null;
   X.save(); X.translate(p[0], p[1]); X.rotate(ang); if (sd < 0) X.scale(1, -1);
   const ink = { stroke: SM.ink, lw: .38 + lw * 2 }, skin = { stroke: SM.skin, lw: .38 };
-  shape(ellPts(-.05, 0, .3, .66, 12), { fill: SM.shirt, stroke: SM.ink, lw, smooth: true });            // shirt cuff
+  if (o.outfit !== 'greek') shape(ellPts(-.05, 0, .3, .66, 12), { fill: SM.shirt, stroke: SM.ink, lw, smooth: true });            // shirt cuff
   if (pose === 'open' || pose === 'palm' || pose === 'thumb' || pose === 'point') {
     const f = pose === 'open' ? [[-.25, .8], [-.05, .9], [.15, .86], [.35, .74], [-1.1, .55]]
       : pose === 'palm' ? [[-.6, .8], [-.22, .92], [.14, .88], [.5, .72], [-1.45, .62]]
@@ -467,6 +474,7 @@ CHARACTERS.sami = {
     'laugh': (x, y, s, t) => { const k = Math.abs(Math.sin(t * 13)); sami(x, y, s, { handL: [-2.2, -9.5], handR: [2.2, -9.5], handPoseL: 'fist', handPoseR: 'fist', eyes: 'squeeze', mouth: k > .5 ? 'grin' : 'open', dy: .4 * k, tilt: -.08 }); },
     'wink': (x, y, s, t) => sami(x, y, s, { eyes: 'wink', mouth: 'grin', handR: [5.2, -13.6], handPoseR: 'thumb', brows: 'up' }),
     'walk': (x, y, s, t) => sami(x, y, s, { ...samiWalk(t * 1.6), mouth: 'smile', turn: -.15 }),
+    'greek': (x, y, s, t) => sami(x, y, s, { outfit: 'greek', mouth: lipFlap(t, frac(t * .5) < .7, 'smile'), brows: 'quizzical', handL: [-5.3, -12.4], handR: [5.3, -12.4], handPoseL: 'palm', handPoseR: 'palm', tilt: .06 }),
     'shrug': (x, y, s, t) => sami(x, y, s, { handL: [-5.0, -13.4], handR: [5.0, -13.4], handPoseL: 'palm', handPoseR: 'palm', brows: 'worried', mouth: 'smirk', tilt: .12, emote: '?', emoteK: 1 }),
   },
 };

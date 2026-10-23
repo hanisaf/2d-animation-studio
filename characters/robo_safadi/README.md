@@ -12,6 +12,7 @@ Robo-Safadi began as a doodle in Jenna's sketchbook (scene 16, *The Spooky Plan*
 - **Powers:**
   - *ACTIVATE*: his eyes, mouth and antenna switch from cool cyan to glowing red (`red`)
   - a red scanning beam that sweeps the floor for candy (`scan`)
+  - a chest hatch that swings open onto a glowing storage bay, for swallowing toys (`hatch`, 0..1; things fly into the `hatch` anchor)
   - hover jets in his shoes (`hover`)
   - steam from his ear vents when he's overheating (`steam`)
 - **Bad at:** jokes, sarcasm and Halloween. Too much candy makes him glitch: sparks, static, X-eyes and a drop of oil (`glitch`, `eyes: 'x'`, `emote: 'oil'`).
@@ -52,7 +53,7 @@ He is about **29.6 local units** tall to the top of the hair plate, and **31.4**
 
 Registered in `robo_safadi.js` (`CHARACTERS.robo_safadi.poses`), shown on the model sheet (`node render.mjs --modelsheet=robo_safadi`):
 
-rest · talk · activate (powers up from dark eyes to red) · eat your broccoli · scan · march · hover · malfunction · happy beep · confused · wave · power down
+rest · talk · activate (powers up from dark eyes to red) · eat your broccoli · scan · march · hover · malfunction · happy beep · confused · wave · open hatch · power down
 
 ## Rig API (`robo_safadi.js`)
 

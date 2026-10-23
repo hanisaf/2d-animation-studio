@@ -9,7 +9,7 @@
 //   node render.mjs --scene=scene01_juggling --build                                                       --frames then --encode
 //   node render.mjs --movie [--skip-build]                                                                 build every scene in REGISTRY.movie, join → out/movie.mp4
 //   node render.mjs --modelsheet=jester_fester [--t=1.1]                                                   a character's model sheet (all poses) → out/check/
-//   node render.mjs --location=dces [--character=jester_fester] [--spot=…] [--cols=3] [--w=640] [--t=1] [--only=Aerial,Keeper]   every camera preset of a set (or those whose name contains one of --only) on one sheet → out/check/
+//   node render.mjs --location=dces [--character=jester_fester] [--spot=…] [--cols=3] [--w=640] [--t=1] [--only=Aerial,Keeper] [--variant=Messy]   every camera preset of a set (or those whose name contains one of --only) on one sheet → out/check/
 //   node render.mjs --doctor                                                                               check this machine: Node, Chrome, ffmpeg, fonts, a test render
 //
 // Options: --chrome=<path> (or $CHROME) · --fps=<n> overrides the scene fps · FFMPEG=<path> to use a specific ffmpeg.
@@ -146,12 +146,12 @@ if (args.location) {
     const loc = LOCATIONS[id], cams = Object.entries(loc.cameras || {}).filter(([n]) => !o.only || o.only.some(q => n.toLowerCase().includes(q.toLowerCase()))), h = Math.round(o.w * 9 / 16), sc = document.createElement('canvas');
     sc.width = o.cols * o.w; sc.height = Math.ceil(cams.length / o.cols) * h; const c = sc.getContext('2d');
     cams.forEach(([name, cam], i) => {
-      paintFrame(o.t, t => drawLocationView(loc, cam, t, { character: o.character, spot: o.spot }));
+      paintFrame(o.t, t => drawLocationView(loc, cam, t, { character: o.character, spot: o.spot, variant: o.variant }));
       const x = (i % o.cols) * o.w, y = Math.floor(i / o.cols) * h;
       c.drawImage(X.canvas, x, y, o.w, h); c.font = '16px sans-serif'; c.fillStyle = 'rgba(0,0,0,.65)'; c.fillRect(x, y, c.measureText(name).width + 12, 24); c.fillStyle = '#fff'; c.fillText(name, x + 6, y + 17);
     });
     return sc.toDataURL('image/jpeg', .88);
-  }, id, { cols: +(args.cols || 3), w: +(args.w || 640), t: +(args.t || 1), character: args.character || null, spot: args.spot || null, only: args.only ? String(args.only).split(',') : null });
+  }, id, { cols: +(args.cols || 3), w: +(args.w || 640), t: +(args.t || 1), character: args.character || null, spot: args.spot || null, variant: args.variant || null, only: args.only ? String(args.only).split(',') : null });
   writeFileSync(out, Buffer.from(url.slice(url.indexOf(',') + 1), 'base64'));
   console.log(out);
 } else if (args.modelsheet) {
