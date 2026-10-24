@@ -13,8 +13,10 @@ Robo-Safadi began as a doodle in Jenna's sketchbook (scene 16, *The Spooky Plan*
   - *ACTIVATE*: his eyes, mouth and antenna switch from cool cyan to glowing red (`red`)
   - a red scanning beam that sweeps the floor for candy (`scan`)
   - a chest hatch that swings open onto a glowing storage bay, for swallowing toys (`hatch`, 0..1; things fly into the `hatch` anchor)
+  - …and blasts it all back out again: the hatch flies open and the bay bursts with light while the toys fly out (`dump`, 0..1)
   - hover jets in his shoes (`hover`)
   - steam from his ear vents when he's overheating (`steam`)
+- **Runs on:** a ROBO-CELL battery behind a door on his back. When it's flat he stops responding (scene 30); plug a charging cable into the port on his right hip and the gauge on his breast-pocket panel fills back up (`battery`, `charging`, `cable`).
 - **Bad at:** jokes, sarcasm and Halloween. Too much candy makes him glitch: sparks, static, X-eyes and a drop of oil (`glitch`, `eyes: 'x'`, `emote: 'oil'`).
 - **Voice and acting:** a flat, buzzy monotone in clipped, evenly spaced syllables (the `robot` voice style), with the odd low "error" drop or a high beep. He moves stiffly: marching, snapping his head round, holding poses a beat too long. Happy, he beeps (`eyes: 'happy'`, `emote: 'music'`).
 
@@ -53,7 +55,7 @@ He is about **29.6 local units** tall to the top of the hair plate, and **31.4**
 
 Registered in `robo_safadi.js` (`CHARACTERS.robo_safadi.poses`), shown on the model sheet (`node render.mjs --modelsheet=robo_safadi`):
 
-rest · talk · activate (powers up from dark eyes to red) · eat your broccoli · scan · march · hover · malfunction · happy beep · confused · wave · open hatch · power down
+rest · talk · activate (powers up from dark eyes to red) · eat your broccoli · scan · march · hover · malfunction · happy beep · confused · wave · open hatch · dump · battery low · charging · battery insert (the close-up of the battery door) · power down
 
 ## Rig API (`robo_safadi.js`)
 
@@ -65,14 +67,20 @@ const A = roboSafadi(x, y, s, {
   // face:   eyes: 'open' | 'wide' | 'happy' | 'closed' | 'squint' | 'off' | 'x' | 'heart', lookX, lookY, blink
   //         brows: 'normal' | 'up' | 'worried' | 'angry' | 'quizzical'
   //         mouth: 'smile' | 'grin' | 'open' | 'o' | 'O' | 'flat' | 'frown' | 'smirk' | 'teeth' (lipFlap works)
-  // powers: red, scan, steam, hover, glitch (all 0..1), antenna (lean, rad)
+  // powers: red, scan, steam, hover, glitch, hatch, dump (all 0..1), antenna (lean, rad)
+  // battery: battery (0..1: a 4-bar gauge on the status panel; ≤ .2 blinks red), charging (true: the bars chase, a bolt glows),
+  //          cable: [sx, sy] (a wall socket in screen px: the cable sags from his hip port to a plug there)
   // extras: emote: '?' | '!' | '!?' | 'oil' | 'music' | 'heart', emoteK
 });
-// A (screen px): head, mouth, top, antenna, eyeL, eyeR, chest, belly, handL, handR, footL, footR
+// A (screen px): head, mouth, top, antenna, eyeL, eyeR, chest, belly, hatch, port, handL, handR, footL, footR
+const B = roboSafadiBatteryInsert(x, y, s, { door, battery, charging });   // the battery door on his back, full frame
+// (x, y) = panel centre, s ≈ W / 34 fills the frame; B (screen px): door (its edge, for a finger or gripper), cell, gauge
 const walk = roboSafadiWalk(p, k);   // the stiff march: spread into the options (p = steps travelled, k = 0..1)
 ```
 
 - **Activating him:** ramp `red` from 0 to 1 over about 0.25 s, with `eyes: 'off'` → `'open'` just before it. Add a `kick` on `jump` and `antenna` for the jolt.
+- **The battery (scene 30):** he has no back view, so cut to `roboSafadiBatteryInsert` for the door: ramp `door` 0 → 1, hold on `battery: .03` (the gauge blinks red, "3%"), then `charging: true` with `battery` rising. In the wide shots keep `battery` on him so the status panel matches, and pass `cable` once he's plugged in.
+- **Giving the toys back:** ramp `dump` 0 → 1 over the dump (the hatch swings open in the first third) and fly the toys out of `A.hatch`; then ease `hatch` back to 0 to close it.
 - **Voice:** give him lines in a scene's `dialogue` with `speaker: 'robo_safadi'`. Use `callout(…, { kind: 'robot' })` for his bubble.
 - **With the real Safadi:** both rigs share the same scale, hip height and hand reach, so the same hand targets work for both.
 

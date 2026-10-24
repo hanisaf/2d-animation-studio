@@ -18,9 +18,14 @@
 //          hatch (0..1): his chest swings open on a hinge into a glowing storage bay (things fly into A.hatch)
 //          from the eyes to the floor in the look direction · steam (0..1): puffs from the ear vents · hover (0..1): legs tuck, jets fire,
 //          he rises · glitch (0..1): sparks, a twitch and static over the face · antenna (rad: lean of the antenna; it also bobs on jumps)
+//          dump (0..1): the hatch flies open and the bay blasts outward (a reversed swirl and light rays); toys fly out of A.hatch
+// Battery  battery (0..1): the status panel shows a 4-bar battery gauge instead of its lights (≤ .2 blinks red; 0 = flat)
+//          charging: true: the bars fill in a chase and a bolt glows · cable: [sx, sy] screen point of a wall socket: a charging cable
+//          from the port on his right hip (A.port), sagging to a plug in the socket (pulses run along it while charging)
+//          roboSafadiBatteryInsert(x, y, s, o) draws the full-frame close-up of the battery door on his back (see below)
 // Extras   emote: '?' | '!' | '!?' | 'oil' (a drop of oil: his sweat) | 'music' | 'heart' with emoteK (0..1 pop) · boil (px)
 //
-// Returns anchors in screen px: { head, mouth, top, antenna, eyeL, eyeR, chest, belly, hatch, handL, handR, footL, footR }
+// Returns anchors in screen px: { head, mouth, top, antenna, eyeL, eyeR, chest, belly, hatch, port, handL, handR, footL, footR }
 // Also: roboSafadiWalk(p, k) → pose options for a stiff robot march (p = steps travelled, k = 0..1 amount), to spread into roboSafadi().
 
 const ROBO_SAFADI_UNIT = 6.0;   // world units per local unit (Safadi's scale)
@@ -60,9 +65,10 @@ function roboSafadi(x, y, s, o = {}) {
 
     // ---- torso: a tan metal box painted like Safadi's suit ----
     X.save(); X.translate(0, hipY); X.rotate(lean);
-    rsTorso(lw, t, red);
-    if ((o.hatch || 0) > .01) rsHatch(clamp(o.hatch), lw, t, red);
-    A.hatch = toPx(0, -4.3);
+    rsTorso(lw, t, red, o);
+    const dump = clamp(o.dump || 0), hk = Math.max(clamp(o.hatch || 0), clamp(dump * 3));
+    if (hk > .01) rsHatch(hk, lw, t, red, dump);
+    A.hatch = toPx(0, -4.3); A.port = toPx(3.3, -1.6);
     A.chest = toPx(0, -6.6); A.belly = toPx(0, -2.6);
     for (let i = 0; i < 3; i++) shape(rectPts(-.95 - i * .05, -9.3 + i * .38, 1.9 + i * .1, .42), { fill: i % 2 ? RS.metalDk : RS.metal, stroke: RS.ink, lw: lw * .8 });   // the accordion neck
 
@@ -84,6 +90,7 @@ function roboSafadi(x, y, s, o = {}) {
       A[sd < 0 ? 'handL' : 'handR'] = toPx(end[0] + Math.cos(ang) * .7, end[1] + Math.sin(ang) * .7);
     });
   });
+  if (o.cable) rsCable(A.port, o.cable, s, t, o.charging);
   if (clamp(o.steam || 0) > .01) rsSteam(clamp(o.steam), t, A, s);
   if (gl > .01) rsSparks(gl, t);
   A.top = toPx(0, -29.6);
@@ -121,7 +128,7 @@ function rsJet(x, y, k, t, sd) {                                           // ho
   shape([[x - .35, y + .3], [x + .35, y + .3], [x, y + 1.9 * k * fl]], { fill: '#FFF3C4', stroke: null, smooth: .5 });
   X.restore();
 }
-function rsTorso(lw, t, red) {
+function rsTorso(lw, t, red, o = {}) {
   const body = [[-3.45, -8.5], [-3.6, -6.4], [-3.35, -3.2], [-3.25, .5], [3.25, .5], [3.35, -3.2], [3.6, -6.4], [3.45, -8.5], [1.4, -8.95], [-1.4, -8.95]];
   shape(body, { fill: linGrad(-3.6, 0, 3.6, 0, [[0, RS.suitDk], [.35, RS.suit], [.7, RS.suitLt], [1, RS.suitDk]]), stroke: RS.ink, lw, smooth: .2 });
   line([[-3.3, -.4], [3.3, -.4]], { stroke: RS.suitDk, lw: lw * 1.2 });                                          // belt seam
@@ -132,21 +139,47 @@ function rsTorso(lw, t, red) {
   [-1, 1].forEach(sd => shape([[sd * .95, -8.92], [sd * 1.55, -8.6], [sd * 2.1, -7.1], [sd * 1.35, -5.2], [sd * .15, -3.3], [0, -3.4]], { fill: RS.suitLt, stroke: RS.ink, lw }));
   for (const by of [-2.6, -1.4]) circle(0, by, .18, { fill: RS.metalDkr, stroke: null });
   shape(rectPts(1.75, -6.6, 1.25, .75), { fill: RS.bezel, stroke: RS.ink, lw: lw * .7 });                         // the breast-pocket status panel
-  for (let i = 0; i < 3; i++) { const on = hash(Math.floor(t * 3) * 7 + i) > .45; circle(2.0 + i * .38, -6.22, .12, { fill: on ? mixCol('#7CFF9B', RS.red, red) : '#2E4A3A', stroke: null }); }
+  if (o.battery != null) rsGauge(1.85, -6.5, 1.0, .55, o.battery, o.charging, t, lw);
+  else for (let i = 0; i < 3; i++) { const on = hash(Math.floor(t * 3) * 7 + i) > .45; circle(2.0 + i * .38, -6.22, .12, { fill: on ? mixCol('#7CFF9B', RS.red, red) : '#2E4A3A', stroke: null }); }
+  // the charging port on the right hip
+  shape(rectPts(2.95, -2.0, .7, .8), { fill: RS.metalDkr, stroke: RS.ink, lw: lw * .7, smooth: .2 });
+  circle(3.3, -1.6, .18, { fill: '#141A22', stroke: null });
+}
+// A battery gauge (any local units): a cell outline with a + nub and 4 bars. level 0..1; low (≤ .2) blinks red; charging chases
+// the bars up to the level and back. Shared by the status panel and the battery insert.
+function rsGauge(x, y, w, h, level, charging, t, lw) {
+  const lv = clamp(level), n = 4, low = lv <= .2, blink = Math.floor(t * 3) % 2 === 0;
+  shape(rectPts(x, y, w, h), { fill: '#141A22', stroke: RS.metalLt, lw: lw * .7 });
+  shape(rectPts(x + w, y + h * .3, w * .08, h * .4), { fill: RS.metalLt, stroke: null });
+  const lit = charging ? Math.max(1, Math.min(n, Math.ceil(lv * n) + (Math.floor(t * 2.5) % (n + 1)) - 1)) : Math.ceil(lv * n - .01);
+  const col = low && !charging ? RS.red : lv < .5 ? '#FFC23A' : '#7CFF9B';
+  for (let i = 0; i < n; i++) {
+    const on = i < lit && (!low || charging || blink), bx = x + w * .08 + i * w * .86 / n;
+    shape(rectPts(bx, y + h * .15, w * .86 / n * .8, h * .7), { fill: on ? col : '#2A3236', stroke: null });
+  }
+  if (charging) shape([[x + w * .55, y - h * .05], [x + w * .35, y + h * .55], [x + w * .52, y + h * .5], [x + w * .45, y + h * 1.05], [x + w * .68, y + h * .4], [x + w * .5, y + h * .45]], { fill: '#FFE97A', stroke: RS.ink, lw: lw * .4 });
 }
 
 // The chest hatch (torso-local units): the whole suit front swings open on its left hinge onto a storage bay that glows
 // cyan (red when activated) with a slow swirl: a vacuum for anything he picks up.
-function rsHatch(k, lw, t, red) {
+function rsHatch(k, lw, t, red, dump = 0) {
   const x0 = -2.55, x1 = 2.55, y0 = -7.7, y1 = -1.0, w = x1 - x0, glow = mixCol('#7FE3FF', RS.red, red);
   shape(rectPts(x0, y0, w, y1 - y0), { fill: '#141A22', stroke: RS.ink, lw, smooth: .15 });                               // the bay
   X.save(); X.beginPath(); X.rect(x0, y0, w, y1 - y0); X.clip();
   circle(0, (y0 + y1) / 2, 3.2, { fill: radGrad(0, (y0 + y1) / 2, 0, 3.4, [[0, rgba(glow, .85 * k)], [.5, rgba(glow, .3 * k)], [1, rgba(glow, 0)]]), stroke: null });
   for (let i = 0; i < 3; i++) {                                                            // the swirl
-    const pts = []; for (let j = 0; j <= 16; j++) { const a = j / 16 * 4.2 + t * 5 + i * 2.1, r = .3 + j / 16 * 2.4; pts.push([Math.cos(a) * r, (y0 + y1) / 2 + Math.sin(a) * r * .9]); }
+    const pts = []; for (let j = 0; j <= 16; j++) { const a = j / 16 * 4.2 + t * 5 * (dump > .01 ? -1.8 : 1) + i * 2.1, r = .3 + j / 16 * 2.4; pts.push([Math.cos(a) * r, (y0 + y1) / 2 + Math.sin(a) * r * .9]); }
     line(pts, { stroke: rgba('#FFFFFF', .5 * k), lw: lw * 1.2, smooth: true });
   }
   X.restore();
+  if (dump > .01) {                                                                        // dumping: a burst of light rays out of the bay
+    const cy = (y0 + y1) / 2, pulse = .75 + .25 * Math.sin(t * 22);
+    X.save(); X.globalCompositeOperation = 'lighter'; X.globalAlpha = .85 * Math.sin(Math.PI * clamp(dump)) ** .4 * pulse;
+    circle(0, cy, 4.5, { fill: radGrad(0, cy, .3, 4.5, [[0, rgba('#FFFFFF', .9)], [.35, rgba(glow, .6)], [1, rgba(glow, 0)]]), stroke: null });
+    for (let i = 0; i < 11; i++) { const a = (i / 11) * TAU + t * .8, L = 5.5 + 3 * hash(i + Math.floor(t * 10) * 3);
+      shape([[0, cy], [Math.cos(a) * L + .7 * Math.sin(a), cy + Math.sin(a) * L], [Math.cos(a) * L - .7 * Math.sin(a), cy + Math.sin(a) * L]], { fill: rgba(glow, .5), stroke: null }); }
+    X.restore();
+  }
   for (const yy of [y0 + .3, y1 - .3]) shape(rectPts(x0 - .25, yy - .3, .5, .6), { fill: RS.metal, stroke: RS.ink, lw: lw * .7 });   // hinges
   const dw = w * Math.cos(Math.PI * .92 * k), outside = dw >= 0, dx0 = Math.min(x0, x0 + dw), dx1 = Math.max(x0, x0 + dw);
   if (Math.abs(dw) > .05) {                                                                // the door: suit painted outside, plain metal inside
@@ -305,6 +338,72 @@ function rsEmote(kind, A, s, k, t) {
     X.lineWidth = size * .14; X.strokeStyle = RS.ink; X.strokeText(txt, 0, 0); X.fillStyle = col; X.fillText(txt, 0, 0); X.restore(); });
 }
 
+// The charging cable (screen px): from his hip port, sagging in a curve to a plug in a wall socket at `to`. While charging,
+// glowing pulses run up the cable toward him. Drawn with him (not as an overlay), so whoever stands in front covers it.
+function rsCable(from, to, s, t, charging) {
+  const [ax, ay] = from, [bx, by] = to, sag = Math.max(s * 4, Math.abs(bx - ax) * .25), lw = Math.max(2, s * .32);
+  const pts = []; for (let i = 0; i <= 24; i++) { const u = i / 24; pts.push([lerp(ax, bx, u), lerp(ay, by, u) + sag * 4 * u * (1 - u) + Math.max(0, (by - ay)) * .0]); }
+  {
+    line(pts, { stroke: RS.ink, lwPx: lw + 3, smooth: true }); line(pts, { stroke: '#3A3F45', lwPx: lw, smooth: true });
+    if (charging) for (let k = 0; k < 3; k++) { const u = 1 - frac(t * .9 + k / 3), i = Math.floor(u * 24), [px, py] = pts[i];
+      circle(px, py, lw * 1.1, { fill: rgba('#7CFF9B', .9), stroke: null }); }
+    // the jack in his port, and the socket and plug on the wall
+    circle(ax, ay, lw * .9, { fill: RS.metalLt, stroke: RS.ink, lwPx: 1.5 });
+    X.save(); X.translate(bx, by);
+    shape(rectPts(-s * 1.1, -s * 1.5, s * 2.2, s * 3.0), { fill: '#F4F1EA', stroke: RS.ink, lwPx: 2, smooth: .2 });                // the outlet plate
+    shape(rectPts(-s * .75, -s * .6, s * 1.5, s * 1.5), { fill: '#2E3338', stroke: RS.ink, lwPx: 2, smooth: .3 });                  // the plug
+    if (charging) circle(s * .45, -s * 1.05, s * .2, { fill: Math.floor(t * 2) % 2 ? '#7CFF9B' : '#2E4A3A', stroke: null });
+    X.restore();
+  }
+}
+
+// The battery insert: a full-frame close-up of the door on Robo-Safadi's back (he has no back view, so cut to this).
+// (x, y) = centre of the panel in screen px, s = px per insert unit (the panel is 32 × 18 units: s ≈ W / 34 fills the frame).
+// o: { t, door: 0..1 (the door swings open on its left hinge), battery: 0..1, charging, hand: [x, y] (a gripper or a kid's
+// finger can be drawn by the scene at this anchor) }. Returns { door, cell, gauge } in screen px.
+function roboSafadiBatteryInsert(x, y, s, o = {}) {
+  const t = o.t ?? T, door = clamp(o.door || 0), lv = clamp(o.battery ?? 1), lw = 2.2 / s, out = {};
+  X.save(); X.translate(x, y); X.scale(s, s);
+  withBoil(o.boil ?? .4, () => {
+    // his back: the tan suit plate, with seams and rivets
+    shape(rectPts(-16, -9, 32, 18), { fill: linGrad(-16, 0, 16, 0, [[0, RS.suitDk], [.4, RS.suit], [.75, RS.suitLt], [1, RS.suitDk]]), stroke: RS.ink, lw, smooth: .05 });
+    line([[0, -9], [0, -5.2]], { stroke: RS.suitDk, lw: lw * 1.4 }); line([[0, 5.2], [0, 9]], { stroke: RS.suitDk, lw: lw * 1.4 });     // the back seam
+    for (const rx of [-14.5, 14.5]) for (const ry of [-7.5, 0, 7.5]) circle(rx, ry, .35, { fill: RS.metalLt, stroke: RS.ink, lw: lw * .6 });
+    shape(rectPts(9.5, -7.8, 4, 1.2), { fill: RS.suitDk, stroke: RS.ink, lw: lw * .6, smooth: .3 });
+    X.font = `700 .8px ${FONT_TALK}`; X.textAlign = 'center'; X.textBaseline = 'middle'; X.fillStyle = RS.suitLt; X.fillText('RS-1', 11.5, -7.2);
+    // the bay
+    const x0 = -7, x1 = 7, y0 = -4.8, y1 = 4.8, w = x1 - x0;
+    shape(rectPts(x0, y0, w, y1 - y0), { fill: '#1A2028', stroke: RS.ink, lw, smooth: .08 });
+    // the battery cell: a fat cylinder lying on its side, with its own gauge on the label
+    const cy = 0, ch = 6.4, cx0 = -5.4, cx1 = 4.6;
+    shape(rectPts(cx0, cy - ch / 2, cx1 - cx0, ch), { fill: linGrad(0, cy - ch / 2, 0, cy + ch / 2, [[0, '#5A6168'], [.3, '#B9C2C8'], [.55, '#8C98A0'], [1, '#3E454B']]), stroke: RS.ink, lw, smooth: .15 });
+    shape(rectPts(cx1, cy - 1.2, 1.1, 2.4), { fill: RS.metalLt, stroke: RS.ink, lw: lw * .8, smooth: .2 });                            // + terminal
+    shape(rectPts(cx0 + .8, cy - 2.4, 6.2, 4.8), { fill: RS.tie, stroke: RS.ink, lw: lw * .8, smooth: .1 });                           // the label
+    X.font = `800 .95px ${FONT_TALK}`; X.fillStyle = '#FFFFFF'; X.fillText('ROBO-CELL', cx0 + 3.9, cy - 1.55);
+    rsGauge(cx0 + 1.4, cy - .6, 4.6, 2.1, lv, o.charging, t, lw * 1.5);
+    X.font = `800 1.0px ${FONT_TALK}`; X.fillStyle = lv <= .2 && !o.charging && Math.floor(t * 3) % 2 ? RS.red : '#FFFFFF'; X.fillText(`${Math.round(lv * 100)}%`, cx0 + 8.2, cy + .4);
+    for (const sd of [-1, 1]) line([[cx0 + .3, cy + sd * (ch / 2 - .5)], [cx1 - .3, cy + sd * (ch / 2 - .5)]], { stroke: 'rgba(255,255,255,.25)', lw: lw * .8 });
+    out.cell = toPx(0, cy); out.gauge = toPx(cx0 + 3.7, cy + .45);
+    // hinges, then the door swinging open (suit outside, bare metal inside) with a little "BATTERY" label and a latch
+    for (const yy of [y0 + 1, y1 - 1]) shape(rectPts(x0 - .5, yy - .7, 1, 1.4), { fill: RS.metal, stroke: RS.ink, lw: lw * .7 });
+    const dw = w * Math.cos(Math.PI * .9 * door), outside = dw >= 0, dx0 = Math.min(x0, x0 + dw), dx1 = Math.max(x0, x0 + dw), sk = Math.sin(Math.PI * .9 * door) * .9;
+    if (Math.abs(dw) > .1) {
+      shape([[dx0, y0 - .3 - (outside ? 0 : sk)], [dx1, y0 - .3 - (outside ? sk : 0)], [dx1, y1 + .3 + (outside ? sk : 0)], [dx0, y1 + .3 + (outside ? 0 : sk)]], { fill: outside ? RS.suitLt : RS.metalDk, stroke: RS.ink, lw });
+      if (outside) {
+        const lx = x0 + dw * .5;
+        X.save(); X.translate(lx, 0); X.scale(dw / w, 1);
+        shape(rectPts(-4, -1.1, 8, 2.2), { fill: RS.suitDk, stroke: RS.ink, lw: lw * .7, smooth: .3 });
+        X.font = `800 1.25px ${FONT_TALK}`; X.fillStyle = RS.suitLt; X.fillText('⚡ BATTERY', 0, .05);
+        shape(rectPts(5.2, -1.6, 1.0, 3.2), { fill: RS.metalLt, stroke: RS.ink, lw: lw * .7, smooth: .3 });                         // the latch
+        X.restore();
+      } else for (let i = 0; i < 4; i++) line([[dx0 + .4, y0 + 1.6 + i * 2.2], [dx1 - .4, y0 + 1.6 + i * 2.2]], { stroke: RS.metalDkr, lw: lw * .8 });
+    }
+    out.door = toPx(x0 + dw * .9, 0);
+  });
+  X.restore();
+  return out;
+}
+
 // A stiff robot march: straight-ish legs lifting in turn, arms swinging opposite, a mechanical bob.
 function roboSafadiWalk(p, k = 1) {
   const ph = p * Math.PI, sw = Math.sin(ph), up = Math.max(0, sw), dn = Math.max(0, -sw);
@@ -331,6 +430,10 @@ CHARACTERS.robo_safadi = {
     'confused': (x, y, s, t) => roboSafadi(x, y, s, { t, brows: 'quizzical', mouth: 'smirk', tilt: -.12, lookX: -.5, lookY: -.4, handR: [1.4, -16.2], handPoseR: 'claw', emote: '?', emoteK: 1 }),
     'wave': (x, y, s, t) => roboSafadi(x, y, s, { t, handR: [5.8 + .6 * Math.sin(t * 6), -19.5], handPoseR: 'palm', mouth: 'grin', eyes: 'happy', brows: 'up' }),
     'open hatch': (x, y, s, t) => roboSafadi(x, y, s, { t, red: 1, hatch: clamp(1.4 * Math.abs(Math.sin(t * .8))), eyes: 'open', mouth: 'O', brows: 'up', handL: [-5.6, -13], handR: [5.6, -13], handPoseL: 'claw', handPoseR: 'claw' }),
+    'dump': (x, y, s, t) => { const u = frac(t / 3); return roboSafadi(x, y, s, { t, red: 1, dump: u < .8 ? clamp(u / .8) : 0, hatch: u >= .8 ? clamp((1 - u) / .2 * 3) : 0, lean: -.08 * Math.sin(Math.PI * clamp(u / .8)), jump: .3 * Math.abs(Math.sin(t * 20)) * (u < .8), eyes: 'wide', mouth: 'O', brows: 'up', handL: [-6.6, -13.5], handR: [6.6, -13.5], handPoseL: 'palm', handPoseR: 'palm' }); },
+    'battery low': (x, y, s, t) => roboSafadi(x, y, s, { t, battery: .04, eyes: 'off', mouth: 'flat', dy: 1.0, tilt: .16, lean: .08, antenna: .8, hum: false, handL: [-3.6, -4.4], handR: [3.6, -4.4] }),
+    'charging': (x, y, s, t) => roboSafadi(x, y, s, { t, battery: frac(t / 8), charging: true, cable: [x + 12 * s, y - 3 * s], eyes: 'closed', mouth: 'smile', dy: .6, tilt: .08 }),
+    'battery insert': (x, y, s, t) => { const u = frac(t / 6); return roboSafadiBatteryInsert(x, y - 15 * s, s * .45, { t, door: clamp(u * 3) * (u < .85 ? 1 : clamp((1 - u) / .15)), battery: u < .5 ? .03 : clamp((u - .5) * 2.2), charging: u >= .5 }); },
     'power down': (x, y, s, t) => { const u = clamp(frac(t / 4) * 1.6); return roboSafadi(x, y, s, { t, eyes: u > .7 ? 'off' : 'squint', mouth: u > .7 ? 'flat' : 'o', dy: 1.2 * ease(u), tilt: .18 * ease(u), lean: .1 * ease(u), antenna: .9 * ease(u), hum: u < .7, handL: [-3.6, -6 + 2 * ease(u)], handR: [3.6, -6 + 2 * ease(u)] }); },
   },
 };

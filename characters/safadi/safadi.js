@@ -660,6 +660,18 @@ function safadiBoard(x, y, w, k, t, o = {}) {
     for (let i = 0; i < 3; i++) { const x0 = (21 + i * 21) * U; part([[x0, cy - 13 * U], [x0 + 6 * U, cy - 15 * U], [x0 + 9 * U, cy - 13 * U], [x0 + 7 * U, cy - 14.5 * U]], .1 + i * .12, .16 + i * .12); }
     ['M', 'T', 'W', 'T', 'F'].forEach((c, i) => { const x = 22 + i * 14; label(c, x, top + 29, 5, .55 + i * .06); if (d > .62 + i * .06) label('✓', x + 4.5, top + 28, 5.5, .62 + i * .06); });
     label('THE HOW · BY PRACTICE', 50, top + 38, 5.6, .9);
+  } else if (kind === 'testing') {                                 // code → TEST → production, with a bug caught at the test
+    [['CODE', 0], ['TEST', 1], ['PRODUCTION', 2]].forEach(([txt, i]) => {
+      const bx = (5 + i * 32) * U, bw = (i === 2 ? 26 : 22) * U, a = i * .26;
+      part([[bx, (top + 6) * U], [bx + bw, (top + 6) * U], [bx + bw, (top + 22) * U], [bx, (top + 22) * U], [bx, (top + 6) * U]], a, a + .12);
+      label(txt, (bx + bw / 2) / U, top + 14, i === 2 ? 4.4 : 5.6, a + .1);
+      if (i < 2) part([[bx + bw + 1.5 * U, (top + 14) * U], [bx + bw + 7 * U, (top + 14) * U], [bx + bw + 4.5 * U, (top + 11.5) * U], [bx + bw + 7 * U, (top + 14) * U], [bx + bw + 4.5 * U, (top + 16.5) * U]], a + .12, a + .24);
+    });
+    const tx = 48 * U, ty = (top + 31) * U, bug = [];                // under TEST: a little bug, then a big cross through it
+    for (let i = 0; i <= 20; i++) { const a2 = i / 20 * TAU; bug.push([tx + Math.cos(a2) * 4 * U, ty + Math.sin(a2) * 3 * U]); }
+    part(bug, .62, .7); for (const sd of [-1, 1]) for (const dy of [-2, 0, 2]) part([[tx + sd * 3.5 * U, ty + dy * U], [tx + sd * 7 * U, ty + (dy - 1.5) * U]], .66, .7);
+    part([[tx - 8 * U, ty - 6 * U], [tx + 8 * U, ty + 6 * U]], .74, .8); part([[tx + 8 * U, ty - 6 * U], [tx - 8 * U, ty + 6 * U]], .78, .84);
+    label('TEST FIRST!', 50, top + 41, 6.2, .9);
   }
   X.restore();
   X.restore();

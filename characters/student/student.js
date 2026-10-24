@@ -5,6 +5,8 @@
 // o.look (from studentLook(seed), or your own object) picks the kid; everything else is the usual pose and face:
 //   dy, jump, lean, tilt, turn, rot, sq, flip, breathe · handL/handR [x, y] IK targets, handPoseL/R: 'open' | 'palm' | 'point' | 'fist'
 //   footL/footR · sit: 0..1 (1 = cross-legged on the floor, for story time)
+//   outfit: 'greek' (or look.outfit): a knee-length chiton in look.robeCol with a look.trimCol hem and belt, bare arms, sandals,
+//     a laurel wreath or a hair ribbon (look.wreath), an optional sash (look.sash); caps, glasses, bows and backpacks come off
 //   eyes: 'open' | 'wide' | 'happy' | 'closed' | 'sleepy' | 'squeeze' | 'star' · lookX, lookY, blink · brows: 'normal' | 'up' | 'worried' | 'angry'
 //   mouth: 'smile' | 'grin' | 'open' | 'o' | 'O' | 'flat' | 'frown' | 'yawn' (lipFlap works) · blush · emote, emoteK
 // Anchors: head, mouth, top, eyeL, eyeR, chest, belly, handL, handR, footL, footR.
@@ -19,6 +21,10 @@ const STU = {
   shoes: ['#E8E4DC', '#D34B4B', '#3B5BA8', '#2E2E36', '#E9A23B', '#6BB86B'],
   irises: ['#6B4423', '#3E2A1B', '#4A7A9A', '#5C7A3A', '#7A5A2A'],
   hairStyles: ['short', 'spiky', 'curly', 'afro', 'bob', 'ponytail', 'pigtails', 'long', 'buzz', 'hijab'],
+  // the Greek outfit: linen, saffron, terracotta, sky and olive chitons; contrasting hems
+  robes: ['#F7F1E3', '#F4E2B8', '#E9A23B', '#D9764E', '#7FB2DE', '#9DB86A', '#C79BD8', '#EE8E8E'],
+  trims: ['#3F6FB0', '#C9653E', '#E3B03A', '#3BB3A8', '#8E3A52'],
+  leaf: '#6E9A45', leafDk: '#4A7330', sandal: '#9A6236', sandalDk: '#6B4022',
 };
 // a stable random kid: skin, hair (style and colour), clothes, accessories and height, all from one seed
 function studentLook(seed = 0) {
@@ -33,6 +39,7 @@ function studentLook(seed = 0) {
     bow: longHair && r(15) < .45, bowCol: pick(['#E25A8A', '#F2D04A', '#9A62D0', '#3F9FD8'], 16), backpack: r(17) < .45, packCol: pick(STU.tops, 18),
     freckles: r(19) < .25, scarf: hair === 'hijab' ? pick(['#5168C9', '#9A62D0', '#3BB3A8', '#E25A5A', '#2E2E36'], 20) : null,
     h: .9 + .2 * r(21),
+    robeCol: pick(STU.robes, 22), trimCol: pick(STU.trims, 23), wreath: r(24) < .5, sash: r(25) < .4,
   };
 }
 
@@ -46,49 +53,53 @@ function student(x, y, s, o = {}) {
   if (o.rot) { X.translate(0, -10); X.rotate(o.rot); X.translate(0, 10); }
   if (o.sq) X.scale(1 + o.sq * .45, 1 - o.sq);
   withBoil(o.boil ?? .45, () => {
-    const hipY = -8.25 + dy, legCol = L.bottom === 'shorts' || L.bottom === 'skirt' || L.bottom === 'none' ? L.skin : L.bottomCol;
+    const greek = (o.outfit ?? L.outfit) === 'greek';
+    const hipY = -8.25 + dy, legCol = greek || L.bottom === 'shorts' || L.bottom === 'skirt' || L.bottom === 'none' ? L.skin : L.bottomCol;
     // legs: standing (IK to the ankle targets) or folded cross-legged
     [[-1, o.footL || [-1.5, -1.05]], [1, o.footR || [1.5, -1.05]]].forEach(([sd, target]) => {
       const hip = [sd * 1.25, hipY];
       if (sit > .5) {
         const knee = [sd * 4.0, -1.5], foot = [-sd * 1.0, -.8];
-        stuLimb([hip, knee, foot], 2.1, L.bottom === 'pants' ? L.bottomCol : L.skin, lw);
-        if (L.bottom === 'shorts') stuLimb([hip, mixPt(hip, knee, .5)], 2.3, L.bottomCol, lw);
-        stuShoe(foot, -sd, lw, L.shoe, .8);
+        stuLimb([hip, knee, foot], 2.1, L.bottom === 'pants' && !greek ? L.bottomCol : L.skin, lw);
+        if (L.bottom === 'shorts' && !greek) stuLimb([hip, mixPt(hip, knee, .5)], 2.3, L.bottomCol, lw);
+        if (greek) stuSandal(foot, -sd, lw, L.skin, .8); else stuShoe(foot, -sd, lw, L.shoe, .8);
         A[sd < 0 ? 'footL' : 'footR'] = toPx(...foot);
         return;
       }
       const { joint, end } = ik2(hip, target, 3.5, 3.76, [sd * .55, .12]);
       stuLimb([hip, joint, end], 2.0, legCol, lw);
-      if (L.bottom === 'shorts') stuLimb([hip, mixPt(hip, joint, .75)], 2.3, L.bottomCol, lw);
-      if (L.bottom === 'pants') circle(joint[0], joint[1], .9, { fill: L.bottomCol, stroke: null });
-      stuShoe(end, sd, lw, L.shoe, 1);
+      if (!greek && L.bottom === 'shorts') stuLimb([hip, mixPt(hip, joint, .75)], 2.3, L.bottomCol, lw);
+      if (!greek && L.bottom === 'pants') circle(joint[0], joint[1], .9, { fill: L.bottomCol, stroke: null });
+      if (greek) stuSandal(end, sd, lw, L.skin, 1); else stuShoe(end, sd, lw, L.shoe, 1);
       A[sd < 0 ? 'footL' : 'footR'] = toPx(end[0], end[1]);
     });
     X.save(); X.translate(0, dy); X.translate(0, -8.6); X.rotate(o.lean || 0); X.translate(0, 8.6);
-    if (L.backpack) { shape(rectPts(-3.6, -15.2, 7.2, 6.4), { fill: L.packCol, stroke: STU.ink, lw, smooth: .3 }); }
+    if (L.backpack && !greek) { shape(rectPts(-3.6, -15.2, 7.2, 6.4), { fill: L.packCol, stroke: STU.ink, lw, smooth: .3 }); }
     // skirt / shorts top / dress, then the shirt
-    if (L.bottom === 'skirt' || L.top === 'dress') {
+    if (greek) { /* the chiton is drawn whole, with the shirt */ }
+    else if (L.bottom === 'skirt' || L.top === 'dress') {
       const col = L.top === 'dress' ? L.topCol : L.bottomCol;
       shape([[-2.7, -10.3], [2.7, -10.3], [3.6 + sit, -6.2], [0, -5.8], [-3.6 - sit, -6.2]], { fill: col, stroke: STU.ink, lw, smooth: .25 });
     } else shape([[-2.65, -10.1], [2.65, -10.1], [2.55, -7.5], [.6, -7.5], [0, -8.2], [-.6, -7.5], [-2.55, -7.5]], { fill: L.bottomCol, stroke: STU.ink, lw: lw * .8, smooth: .3 });
     const breath = o.breathe === false ? 0 : .025 * wob(t, .35, (o.seed || 0) * .3);
     X.save(); X.translate(0, -14); X.scale(1 + breath, 1 + breath); X.translate(0, 14);
-    stuShirt(L, lw);
+    if (greek) stuChiton(L, lw, sit); else stuShirt(L, lw);
     A.chest = toPx(0, -13.5); A.belly = toPx(0, -11.3);
     X.restore();
     shape(rectPts(-.82, -17.1, 1.64, 2.1), { fill: L.skin, stroke: STU.ink, lw, smooth: .3 });
     X.save(); X.translate(0, -22.3); X.rotate(o.tilt || 0);
-    stuHead(o, L, t, lw, A);
+    stuHead(o, greek ? { ...L, glasses: false, cap: false, bow: false } : L, t, lw, A);
+    if (greek) stuWreath(L, o.turn || 0, lw);
     A.top = toPx(0, -6.9);
     X.restore();
     // arms: two-bone IK, sleeves to the elbow (hoodies and sweaters to the wrist)
     const defHand = sit > .5 ? [[-3.0, -6.4], [3.0, -6.4]] : [[-3.5, -9.8], [3.5, -9.8]];
     [[-1, o.handL || defHand[0], o.handPoseL || 'open'], [1, o.handR || defHand[1], o.handPoseR || 'open']].forEach(([sd, target, pose]) => {
       const shoulder = [sd * 2.7, -14.45], { joint, end } = ik2(shoulder, target, 2.5, 3.0, [sd * .8, .25]);
-      const longSleeve = L.top === 'hoodie' || L.top === 'sweater';
+      const longSleeve = !greek && (L.top === 'hoodie' || L.top === 'sweater');
       stuLimb([shoulder, joint, end], .89, L.skin, lw);
-      stuLimb(longSleeve ? [shoulder, joint, mixPt(joint, end, .8)] : [shoulder, mixPt(shoulder, joint, .6)], 1.5, L.topCol, lw);
+      if (greek) stuLimb([shoulder, mixPt(shoulder, joint, .42)], 1.6, L.robeCol, lw);
+      else stuLimb(longSleeve ? [shoulder, joint, mixPt(joint, end, .8)] : [shoulder, mixPt(shoulder, joint, .6)], 1.5, L.topCol, lw);
       stuHand(end, Math.atan2(end[1] - joint[1], end[0] - joint[0]), sd, pose, lw, L.skin);
       A[sd < 0 ? 'handL' : 'handR'] = toPx(end[0], end[1]);
     });
@@ -131,6 +142,63 @@ function stuShirt(L, lw) {
   if (L.top === 'hoodie') shape([[-2.3, -15.6], [0, -14.7], [2.3, -15.6], [1.6, -16.3], [-1.6, -16.3]], { fill: L.topCol, stroke: STU.ink, lw: lw * .7, smooth: .4 });
   else shape([[-1.0, -15.55], [0, -14.85], [1.0, -15.55]], { fill: L.skin, stroke: STU.ink, lw: lw * .6, smooth: .4 });
   if (L.backpack) [-1, 1].forEach(sd => line([[sd * 1.9, -15.3], [sd * 2.1, -11.2]], { stroke: L.packCol, lw: .55 }));
+}
+
+// The Greek outfit (outfit: 'greek'): a knee-length chiton pinned at both shoulders, with a patterned hem, a belt and an
+// optional sash. sit widens the skirt over folded legs.
+function stuChiton(L, lw, sit) {
+  const f = 1.4 * clamp(sit), dk = mixCol(L.robeCol, '#5A3A40', .22);
+  const body = [[-1.1, -15.5], [-2.7, -15.3], [-3.1, -13.8], [-2.85, -10.7], [-3.25 - f * .5, -8.2], [-3.85 - f, -5.3], [-2.0 - f * .5, -5.0], [0, -5.1], [2.0 + f * .5, -5.0], [3.85 + f, -5.3], [3.25 + f * .5, -8.2], [2.85, -10.7], [3.1, -13.8], [2.7, -15.3], [1.1, -15.5]];
+  shape(body, { fill: L.robeCol, stroke: STU.ink, lw, smooth: .35 });
+  X.save(); tracePath(body, true, .35); X.clip();
+  withBoil(0, () => {
+    [-1, 1].forEach(sd => shape([[sd * 3.9, -15.6], [sd * 2.6, -15.6], [sd * 2.3, -4.8], [sd * (4.2 + f), -4.8]], { fill: rgba(dk, .35), stroke: null }));
+    [-1.6, -.5, .6, 1.7].forEach((x, i) => line([[x * .9, -9.8], [x * 1.05 + (i % 2 ? .1 : -.1), -7.4], [x * (1.2 + f * .2), -5.4]], { stroke: dk, lw: lw * 1.0, smooth: true }));   // skirt folds
+    line([[-.9, -15.2], [-.6, -11.2]], { stroke: dk, lw: lw * .8 }); line([[.9, -15.2], [.6, -11.2]], { stroke: dk, lw: lw * .8 });
+    shape([[-4.4 - f, -6.0], [4.4 + f, -6.0], [4.4 + f, -4.6], [-4.4 - f, -4.6]], { fill: L.trimCol, stroke: null });                // the hem band
+    for (let i = 0; i < 8; i++) { const x = -3.4 - f + i * (6.8 + 2 * f) / 7.5; line([[x, -5.0], [x, -5.6], [x + .4, -5.6], [x + .4, -5.3]], { stroke: '#FFF9F2', lw: lw * .55 }); }   // a little meander
+  });
+  X.restore();
+  shape([[-1.05, -15.5], [0, -14.4], [1.05, -15.5]], { fill: L.skin, stroke: STU.ink, lw: lw * .7, smooth: .5 });                  // the neckline
+  shape([[-2.9, -11.2], [2.9, -11.2], [2.86, -10.45], [-2.86, -10.45]], { fill: L.trimCol, stroke: STU.ink, lw: lw * .7 });       // the belt
+  if (L.sash) {
+    const sash = [[-2.6, -15.3], [-1.4, -15.5], [3.0, -11.0], [2.9, -10.0], [2.2, -10.3]];
+    shape(sash, { fill: L.trimCol, stroke: STU.ink, lw: lw * .8, smooth: .25 });
+  }
+  [-1, 1].forEach(sd => circle(sd * 2.0, -15.15, .3, { fill: '#E3B03A', stroke: STU.ink, lw: lw * .5 }));                         // shoulder pins
+}
+// A laurel wreath round the head (look.wreath) or a ribbon in the hair. Call it inside stuHead's transform (head-local units). The hijab gets a
+// gold band instead.
+function stuWreath(L, turn, lw) {
+  X.save();
+  if (L.hair === 'hijab') { line([[-4.9, -2.4], [-2.6, -4.6], [0, -5.1], [2.6, -4.6], [4.9, -2.4]].map(([x, y]) => [x - turn * .3, y]), { stroke: '#E3B03A', lw: .5, smooth: true }); X.restore(); return; }
+  const lift = L.hair === 'afro' ? 1.4 : L.hair === 'spiky' ? .8 : 0, wide = L.hair === 'afro' ? 1.25 : 1.05;
+  if (!L.wreath) {
+    line([[-4.9, -2.0], [-3.0, -4.4 - lift * .5], [0, -5.0 - lift * .6], [3.0, -4.4 - lift * .5], [4.9, -2.0]].map(([x, y]) => [x * wide / 1.05 - turn * .3, y]), { stroke: STU.ink, lw: .95, smooth: true });
+    line([[-4.9, -2.0], [-3.0, -4.4 - lift * .5], [0, -5.0 - lift * .6], [3.0, -4.4 - lift * .5], [4.9, -2.0]].map(([x, y]) => [x * wide / 1.05 - turn * .3, y]), { stroke: L.trimCol, lw: .6, smooth: true });
+    X.restore(); return;
+  }
+  const pts = [[-4.3, -.6], [-4.5, -2.5], [-4.0, -4.4], [-2.8, -5.9], [-1.1, -6.7], [-.15, -6.9]].map(([x, y]) => [x * wide, y - lift * (1 - (y + 6.9) / 6.3 * .3)]);
+  const leaf = (x, y, ang, col) => { X.save(); X.translate(x, y); X.rotate(ang); shape(ellPts(.6, 0, .66, .3, 10), { fill: col, stroke: STU.ink, lw: lw * .6, smooth: true }); X.restore(); };
+  for (const sd of [-1, 1]) {
+    const br = pts.map(([x, y]) => [sd * x - turn * .35, y]);
+    line(br, { stroke: STU.leafDk, lw: lw * 1.1, smooth: true });
+    for (let i = 0; i < br.length - 1; i++) {
+      const [x0, y0] = br[i], [x1, y1] = br[i + 1], g = Math.atan2(y1 - y0, x1 - x0);
+      leaf(x0, y0, g - sd * .75, STU.leafDk); leaf(x0, y0, g + sd * .75, STU.leaf);
+      leaf(lerp(x0, x1, .5), lerp(y0, y1, .5), g + sd * .6, STU.leaf);
+    }
+  }
+  X.restore();
+}
+// A leather sandal: a bare foot on a sole, with straps over the toes and round the ankle (sized like stuShoe).
+function stuSandal(p, sd, lw, skin, k) {
+  X.save(); X.translate(p[0], p[1]); X.scale(sd * 1.3 * k, 1.3 * k);
+  shape([[-.8, .3], [-.78, .6], [1.0, .6], [1.1, .32]], { fill: STU.sandalDk, stroke: STU.ink, lw, smooth: .5 });
+  shape([[-.7, .32], [-.65, -.38], [-.25, -.7], [.4, -.6], [.9, -.2], [1.05, .32]], { fill: skin, stroke: STU.ink, lw, smooth: .7 });
+  line([[-.4, -.3], [.75, .1]], { stroke: STU.sandal, lw: lw * 2.2 }); line([[-.6, .02], [.95, .3]], { stroke: STU.sandal, lw: lw * 2.2 });
+  line([[-.55, -.85], [-.38, -.38]], { stroke: STU.sandal, lw: lw * 2.0 });
+  X.restore();
 }
 
 function stuHead(o, L, t, lw, A) {
@@ -231,6 +299,12 @@ CHARACTERS.student = {
     'asleep': (x, y, s, t) => student(x, y, s, { t, seed: 4, sit: 1, eyes: 'closed', mouth: 'o', tilt: .25 + .05 * Math.sin(t * 1.5), emote: 'zzz' }),
     'walk': (x, y, s, t) => student(x, y, s, { t, seed: 6, ...studentWalk(t * 2.4), mouth: 'grin' }),
     'hand up': (x, y, s, t) => student(x, y, s, { t, seed: 5, handR: [4.0, -22], handPoseR: 'palm', mouth: 'grin', brows: 'up' }),
+    'greek': (x, y, s, t) => student(x, y, s, { t, seed: 31, outfit: 'greek', mouth: 'smile' }),
+    'greek · teach us!': (x, y, s, t) => student(x, y, s, { t, seed: 44, outfit: 'greek', handR: [4.0, -21.5], handPoseR: 'palm', handL: [-3.2, -12.6], handPoseL: 'fist', mouth: lipFlap(t, true), brows: 'up', eyes: 'wide', jump: .5 * Math.max(0, Math.sin(t * 6)) }),
+    'greek · astronomy': (x, y, s, t) => student(x, y, s, { t, seed: 52, outfit: 'greek', handR: [3.6, -20.6], handPoseR: 'point', lookY: -.9, lookX: .4, tilt: -.12, mouth: 'O', eyes: 'star' }),
+    'greek · puzzled': (x, y, s, t) => student(x, y, s, { t, seed: 67, outfit: 'greek', handR: [1.5, -16.3 - .15 * Math.max(0, Math.sin(t * 5))], handPoseR: 'fist', handL: [.9, -11.9], handPoseL: 'open', tilt: .14, brows: 'worried', mouth: 'flat', lookX: -.6, emote: '?' }),
+    'greek · story time': (x, y, s, t) => student(x, y, s, { t, seed: 73, outfit: 'greek', sit: 1, eyes: 'star', mouth: 'O', lookY: -.5 }),
+    'greek · class': (x, y, s, t) => { let A; [31, 44, 52, 67, 73].forEach((seed, i) => { A = student(x + (i - 2) * 10 * s, y, s, { t, seed, outfit: 'greek', mouth: 'grin', handR: i % 2 ? [4.0, -20.5] : undefined, handPoseR: 'palm' }); }); return A; },
     'crowd': (x, y, s, t) => { let A; for (let i = 0; i < 6; i++) A = student(x + (i - 2.5) * 9 * s, y, s, { t, seed: 10 + i, mouth: 'grin', handR: i % 2 ? [4.0, -20] : undefined, handPoseR: 'palm' }); return A; },
   },
 };
