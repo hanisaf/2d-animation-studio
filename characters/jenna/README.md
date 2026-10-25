@@ -10,7 +10,7 @@ Jenna is Alma's cousin. She is a funny 9-year-old girl who likes gymnastics and 
 
 ## Look
 
-Based on the supplied reference, she wears a pale pink T-shirt with pastel flowers and two butterflies, a pleated knee-length pink tulle skirt, ribbed white socks, and pink slip-on shoes with white soles. She has warm light brown skin (`#DFB197`), large brown eyes, visible ears, and brown wavy hair (`#4E372A`) tied into a curly side ponytail over her right shoulder. Two small pink butterfly clips hold the front waves back.
+Based on the supplied reference, she wears a pale pink T-shirt with pastel flowers and two butterflies, a pleated knee-length pink tulle skirt, ribbed white socks, and pink slip-on shoes with white soles. She has warm light brown skin (`#DFB197`), large brown eyes, visible ears, and brown wavy hair (`#543722`) tied into a curly side ponytail over her right shoulder. Two small pink butterfly clips hold the front waves back.
 
 ## Proportions and scale
 
