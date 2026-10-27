@@ -24,11 +24,14 @@ async function exportSceneJavaScript({ id, sound = false, signal, onProgress = (
   // in studio load order, but only the selected scene. Each mount gets its own private scope.
   // A scene that borrows helpers from earlier scenes lists them in its asset.js `uses`; their
   // helper files (everything but scene.js, so no extra scene registers) load just before it.
-  const uses = (ASSETS.scene[id].uses || []).map(dep => {
-    const a = ASSETS.scene[dep];
-    if (!a) throw new Error(id + ' uses unknown scene ' + dep);
-    return { ...a, files: a.files.filter(f => f !== 'scene.js') };
+  // Borrowed helpers may borrow in turn, so follow `uses` all the way and keep studio load order.
+  const deps = new Set(), follow = sid => (ASSETS.scene[sid].uses || []).forEach(dep => {
+    if (!ASSETS.scene[dep]) throw new Error(sid + ' uses unknown scene ' + dep);
+    if (!deps.has(dep)) { deps.add(dep); follow(dep); }
   });
+  follow(id);
+  const uses = REGISTRY.scenes.filter(sid => deps.has(sid) && sid !== id)
+    .map(sid => ({ ...ASSETS.scene[sid], files: ASSETS.scene[sid].files.filter(f => f !== 'scene.js') }));
   const assets = [...REGISTRY.characters.map(id => ASSETS.character[id]),
     ...REGISTRY.locations.map(id => ASSETS.location[id]), ...uses, ASSETS.scene[id]];
   for (let i = 0; i < assets.length; i++) {

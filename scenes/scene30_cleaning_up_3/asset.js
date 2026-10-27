@@ -5,6 +5,7 @@ asset({
   title: 'Cleaning Up 3 · The Eureka Moment',
   logline: 'Straight on from "Allow me to explain!": Housam tells Professor Safadi how the LLM-powered Robo-Safadi swallowed every toy. What did they learn? "Never trust technology!" Not quite: software must be tested before it goes to production, and they should have depended on themselves. The robot won\'t respond: its battery is flat. While it charges, Safadi tells a story. In ancient Athens, children beg him to teach them physics, mathematics, astronomy. "Gnōthi seauton… Know thyself…" The charger beeps: Robo-Safadi gives the toys back, all over the floor. This time the kids clean up themselves. "After you clean up, I will continue the story." "No way! We want to play board games!" To be continued…',
   files: ['scene.js'],
+  uses: ['scene28_cleaning_up'],                // the cu* board games
   docs: 'README.md',                            // synopsis, script, shot list, notes for editing
   cast: ['housam', 'alma', 'jenna', 'danny', 'safadi', 'robo_safadi', 'student'],
   locations: ['alma_bedroom', 'ancient_athens'],

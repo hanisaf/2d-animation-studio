@@ -6,6 +6,7 @@ asset({
   title: 'Game Over!',
   logline: 'In Housam\'s bedroom the kids make a plan: "software only this time." Clawd can hop into any game, so he flies to the living room and sparkles into the brothers\' games. The twins brag and laugh, and tiny Clawd turns the difficulty dial to SUPER HARD: GAME OVER for the professor, KIDS WIN against the doctor. "Impossible!" "Losing is not fun, let us take a break." The kids drop in: "So, how did the research go?" "…space…" "…importance of sport!" "How about we all play board games?" "HOORAY!" To be continued…',
   files: ['props.js', 'scene.js'],              // the laptop frame, the difficulty dial and the super-hard games, then the shots
+  uses: ['scene18_some_assembly', 'scene32_screen_time'], // SA colors and the st* arcade screens
   docs: 'README.md',                            // synopsis, script, shot list, notes for editing
   cast: ['housam', 'danny', 'alma', 'jenna', 'clawd', 'safadi', 'sami', 'robo_safadi', 'neptune'],
   locations: ['housam_bedroom', 'living_room'],

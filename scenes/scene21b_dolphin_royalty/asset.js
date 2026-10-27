@@ -4,6 +4,7 @@ asset({
   title: 'Dolphin Royalty',
   logline: 'Housam and Danny reprogram Robo-Safadi so "explain" no longer sends him haywire. Jenna and Alma test it ("Let me EXPLAIN…"), and nothing happens. Sigh. Then the girls unveil their own books for the book fair: Dolphin Royalty, a coloring book with a mini poster, starring Princess Pearl and Jester Fester. Everyone races to the library to write. "You shall see!"',
   files: ['props.js', 'scene.js'],              // the girls' book covers, the mini poster, the story pops; then the shots
+  uses: ['scene16_spooky_plan', 'scene18_some_assembly', 'scene19_if_else_explain'], // spkPencil, saMarker and saWrench, and the ie* cart, laptop and editor
   docs: 'README.md',                            // synopsis, script, shot list, notes for editing
   refs: ['reference/cover_gold.jpg', 'reference/cover_green.jpg', 'reference/mini_poster.jpg'],   // the real books (the covers are redrawn from these)
   cast: ['housam', 'danny', 'jenna', 'alma', 'robo_safadi', 'clawd', 'princess_pearl', 'jester_fester'],
