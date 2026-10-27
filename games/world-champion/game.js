@@ -17,11 +17,11 @@ X=ctx;
 const keys=new Set(),pointers=new Map(); let last=0,accumulator=0,previousNotice='',hero='sami';
 const mapping={ArrowUp:'up',KeyW:'up',ArrowDown:'down',KeyS:'down',ArrowLeft:'left',KeyA:'left',ArrowRight:'right',KeyD:'right',Space:'shoot',KeyX:'chip',ShiftLeft:'sprint',ShiftRight:'sprint'};
 function release(){keys.clear();pointers.clear();document.querySelectorAll('[data-control]').forEach(b=>b.classList.remove('active'));}
-function controls(){const result={};for(const k of keys) result[mapping[k]]=true;for(const v of pointers.values())result[v]=true;return result;}
+function controls(){const result={};for(const k of keys) result[mapping[k]]=true;for(const v of pointers.values())for(const direction of v.split('-'))result[direction]=true;return result;}
 function announce(message){$('announcement').textContent=message;}
-function choose(id){audio.stop();hero=id;match.reset(id);document.querySelectorAll('[data-hero]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.hero===id)));sync();}
+function choose(id){release();audio.stop();hero=id;match.reset(id);document.querySelectorAll('[data-hero]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.hero===id)));sync();}
 document.querySelectorAll('[data-hero]').forEach(b=>b.onclick=()=>choose(b.dataset.hero));
-function start(){audio.stop();audio.unlock();release();if(match.state==='paused')match.resume();else{match.reset(hero);match.start();}sync();canvas.focus();}
+function start(){audio.stop();audio.unlock();release();if(match.state==='paused')match.resume();else{match.reset(hero);match.start();}sync();canvas.focus({preventScroll:true});}
 function pause(){audio.stop();release();if(match.state==='playing')match.pause();else if(match.state==='paused')match.resume();sync();}
 $('sound').onclick=()=>{audio.enabled=!audio.enabled;if(audio.enabled)audio.unlock();else audio.stop();$('sound').textContent=`Sound: ${audio.enabled?'on':'off'}`;$('sound').setAttribute('aria-pressed',String(audio.enabled));};
 $('start').onclick=start;$('pause').onclick=pause;$('restart').onclick=()=>{match.reset(hero);start();};
@@ -33,13 +33,20 @@ window.addEventListener('keydown',e=>{
 });
 window.addEventListener('keyup',e=>keys.delete(e.code));
 for(const b of document.querySelectorAll('[data-control]')){
-  b.addEventListener('pointerdown',e=>{e.preventDefault();b.setPointerCapture(e.pointerId);pointers.set(e.pointerId,b.dataset.control);b.classList.add('active');});
-  const end=e=>{pointers.delete(e.pointerId);if(![...pointers.values()].includes(b.dataset.control))b.classList.remove('active');};
+  b.addEventListener('pointerdown',e=>{if(match.state!=='playing'||(e.pointerType==='mouse'&&e.button!==0))return;audio.unlock();e.preventDefault();b.setPointerCapture(e.pointerId);pointers.set(e.pointerId,b.dataset.control);b.classList.add('active');});
+  const feedback=()=>document.querySelectorAll('[data-control]').forEach(button=>button.classList.toggle('active',[...pointers.values()].includes(button.dataset.control)));
+  b.addEventListener('pointermove',e=>{
+    if(!pointers.has(e.pointerId)||!b.closest('.dpad'))return;
+    const target=document.elementFromPoint(e.clientX,e.clientY)?.closest('.dpad [data-control]');
+    if(target){pointers.set(e.pointerId,target.dataset.control);feedback();}
+  });
+  const end=e=>{pointers.delete(e.pointerId);feedback();};
   b.addEventListener('pointerup',end);b.addEventListener('pointercancel',end);b.addEventListener('lostpointercapture',end);
 }
 window.addEventListener('blur',()=>{audio.stop();release();match.pause();sync();});
 document.addEventListener('visibilitychange',()=>{if(document.hidden){audio.stop();release();match.pause();sync();}});
 function sync(){
+  document.body.classList.toggle('play-session',match.state!=='ready');
   const ready=match.state==='ready',paused=match.state==='paused',finished=match.state==='finished';
   $('overlay').hidden=match.state==='playing';$('selection').hidden=!ready;$('result-copy').hidden=!finished;
   $('overlay-title').textContent=ready?'CHOOSE YOUR CHAMPION':paused?'HALF-TIME BREATHER':match.notice;

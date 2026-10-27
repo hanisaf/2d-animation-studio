@@ -1,3 +1,4 @@
+import { checkGameTouch } from './check-game-touch.mjs';
 import puppeteer from 'puppeteer-core';
 import assert from 'node:assert/strict';
 import { spawn } from 'node:child_process';
@@ -134,6 +135,7 @@ assert.ok(afterTouch > beforeTouch + 150, `touch moves Neptune while firing: ${b
 assert.equal(await page.$eval('[data-control="right"]',e=>e.classList.contains('active')),false);
 assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth <= innerWidth), true);
 await page.screenshot({path: '/tmp/robo-v2-mobile.png',fullPage:true});
+await checkGameTouch(page, 'robo-invaders');
 await page.setViewport({width:1200,height:1000});
 await page.click(await page.$eval('#fighter-select', e => e.hidden) ? '#restart' : '#confirm-hero');
 await page.screenshot({path: '/tmp/robo-v2-desktop.png',fullPage:true});

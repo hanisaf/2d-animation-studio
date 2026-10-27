@@ -4,7 +4,7 @@ A 90-second soccer showdown inspired by the World Champion insert in scene32_scr
 
 Open `index.html` directly in a browser, or follow the World Champion card in the arcade. To share offline, copy `index.html`, `style.css` and `runtime.js` together into any folder. No server, network, fonts or studio assets are required at runtime.
 
-Arrows/WASD move. Run into the ball to dribble or tackle. Attack right and defend left. Space shoots; hold up/down to aim. X chips over Alma (best from the penalty area); Shift sprints while stamina lasts. P pauses. Touch buttons support simultaneous movement and actions. Matches pause on blur or when the tab is hidden. Restart begins a fresh match with the chosen hero; Choose player returns to the picker.
+Arrows/WASD move. Run into the ball to dribble or tackle. Attack right and defend left. Space shoots; hold up/down to aim. X chips over Alma (best from the penalty area); Shift sprints while stamina lasts. P pauses. On touch devices, hold the eight-way pad and an action together; slide across the pad to change direction without lifting your steering thumb. Diagonals support moving and aiming together. Phone play layouts keep the field and large controls visible in portrait and landscape. Matches pause on blur or when the tab is hidden. Restart begins a fresh match with the chosen hero; Choose player returns to the picker.
 
 Sound effects include kick-off and full-time whistles, kicks, chip shots, tackles, steals, saves, rebounds and goal cheers. Use **Sound: on/off** to mute; ongoing effects stop on pause or when leaving the match. Audio starts after a user gesture and is synthesized locally with Web Audio. Browsers without Web Audio play silently.
 

@@ -1,3 +1,4 @@
+import { checkGameTouch } from './check-game-touch.mjs';
 import puppeteer from 'puppeteer-core';
 import assert from 'node:assert/strict';
 import { mkdtemp,copyFile,readFile,access } from 'node:fs/promises';
@@ -42,6 +43,7 @@ try{
  await page.evaluate(()=>window.dispatchEvent(new Event('blur')));assert.equal(await page.$eval('#overlay-title',e=>e.textContent),'HALF-TIME BREATHER');
  assert.deepEqual(errors,[]);assert.deepEqual(requests,[]);
 
+await checkGameTouch(page, 'world-champion');
  for(const viewport of [{width:1280,height:1000},{width:390,height:844}]){
  await page.setViewport(viewport);await page.goto(pathToFileURL(join(process.cwd(),'games/index.html')).href);await page.screenshot({path:`/tmp/world-champion-arcade-${viewport.width}.png`,fullPage:true});assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));
  }

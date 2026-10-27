@@ -56,7 +56,11 @@ Treat character size as a separate choice. If changing size, update hitboxes, pr
 
 ## Playable controls and feedback
 
-Provide keyboard controls and touch buttons that support simultaneous movement and firing. Track held keys and pointer IDs; handle pointer cancellation and lost capture, and release input on blur, pause, and restart. Prevent scrolling for gameplay keys without breaking focused buttons or links.
+Provide keyboard controls and visible touch controls for every gameplay action, supporting simultaneous movement and actions with separate pointer IDs. Use thumb-sized targets (at least 44×44 CSS pixels), clear held feedback, and a spatial direction pad for two-dimensional movement, including diagonals. Allow sliding across the pad without lifting the steering thumb. Keep controls available on hybrid touch/keyboard devices; viewport width alone does not identify touch support.
+
+Apply `touch-action: none` and selection/callout suppression to held gameplay controls; allow ordinary page scrolling and zoom elsewhere, including hero selection. Capture pointers, handle pointer cancellation and lost capture, and release input on blur, visibility loss, pause, selection changes, and restart. Ignore gameplay presses outside active play and non-primary mouse buttons. Focus the canvas with `preventScroll` so starting or resuming does not move touch controls offscreen. Prevent scrolling for gameplay keys without breaking focused buttons or links.
+
+Fit the field, status, pause control, and touch controls together on short landscape phones as well as portrait phones. Use safe-area insets for notches and dynamic viewport units when sizing to the available height. Keep selection screens scrollable and their start buttons reachable; do not shrink buttons to force an overlay into a short canvas.
 
 Include the start, pause/resume, defeat, and restart states relevant to the game. Make score, lives, and progression visible when those mechanics apply. Keep keyboard focus usable, label controls, and announce significant state changes without announcing every frame. Inspect the actual desktop and phone layouts.
 
@@ -86,6 +90,6 @@ node scripts/test-robo-invaders.mjs
 CHROME=/path/to/chrome node scripts/test-robo-invaders-browser.mjs
 ```
 
-Use the available Chrome executable; do not hardcode one developer's machine path. Browser checks should cover startup, rendering, keyboard and touch input, pause/resume, and responsive layout. Test the distributable files copied into a temporary directory outside the repository, open them with `file://`, block network requests, and check for script errors. For resolution changes, verify both backing-canvas and sprite-cache dimensions and their displayed size. Visually inspect character spacing and clipping; correct dimensions alone do not establish that the game looks right.
+Use the available Chrome executable; do not hardcode one developer's machine path. Browser checks should cover startup, rendering, keyboard and real emulated multi-touch input, pause/resume, and responsive layout. Check narrow portrait phones (including 320px), short landscape phones, and tablets with touch enabled. Assert touch target sizes, visible field and controls in landscape, no horizontal overflow, and successful touch selection/start/restart/pause. Exercise movement plus actions, diagonal steering and sliding when applicable, release of one finger while another remains held, cancellation/lost capture, and input clearing across pause/restart. Capture and inspect portrait and landscape screenshots. Test the distributable files copied into a temporary directory outside the repository, open them with `file://`, block network requests, and check for script errors. For resolution changes, verify both backing-canvas and sprite-cache dimensions and their displayed size. Visually inspect character spacing and clipping; correct dimensions alone do not establish that the game looks right.
 
 Report how to open the finished game, the relevant controls, and which checks passed. Keep remaining limitations explicit.

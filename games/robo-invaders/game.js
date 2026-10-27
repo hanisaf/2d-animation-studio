@@ -106,12 +106,12 @@ function controls() {
 }
 function release() { keys.clear(); touches.clear(); controls(); document.querySelectorAll('.touch button').forEach(b => b.classList.remove('active')); }
 function announce(text) { $('announcement').textContent = text; }
-function start() { unlockAudio(); release(); game.reset(); sync(); canvas.focus(); announce(`${heroes[heroId].name} started. Three crowns.`); }
+function start() { unlockAudio(); release(); game.reset(); sync(); canvas.focus({preventScroll:true}); announce(`${heroes[heroId].name} started. Three crowns.`); }
 function pause() {
   if (!['playing', 'paused'].includes(game.state)) return;
   unlockAudio();
   game.state = game.state === 'playing' ? 'paused' : 'playing'; release(); sync();
-  if (game.state === 'playing') canvas.focus();
+  if (game.state === 'playing') canvas.focus({preventScroll:true});
 }
 $('start').onclick = () => game.state === 'paused' ? pause() : start();
 $('restart').onclick = start; $('pause').onclick = pause;
@@ -129,6 +129,7 @@ window.addEventListener('blur', () => { release(); if (game.state === 'playing')
 document.addEventListener('visibilitychange', () => { if (document.hidden) { release(); if (game.state === 'playing') pause(); } });
 for (const button of document.querySelectorAll('[data-control]')) {
   button.addEventListener('pointerdown', e => {
+    if (game.state !== 'playing' || (e.pointerType === 'mouse' && e.button !== 0)) return;
     unlockAudio(); e.preventDefault(); button.setPointerCapture(e.pointerId);
     touches.set(e.pointerId, button.dataset.control); button.classList.add('active'); controls();
   });
@@ -144,6 +145,7 @@ function sync() {
   if (signature === lastUi) return;
   lastUi = signature;
   const selecting = game.state === 'ready';
+  document.body.classList.toggle('play-session', !selecting);
   $('fighter-select').hidden = !selecting;
   canvas.hidden = selecting;
   canvas.parentElement.classList.toggle('selecting', selecting);
