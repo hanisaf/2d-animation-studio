@@ -1,6 +1,6 @@
 // engine/timeline.js: asset manifests, registries, and the per-frame dispatcher.
 //
-// Every asset is a self-contained folder: characters/<id>/, locations/<id>/ or scenes/<id>/. Each folder holds an
+// Every asset is a self-contained folder: characters/<id>/, locations/<id>/ or scenes/<series>/<id>/. Each folder holds an
 // asset.js manifest that calls asset({...}) (title, logline, code files, docs, reference art, …), its code, its
 // README.md and its reference art. registry.js only lists the folder names (and the movie order).
 //
@@ -26,12 +26,20 @@ const VOICE_CLIPS = {};
 function voiceClips(clips) { const a = CURRENT_ASSET; if (a) VOICE_CLIPS[a.id] = { ...VOICE_CLIPS[a.id], ...clips }; }
 const voiceClipFor = (sceneId, line) => VOICE_CLIPS[sceneId]?.[line.text.replace(/\*/g, '')];
 // Load every asset listed in REGISTRY (browser only): asset.js first, then the files it lists, in order.
+// Scenes come from the series files first (engine/series.js), so each scene's folder is scenes/<series>/<id>.
 async function loadAssets(load) {
-  for (const [kind, dir] of [['character', 'characters'], ['location', 'locations'], ['scene', 'scenes']]) {
-    for (const id of REGISTRY[dir]) {
-      CURRENT_ASSET = { kind, id, dir: `${dir}/${id}` };
-      try { await load(`${dir}/${id}/asset.js`); } catch { throw new Error(`${dir}/${id}/asset.js is missing (every asset folder needs one: see docs/HANDBOOK.md)`); }
-      for (const f of CURRENT_ASSET.files) await load(`${dir}/${id}/${f}`);
+  for (const sid of REGISTRY.series) {
+    CURRENT_SERIES = sid;
+    try { await load(`scenes/${sid}/series.js`); } catch { throw new Error(`scenes/${sid}/series.js is missing (every series folder needs one: see docs/HANDBOOK.md)`); }
+  }
+  CURRENT_SERIES = null;
+  expandSeries();
+  for (const [kind, key] of [['character', 'characters'], ['location', 'locations'], ['scene', 'scenes']]) {
+    for (const id of REGISTRY[key]) {
+      const dir = kind === 'scene' ? sceneDir(id) : `${key}/${id}`;
+      CURRENT_ASSET = { kind, id, dir };
+      try { await load(`${dir}/asset.js`); } catch { throw new Error(`${dir}/asset.js is missing (every asset folder needs one: see docs/HANDBOOK.md)`); }
+      for (const f of CURRENT_ASSET.files) await load(`${dir}/${f}`);
     }
   }
   CURRENT_ASSET = null;

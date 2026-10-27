@@ -5,8 +5,8 @@
 | | |
 |---|---|
 | **Length** | 6 s · 24 fps |
-| **Cast** | [Jester Fester](../../characters/jester_fester/README.md) |
-| **Location** | [Throne room](../../locations/throne_room/README.md) |
+| **Cast** | [Jester Fester](../../../characters/jester_fester/README.md) |
+| **Location** | [Throne room](../../../locations/throne_room/README.md) |
 | **Audio** | `audio.mp3` in this folder (optional) |
 
 ## Synopsis

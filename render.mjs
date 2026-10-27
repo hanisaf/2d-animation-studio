@@ -15,14 +15,13 @@
 // Options: --chrome=<path> (or $CHROME) · --fps=<n> overrides the scene fps · FFMPEG=<path> to use a specific ffmpeg.
 import puppeteer from 'puppeteer-core';
 import { spawn, spawnSync } from 'node:child_process';
-import { mkdirSync, writeFileSync, existsSync, statSync, renameSync, readdirSync, readFileSync, rmSync } from 'node:fs';
+import { mkdirSync, writeFileSync, existsSync, statSync, renameSync, readdirSync, rmSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { cpus } from 'node:os';
-import vm from 'node:vm';
+import { REGISTRY, SERIES } from './scripts/registry.mjs';
 
 const args = Object.fromEntries(process.argv.slice(2).map(a => { const [k, ...v] = a.replace(/^--/, '').split('='); return [k, v.length ? v.join('=') : true]; }));
-const REGISTRY = vm.runInNewContext(readFileSync('registry.js', 'utf8') + ';REGISTRY');
 const CHROME = args.chrome || process.env.CHROME || [
   '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
   'C:/Program Files/Google/Chrome/Application/chrome.exe', '/usr/bin/google-chrome', '/usr/bin/chromium',
@@ -36,7 +35,7 @@ const pad = i => String(i).padStart(5, '0');
 if (args.list) {
   console.log('characters:', REGISTRY.characters.join(', '));
   console.log('locations: ', REGISTRY.locations.join(', '));
-  console.log('scenes:    ', REGISTRY.scenes.join(', '));
+  for (const sid of REGISTRY.series) console.log(`series:     ${sid} (${SERIES[sid].title} · ${SERIES[sid].category}): ${SERIES[sid].scenes.join(', ')}`);
   console.log('movie:     ', REGISTRY.movie.join(' → '));
   process.exit(0);
 }

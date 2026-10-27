@@ -1,4 +1,4 @@
-// scenes/__NAME__/scene.js: the shots of "__TITLE__". Write the synopsis, script and shot list in README.md first.
+// scenes/__SERIES__/__NAME__/scene.js: the shots of "__TITLE__". Write the synopsis, script and shot list in README.md first.
 // Every shot fn(t, lt, dur) paints the WHOLE frame and must be a pure function of t (no state, no Math.random()).
 (() => {
   const R = LOCATIONS.throne_room, U = JF_UNIT, JZ = R.MARK.z;
