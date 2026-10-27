@@ -73,10 +73,55 @@ const heroImages = new Set();
 for (const id of ['safadi', 'sami', 'housam', 'alma', 'danny', 'jenna', 'jester_fester', 'neptune']) {
   await page.click(`[data-hero="${id}"]`);
   assert.equal(await page.$eval('#hero-name', e => e.textContent), await page.$eval(`[data-hero="${id}"] span`, e => e.textContent));
+  await page.evaluate(() => {
+    window.heroFrames = [];
+    const original = document.createElement.bind(document);
+    document.createElement = (...args) => {
+      const element = original(...args);
+      if (args[0] === 'canvas') window.heroFrames.push(element);
+      return element;
+    };
+    window.restoreCreateElement = () => { document.createElement = original; };
+  });
   await page.click('#confirm-hero');
+  const cache = await page.evaluate(() => {
+    window.restoreCreateElement();
+    const releasedPrevious = !window.previousHeroFrames || window.previousHeroFrames.every(frame => frame.width === 0 && frame.height === 0);
+    window.previousHeroFrames = window.heroFrames;
+    const hashes = new Set();
+    const frames = window.heroFrames.map(frame => {
+      const { width, height } = frame;
+      const data = frame.getContext('2d').getImageData(0, 0, width, height).data;
+      let clipped = false, hash = 0;
+      for (let x = 0; x < width; x++) {
+        if (data[x * 4 + 3] || data[((height - 1) * width + x) * 4 + 3]) clipped = true;
+      }
+      for (let y = 0; y < height; y++) {
+        if (data[y * width * 4 + 3] || data[(y * width + width - 1) * 4 + 3]) clipped = true;
+      }
+      for (let i = 0; i < data.length; i += 16) hash = (Math.imul(hash, 31) + data[i] + data[i + 1] + data[i + 2] + data[i + 3]) | 0;
+      hashes.add(hash);
+      return { width, height, clipped, painted: data.some((value, i) => i % 4 === 3 && value > 0) };
+    });
+    window.heroFrames = [];
+    return { frames, unique: hashes.size, releasedPrevious };
+  });
+  assert.ok(cache.releasedPrevious, `${id}: release the previous hero's pixel buffers`);
+  assert.equal(cache.frames.length, 48, `${id}: cache the animation before play`);
+  assert.ok(cache.unique > 1, `${id}: preserve animated artwork`);
+  assert.ok(cache.frames.every(f => f.width === 448 && f.height === 448 && f.painted && !f.clipped), `${id}: cache contains complete artwork at 2× density`);
+  const liveCurves = await page.evaluate(() => new Promise(resolve => {
+    const context = document.getElementById('game').getContext('2d'), original = context.bezierCurveTo;
+    let count = 0;
+    context.bezierCurveTo = function(...args) { count++; return original.apply(this, args); };
+    requestAnimationFrame(() => requestAnimationFrame(() => { context.bezierCurveTo = original; resolve(count); }));
+  }));
+  assert.equal(liveCurves, 0, `${id}: gameplay copies sprites without redrawing rig curves`);
   await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
   assert.equal(await page.$eval('#fighter-select', e => e.hidden), true);
   heroImages.add(await page.$eval('#game', c => c.toDataURL()));
+  await page.click('#restart');
+  assert.ok(await page.evaluate(() => window.previousHeroFrames.every(frame => frame.width === 448 && frame.height === 448)), `${id}: restart reuses the existing cache`);
   await page.click('#choose-hero');
   assert.equal(await page.$eval('#fighter-select', e => e.hidden), false);
 }
