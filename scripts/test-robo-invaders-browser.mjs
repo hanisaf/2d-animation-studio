@@ -15,8 +15,16 @@ const server = spawn(process.execPath, ['serve.mjs', String(port)], { stdio: ['i
 await new Promise((resolve, reject) => { server.stdout.once('data', resolve); server.once('error', reject); });
 let browser;
 try {
-browser = await puppeteer.launch({ executablePath: process.env.CHROME || '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome', headless: true, args: ['--no-sandbox'] });
+browser = await puppeteer.launch({ executablePath: process.env.CHROME, headless: true, args: ['--no-sandbox'] });
 const page = await browser.newPage(); const errors = []; page.on('pageerror', e => errors.push(e.message));
+await page.evaluateOnNewDocument(() => {
+  window.playedSounds = [];
+  const original = OscillatorNode.prototype.start;
+  OscillatorNode.prototype.start = function(...args) {
+    window.playedSounds.push(this.type);
+    return original.apply(this, args);
+  };
+});
 await page.setViewport({width:1200,height:1100});
 await page.goto(`http://127.0.0.1:${port}/studio.html`, {waitUntil:'networkidle0'});
 await page.waitForFunction(() => window.ready && window.studio);
@@ -38,8 +46,8 @@ assert.deepEqual(requests, []);
 assert.equal(await page.$eval('#state-label', e => e.textContent), 'READY WHEN YOU ARE');
 const painted = await page.$eval('#game', e => [...e.getContext('2d').getImageData(0, 0, 1, 1).data]);
 assert.equal(painted[3], 255);
-assert.deepEqual(await page.$eval('#game', e => [e.width, e.height]), [1920, 1280]);
-assert.equal(await page.$eval('#game', e => e.getContext('2d').getImageData(1919, 1279, 1, 1).data[3]), 255);
+assert.deepEqual(await page.$eval('#game', e => [e.width, e.height]), [1920, 1080]);
+assert.equal(await page.$eval('#game', e => e.getContext('2d').getImageData(1919, 1079, 1, 1).data[3]), 255);
 const sprite = await page.evaluate(() => new Promise(resolve => {
   const ctx = document.getElementById('game').getContext('2d'), original = ctx.drawImage;
   ctx.drawImage = function(image, ...args) {
@@ -48,21 +56,87 @@ const sprite = await page.evaluate(() => new Promise(resolve => {
     return original.call(this, image, ...args);
   };
 }));
-assert.deepEqual(sprite, { cache: [250, 250], display: [125, 125] });
-await page.click('#start'); await page.keyboard.down('Space'); await page.keyboard.down('ArrowLeft');
+assert.deepEqual(sprite, { cache: [220, 220], display: [110, 110] });
+const playerCenter = () => page.$eval('#game', canvas => {
+  const { width:w, height:h } = canvas, data = canvas.getContext('2d').getImageData(0,0,w,h).data;
+  let sum = 0, count = 0;
+  for (let y=Math.floor(h*.76); y<h*.95; y+=2) for (let x=0; x<w; x+=2) {
+    const i=(y*w+x)*4;
+    if (data[i]<110 && data[i+1]>110 && data[i+2]>170 && data[i+2]>data[i+1]*1.1) { sum+=x; count++; }
+  }
+  return sum/count;
+});
+assert.deepEqual(await page.$$eval('.hero-card span', options => options.map(o => o.textContent)),
+  ['Neptune', 'Jester Fester', 'Professor Safadi', 'Dr Sami', 'Housam', 'Alma', 'Danny', 'Jenna']);
+const heroImages = new Set();
+for (const id of ['safadi', 'sami', 'housam', 'alma', 'danny', 'jenna', 'jester_fester', 'neptune']) {
+  await page.click(`[data-hero="${id}"]`);
+  assert.equal(await page.$eval('#hero-name', e => e.textContent), await page.$eval(`[data-hero="${id}"] span`, e => e.textContent));
+  await page.click('#confirm-hero');
+  await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
+  assert.equal(await page.$eval('#fighter-select', e => e.hidden), true);
+  heroImages.add(await page.$eval('#game', c => c.toDataURL()));
+  await page.click('#choose-hero');
+  assert.equal(await page.$eval('#fighter-select', e => e.hidden), false);
+}
+assert.equal(heroImages.size, 8, 'every hero renders different artwork');
+await page.screenshot({path: '/tmp/robo-v2-hero-picker.png',fullPage:true});
+await page.focus('[data-hero="neptune"]');
+await page.keyboard.press('ArrowRight');
+assert.equal(await page.$eval('.hero-card[aria-pressed="true"]', e => e.dataset.hero), 'jester_fester');
+await page.keyboard.press('ArrowLeft');
+assert.equal(await page.$eval('.hero-card[aria-pressed="true"]', e => e.dataset.hero), 'neptune');
+await page.keyboard.press('Enter');
+assert.equal(await page.$eval('#fighter-select', e => e.hidden), true);
+await page.click('#choose-hero');
+await page.setViewport({width:390,height:844,isMobile:true,hasTouch:true});
+await page.screenshot({path: '/tmp/robo-v2-hero-picker-mobile.png',fullPage:true});
+assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth <= innerWidth), true);
+await page.click('[data-hero="jester_fester"]');
+assert.equal(await page.$eval('#hero-name', e => e.textContent), 'Jester Fester');
+await page.click('[data-hero="neptune"]');
+await page.setViewport({width:1200,height:1100});
+await page.click('#confirm-hero');
+const beforeMove = await playerCenter();
+await page.keyboard.down('Space'); await page.keyboard.down('ArrowLeft');
 await new Promise(r=>setTimeout(r,1500)); await page.keyboard.up('ArrowLeft'); await page.keyboard.up('Space');
+const sounds = await page.evaluate(() => window.playedSounds);
+assert.ok(sounds.includes('square'), 'firing plays a shot sound');
+assert.ok(sounds.includes('sawtooth'), 'robot collision plays a hit sound');
+await page.click('#sound');
+assert.equal(await page.$eval('#sound', e => e.getAttribute('aria-pressed')), 'false');
+const soundCount = await page.evaluate(() => window.playedSounds.length);
+await page.focus('#game'); await page.keyboard.down('Space');
+await new Promise(r => setTimeout(r, 300)); await page.keyboard.up('Space');
+assert.equal(await page.evaluate(() => window.playedSounds.length), soundCount, 'mute silences effects');
+await page.click('#sound'); await page.focus('#game');
+assert.ok(await playerCenter() < beforeMove - 200, 'keyboard moves Neptune left');
 await page.keyboard.press('KeyP');
 assert.equal(await page.$eval('#overlay-title',e=>e.textContent),'On a little break.');
 await page.click('#start');
 assert.equal(await page.$eval('#overlay',e=>e.hidden),true);
 
 await page.setViewport({width:390,height:844,isMobile:true,hasTouch:true});
-await page.click('#restart');
-await page.$eval('[data-control="fire"]', e=>e.dispatchEvent(new PointerEvent('pointerdown',{pointerId:1,bubbles:true})));
-await new Promise(r=>setTimeout(r,500));
-await page.$eval('[data-control="fire"]', e=>e.dispatchEvent(new PointerEvent('pointerup',{pointerId:1,bubbles:true})));
-
+await page.click(await page.$eval('#fighter-select', e => e.hidden) ? '#restart' : '#confirm-hero');
+await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
+const beforeTouch = await playerCenter();
+const touchSession = await page.createCDPSession();
+const touchPoints = await page.$$eval('[data-control="right"], [data-control="fire"]', buttons => buttons.map((button,id) => {
+  const r=button.getBoundingClientRect(); return {x:r.x+r.width/2,y:r.y+r.height/2,id:id+1};
+}));
+await touchSession.send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints});
+assert.equal(await page.$eval('[data-control="right"]', e=>e.classList.contains('active')),true);
+assert.equal(await page.$eval('[data-control="fire"]', e=>e.classList.contains('active')),true);
+await new Promise(r=>setTimeout(r,700));
+await touchSession.send('Input.dispatchTouchEvent',{type:'touchCancel',touchPoints:[]});
+const afterTouch = await playerCenter();
+assert.ok(afterTouch > beforeTouch + 150, `touch moves Neptune while firing: ${beforeTouch} → ${afterTouch}`);
+assert.equal(await page.$eval('[data-control="right"]',e=>e.classList.contains('active')),false);
 assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth <= innerWidth), true);
+await page.screenshot({path: '/tmp/robo-v2-mobile.png',fullPage:true});
+await page.setViewport({width:1200,height:1000});
+await page.click(await page.$eval('#fighter-select', e => e.hidden) ? '#restart' : '#confirm-hero');
+await page.screenshot({path: '/tmp/robo-v2-desktop.png',fullPage:true});
 assert.deepEqual(errors, []);
 assert.deepEqual(requests, []);
 console.log('Browser checks passed: standalone HTML/CSS/JS outside repository with networking blocked, studio link, rendering, start, keyboard controls, pause/resume, restart, mobile layout, touch input.');

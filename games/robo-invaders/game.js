@@ -1,15 +1,99 @@
 import { Game, WIDTH, HEIGHT } from './model.js';
 const $ = id => document.getElementById(id);
 const canvas = $('game'), ctx = canvas.getContext('2d'), game = new Game();
-const RENDER_SCALE = 2, CHARACTER_SCALE = 1.25, ROBOT_SIZE = 100 * CHARACTER_SCALE;
+const RENDER_SCALE = 2, CHARACTER_SCALE = 1.1, ROBOT_SIZE = 110;
 canvas.width = WIDTH * RENDER_SCALE; canvas.height = HEIGHT * RENDER_SCALE;
 const input = { left: false, right: false, fire: false }, keys = new Set(), touches = new Map();
+const heroes = {
+  neptune: { name: 'Neptune', draw: neptune, scale: 5.2 },
+  jester_fester: { name: 'Jester Fester', draw: jester, scale: 4.4 },
+  safadi: { name: 'Professor Safadi', draw: safadi, scale: 4 },
+  sami: { name: 'Dr Sami', draw: sami, scale: 4 },
+  housam: { name: 'Housam', draw: housam, scale: 3.75 },
+  alma: { name: 'Alma', draw: alma, scale: 5 },
+  danny: { name: 'Danny', draw: danny, scale: 4.1 },
+  jenna: { name: 'Jenna', draw: jenna, scale: 4.1 },
+};
+let heroId = 'neptune', audioContext, soundEnabled = true;
+// Short, locally synthesized arcade effects; audio is unlocked by a user gesture.
+function unlockAudio() {
+  if (!soundEnabled) return;
+  try {
+    const Audio = window.AudioContext || window.webkitAudioContext;
+    if (Audio) { audioContext ||= new Audio(); audioContext.resume().catch(() => {}); }
+  } catch { /* Gameplay also works in browsers without audio support. */ }
+}
+function playSound(kind) {
+  if (!soundEnabled || audioContext?.state !== 'running') return;
+  const now = audioContext.currentTime;
+  const [from, to, duration, type] = {
+    shot: [1000, 180, .09, 'square'], hit: [260, 55, .16, 'sawtooth'], hurt: [140, 35, .25, 'triangle'],
+  }[kind];
+  const oscillator = audioContext.createOscillator(), gain = audioContext.createGain();
+  oscillator.type = type; oscillator.frequency.setValueAtTime(from, now);
+  oscillator.frequency.exponentialRampToValueAtTime(to, now + duration);
+  gain.gain.setValueAtTime(.0001, now); gain.gain.exponentialRampToValueAtTime(.055, now + .005);
+  gain.gain.exponentialRampToValueAtTime(.0001, now + duration);
+  oscillator.connect(gain); gain.connect(audioContext.destination);
+  oscillator.onended = () => { oscillator.disconnect(); gain.disconnect(); };
+  oscillator.start(now); oscillator.stop(now + duration);
+}
+$('sound').onclick = () => {
+  soundEnabled = !soundEnabled; $('sound').textContent = `Sound: ${soundEnabled ? 'on' : 'off'}`;
+  $('sound').setAttribute('aria-pressed', String(soundEnabled));
+  if (soundEnabled) unlockAudio();
+};
+const heroIds = Object.keys(heroes);
+const taglines = ['Ruler of the seven seas', 'The last laugh is yours', 'Knowledge is power', 'A healthy dose of heroism', 'Quick feet. Brilliant mind.', 'Let your rainbow powers shine', 'Small hero. Big adventure.', 'Creativity takes the crown'];
+const portraits = {};
+// Paint the original rigs into local portraits so the selection screen also works offline.
+for (const [index, id] of heroIds.entries()) {
+  const portrait = document.createElement('canvas'); portrait.width = 300; portrait.height = 360;
+  X = portrait.getContext('2d'); T = 0; boilSeed(T); OVERLAYS = []; CAM = null; JIT = 0;
+  const hero = heroes[id];
+  hero.draw(150, 335, hero.scale * 2.35, { t: 0, sit: 1, mouth: 'grin', eyes: 'open', boil: 0, noShadow: true });
+  OVERLAYS = [];
+  portraits[id] = portrait.toDataURL();
+  const button = document.createElement('button');
+  button.type = 'button'; button.className = 'hero-card'; button.dataset.hero = id;
+  button.setAttribute('aria-pressed', String(id === heroId)); button.tabIndex = id === heroId ? 0 : -1;
+  const img = document.createElement('img'); img.src = portraits[id]; img.alt = ''; img.draggable = false;
+  const name = document.createElement('span'); name.textContent = hero.name;
+  const number = document.createElement('small'); number.textContent = `0${index + 1}`;
+  button.append(number, img, name); button.onclick = () => selectHero(id);
+  $('hero-grid').append(button);
+}
+function selectHero(id, focus = false) {
+  heroId = id;
+  for (const button of document.querySelectorAll('.hero-card')) {
+    const selected = button.dataset.hero === id;
+    button.setAttribute('aria-pressed', String(selected)); button.tabIndex = selected ? 0 : -1;
+    if (selected && focus) button.focus();
+  }
+  $('hero-preview').src = portraits[id]; $('hero-preview').alt = heroes[id].name;
+  $('hero-name').textContent = heroes[id].name;
+  $('hero-tagline').textContent = taglines[heroIds.indexOf(id)];
+  announce(`${heroes[id].name} selected.`);
+}
+selectHero(heroId);
+$('hero-grid').addEventListener('keydown', e => {
+  const columns = getComputedStyle($('hero-grid')).gridTemplateColumns.split(' ').length;
+  const offset = { ArrowLeft: -1, ArrowRight: 1, ArrowUp: -columns, ArrowDown: columns }[e.code];
+  if (offset !== undefined) {
+    e.preventDefault(); selectHero(heroIds[(heroIds.indexOf(heroId) + offset + heroIds.length) % heroIds.length], true);
+  } else if (e.code === 'Enter') { e.preventDefault(); start(); }
+});
+$('confirm-hero').onclick = start;
+$('choose-hero').onclick = () => {
+  release(); game.reset(); game.state = 'ready'; sync();
+  document.querySelector(`[data-hero="${heroId}"]`).focus();
+};
 X = ctx;
 // Cache the detailed rig once for each marching frame, rather than repainting every robot.
 const robots = Array.from({ length: 4 }, (_, i) => {
   const sprite = document.createElement('canvas'); sprite.width = ROBOT_SIZE * RENDER_SCALE; sprite.height = ROBOT_SIZE * RENDER_SCALE;
   X = sprite.getContext('2d'); X.scale(RENDER_SCALE * CHARACTER_SCALE, RENDER_SCALE * CHARACTER_SCALE); T = i / 8; boilSeed(T);
-  roboSafadi(50, 88, 2.15, { t: T, ...roboSafadiWalk(i / 4), red: .8, hum: false, noShadow: true, boil: .25 });
+  roboSafadi(50, 88, 2.5, { t: T, red: 1, hum: false, noShadow: true, boil: 0, mouth: 'teeth', brows: 'angry', handL: i % 2 ? [-6,-20] : [-6.5,-14], handR: i % 2 ? [6.5,-14] : [6,-20], handPoseL: 'claw', handPoseR: 'claw', antenna: i % 2 ? .3 : -.3 });
   return sprite;
 });
 X = ctx;
@@ -22,9 +106,10 @@ function controls() {
 }
 function release() { keys.clear(); touches.clear(); controls(); document.querySelectorAll('.touch button').forEach(b => b.classList.remove('active')); }
 function announce(text) { $('announcement').textContent = text; }
-function start() { release(); game.reset(); canvas.focus(); sync(); announce('Game started. Three lives.'); }
+function start() { unlockAudio(); release(); game.reset(); sync(); canvas.focus(); announce(`${heroes[heroId].name} started. Three crowns.`); }
 function pause() {
   if (!['playing', 'paused'].includes(game.state)) return;
+  unlockAudio();
   game.state = game.state === 'playing' ? 'paused' : 'playing'; release(); sync();
   if (game.state === 'playing') canvas.focus();
 }
@@ -34,7 +119,7 @@ window.addEventListener('keydown', e => {
   if (['KeyP', 'Escape'].includes(e.code)) {
     e.preventDefault(); if (!e.repeat) pause(); return;
   }
-  if (e.target instanceof HTMLButtonElement || e.target instanceof HTMLAnchorElement) return;
+  if (e.target instanceof HTMLButtonElement || e.target instanceof HTMLAnchorElement || e.target instanceof HTMLSelectElement) return;
   if (['ArrowLeft', 'ArrowRight', 'Space', 'KeyA', 'KeyD', 'KeyP', 'Escape'].includes(e.code)) e.preventDefault();
   if (['KeyP', 'Escape'].includes(e.code) && !e.repeat) pause();
   else { keys.add(e.code); controls(); }
@@ -44,7 +129,7 @@ window.addEventListener('blur', () => { release(); if (game.state === 'playing')
 document.addEventListener('visibilitychange', () => { if (document.hidden) { release(); if (game.state === 'playing') pause(); } });
 for (const button of document.querySelectorAll('[data-control]')) {
   button.addEventListener('pointerdown', e => {
-    e.preventDefault(); button.setPointerCapture(e.pointerId);
+    unlockAudio(); e.preventDefault(); button.setPointerCapture(e.pointerId);
     touches.set(e.pointerId, button.dataset.control); button.classList.add('active'); controls();
   });
   const up = e => {
@@ -58,18 +143,24 @@ function sync() {
   const signature = [game.score, game.wave, game.lives, game.state, game.invaders.length === 0].join(':');
   if (signature === lastUi) return;
   lastUi = signature;
+  const selecting = game.state === 'ready';
+  $('fighter-select').hidden = !selecting;
+  canvas.hidden = selecting;
+  canvas.parentElement.classList.toggle('selecting', selecting);
+  $('choose-hero').disabled = selecting;
+  $('restart').disabled = selecting;
   $('score').textContent = String(game.score).padStart(5, '0');
   $('wave').textContent = String(game.wave).padStart(2, '0');
-  $('lives').textContent = '♥ '.repeat(game.lives).trim() || '—';
+  $('lives').textContent = '♛ '.repeat(game.lives).trim() || '—';
   $('pause').disabled = !['playing', 'paused'].includes(game.state);
   $('pause').textContent = game.state === 'paused' ? 'Resume' : 'Pause';
-  $('state-label').textContent = ({ ready: 'READY WHEN YOU ARE', playing: 'CHALK SYSTEMS ONLINE', paused: 'TAKE A BREATHER', over: 'THE BRIGADE GOT THROUGH' })[game.state];
-  $('overlay').hidden = game.state === 'playing';
+  $('state-label').textContent = ({ ready: 'READY WHEN YOU ARE', playing: 'RAINBOW POWER ONLINE', paused: 'TAKE A BREATHER', over: 'THE ROBOTS GOT THROUGH' })[game.state];
+  $('overlay').hidden = ['playing', 'ready'].includes(game.state);
   $('wave-notice').hidden = game.state !== 'playing' || game.invaders.length > 0;
   const copy = {
-    ready: ['THE BROCCOLI BRIGADE IS APPROACHING', 'The doctor is in.', 'Clear the replicas with glowing chalk bolts.\nThree lives. Endless waves. Stay curious.', 'Start game'],
-    paused: ['CHALK DOWN. DEEP BREATH.', 'On a little break.', 'Your wave is waiting right here.\nReady to get back to the robots?', 'Resume game'],
-    over: ['A VALIANT PRESCRIPTION', 'The robots win. For now.', `You scored ${game.score} points and reached wave ${game.wave}.\nTime for another appointment?`, 'Play again'],
+    ready: [`YOUR HERO: ${heroes[heroId].name.toUpperCase()}`, 'ROBO INVASION!', 'Choose your hero above. Clear the Robo-Safadis.\nThree crowns. Endless waves. Rainbow power.', 'Start game'],
+    paused: ['POWER DOWN. DEEP BREATH.', 'On a little break.', 'Your wave is waiting right here.\nReady to get back to the robots?', 'Resume game'],
+    over: ['THE SEVEN SEAS NEED YOU', 'The robots win. For now.', `You scored ${game.score} points and reached wave ${game.wave}.\nReady for another invasion?`, 'Play again'],
   }[game.state];
   if (copy) {
     $('overlay-label').textContent = copy[0]; $('overlay-title').textContent = copy[1];
@@ -77,59 +168,65 @@ function sync() {
     $('start').textContent = copy[3] + ' ↗';
   }
 }
-function broccoli(x, y) {
-  ctx.strokeStyle = '#a9d683'; ctx.lineWidth = 5; ctx.lineCap = 'round';
-  ctx.beginPath(); ctx.moveTo(x, y + 7); ctx.lineTo(x, y - 5); ctx.stroke();
-  ctx.fillStyle = '#69b96f'; ctx.strokeStyle = '#b4e594'; ctx.lineWidth = 1.3;
-  for (const [dx, dy, r] of [[-5, -3, 5], [5, -3, 5], [0, -7, 6]]) {
-    ctx.beginPath(); ctx.arc(x + dx, y + dy, r, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
-  }
+const rainbow = ['#FF5A5A', '#FFAF49', '#FFE066', '#7CFF9B', '#7FD3FF', '#C9A0FF'];
+function arcade(text, x, y, size, color, align = 'center') {
+  ctx.font = `900 ${size}px Impact, 'Arial Black', sans-serif`; ctx.textAlign = align; ctx.textBaseline = 'middle';
+  ctx.lineJoin = 'round'; ctx.lineWidth = size * .18; ctx.strokeStyle = '#0B0B14'; ctx.strokeText(text,x,y);
+  ctx.fillStyle = color; ctx.fillText(text,x,y);
 }
 function render() {
   X = ctx; T = game.time; boilSeed(T); OVERLAYS = []; CAM = null; JIT = 0;
   ctx.setTransform(RENDER_SCALE, 0, 0, RENDER_SCALE, 0, 0);
   ctx.clearRect(0, 0, WIDTH, HEIGHT);
-  const sky = ctx.createLinearGradient(0, 0, 0, HEIGHT); sky.addColorStop(0, '#101e2a'); sky.addColorStop(1, '#203c3e');
+  const sky = ctx.createLinearGradient(0, 0, 0, HEIGHT); sky.addColorStop(0, '#070A1C'); sky.addColorStop(1, '#1B1240');
   ctx.fillStyle = sky; ctx.fillRect(0, 0, WIDTH, HEIGHT);
-  for (const star of stars) { ctx.globalAlpha = .3 + star.r * .2; ctx.fillStyle = '#c8e9d6'; ctx.fillRect(star.x, star.y, star.r, star.r); }
+  for (const star of stars) { ctx.globalAlpha = .4 + star.r * .2; ctx.fillStyle = '#ffffff'; ctx.beginPath(); ctx.arc(star.x, (star.y + game.time * 12 * star.r) % HEIGHT, star.r, 0, Math.PI * 2); ctx.fill(); }
   ctx.globalAlpha = 1;
-  ctx.strokeStyle = '#a9f4c712'; ctx.lineWidth = 1;
-  for (let i = 0; i < 15; i++) { ctx.beginPath(); ctx.moveTo(480 + (i - 7) * 40, 498); ctx.lineTo(480 + (i - 7) * 150, HEIGHT); ctx.stroke(); }
-  for (const y of [498, 518, 548, 590, 639]) { ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(WIDTH, y); ctx.stroke(); }
-  ctx.strokeStyle = '#a9f4c738'; ctx.setLineDash([5, 8]); ctx.beginPath(); ctx.moveTo(0, 513); ctx.lineTo(WIDTH, 513); ctx.stroke(); ctx.setLineDash([]);
+  arcade('SCORE ' + String(game.score).padStart(6, '0'), 22, 26, 22, '#FFFFFF', 'left');
+  arcade('ROBO INVASION', WIDTH / 2, 26, 27, '#FF5A5A');
+  arcade('WAVE ' + String(game.wave).padStart(2,'0'), WIDTH - 22, 26, 22, '#FFE066', 'right');
   for (const enemy of game.invaders) {
     const frame = (Math.floor(game.time * 7) + enemy.col) % robots.length;
     ctx.drawImage(robots[frame], enemy.x - ROBOT_SIZE / 2, enemy.y - 88 * CHARACTER_SCALE, ROBOT_SIZE, ROBOT_SIZE);
   }
-  ctx.fillStyle = '#ddfff0'; ctx.shadowColor = '#a9ffcc'; ctx.shadowBlur = 16 * RENDER_SCALE;
-  for (const bolt of game.bolts) { ctx.fillRect(bolt.x - 2.5, bolt.y - 15, 5, 20); }
-  ctx.shadowBlur = 0;
-  for (const drop of game.drops) broccoli(drop.x, drop.y);
   ctx.save();
-  if (game.player.immune > 0 && game.state === 'playing') ctx.globalAlpha = .55 + .45 * Math.sin(game.time * 25) ** 2;
-  const moving = input.left || input.right;
-  sami(game.player.x, game.player.y, 2.7 * CHARACTER_SCALE, { t: game.time, ...(moving ? samiWalk(game.time * 3, .45) : {}),
-    noShadow: true, boil: .3, handL: [-3.8, -12], handR: [0, -31], handPoseR: 'pointer', pointerAng: -Math.PI / 2, pointerLen: 4,
-    mouth: 'smile', brows: 'focused', lookY: -.65 });
+  const hero = heroes[heroId];
+  if (heroId === 'neptune') {
+    hero.draw(game.player.x, game.player.y, hero.scale, { t: game.time, sit: 1, trident: true, tridentAng: -Math.PI / 2, eyes: 'smug', mouth: 'grin', headTilt: .1, power: .3, boil: 0, noShadow: true });
+  } else {
+    hero.draw(game.player.x, game.player.y, hero.scale, { t: game.time, eyes: 'open', mouth: 'grin', handR: [5, -16], handPoseR: 'fist', boil: 0, noShadow: true });
+
+  }
   ctx.restore();
+  for (const bolt of game.bolts) {
+    ctx.shadowColor = '#7FD3FF'; ctx.shadowBlur = 12 * RENDER_SCALE;
+    rainbow.forEach((color,i) => { ctx.strokeStyle = color; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(bolt.x + (i-2.5)*2, bolt.y + 21); ctx.lineTo(bolt.x + (i-2.5)*2, bolt.y - 12); ctx.stroke(); });
+  }
+  ctx.shadowBlur = 0;
+  ctx.strokeStyle = '#FF4A4A'; ctx.lineWidth = 3;
+  for (const drop of game.drops) { ctx.beginPath(); ctx.moveTo(drop.x-4,drop.y-12); ctx.lineTo(drop.x+4,drop.y-5); ctx.lineTo(drop.x-4,drop.y+2); ctx.lineTo(drop.x+4,drop.y+9); ctx.stroke(); }
   if (game.player.immune > 0 && game.state === 'playing') {
-    ctx.strokeStyle = '#a9f4c755'; ctx.lineWidth = 2; ctx.beginPath(); ctx.ellipse(game.player.x, 555, 44, 65, 0, 0, Math.PI * 2); ctx.stroke();
+    ctx.strokeStyle = '#7FD3FF66'; ctx.lineWidth = 2; ctx.beginPath(); ctx.ellipse(game.player.x, 471, 49, 48, 0, 0, Math.PI * 2); ctx.stroke();
   }
   for (const p of game.sparks) { ctx.globalAlpha = Math.max(0, p.life * 2); ctx.fillStyle = p.color; ctx.fillRect(p.x - 2, p.y - 2, 4, 4); }
   ctx.globalAlpha = 1;
   flushOverlays();
+  ctx.fillStyle = '#00000016'; for (let y=0; y<HEIGHT; y+=4) ctx.fillRect(0,y,WIDTH,1);
+  const shade = ctx.createRadialGradient(480,270,220,480,270,570); shade.addColorStop(0,'#0000'); shade.addColorStop(1,'#0008'); ctx.fillStyle=shade; ctx.fillRect(0,0,WIDTH,HEIGHT);
 }
 let previous = 0, accumulator = 0, previousState = game.state, previousWave = game.wave, previousLives = game.lives;
 function tick(now) {
   const elapsed = previous ? Math.min((now - previous) / 1000, .1) : 0; previous = now;
   if (game.state === 'playing') {
     accumulator += elapsed;
-    while (accumulator >= 1 / 120) { game.update(1 / 120, input); accumulator -= 1 / 120; }
+    while (accumulator >= 1 / 120) { game.update(1 / 120, input);
+      for (const event of game.events.splice(0)) playSound(event);
+      accumulator -= 1 / 120; }
   } else accumulator = 0;
   if (game.state !== previousState || game.wave !== previousWave || game.lives !== previousLives) {
     if (game.state === 'over') announce(`Game over. Score ${game.score}. Wave ${game.wave}.`);
     else if (game.wave !== previousWave) announce(`Wave ${game.wave}.`);
-    else if (game.lives !== previousLives) announce(`${game.lives} lives remaining.`);
+    else if (game.lives !== previousLives) announce(`${game.lives} crowns remaining.`);
     previousState = game.state; previousWave = game.wave; previousLives = game.lives;
   }
   sync(); render(); requestAnimationFrame(tick);

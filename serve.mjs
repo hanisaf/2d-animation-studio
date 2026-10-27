@@ -15,9 +15,21 @@ const MIME = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; cha
 http.createServer((req, res) => {
   let p = decodeURIComponent(new URL(req.url, 'http://x').pathname);
   if (p === '/') p = '/studio.html';
-  const f = normalize(join(root, p));
+  let f = normalize(join(root, p));
   if (f !== root && !f.startsWith(root + sep)) { res.writeHead(403).end('forbidden'); return; }
-  let st; try { st = statSync(f); if (!st.isFile()) throw 0; } catch { res.writeHead(404).end('not found: ' + p); return; }
+  let st; try {
+    st = statSync(f);
+    if (st.isDirectory()) {
+      if (!p.endsWith('/')) {
+        const url = new URL(req.url, 'http://x');
+        res.writeHead(301, { Location: url.pathname + '/' + url.search }).end();
+        return;
+      }
+      f = join(f, 'index.html');
+      st = statSync(f);
+    }
+    if (!st.isFile()) throw 0;
+  } catch { res.writeHead(404).end('not found: ' + p); return; }
   const type = MIME[extname(f).toLowerCase()] || 'application/octet-stream', range = /bytes=(\d*)-(\d*)/.exec(req.headers.range || '');
   if (range) {                                                   // partial content, so audio can seek
     const a = range[1] ? +range[1] : 0, b = range[2] ? +range[2] : st.size - 1;
