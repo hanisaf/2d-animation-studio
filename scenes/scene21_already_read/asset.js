@@ -4,6 +4,7 @@ asset({
   title: 'We Already Read a Lot!',
   logline: 'Safadi lectures the kids on reading until they drag him into the library to prove they already read a lot. He pivots to writing, brags about his own books, and hears about the book fair. "You shall see!" To be continued…',
   files: ['scene.js'],                          // the shots
+  uses: ['scene16_spooky_plan'],                // spkPencil and spkSketchbook
   docs: 'README.md',                            // synopsis, script, shot list, notes for editing
   cast: ['safadi', 'housam', 'alma', 'jenna', 'danny'],
   locations: ['dces', 'school_library', 'safadi_study'],

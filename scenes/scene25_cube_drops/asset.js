@@ -93,6 +93,7 @@ asset((() => {
     title: 'The Cube Drops',
     logline: 'Danny\'s Rubik\'s cube act, in three parts. Part 1, a toss and a catch: 10, 5, and a zero from Pearl ("Everyone can catch it!"). Part 2, a solve in seconds: 10, 10, 5 ("Solving a puzzle is not enough!"). Part 3, a throw he solves while catching: "A juggle and a puzzle!" "A... puggle?" Pearl: "This puggle is perfect!" 10, 10, 10. Golden trophies for all four kids; Danny reveals he knew the secret potion was a joke and practiced his cube instead. "Yours was a mic drop moment." "I thought he dropped the cube?" "Let me explain!" To be continued.',
     files: ['props.js', 'scene.js'],            // trophies and the close-up cube; then the shots (also uses scene 24's props)
+    uses: ['scene24_competition_begins'],       // the cb* judges' table, chairs and score cards
     docs: 'README.md',                          // synopsis, script, shot list, notes for editing
     cast: ['danny', 'alma', 'jenna', 'housam', 'dragon', 'jester_fester', 'princess_pearl', 'safadi', 'sami', 'student'],
     locations: ['school_gym'],

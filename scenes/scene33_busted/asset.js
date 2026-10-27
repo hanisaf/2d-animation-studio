@@ -4,6 +4,7 @@ asset({
   title: 'Busted!',
   logline: 'Sent outside after Screen Time, the kids mope on the lawn. "What do you think Professor Safadi and Doctor Sami are doing?" Housam spies through the living-room window: "They are on their laptops!" "We busted them!" A closer look: the professor is playing Robo Invasion, the doctor World Champion. "NOT FAIR!" "What should we do now?" Housam: "EUREKA!" Alma: "Not again…" A big grin. To be continued…',
   files: ['scene.js'],
+  uses: ['scene32_screen_time'],                // the st* game screens and face glow
   docs: 'README.md',                            // synopsis, script, shot list, notes for editing
   cast: ['housam', 'danny', 'alma', 'jenna', 'safadi', 'sami', 'robo_safadi', 'neptune'],
   locations: ['house', 'living_room'],

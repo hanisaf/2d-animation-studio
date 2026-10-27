@@ -4,6 +4,7 @@ asset({
   title: 'Cleaning Up 2 · The Helping Hands',
   logline: 'Picking up right after Housam\'s "EUREKA!": Alma asks what eureka means. "In old Greece…" In Housam\'s story, Professor Safadi shouts "EUREKA!" in a Greek bathtub: he found the soap. Then Housam\'s real idea: program Robo-Safadi to clean up, and let the LLM decide where the toys go. "Clean up Alma\'s room." The robot swallows every toy into his chest. "Room clean up!" "But my toys are gone!" Professor Safadi comes in: "Wonderful job!" "But we have a small problem… Allow me to explain!" To be continued…',
   files: ['scene.js'],
+  uses: ['scene19_if_else_explain', 'scene28_cleaning_up'], // ieEditor and the cu* board games
   docs: 'README.md',                            // synopsis, script, shot list, notes for editing
   cast: ['alma', 'housam', 'jenna', 'danny', 'safadi', 'sami', 'robo_safadi', 'clawd'],
   locations: ['alma_bedroom', 'roman_bath'],

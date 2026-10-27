@@ -126,3 +126,41 @@ function downloadBlob(blob, name) {
   const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name;
   document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 60000);
 }
+
+// Capture deterministic character frames, one at a time, without retaining RGBA frames.
+// GIF timing uses hundredths of a second; 20 fps gives an exact 50 ms delay.
+async function exportCharacterGif({ entry, pose, view, backdrop, zoom, start = 0, duration = 4,
+  signal, onProgress = () => {} }) {
+  const stop = () => { if (signal?.aborted) throw new DOMException('Export cancelled', 'AbortError'); };
+  if (!Number.isFinite(duration) || duration < 1 || duration > 10) throw new Error('GIF duration must be between 1 and 10 seconds');
+  if (location.protocol === 'file:') throw new Error('Start the studio with npm run studio to export animated GIFs');
+  const { GIFEncoder, quantize, applyPalette } = await import('../node_modules/gifenc/dist/gifenc.esm.js');
+  stop();
+  const transparent = backdrop === 'transparent';
+  const fps = 20, width = 960, height = 540, total = Math.round(duration * fps);
+  const frame = document.createElement('canvas'); frame.width = width; frame.height = height;
+  const ctx = frame.getContext('2d', { willReadFrequently: true }), gif = GIFEncoder();
+  for (let i = 0; i < total; i++) {
+    stop();
+    const t = start + i / fps;
+    paintFrame(t, () => view === 'sheet' ? drawModelSheet(entry, t, { transparent })
+      : drawCharacterView(entry, pose, t, { location: backdrop, zoom }), { transparent });
+    ctx.clearRect(0, 0, width, height);
+    ctx.drawImage(X.canvas, 0, 0, width, height);
+    const { data } = ctx.getImageData(0, 0, width, height);
+    const palette = quantize(data, transparent ? 255 : 256), indexed = applyPalette(data, palette);
+    const transparentIndex = palette.length;
+    if (transparent) {
+      palette.push([0, 0, 0]);
+      for (let p = 0; p < indexed.length; p++) if (data[p * 4 + 3] < 128) indexed[p] = transparentIndex;
+    }
+    gif.writeFrame(indexed, width, height, { palette, delay: 1000 / fps, repeat: 0,
+      transparent, transparentIndex: transparent ? transparentIndex : 0, dispose: transparent ? 2 : -1 });
+    onProgress((i + 1) / total, `GIF · frame ${i + 1}/${total}`);
+    await new Promise(resolve => setTimeout(resolve, 0));
+  }
+  stop(); gif.finish();
+  const blob = new Blob([gif.bytes()], { type: 'image/gif' });
+  blob.frames = total;
+  return blob;
+}

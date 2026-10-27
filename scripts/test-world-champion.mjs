@@ -1,0 +1,16 @@
+import assert from 'node:assert/strict';
+import { Match } from '../games/world-champion/model.js';
+const step=(m,n=1,input={})=>{for(let i=0;i<n;i++)m.update(1/60,input);};
+const m=new Match('safadi');assert.equal(m.player.id,'safadi');assert.deepEqual(m.kids.map(k=>k.id),['housam','danny','jenna','alma']);
+assert.deepEqual(m.drainEvents(),[]);m.start();assert.deepEqual(m.drainEvents(),['kickoff']);step(m,300,{left:true,up:true});assert.equal(m.player.x,85);assert.equal(m.player.y,174);
+m.pause();const snapshot=JSON.stringify(m);step(m,60,{shoot:true});assert.equal(JSON.stringify(m),snapshot);m.resume();
+m.reset('sami');m.start();step(m,25);assert(m.shoot(true));assert.equal(m.ball.owner,null);assert(m.ball.vz>0);assert(!m.shoot(true),'cannot shoot a ball already in flight');assert.deepEqual(m.drainEvents(),['kickoff','chip']);
+m.reset();m.start();m.ball={x:887,y:320,z:0,vx:600,vy:0,vz:0,owner:null,lock:1};step(m);assert.deepEqual(m.score,[1,0]);assert.deepEqual(m.drainEvents(),['kickoff','goal']);step(m,120);assert.equal(m.ball.owner,'player');
+m.ball={x:73,y:320,z:0,vx:-600,vy:0,vz:0,owner:null,lock:1};step(m);assert.deepEqual(m.score,[1,1]);assert(m.drainEvents().includes('kids-goal'));
+m.reset();m.start();m.ball={x:887,y:320,z:90,vx:600,vy:0,vz:0,owner:null,lock:1};step(m);assert.equal(m.score[0],0);assert(m.ball.vx<0,'overbar rebounds');assert(m.drainEvents().includes('bounce'));
+m.ball={x:849,y:315,z:0,vx:0,vy:0,vz:0,owner:null,lock:0};step(m);assert.equal(m.ball.owner,'alma');assert(m.drainEvents().includes('save'));step(m,42);assert.equal(m.ball.owner,null,'keeper clears after save');assert(m.ball.vx<0);assert(m.drainEvents().includes('shot'));
+m.reset();m.start();m.kids[0].x=258;m.kids[0].y=320;m.cooldown=0;step(m);assert.equal(m.ball.owner,'housam');assert(m.drainEvents().includes('steal'));m.player.x=m.ball.x;m.player.y=m.ball.y;m.ball.lock=0;step(m);assert.equal(m.ball.owner,'player','player tackles');assert(m.drainEvents().includes('tackle'));
+m.reset();m.start();step(m,60,{right:true,sprint:true});assert(m.stamina<.7);const tired=m.stamina;step(m,60);assert(m.stamina>tired);
+m.score=[2,1];m.time=.01;step(m);assert.equal(m.state,'finished');assert.equal(m.notice,'WORLD CHAMPION!');assert(m.drainEvents().includes('fulltime'));const done=JSON.stringify(m);step(m,100);assert.equal(JSON.stringify(m),done);
+m.reset();assert.equal(m.time,90);assert.deepEqual(m.score,[0,0]);assert.equal(m.state,'ready');
+console.log('Model checks passed: roster, boundaries, pause, chips, scoring, overbar, keeper saves/clears, steals/tackles, stamina, full time, restart and sound event dispatch.');

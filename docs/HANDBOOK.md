@@ -273,6 +273,7 @@ The sidebar lists every asset from `registry.js`:
 **🎭 Characters**
 - **Pose** view: pick any registered pose chip. The **Backdrop** is Paper, or a location at true scale (standing on its stage mark, background softened). Adjust **Zoom**, and toggle **animate** (boil, blinks, idle motion).
 - **Model sheet** view: every pose on one page (also `node render.mjs --modelsheet=<id>`).
+- **⬇ Export GIF**, beside **📷 Snapshot PNG**, saves the current pose or model sheet as a looping animation, including the selected backdrop and zoom. Choose a **GIF length** of 2, 4 (default), 6, or 10 seconds. GIFs are 960×540 at 20 fps, with progress and **Cancel**. Export captures motion even with **animate** paused and restores your preview afterward. Start with `npm run studio` to use GIF export.
 - The reference image sits beside the pose chips; click it to enlarge.
 
 **🏰 Locations**
@@ -478,12 +479,15 @@ asset({
   audio: 'audio.mp3',                               // scenes: soundtrack (optional; silence if missing)
   cast: ['princess_pearl', 'jester_fester'],        // scenes: character ids (the studio cross-links them)
   locations: ['throne_room'],                       // scenes: location ids
+  uses: ['scene01_juggling'],                       // scenes: earlier scenes whose helper files this one borrows (optional)
 });
 ```
 
 Paths in a manifest are relative to its folder. A scene's `id`, `title` and `audio` come from its manifest, so `scene.js` only declares `duration`, `fps`, `bpm` and `shots`.
 
 **Loading.** For each folder in `registry.js` (characters → locations → scenes), the studio loads `asset.js` and then the files it lists. So a scene can use any character or location.
+
+A scene can also call helpers defined in an earlier scene's files (scene 20 draws scene 17's Halloween props). The studio loads every scene, so that just works there; list those scenes in `uses` so **Export JavaScript**, which bundles one scene on its own, includes their helper files (everything but their `scene.js`).
 
 **The code registers the runtime parts:**
 - `CHARACTERS.<id> = { draw, unit, size, poses }`: poses appear as the studio's pose chips and the model sheet.

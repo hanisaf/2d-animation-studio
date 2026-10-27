@@ -28,6 +28,120 @@ npm install
 node render.mjs --doctor      # checks Node, Chrome, ffmpeg and fonts, and renders a test frame
 ```
 
+## Docker
+
+Install Docker Desktop with Linux containers and Docker Compose v2. The image
+includes Node.js 24, Chromium, ffmpeg, fonts, Git, and the Codex, Claude Code,
+and Gemini CLIs. Internet access is needed for the build, AI services, and web fonts.
+
+### Start the studio
+
+Run Compose commands from the project folder, where `compose.yaml` lives.
+For this checkout in PowerShell:
+
+~~~powershell
+cd C:\Users\samisaf\GitHub\2d-animation-studio
+docker compose up --build -d studio
+~~~
+
+Open http://localhost:5173. The first build may take several minutes. Source edits
+appear immediately through the project mount, and renders are saved in `out/`
+on your computer. Container dependencies are stored in a separate Linux volume.
+
+### Start the coding agents
+
+Start both the studio and the tools container, then launch the CLI you want:
+
+~~~sh
+docker compose --profile tools up --build -d
+docker compose exec agents codex
+docker compose exec agents claude
+docker compose exec agents gemini
+~~~
+
+Run each CLI in its own terminal. For a container shell, use
+`docker compose exec agents bash`. Agents can edit the mounted project and run
+rendering commands. Settings and logins persist in the `agent_home` volume.
+
+For Codex account login:
+
+~~~sh
+docker compose exec agents codex login --device-auth
+~~~
+
+Open the printed URL on your computer and enter the code. Enable device code login
+in your account or workspace settings if required. For Claude and Gemini, follow
+their CLI login prompts. Use an API key if a browser callback cannot reach the container.
+
+For API-key authentication, copy `.env.example` to `.env` (PowerShell:
+`Copy-Item .env.example .env`) and fill in the relevant `OPENAI_API_KEY`,
+`ANTHROPIC_API_KEY`, or `GEMINI_API_KEY`. Recreate the tools container after changing
+keys with `docker compose --profile tools up -d agents`. Do not commit real keys.
+The agents can read `.env` through the project mount.
+
+For Codex API-key login:
+
+~~~sh
+docker compose exec agents sh -c 'printenv OPENAI_API_KEY | codex login --with-api-key'
+~~~
+
+Claude uses `ANTHROPIC_API_KEY`; in Gemini, select **Use Gemini API Key**.
+
+### Default permissions
+
+The tools container installs missing settings from
+[`docker/agent-defaults/`](docker/agent-defaults/) into its persistent home directory:
+
+| Agent | Default | Container settings file |
+|---|---|---|
+| Codex | Workspace writes, on-request approvals, outbound network access | `/home/node/.codex/config.toml` |
+| Claude | Automatically accept file edits; other actions retain permission checks | `/home/node/.claude/settings.json` |
+| Gemini | Automatically approve edit tools; other actions retain permission checks | `/home/node/.gemini/settings.json` |
+
+Existing settings files and logins are preserved. To enable newly added templates,
+rebuild with `docker compose --profile tools up --build -d agents`. If a settings
+file already exists, merge the desired template values into it and restart the CLI.
+Agents modify the actual checkout, so container isolation does not undo file edits.
+
+### Render and check the environment
+
+~~~sh
+docker compose exec studio npm run doctor
+docker compose exec studio node render.mjs --scene=scene01_juggling --sheet=1,4,8,12
+docker compose exec studio node render.mjs --scene=scene01_juggling --clip=0:2
+docker compose exec studio npm run movie
+~~~
+
+Inspect the doctor's output and `out/check/doctor.png`: the doctor currently exits
+successfully even when a check fails.
+
+### Updates and shutdown
+
+After changing `package.json` or `package-lock.json`, refresh the shared dependency
+volume; rebuilding alone does not replace its contents:
+
+~~~sh
+docker compose --profile tools stop
+docker compose run --rm --no-deps studio npm ci
+docker compose --profile tools up --build -d
+~~~
+
+Set `STUDIO_PORT` in `.env` to change the host port. Set `CODEX_VERSION`,
+`CLAUDE_VERSION`, and `GEMINI_VERSION` to exact npm versions to pin the CLIs.
+To refresh CLIs using `latest`, run `docker compose build --no-cache studio`,
+then `docker compose --profile tools up -d`.
+
+Stop the containers with:
+
+~~~sh
+docker compose --profile tools down
+~~~
+
+This preserves dependencies, settings, and logins. Adding `--volumes` deletes both
+named volumes, including saved credentials. Rendered files in the checkout remain.
+
+See [docs/DOCKER.md](docs/DOCKER.md) for standalone Docker commands and container details.
+
 ## The studio
 
 ```bash
@@ -36,7 +150,7 @@ npm run studio                                 # → http://localhost:5173
 
 - **Scenes**: play/scrub with a shot timeline and audio preview; **Export scene MP4** straight from the browser (WebCodecs; Chrome/Edge). Scene 01 synthesizes music and cartoon dialogue from `scenes/scene01_juggling/asset.js`. **Copy play link** gives a URL such as `studio.html?scene=scene01_juggling&play=true`, which starts playback in a full-window view without the tools. If the browser blocks autoplay with sound, click **Tap for sound**; after the scene ends, **Replay with sound** starts it again.
 - **Movie composer**: choose scenes, set in/out points, reorder or remove clips, preview the cut, and export the selected movie as MP4. The composition is saved in this browser.
-- **Characters**: every pose (on paper or standing in a location at true scale) and the full model sheet, next to the reference art.
+- **Characters**: every pose (on paper or standing in a location at true scale) and the full model sheet, next to the reference art. Choose **Backdrop → Transparent** for a checkerboard preview and transparent PNG snapshots or GIF exports, including model sheets. **Export SVG** downloads the current animation frame as editable vector paths on a transparent 1920×1080 canvas. Pose view exports the selected pose at the current zoom; model-sheet view exports all poses. Backdrops, grain, and sheet labels are omitted. Canvas glow/shadow and additive blending effects may look different, and text props use fonts installed in the viewer.
 - **📄 Docs**: each asset's `README.md` (description, script, shot list, API) beside its preview, cross-linked (a scene ↔ its cast ↔ its locations); project docs in the sidebar.
 - **Locations**: fly a camera through the set (presets, sliders, drag/wheel, WASD, **⇄ Reverse** for a reverse angle), drop a character on a spot for scale, and **Copy camera** as code for your scene.
 
@@ -83,3 +197,70 @@ scripts/new.sh scene scene03_auditions        # scenes/scene03_auditions/ {asset
 Each new folder is self-contained: describe the asset in its `README.md` (for a scene: synopsis, script, shot list), put reference art in the folder and list it in `asset.js`, then write the code. See [ANIMATION_GUIDE.md](ANIMATION_GUIDE.md) and [docs/HANDBOOK.md §8](docs/HANDBOOK.md#8-assets-characters-locations-scenes).
 
 > **Note on Naming Conflicts:** All character, location, and scene scripts are loaded into the same global environment without module isolation (no `import`/`export`). To avoid naming collisions that can cause scripts to silently overwrite each other or throw syntax errors, always namespace your internal helper functions and constants (e.g., prefixing them with `sm` for Sami, `sf` for Safadi, etc.) instead of using generic names.
+
+## Embed a scene in a web page
+
+Select a scene in the studio and choose **Export JavaScript (without sound)** or
+**Export JavaScript (with sound)**. Each download includes the drawing engine,
+shared character and location code, the selected scene, and embedded fonts.
+The sound version renders the scene's music and cartoon voices during export and
+embeds the finished WAV soundtrack (or its existing audio file). Long tracks render
+in short overlapping sections to keep soundtrack preparation responsive. Downloaded players
+need no audio synthesis: Unmute starts the embedded track at the current scene time.
+Sound exports take longer to create and contain the full audio data, making them
+larger than silent exports. The silent version keeps speech bubbles and omits audio. No studio server, CDN, or extra files are required by the downloaded player.
+Export from the studio served by npm run studio; font embedding needs an internet
+connection during export. A failed font or soundtrack download stops the export.
+
+Put the downloaded JavaScript file beside index.html (or use its correct relative
+path), then embed it with the following. Use your actual exported filename:
+
+~~~html
+<div id="animation"></div>
+<script src="scene01_juggling.silent.js"
+        data-mount="#animation" data-loop="true"></script>
+~~~
+
+The script mounts its own scene, so no scene identifier is needed. This also works
+with async or defer and scripts placed in the head: it waits for the page content.
+Set data-autoplay="false" or data-controls="false" as needed.
+
+For manual control of a single export, load the script before calling:
+
+~~~javascript
+const player = await MyScene.mount('#animation', { loop: true });
+// player.pause(); player.seek(8); await player.play(); player.destroy();
+~~~
+
+MyScene always refers to the most recently loaded export. For multiple exports,
+use SafadiScenes['the-exact-scene-id'].mount(...). The scene ID is printed in the
+first line of the downloaded file and is available as MyScene.id. For IDs containing
+hyphens, use bracket notation. Do not keep scene01_juggling in manual code when
+loading a different scene. An undefined mount error means that scene ID is absent
+from the registry, or the downloaded script has not loaded yet. Check the script
+filename/path and browser Network/Console errors. With manual code and async/defer,
+wait for the script load event before calling mount.
+
+
+For sound, change the script filename to scene01_juggling.with-sound.js.
+Exported players start **muted**, play immediately without waiting for sound
+preparation, and provide compact Play/Pause, a seek slider,
+elapsed/total time, Mute/Unmute, and playback speed (0.5x–2x). Silent exports
+disable the sound button. Re-export existing files to get the updated controls.
+Use `data-muted="false"` to start with sound or `data-speed="1.5"` for a different
+initial speed. Browsers may block audible autoplay; click Play to enable sound.
+Each mount has independent playback and drawing state; several scenes or instances
+can coexist. mount returns a promise for a player with play, pause, seek(seconds),
+destroy, setMuted(boolean), setPlaybackRate(number), canvas, currentTime, duration,
+playing, muted, and playbackRate. Manual mount options also accept muted (default
+true) and playbackRate (default 1; supported range 0.25–4). Set autoplay: false for a still
+first frame, or controls: false when providing your own controls. The canvas scales
+to the container's width. Loading both variants for the same scene makes the last
+loaded variant the one used by subsequent mounts.
+
+
+## Robo Invader · The Ultimate Edition
+
+Open [The Ultimate Edition](games/robo-invaders/index.html) directly in your browser or from the studio’s **Arcade** menu. Inspired by the game in **Scene 32 · Screen Time**, this edition stars King Neptune with rainbow trident blasts, red-eyed Robo-Safadis, a purple starfield, and a monitor frame. Move with arrows or A/D, hold Space to fire, and press P to pause; touch controls are included.
+
+Run `npm run build:game` to rebuild. Share `index.html`, `style.css`, and `runtime.js` together for offline play. See the [The Ultimate Edition README](games/robo-invaders/README.md) for source and verification commands.

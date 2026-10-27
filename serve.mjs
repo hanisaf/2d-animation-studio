@@ -6,6 +6,7 @@ import { createReadStream, statSync } from 'node:fs';
 import { extname, join, normalize, resolve, sep } from 'node:path';
 import { spawn } from 'node:child_process';
 
+const host = process.env.HOST || '127.0.0.1';
 const root = resolve('.'), port = +(process.argv.find(a => /^\d+$/.test(a)) || process.env.PORT || 5173);
 const MIME = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.mjs': 'text/javascript; charset=utf-8', '.css': 'text/css; charset=utf-8',
   '.json': 'application/json', '.md': 'text/markdown; charset=utf-8', '.png': 'image/png', '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg', '.webp': 'image/webp', '.gif': 'image/gif',
@@ -14,9 +15,21 @@ const MIME = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; cha
 http.createServer((req, res) => {
   let p = decodeURIComponent(new URL(req.url, 'http://x').pathname);
   if (p === '/') p = '/studio.html';
-  const f = normalize(join(root, p));
+  let f = normalize(join(root, p));
   if (f !== root && !f.startsWith(root + sep)) { res.writeHead(403).end('forbidden'); return; }
-  let st; try { st = statSync(f); if (!st.isFile()) throw 0; } catch { res.writeHead(404).end('not found: ' + p); return; }
+  let st; try {
+    st = statSync(f);
+    if (st.isDirectory()) {
+      if (!p.endsWith('/')) {
+        const url = new URL(req.url, 'http://x');
+        res.writeHead(301, { Location: url.pathname + '/' + url.search }).end();
+        return;
+      }
+      f = join(f, 'index.html');
+      st = statSync(f);
+    }
+    if (!st.isFile()) throw 0;
+  } catch { res.writeHead(404).end('not found: ' + p); return; }
   const type = MIME[extname(f).toLowerCase()] || 'application/octet-stream', range = /bytes=(\d*)-(\d*)/.exec(req.headers.range || '');
   if (range) {                                                   // partial content, so audio can seek
     const a = range[1] ? +range[1] : 0, b = range[2] ? +range[2] : st.size - 1;
@@ -26,7 +39,7 @@ http.createServer((req, res) => {
     res.writeHead(200, { 'Content-Type': type, 'Content-Length': st.size, 'Accept-Ranges': 'bytes', 'Cache-Control': 'no-store' });
     createReadStream(f).pipe(res);
   }
-}).listen(port, '127.0.0.1', () => {
+}).listen(port, host, () => {
   const url = `http://localhost:${port}/`;
   console.log(`Safadi Animation Studio → ${url}   (Ctrl+C to stop)`);
   if (process.argv.includes('--open')) {

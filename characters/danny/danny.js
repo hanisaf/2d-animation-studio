@@ -279,6 +279,105 @@ function dannyDribble(p, k = 1) {
   };
 }
 
+// Viewer-facing laptop so the Scratch blocks remain visible at pose-preview scale.
+function dannyLaptop(x, y, s, o = {}) {
+  X.save(); X.translate(x, y); X.scale(s, s);
+  const lw = clamp(s * .1, 1.2, 4) / s, open = o.open ?? 1;
+  shape([[-4.2, 0], [4.2, 0], [4.8, 2], [-4.8, 2]], { fill: '#AAB8CC', stroke: DN.ink, lw });
+  for (let row = 0; row < 3; row++) {
+    for (let col = 0; col < 10; col++) {
+      shape(rectPts(-3.65 + col * .74 - row * .08, .3 + row * .35, .56, .22), { fill: '#45516B', stroke: null });
+    }
+  }
+  shape(rectPts(-.85, 1.4, 1.7, .4), { fill: '#DCE5EF', stroke: null });
+  line([[-4.8, 2], [4.8, 2]], { stroke: '#697B96', lw: .18 });
+  // The lid unfolds from the hinge; at zero it covers the keyboard.
+  X.save(); X.scale(1, 1 - 3 * open);
+  shape(rectPts(-4.2, 0, 8.4, 2), { fill: '#45516B', stroke: DN.ink, lw });
+  X.restore();
+  if (open > .05) {
+    X.save(); X.scale(1, open);
+    shape(rectPts(-3.85, -3.65, 7.7, 3.3), { fill: '#F6F8FC', stroke: null });
+    shape(rectPts(-3.85, -3.65, 7.7, .6), { fill: '#855CD6', stroke: null });
+    X.fillStyle = '#FFFFFF'; X.font = 'bold .43px sans-serif'; X.textAlign = 'left';
+    X.fillText('Scratch', -3.57, -3.22);
+    shape([ [2.3, -3.5], [2.3, -3.12], [2.75, -3.25], [2.3, -3.38] ], { fill: '#63CD78', stroke: null });
+    circle(3.18, -3.31, .14, { fill: '#F47777', stroke: null });
+    shape(rectPts(-3.85, -3.05, 1.05, 2.7), { fill: '#E2E8F2', stroke: null });
+    ['#FFBF00', '#4C97FF', '#9966FF', '#FFAB19'].forEach((col, i) => {
+      shape(rectPts(-3.7, -2.85 + i * .57, .74, .3), { fill: col, stroke: null });
+    });
+    // Interlocking event, control, motion, and looks blocks.
+    const labels = ['when flag clicked', 'repeat 10', 'move 10 steps', 'say Hello!'];
+    ['#FFBF00', '#FFAB19', '#4C97FF', '#9966FF'].forEach((col, i) => {
+      const bx = -2.48 + (i > 1 ? .22 : 0), by = -2.83 + i * .55;
+      shape([[bx, by], [bx + .3, by], [bx + .4, by + .1], [bx + .75, by + .1],
+        [bx + .85, by], [bx + 2.9, by], [bx + 2.9, by + .5], [bx + .85, by + .5],
+        [bx + .75, by + .6], [bx + .4, by + .6], [bx + .3, by + .5], [bx, by + .5]],
+      { fill: col, stroke: null });
+      X.fillStyle = '#FFFFFF'; X.font = 'bold .25px sans-serif';
+      X.fillText(labels[i], bx + .12, by + .34);
+    });
+    shape(rectPts(1.05, -2.87, 2.5, 2.3), { fill: '#FFFFFF', stroke: '#CDD6E4', lw: .06 });
+    // A little orange cat on the Scratch stage.
+    const catX = 2.25 + .18 * Math.sin((o.t ?? 0) * 3);
+    ellipse(catX, -1.25, .45, .35, { fill: '#FF9D32', stroke: null });
+    shape([[catX - .42, -1.68], [catX - .38, -2.22], [catX - .1, -2.02],
+      [catX + .15, -2.02], [catX + .4, -2.22], [catX + .45, -1.68]], { fill: '#FF9D32', stroke: null });
+    ellipse(catX, -1.74, .45, .35, { fill: '#FF9D32', stroke: null });
+    [-1, 1].forEach(sd => circle(catX + sd * .18, -1.83, .07, { fill: DN.ink, stroke: null }));
+    line([[catX + .35, -1.23], [catX + .72, -1.35], [catX + .7, -1.63]], { stroke: '#FF9D32', lw: .16, smooth: true });
+    X.restore();
+  }
+  X.restore();
+}
+
+function dannyIdea(x, y, s, t, glow = 1) {
+  X.save(); X.translate(x, y); X.scale(s, s);
+  const lw = clamp(s * .1, 1.2, 4) / s;
+  circle(0, 0, 2.15, { fill: rgba('#FFD45C', (.12 + .04 * wob(t, 1)) * glow), stroke: null });
+  ellipse(0, -.2, 1.05, 1.2, { fill: mixCol('#E2D9B8', '#FFE477', glow), stroke: DN.ink, lw });
+  shape(rectPts(-.5, .65, 1, .65), { fill: '#AAB8CC', stroke: DN.ink, lw });
+  line([[-.45, .97], [.45, .97]], { stroke: '#697B96', lw: .12 });
+  line([[-.35, -.2], [0, .18], [.35, -.2]], { stroke: '#D29128', lw: .13 });
+  if (glow > .01) {
+    for (let i = 0; i < 5; i++) {
+      const a = Math.PI + i * Math.PI / 4;
+      line([[Math.cos(a) * 1.65, Math.sin(a) * 1.65 - .2],
+        [Math.cos(a) * 2.2, Math.sin(a) * 2.2 - .2]], { stroke: '#E9AB32', lw: .18, alpha: glow });
+    }
+  }
+  X.restore();
+}
+
+// Six-second loop: pull out, open, type, then close and tuck away.
+function dannyProgrammer(x, y, s, t) {
+  const p = ((t % 6) + 6) % 6;
+  const pull = ease(seg(p, 0, .8)) * (1 - ease(seg(p, 5.3, 6)));
+  const open = ease(seg(p, .65, 1.35)) * (1 - ease(seg(p, 4.95, 5.4)));
+  const typing = ease(seg(p, 1.3, 1.6)) * (1 - ease(seg(p, 4.7, 5)));
+  const laptopX = lerp(4.3, 0, pull), laptopY = lerp(-8.5, -12.2, pull);
+  const handL = mixPt([-3.5, -9.8], [-1.9, laptopY + 1.05 + .13 * wob(t, 5)], pull);
+  const handR = [laptopX + 1.9, laptopY + 1.05 - .13 * wob(t, 5) * typing];
+  const A = danny(x, y, s, { t, handL, handR, handPoseL: 'fist', handPoseR: 'fist',
+    lookY: .8 * open, brows: typing ? 'focused' : 'up', mouth: 'smile', breathe: false });
+  X.save(); X.globalAlpha *= pull;
+  dannyLaptop(x + laptopX * s, y + laptopY * s, s, { open, t });
+  // Keep typing hands in front of the keyboard, using the rig's actual endpoints.
+  [A.handL, A.handR].forEach((hand, i) => {
+    X.save(); X.translate(hand[0], hand[1]); X.scale(s, s);
+    ellipse(0, 0, .62, .32, { fill: DN.skin, stroke: DN.ink, lw: clamp(s * .1, 1.2, 4) / s });
+    for (let finger = 0; finger < 3; finger++) {
+      line([[-.3 + finger * .22, -.1], [-.3 + finger * .22, .14 + .06 * typing * wob(t, 5, i * .5)]],
+        { stroke: DN.skinShade, lw: .08 });
+    }
+    X.restore();
+  });
+  X.restore();
+  dannyIdea(A.top[0], A.top[1] - 2.7 * s, s, t, open);
+  return A;
+}
+
 CHARACTERS.danny = {
   draw: danny, unit: DANNY_UNIT, palette: DN, size: [14, 30],
   poses: {
@@ -290,6 +389,7 @@ CHARACTERS.danny = {
     'kick': (x, y, s, t) => { dannyBall(x + (5.9 + .3 * Math.sin(t * 2.2)) * s, y - 2.5 * s, s, { spin: t * 5 }); return danny(x, y, s, { t, footR: [4.7, -3.7], footL: [-1.75, -1.05], handL: [-4.5, -13.5], handR: [4.3, -14.4], lean: -.15, rot: -.035, mouth: 'grin', brows: 'focused' }); },
     'builder': (x, y, s, t) => { const A = danny(x, y, s, { t, handL: [-3.2, -13], handR: [3.2, -13], handPoseL: 'fist', handPoseR: 'fist', mouth: 'grin', lookY: .5 }); dannyBlock(A.handL[0], A.handL[1] - .7 * s, s, { ang: -.1 }); return A; },
     'block tower': (x, y, s, t) => { for (let i = 0; i < 3; i++) dannyBlock(x + 5.5 * s, y - (1.5 + 1.5 * i) * s, s); return danny(x, y, s, { t, handR: [4.4, -11.5], handPoseR: 'point', mouth: 'grin', brows: 'up', lookX: .7 }); },
+    'programmer': dannyProgrammer,
     'goofy': (x, y, s, t) => danny(x, y, s, { t, eyes: 'wink', mouth: 'grin', handL: [-4.5, -15.6], handR: [4.5, -15.6], handPoseL: 'palm', handPoseR: 'palm', tilt: .13 * Math.sin(t * 3), lean: -.06 }),
     'goal!': (x, y, s, t) => danny(x, y, s, { t, handL: [-4.3, -19.3], handR: [4.3, -19.3], handPoseL: 'palm', handPoseR: 'palm', eyes: 'happy', mouth: 'grin', jump: 1.2 * Math.abs(Math.sin(t * 3)) }),
     'laugh': (x, y, s, t) => danny(x, y, s, { t, eyes: 'happy', mouth: 'open', handL: [-3.5, -12.1], handR: [3.5, -12.1], tilt: -.1, dy: .18 * Math.abs(Math.sin(t * 10)) }),

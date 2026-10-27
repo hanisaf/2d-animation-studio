@@ -4,6 +4,7 @@ asset({
   title: 'The Infinite Candy Glitch',
   logline: 'Halloween night at Alma\'s house. Robo-Safadi stands by the porch; the grown-ups (and Dragon) poke at him until they crack his program: trick gets broccoli, treat gets candy. TREAT! TREAT! TREAT! An infinite candy glitch, until Safadi says "Let me explain…" and Clawd wakes up inside the robot. Red eyes. "BEEP BOOP." To be continued…',
   files: ['decor.js', 'scene.js'],              // the Halloween decorations, then the shots (also uses scene 16's doodles and scene 17's props)
+  uses: ['scene16_spooky_plan', 'scene17_broccoli_directive'],   // spkDoodle and the bd* Halloween props
   docs: 'README.md',                            // synopsis, script, shot list, notes for editing
   cast: ['jester_fester', 'safadi', 'sami', 'dragon', 'alma', 'jenna', 'housam', 'danny', 'robo_safadi', 'clawd'],
   locations: ['house'],

@@ -5,6 +5,7 @@ asset({
   title: 'The Book Fair',
   logline: 'The book fair opens in the library. Students rush past Professor Safadi\'s stand to grab the kids\' coloring flip books. At story time, Alma tells Fester\'s stories while Safadi explains the Riemann hypothesis to three dozing students (and a snoring Sami). The kids sell out; Safadi sells nothing, and is proud anyway. Alma wishes Pearl and Fester were real. "We can always imagine."',
   files: ['props.js', 'scene.js'],              // the stands, the boards, the story clouds; then the shots
+  uses: ['scene21b_dolphin_royalty'],           // the dry* book covers and story pops
   docs: 'README.md',
   cast: ['safadi', 'sami', 'alma', 'jenna', 'housam', 'danny', 'student', 'jester_fester', 'princess_pearl'],
   locations: ['school_library', 'throne_room'],

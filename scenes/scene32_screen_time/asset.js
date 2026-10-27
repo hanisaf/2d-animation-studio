@@ -4,6 +4,7 @@ asset({
   title: 'Screen Time',
   logline: 'The kids promised board games after the clean-up, but Professor Safadi finds all four glued to their tablets. They are done with board games, and still playing together: Craft Blocks and Fight Planet. "Do you remember what I said about video games?" "No." Dr. Sami: "30 minutes per day, and I suppose it is over!" "But you are also on your screen more than 30 minutes a day!" The professor "researches his books" with Robo Invasion; the doctor "looks up medical information" with World Champion. "Go play outside!" The kids trudge out. "Brother, what shall we do now?" "Robo Invasion… or World Champion?" To be continued…',
   files: ['props.js', 'scene.js'],              // the tablets, the game screens, the books; then the shots
+  uses: ['scene18_some_assembly', 'scene28_cleaning_up'], // SA colors and cuGameFloor
   docs: 'README.md',                            // synopsis, script, shot list, notes for editing
   cast: ['alma', 'jenna', 'housam', 'danny', 'safadi', 'sami', 'robo_safadi', 'neptune'],
   locations: ['alma_bedroom', 'safadi_study', 'sami_clinic'],

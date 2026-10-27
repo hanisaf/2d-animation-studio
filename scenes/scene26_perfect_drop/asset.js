@@ -7,6 +7,7 @@ asset({
   title: 'The Perfect Drop',
   logline: 'The finale of the talent show: Princess Pearl, the judge who is never dazzled, takes the mic and sings "The Perfect Drop" while the kids replay their winning tricks, Professor Safadi explains why there are no shortcuts, and Fester shreds a guitar solo (until a ball finds his head). On "MIC DROP!" she drops the mic and the music stops dead. In the silence, a puddle… and Neptune rises out of it, picks up the mic: "KING Neptune is in the house!" THE END.',
   files: ['props.js', 'lyrics.js', 'scene.js'],       // props, the song and karaoke, then the shots
+  uses: ['scene22_you_shall_see', 'scene24_competition_begins', 'scene25_cube_drops'], // the ys* effects, the cb* judges' furniture, the cd* cube and trophy
   docs: 'README.md',                                  // synopsis, song map, shot list
   audio: 'audio.mp3',                                 // "The Perfect Drop" (149.8 s) + the coda's sound (to 160.6 s)
   cast: ['princess_pearl', 'jenna', 'alma', 'housam', 'danny', 'safadi', 'sami', 'jester_fester', 'dragon', 'robo_safadi', 'clawd', 'neptune', 'student'],
