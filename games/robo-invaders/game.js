@@ -97,6 +97,37 @@ const robots = Array.from({ length: 4 }, (_, i) => {
   return sprite;
 });
 X = ctx;
+// Keep only the selected hero's four-second loop, at the same density as the field.
+// Build before play, so the render loop only copies a sprite (movement stays smooth).
+const HERO_FPS = 12, HERO_FRAMES = 48, HERO_SIZE = 224, HERO_X = 112, HERO_Y = 160;
+let heroAnimation;
+function cacheHeroAnimation() {
+  if (heroAnimation?.id === heroId) return;
+  if (heroAnimation) {
+    for (const frame of heroAnimation.frames) { frame.width = 0; frame.height = 0; }
+    heroAnimation = null;
+  }
+  const hero = heroes[heroId], frames = [];
+  const saved = { X, T, OVERLAYS, CAM, JIT };
+  try {
+    for (let i = 0; i < HERO_FRAMES; i++) {
+      const frame = document.createElement('canvas');
+      frame.width = frame.height = HERO_SIZE * RENDER_SCALE;
+      X = frame.getContext('2d'); X.scale(RENDER_SCALE, RENDER_SCALE);
+      T = i / HERO_FPS; boilSeed(T); OVERLAYS = []; CAM = null; JIT = 0;
+      const pose = heroId === 'neptune'
+        ? { sit: 1, trident: true, tridentAng: -Math.PI / 2, eyes: 'smug', headTilt: .1, power: .3 }
+        : { eyes: 'open', handR: [5, -16], handPoseR: 'fist' };
+      hero.draw(HERO_X, HERO_Y, hero.scale, { ...pose, t: T, mouth: 'grin', boil: 0, noShadow: true });
+      flushOverlays();
+      frames.push(frame);
+    }
+    heroAnimation = { id: heroId, frames };
+  } finally {
+    ({ X, T, OVERLAYS, CAM, JIT } = saved);
+    boilSeed(T);
+  }
+}
 const stars = Array.from({ length: 65 }, (_, i) => ({ x: hash(i * 3 + 1) * WIDTH, y: hash(i * 3 + 2) * 490, r: .6 + hash(i * 3 + 3) * 1.2 }));
 function controls() {
   const held = new Set(touches.values());
@@ -106,7 +137,7 @@ function controls() {
 }
 function release() { keys.clear(); touches.clear(); controls(); document.querySelectorAll('.touch button').forEach(b => b.classList.remove('active')); }
 function announce(text) { $('announcement').textContent = text; }
-function start() { unlockAudio(); release(); game.reset(); sync(); canvas.focus({preventScroll:true}); announce(`${heroes[heroId].name} started. Three crowns.`); }
+function start() { unlockAudio(); release(); cacheHeroAnimation(); game.reset(); sync(); canvas.focus({preventScroll:true}); announce(`${heroes[heroId].name} started. Three crowns.`); }
 function pause() {
   if (!['playing', 'paused'].includes(game.state)) return;
   unlockAudio();
@@ -191,15 +222,10 @@ function render() {
     const frame = (Math.floor(game.time * 7) + enemy.col) % robots.length;
     ctx.drawImage(robots[frame], enemy.x - ROBOT_SIZE / 2, enemy.y - 88 * CHARACTER_SCALE, ROBOT_SIZE, ROBOT_SIZE);
   }
-  ctx.save();
-  const hero = heroes[heroId];
-  if (heroId === 'neptune') {
-    hero.draw(game.player.x, game.player.y, hero.scale, { t: game.time, sit: 1, trident: true, tridentAng: -Math.PI / 2, eyes: 'smug', mouth: 'grin', headTilt: .1, power: .3, boil: 0, noShadow: true });
-  } else {
-    hero.draw(game.player.x, game.player.y, hero.scale, { t: game.time, eyes: 'open', mouth: 'grin', handR: [5, -16], handPoseR: 'fist', boil: 0, noShadow: true });
-
+  if (game.state !== 'ready' && heroAnimation?.id === heroId) {
+    const frame = Math.floor(game.time * HERO_FPS) % HERO_FRAMES;
+    ctx.drawImage(heroAnimation.frames[frame], game.player.x - HERO_X, game.player.y - HERO_Y, HERO_SIZE, HERO_SIZE);
   }
-  ctx.restore();
   for (const bolt of game.bolts) {
     ctx.shadowColor = '#7FD3FF'; ctx.shadowBlur = 12 * RENDER_SCALE;
     rainbow.forEach((color,i) => { ctx.strokeStyle = color; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(bolt.x + (i-2.5)*2, bolt.y + 21); ctx.lineTo(bolt.x + (i-2.5)*2, bolt.y - 12); ctx.stroke(); });
