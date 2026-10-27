@@ -739,6 +739,3123 @@ CHARACTERS.neptune = {
   },
 };
 
+// Source: ../../characters/safadi/safadi.js
+// characters/safadi/safadi.js: Professor Safadi, the professor with super explanatory powers (see reference.jpg, README.md).
+//
+// safadi(x, y, s, o) → anchors
+//   (x, y) screen point on the floor between the feet · s = px per local unit. He is ~29.5 units tall (feet to hair top),
+//   so in a perspective set use s = SAFADI_UNIT * P.k(Z) (he is ~177 world units tall).
+//
+// Local units: feet y = 0, y points DOWN (up is negative). Hips −8.0, shoulders −15.4, chin −17.0, head centre −23.0, hair top ≈ −29.5.
+// A big bobble head (≈ 40% of his height) on a tan three-piece suit, white shirt, red tie, brown oxfords. Front view.
+//
+// Pose     dy (hip drop; + = crouch) · lean (torso, rad) · tilt (head, rad) · turn (head −1..1) · rot (whole body, about the belly)
+//          jump (units off the floor) · sq (squash; negative stretches) · flip · breathe (default on)
+// Limbs    handL / handR: [x, y] wrist targets in local units (L = screen-left) · footL / footR: ankle targets (rest [∓1.25, −0.8])
+//          handPoseL / handPoseR: 'open' | 'palm' (spread, presenting) | 'point' (index finger) | 'fist' | 'thumb' | 'pointer'
+//          pointerAng (screen angle of the pointer stick, rad; default up and outward) · pointerLen (units, default 7.5)
+// Face     eyes: open | wide | happy | closed | wink | squeeze | narrow | glow · lookX / lookY (−1..1) · blink (0..1, auto if unset)
+//          brows: normal | up | worried | angry | quizzical | focused · mouth: smile | grin | open | o | O | flat | frown | smirk | teeth | wobble
+//          blush (0..1)
+// Powers   power (0..1): the explanatory aura: golden-cyan glow, rays, glowing hands and a ring of chalk formulas orbiting him
+//          bulb (0..1): an idea light bulb pops on above his head
+// Extras   emote: '?' | '!' | 'sweat' | 'music' | 'heart' with emoteK (0..1 pop) · boil (px)
+//
+// Returns anchors in screen px: { head, mouth, top, eyeL, eyeR, chest, belly, handL, handR, pointerTip, bulb }
+//
+// Also: safadiBoard(x, y, w, k, t, { kind, title }): his floating holographic chalkboard (screen px; k 0..1 = appear + draw).
+//   kind: 'graph' | 'steps' | 'atom' | 'bulb' | 'story' | 'plate' (healthy plate) | 'crash' (sugar spike vs steady veggies) | 'passing' | 'dribbling' | 'shooting' | 'teamwork' (soccer lessons).
+//   safadiWalk(p, k): walk-cycle pose options (p = steps travelled, k = stride amount).
+
+const SF = {
+  ink: '#3B2530', skin: '#F3C6A8', skinDk: '#D99D80', skinLt: '#FBDCC6', cheek: '#EE9A8E', lip: '#D88579',
+  hair: '#2E221D', hairLt: '#4D3A30', brow: '#2A1D18', eyeW: '#FFFDF7', iris: '#6B3A1F',
+  suit: '#D4B68C', suitDk: '#B7966B', suitLt: '#E4CDA7', shirt: '#F8F6F1', shirtDk: '#D9D4CB', tie: '#C3222F', tieDk: '#8E1621',
+  shoe: '#6E3B22', shoeDk: '#4A2515', shoeLt: '#8C5436', button: '#3A2A22', mouth: '#6E1F2E', tongue: '#EE7F8C',
+  glow: '#7FE3FF', glowGold: '#FFD66B', chalk: '#FFFDF4', board: '#23433A', boardDk: '#193029',
+};
+const SAFADI_UNIT = 6.0;    // world units per local unit
+const SF_HIP = -8.0;
+const SF_CHALK = '"Chalkboard SE", "Chalkduster", "Comic Sans MS", "Fredoka", sans-serif';
+
+function safadi(x, y, s, o = {}) {
+  const t = o.t ?? T, A = {}, pw = clamp(o.power || 0);
+  const lw = clamp(s * .15, 1.6, 5.5) / s;
+  X.save();
+  X.translate(x, y); X.scale(s * (o.flip ? -1 : 1), s);
+  const air = o.jump || 0;
+  if (!o.noShadow) { const f = 1 - clamp(air / 22) * .55; ellipse(0, .15, 4.2 * f, .8 * f, { fill: 'rgba(40,20,30,.28)', stroke: null }); }
+  X.translate(0, -air);
+  if (o.rot) { X.translate(0, -12); X.rotate(o.rot); X.translate(0, 12); }
+  if (o.sq) X.scale(1 + o.sq * .55, 1 - o.sq);
+  if (pw > .01) { sfAura(pw, t); sfGlyphs(pw, t, false); }
+
+  withBoil(o.boil ?? .7, () => {
+    const hipY = SF_HIP + (o.dy || 0), lean = o.lean || 0, cl = Math.cos(lean), sl = Math.sin(lean);
+    const tl = (px, py) => [px * cl - py * sl, hipY + px * sl + py * cl];   // torso-local → body-local
+    const br = o.breathe === false ? 0 : wob(t, .22) * .06;
+
+    // ---- legs + shoes ----
+    [[-1, o.footL || [-1.25, -.8]], [1, o.footR || [1.25, -.8]]].forEach(([sd, f]) => {
+      const hp = tl(sd * 1.15, -.2), { joint, end } = ik2(hp, f, 3.75, 3.7, [sd * .15, .1]);
+      sfLimb([hp, joint, end], 2.05, SF.suit, lw);
+      line([[lerp(hp[0], joint[0], .1) + sd * .15, lerp(hp[1], joint[1], .1)], [joint[0] + sd * .12, joint[1]], [end[0] + sd * .1, end[1] - .6]], { stroke: SF.suitDk, lw: lw * .8 });
+      sfShoe(end, sd, lw);
+    });
+
+    // ---- torso: jacket, shirt, tie, vest, lapels ----
+    X.save(); X.translate(0, hipY); X.rotate(lean); X.scale(1 + br * .3, 1 + br);
+    sfJacket(lw);
+    A.chest = toPx(0, -6.5); A.belly = toPx(0, -2.5);
+    shape(rectPts(-.75, -9.4, 1.5, 1.2), { fill: SF.skin, stroke: SF.ink, lw });          // neck
+
+    // ---- head ----
+    X.save(); X.translate(0, -8.9); X.rotate(o.tilt || 0); X.scale(1.1, 1.1); X.translate(0, -5.55);
+    sfHead(o, t, lw, A);
+    X.restore();
+    X.restore();
+
+    // ---- arms (in front of the body) ----
+    [[-1, o.handL || [-4.4, -8.1], o.handPoseL || 'open'], [1, o.handR || [4.4, -8.1], o.handPoseR || 'open']].forEach(([sd, tg, pose]) => {
+      const sh = tl(sd * 2.95, -7.2), { joint, end } = ik2(sh, tg, 3.75, 3.45, [sd * .25, 1]);
+      sfLimb([sh, joint, end], 1.55, SF.suit, lw);
+      line([[sh[0] - sd * .1, sh[1] + .5], [joint[0] - sd * .35, joint[1]]], { stroke: SF.suitDk, lw: lw * .8 });
+      const ang = Math.atan2(end[1] - joint[1], end[0] - joint[0]);
+      if (pw > .01) circle(end[0] + Math.cos(ang) * .6, end[1] + Math.sin(ang) * .6, 2.2, { fill: radGrad(end[0] + Math.cos(ang) * .6, end[1] + Math.sin(ang) * .6, 0, 2.2, [[0, rgba(SF.glow, .55 * pw)], [1, rgba(SF.glow, 0)]]), stroke: null });
+      const tip = sfHand(end, ang, sd, pose, lw, o, pw);
+      A[sd < 0 ? 'handL' : 'handR'] = toPx(end[0] + Math.cos(ang) * .6, end[1] + Math.sin(ang) * .6);
+      if (tip) A.pointerTip = tip;
+    });
+  });
+  if (pw > .01) sfGlyphs(pw, t, true);
+  if ((o.bulb || 0) > .01) sfBulb(clamp(o.bulb), t, lw, A);
+  A.top = toPx(0, -29.5);
+  X.restore();
+  if (o.emote && (o.emoteK ?? 1) > .02) sfEmote(o.emote, A, s, o.emoteK ?? 1, t);
+  return A;
+}
+
+// A limb as one stroked path: ink underlay, then colour. Points are jittered once so the layers stay aligned.
+function sfLimb(pts, w, col, lw) {
+  if (JIT) { const a = JIT / pxScale(); pts = pts.map(p => [p[0] + jit(a), p[1] + jit(a)]); }
+  withBoil(0, () => { line(pts, { stroke: SF.ink, lw: w + lw * 2 }); line(pts, { stroke: col, lw: w }); });
+}
+
+// Brown oxford seen from the front, toes turned slightly out.
+function sfShoe(a, sd, lw) {
+  X.save(); X.translate(a[0] + sd * .1, a[1]); X.scale(sd, 1);
+  shape([[-1.0, .05], [-.95, -.55], [-.4, -.85], [.55, -.8], [1.1, -.35], [1.3, .35], [.95, .9], [-.1, .95], [-.85, .7]], { fill: SF.shoe, stroke: SF.ink, lw, smooth: .8 });
+  shape([[-.55, -.75], [.45, -.72], [.55, -.05], [-.5, -.1]], { fill: SF.shoeDk, stroke: SF.ink, lw: lw * .7, smooth: .5 });
+  [[-.2, -.55], [.2, -.55], [-.2, -.3], [.2, -.3]].forEach(([x, y]) => circle(x, y, .07, { fill: SF.shoeLt, stroke: null }));
+  line([[-.2, -.55], [.2, -.3]], { stroke: SF.shoeLt, lw: lw * .6 }); line([[.2, -.55], [-.2, -.3]], { stroke: SF.shoeLt, lw: lw * .6 });
+  ellipse(.55, .3, .3, .16, { fill: 'rgba(255,230,210,.35)', stroke: null, rot: -.3 });
+  X.restore();
+}
+
+// Jacket, vest, shirt, tie and lapels in torso-local units (origin: hip centre).
+function sfJacket(lw) {
+  const body = [[-3.25, -7.75], [-3.4, -6.2], [-3.05, -3.2], [-2.95, -.9], [-3.05, .45], [-1.2, .6], [-.3, .45], [0, .05], [.3, .45], [1.2, .6], [3.05, .45], [2.95, -.9], [3.05, -3.2], [3.4, -6.2], [3.25, -7.75], [2.2, -8.3], [.85, -8.6], [-.85, -8.6], [-2.2, -8.3]];
+  shape(body, { fill: SF.suit, stroke: SF.ink, lw, smooth: .35 });
+  // side shading
+  X.save(); tracePath(body, true, .35); X.clip();
+  withBoil(0, () => [-1, 1].forEach(sd => shape([[sd * 3.6, -8], [sd * 2.6, -8], [sd * 2.3, .8], [sd * 3.6, .8]], { fill: rgba(SF.suitDk, .35), stroke: null })));
+  X.restore();
+  // the V: shirt, tie, vest
+  const V = [[-.85, -8.6], [.85, -8.6], [0, -3.3]];
+  shape(V, { fill: SF.shirt, stroke: null });
+  shape([[-.32, -8.45], [.32, -8.45], [.22, -7.85], [-.22, -7.85]], { fill: SF.tie, stroke: SF.ink, lw: lw * .8 });
+  shape([[-.22, -7.85], [.22, -7.85], [.45, -5.7], [0, -5.0], [-.45, -5.7]], { fill: SF.tie, stroke: SF.ink, lw: lw * .8 });
+  line([[.05, -7.6], [.2, -5.8]], { stroke: SF.tieDk, lw: lw * .7 });
+  shape([[-.55, -6.95], [-.24, -6.95], [0, -5.15], [.24, -6.95], [.55, -6.95], [0, -3.3]], { fill: SF.suitLt, stroke: SF.ink, lw: lw * .8 });
+  circle(0, -4.45, .13, { fill: SF.button, stroke: null });
+  // shirt collar points
+  [-1, 1].forEach(sd => shape([[sd * .85, -8.62], [sd * .12, -8.5], [sd * .55, -7.85]], { fill: SF.shirt, stroke: SF.ink, lw: lw * .8 }));
+  // notch lapels
+  [-1, 1].forEach(sd => {
+    shape([[sd * .88, -8.62], [sd * 1.4, -8.4], [sd * 1.5, -7.6], [sd * 1.25, -7.45], [sd * 2.05, -7.2], [sd * 1.3, -5.0], [sd * .15, -3.25], [0, -3.3]],
+      { fill: SF.suitLt, stroke: SF.ink, lw });
+  });
+  circle(.12, -3.2, .22, { fill: SF.button, stroke: SF.ink, lw: lw * .6 });
+  // pocket flaps + breast welt
+  [-1, 1].forEach(sd => shape(rectPts(sd * 1.95 - .8, -1.95, 1.6, .5), { fill: SF.suit, stroke: SF.ink, lw: lw * .8 }));
+  line([[1.55, -5.75], [2.45, -5.95]], { stroke: SF.ink, lw: lw * .9 });
+}
+
+function sfHead(o, t, lw, A) {
+  const turn = o.turn || 0, tx = turn * .8;
+  // ears
+  [-1, 1].forEach(sd => {
+    const ex = sd * 3.9 - turn * .45;
+    shape(ellPts(ex, .7, .55, .95, 14), { fill: SF.skin, stroke: SF.ink, lw, smooth: true });
+    line([[ex - sd * .05, .2], [ex + sd * .2, .7], [ex, 1.2]], { stroke: SF.skinDk, lw: lw * .8, smooth: true });
+  });
+  // face
+  const face = [[0, -5.0], [2.8, -4.4], [3.8, -2.2], [3.95, .4], [3.7, 2.6], [2.9, 4.4], [1.5, 5.25], [0, 5.45], [-1.5, 5.25], [-2.9, 4.4], [-3.7, 2.6], [-3.95, .4], [-3.8, -2.2], [-2.8, -4.4]];
+  shape(face, { fill: SF.skin, stroke: SF.ink, lw, smooth: true });
+  X.save(); tracePath(face, true, true); X.clip();
+  withBoil(0, () => {
+    ellipse(0, 4.6, 3.2, 1.3, { fill: rgba(SF.skinDk, .22), stroke: null });          // jaw shade
+    ellipse(-1.2 + tx * .4, -2.4, 1.6, .8, { fill: rgba(SF.skinLt, .5), stroke: null });  // forehead light
+  });
+  X.restore();
+  // hair: side part on screen-left, a flick over the forehead on the right, short sideburns
+  const hair = [[-3.95, .45], [-4.1, -1.6], [-3.8, -3.6], [-2.75, -5.15], [-1.0, -5.85], [.8, -5.9], [2.55, -5.45], [3.65, -4.3], [4.1, -2.4], [3.98, .45], [3.62, .4], [3.45, -1.8], [3.0, -2.85], [2.35, -3.0], [2.05, -2.6], [1.8, -3.15], [.9, -3.3], [-.3, -3.2], [-1.6, -3.25], [-2.8, -2.95], [-3.4, -1.8], [-3.62, .4]]
+    .map(([x, y]) => [x - turn * .35, y]);
+  shape(hair, { fill: SF.hair, stroke: SF.ink, lw, smooth: .45 });
+  withBoil(0, () => {
+    line([[-1.9, -5.25], [-.2, -5.5], [1.6, -5.2]].map(([x, y]) => [x - turn * .35, y]), { stroke: SF.hairLt, lw: lw * 1.6, smooth: true });
+    line([[-2.1, -4.55], [-2.35, -3.6]].map(([x, y]) => [x - turn * .35, y]), { stroke: SF.hairLt, lw: lw * 1.1 });   // the part
+  });
+  // cheeks
+  const bl = o.blush ?? .35;
+  if (bl > .01) [-1, 1].forEach(sd => ellipse(sd * 2.5 + tx * .5, 2.2, .75, .42, { fill: rgba(SF.cheek, .5 * bl), stroke: null }));
+  // eyes + brows
+  const eyeX = [-1.6 + tx, 1.6 + tx];
+  eyeX.forEach((ex, i) => sfEye(ex, .05, o, i === 0, lw, t, 1 - Math.abs(turn) * (turn * (i ? -1 : 1) > 0 ? .25 : 0)));
+  A.eyeL = toPx(eyeX[0], .05); A.eyeR = toPx(eyeX[1], .05);
+  sfBrows(eyeX, o, lw);
+  // nose: a broad soft bulb with nostril wings
+  X.save(); X.translate(tx * 1.1, 0);
+  ellipse(0, 1.75, .78, .62, { fill: SF.skin, stroke: null });
+  line([[-.95, 1.65], [-1.0, 2.05], [-.65, 2.3], [-.3, 2.2]], { stroke: SF.ink, lw, smooth: true });
+  line([[.95, 1.65], [1.0, 2.05], [.65, 2.3], [.3, 2.2]], { stroke: SF.ink, lw, smooth: true });
+  line([[-.3, 2.38], [0, 2.46], [.3, 2.38]], { stroke: SF.skinDk, lw, smooth: true });
+  line([[.25, .1], [.38, 1.0]], { stroke: rgba(SF.skinDk, .8), lw: lw * .9 });
+  circle(-.15, 1.45, .2, { fill: rgba(SF.skinLt, .8), stroke: null });
+  X.restore();
+  // mouth
+  sfMouth(o.mouth || 'smile', tx, lw);
+  A.mouth = toPx(tx, 3.3); A.head = toPx(0, 0);
+}
+
+function sfEye(cx, cy, o, isLeft, lw, t, narrow) {
+  let kind = o.eyes || 'open';
+  if (kind === 'wink') kind = isLeft ? 'open' : 'happy';
+  const rx = .74 * narrow, ry = .5;
+  if (kind === 'happy') return line([[cx - .7, cy + .25], [cx, cy - .35], [cx + .7, cy + .25]], { stroke: SF.ink, lw: lw * 1.8, smooth: true });
+  if (kind === 'closed') return line([[cx - .7, cy], [cx, cy + .3], [cx + .7, cy]], { stroke: SF.ink, lw: lw * 1.8, smooth: true });
+  if (kind === 'squeeze') { const d = isLeft ? 1 : -1; return line([[cx - d * .6, cy - .42], [cx + d * .42, cy], [cx - d * .6, cy + .42]], { stroke: SF.ink, lw: lw * 1.8 }); }
+  const R = kind === 'wide' ? 1.25 : 1, glow = kind === 'glow';
+  const alm = [[cx - rx * R, cy + .05], [cx - rx * .4 * R, cy - ry * R], [cx + rx * .45 * R, cy - ry * R * 1.02], [cx + rx * R, cy], [cx + rx * .4 * R, cy + ry * .8 * R], [cx - rx * .45 * R, cy + ry * .8 * R]];
+  shape(alm, { fill: glow ? '#E9FBFF' : SF.eyeW, stroke: SF.ink, lw, smooth: .8 });
+  const lx = clamp(o.lookX || 0, -1, 1), ly = clamp(o.lookY || 0, -1, 1), ir = kind === 'wide' ? .3 : .36;
+  const ix = cx + lx * .34 * narrow, iy = cy + ly * .18;
+  X.save(); tracePath(alm, true, .8); X.clip();
+  withBoil(0, () => {
+    if (glow) { circle(ix, iy, ir * 1.1, { fill: SF.glow, stroke: null }); circle(ix, iy, ir * .5, { fill: '#FFFFFF', stroke: null }); }
+    else {
+      circle(ix, iy, ir, { fill: SF.iris, stroke: null });
+      circle(ix, iy, ir * .52, { fill: SF.ink, stroke: null });
+      circle(ix - ir * .38, iy - ir * .4, ir * .28, { fill: '#FFFFFF', stroke: null });
+    }
+    // eyelid: auto-blink every ~3.9 s unless o.blink is given; 'narrow' = half-lidded
+    const ph = (t + .6 + (o.blinkSeed || 0)) % 3.9, b = Math.max(o.blink ?? (ph < .16 ? Math.sin(ph / .16 * Math.PI) : 0), kind === 'narrow' ? .45 : 0);
+    if (b > .02) shape(rectPts(cx - 1.2, cy - 1.2, 2.4, .7 + 1.1 * b), { fill: SF.skin, stroke: null });
+    if (b > .02) line([[cx - rx * R, cy - .5 + b], [cx + rx * R, cy - .5 + b]], { stroke: SF.ink, lw: lw * 1.3 });
+  });
+  X.restore();
+  line([[cx - rx * R - .05, cy + .02], [cx - rx * .4 * R, cy - ry * R - .04], [cx + rx * .45 * R, cy - ry * R - .05], [cx + rx * R + .05, cy - .02]], { stroke: SF.ink, lw: lw * 1.6, smooth: .8 });
+  if (glow) circle(cx, cy, 1.1, { fill: radGrad(cx, cy, 0, 1.1, [[0, rgba(SF.glow, .5)], [1, rgba(SF.glow, 0)]]), stroke: null });
+}
+
+// Thick dark tapered brows. quizzical = one up (screen-right), one level; focused = low and flat.
+function sfBrows(eyeX, o, lw) {
+  const kind = o.brows || 'normal';
+  eyeX.forEach((ex, i) => {
+    const sd = i ? 1 : -1;
+    let up = kind === 'up' ? .4 : kind === 'focused' ? -.18 : 0, inner = kind === 'worried' ? -.4 : kind === 'angry' ? .38 : 0;
+    if (kind === 'quizzical') { up = i ? .55 : -.05; inner = i ? -.1 : .15; }
+    const y = -1.05 - up, a = [ex - sd * .75, y + inner], m = [ex + sd * .1, y - .28 + inner * .35], b = [ex + sd * .95, y + .12];
+    shape([a, m, b, [b[0] - sd * .05, b[1] + .12], [m[0], m[1] + .36], [a[0], a[1] + .38]], { fill: SF.brow, stroke: SF.ink, lw: lw * .6, smooth: .6 });
+  });
+}
+
+function sfMouth(kind, tx, lw) {
+  X.save(); X.translate(tx, 1.35);
+  const dark = { fill: SF.mouth, stroke: SF.ink, lw };
+  if (kind === 'smile') {
+    ellipse(0, 2.1, .75, .2, { fill: rgba(SF.lip, .45), stroke: null });
+    line([[-1.5, 1.55], [-.75, 1.85], [0, 1.92], [.75, 1.85], [1.5, 1.55]], { stroke: SF.ink, lw: lw * 1.4, smooth: true });
+  } else if (kind === 'grin' || kind === 'open') {
+    const pts = kind === 'grin' ? [[-1.55, 1.5], [0, 1.65], [1.55, 1.5], [1.05, 2.5], [0, 2.8], [-1.05, 2.5]] : [[-.8, 1.55], [0, 1.45], [.8, 1.55], [.8, 2.3], [0, 2.85], [-.8, 2.3]];
+    X.save(); tracePath(pts, true, .8); X.fillStyle = SF.mouth; X.fill(); X.clip();
+    withBoil(0, () => {
+      shape(rectPts(-1.7, 1.3, 3.4, kind === 'grin' ? .55 : .4), { fill: '#FFFDF7', stroke: null });
+      ellipse(0, 2.8, .8, .45, { fill: SF.tongue, stroke: null });
+    });
+    X.restore();
+    shape(pts, { stroke: SF.ink, lw, smooth: .8 });
+  } else if (kind === 'o') ellipse(0, 2.0, .35, .42, dark);
+  else if (kind === 'O') ellipse(0, 2.15, .62, .78, dark);
+  else if (kind === 'flat') line([[-.9, 1.85], [.9, 1.85]], { stroke: SF.ink, lw: lw * 1.5 });
+  else if (kind === 'frown') line([[-1.3, 2.25], [-.65, 1.8], [0, 1.7], [.65, 1.8], [1.3, 2.25]], { stroke: SF.ink, lw: lw * 1.5, smooth: true });
+  else if (kind === 'smirk') line([[-1.1, 1.85], [0, 1.95], [1.25, 1.45]], { stroke: SF.ink, lw: lw * 1.5, smooth: true });
+  else if (kind === 'wobble') line([[-1.1, 1.95], [-.65, 1.7], [-.2, 2.0], [.2, 1.7], [.65, 2.0], [1.1, 1.75]], { stroke: SF.ink, lw: lw * 1.4, smooth: true });
+  else if (kind === 'teeth') {
+    shape([[-1.2, 1.5], [1.2, 1.5], [1.1, 2.3], [-1.1, 2.3]], { fill: '#FFFDF7', stroke: SF.ink, lw, smooth: .3 });
+    line([[-1.15, 1.9], [1.15, 1.9]], { stroke: SF.ink, lw: lw * .8 });
+    [-.6, 0, .6].forEach(x => line([[x, 1.52], [x, 2.28]], { stroke: SF.ink, lw: lw * .7 }));
+  }
+  X.restore();
+}
+
+// Hand at wrist p, pointing along ang. Returns the pointer tip (screen px) when holding the pointer.
+function sfHand(p, ang, sd, pose, lw, o, pw) {
+  let tip = null;
+  X.save(); X.translate(p[0], p[1]); X.rotate(ang); if (sd < 0) X.scale(1, -1);
+  const ink = { stroke: SF.ink, lw: .38 + lw * 2 }, skin = { stroke: SF.skin, lw: .38 };
+  shape(ellPts(-.05, 0, .3, .66, 12), { fill: SF.shirt, stroke: SF.ink, lw, smooth: true });            // shirt cuff
+  if (pose === 'open' || pose === 'palm' || pose === 'thumb' || pose === 'point') {
+    const f = pose === 'open' ? [[-.25, .8], [-.05, .9], [.15, .86], [.35, .74], [-1.1, .55]]
+      : pose === 'palm' ? [[-.6, .8], [-.22, .92], [.14, .88], [.5, .72], [-1.45, .62]]
+      : pose === 'thumb' ? [[-1.7, .85]] : [[0, 1.25]];
+    const fingers = f.map(([a, l]) => [[.6, 0], [.6 + Math.cos(a) * (.38 + l), Math.sin(a) * (.38 + l)]]);
+    withBoil(0, () => {
+      fingers.forEach(g => line(g, ink)); circle(.6, 0, .6, { stroke: SF.ink, lw: lw * 2 });
+      fingers.forEach(g => line(g, skin)); circle(.6, 0, .6, { fill: SF.skin, stroke: null });
+      if (pose === 'thumb' || pose === 'point') shape(ellPts(.85, .12, .5, .45, 12), { fill: SF.skin, stroke: SF.ink, lw, smooth: true });
+    });
+  } else {        // fist / pointer: a chunky mitten with finger creases
+    shape([[.1, -.55], [.65, -.66], [1.12, -.45], [1.25, 0], [1.12, .48], [.6, .64], [.1, .5]], { fill: SF.skin, stroke: SF.ink, lw, smooth: .9 });
+    [-.2, .1, .38].forEach(y => line([[.84, y], [1.15, y + .03]], { stroke: SF.skinDk, lw: lw * .8 }));
+    if (pose === 'pointer') {
+      X.restore(); X.save(); X.translate(p[0], p[1]);                                    // the stick, in body space
+      const a = o.pointerAng ?? (sd > 0 ? -1.05 : -Math.PI + 1.05), L = o.pointerLen ?? 7.5, c = [Math.cos(ang) * .7, Math.sin(ang) * .7];
+      const e = [c[0] + Math.cos(a) * L, c[1] + Math.sin(a) * L], b0 = [c[0] - Math.cos(a) * .9, c[1] - Math.sin(a) * .9];
+      withBoil(0, () => {
+        line([b0, e], { stroke: SF.ink, lw: .34 + lw * 2 }); line([b0, mixPt(b0, e, .45)], { stroke: '#5B3A2A', lw: .34 }); line([mixPt(b0, e, .45), e], { stroke: '#C9CED3', lw: .22 });
+        if (pw > .01) circle(e[0], e[1], 1.3, { fill: radGrad(e[0], e[1], 0, 1.3, [[0, rgba(SF.glow, .8 * pw)], [1, rgba(SF.glow, 0)]]), stroke: null });
+        circle(e[0], e[1], .28, { fill: SF.tie, stroke: SF.ink, lw });
+      });
+      tip = toPx(e[0], e[1]);
+      shape(ellPts(c[0], c[1], .62, .6, 12), { fill: SF.skin, stroke: SF.ink, lw, smooth: true });     // fingers wrapped over it
+    }
+  }
+  X.restore();
+  return tip;
+}
+
+// ---------- the explanatory powers ----------
+function sfAura(k, t) {
+  X.save();
+  circle(0, -15, 15, { fill: radGrad(0, -15, 2, 15, [[0, rgba(SF.glowGold, .45 * k)], [.5, rgba(SF.glow, .22 * k)], [1, rgba(SF.glow, 0)]]), stroke: null });
+  X.globalCompositeOperation = 'lighter';
+  for (let i = 0; i < 12; i++) {
+    const a = i / 12 * TAU + t * .25, w = .09;
+    shape([[0, -15], [Math.cos(a - w) * 13, -15 + Math.sin(a - w) * 13], [Math.cos(a + w) * 13, -15 + Math.sin(a + w) * 13]], { fill: rgba(SF.glowGold, .045 * k), stroke: null });
+  }
+  X.restore();
+}
+const SF_GLYPHS = ['E=mc²', 'π', '∑', '√x', 'a²+b²', '?→!', '∫', 'Δ', '1+1=2', '∞'];
+function sfGlyphs(k, t, front) {
+  const m = X.getTransform(), sc = pxScale();
+  for (let i = 0; i < SF_GLYPHS.length; i++) {
+    const a = t * .8 + i / SF_GLYPHS.length * TAU, depth = Math.sin(a);
+    if ((depth > 0) !== front) continue;
+    const lx = Math.cos(a) * 8.6, ly = -14.5 + depth * 1.6 + Math.sin(a * 2 + i) * .9 - (i % 3) * 2.2;
+    const px = m.a * lx + m.c * ly + m.e, py = m.b * lx + m.d * ly + m.f, size = sc * (1.25 + .35 * depth) * (.6 + .4 * k);
+    X.save(); X.setTransform(1, 0, 0, 1, 0, 0);
+    X.globalAlpha = k * (front ? .95 : .55); X.font = `700 ${size}px ${SF_CHALK}`; X.textAlign = 'center'; X.textBaseline = 'middle';
+    X.shadowColor = SF.glow; X.shadowBlur = size * .45; X.fillStyle = SF.chalk; X.fillText(SF_GLYPHS[i], px, py);
+    X.restore();
+  }
+}
+function sfBulb(k, t, lw, A) {
+  const p = backOut(k), cx = 0, cy = -33.2;
+  X.save(); X.translate(cx, cy); X.scale(p, p);
+  X.save(); X.globalCompositeOperation = 'lighter';
+  circle(0, 0, 3.4, { fill: radGrad(0, 0, .5, 3.4, [[0, 'rgba(255,230,120,.55)'], [1, 'rgba(255,230,120,0)']]), stroke: null });
+  X.restore();
+  for (let i = 0; i < 8; i++) { const a = -Math.PI / 2 + (i - 3.5) * .42, r0 = 1.9, r1 = 2.6 + .25 * wob(t, 2, i * .2); line([[Math.cos(a) * r0, Math.sin(a) * r0], [Math.cos(a) * r1, Math.sin(a) * r1]], { stroke: '#F2B634', lw: lw * 1.6 }); }
+  shape([[-.55, .95], [-1.25, 0], [-1.3, -.8], [-.7, -1.45], [0, -1.6], [.7, -1.45], [1.3, -.8], [1.25, 0], [.55, .95]], { fill: '#FFE68A', stroke: SF.ink, lw, smooth: .85 });
+  line([[-.3, .9], [-.35, -.2], [0, -.55], [.35, -.2], [.3, .9]], { stroke: '#E0A020', lw: lw * .9, smooth: true });
+  circle(-.55, -.75, .25, { fill: '#FFFFFF', stroke: null });
+  shape(rectPts(-.6, .95, 1.2, .75), { fill: '#AEB5BA', stroke: SF.ink, lw });
+  [1.2, 1.45].forEach(y => line([[-.6, y], [.6, y]], { stroke: SF.ink, lw: lw * .7 }));
+  shape([[-.3, 1.7], [.3, 1.7], [0, 2.05]], { fill: '#6E767B', stroke: SF.ink, lw: lw * .7 });
+  X.restore();
+  A.bulb = toPx(cx, cy);
+}
+
+function sfEmote(kind, A, s, k, t) {
+  const [hx, hy] = A.head, x = hx + s * 5.2, y = hy - s * 6.4, pop = backOut(k);
+  if (kind === 'sweat') {
+    const [sx, sy] = [hx + s * 4.2, hy - s * 2.2 + (1 - k) * s];
+    overlay(() => { X.save(); X.translate(sx, sy); X.scale(pop * s, pop * s); shape([[0, -.9], [.45, .1], [0, .5], [-.45, .1]], { fill: '#8FD3F0', stroke: SF.ink, lwPx: 3, smooth: .7 }); X.restore(); });
+    return;
+  }
+  const txt = { '?': '?', '!': '!', '!?': '!?', music: '♪', heart: '♥' }[kind] ?? kind;
+  const col = kind === 'heart' ? SF.cheek : kind === 'music' ? PAL.blue : PAL.goldLt;
+  overlay(() => {
+    X.save(); X.translate(x, y + wob(t, 1.5) * s * .2); X.rotate(.12 + wob(t, 1.1) * .06); X.scale(pop, pop);
+    const size = s * 3.6; X.font = `${size}px ${FONT_SFX}`; X.textAlign = 'center'; X.textBaseline = 'middle';
+    X.lineJoin = 'round'; X.lineWidth = size * .14; X.strokeStyle = SF.ink; X.strokeText(txt, 0, 0);
+    X.fillStyle = col; X.fillText(txt, 0, 0); X.restore();
+  });
+}
+
+// His floating holographic chalkboard: screen px centre (x, y), width w. k 0..1: pops in (0–.2), then the drawing
+// chalks itself on (.2–1). o: { kind: 'graph' | 'steps' | 'atom' | 'bulb' | 'story', title }
+function safadiBoard(x, y, w, k, t, o = {}) {
+  if (k <= 0) return;
+  const h = w * .62, pop = backOut(seg(k, 0, .2)), d = seg(k, .2, 1), kind = o.kind || 'graph';
+  X.save(); X.translate(x, y + wob(t, .35) * w * .01); X.scale(pop, pop); X.translate(-w / 2, -h / 2);
+  X.save(); X.shadowColor = SF.glow; X.shadowBlur = w * .06;
+  shape([[0, 0], [w, 0], [w, h], [0, h]], { fill: linGrad(0, 0, 0, h, [[0, SF.board], [1, SF.boardDk]]), stroke: SF.glow, lwPx: Math.max(2, w * .012) });
+  X.restore();
+  shape([[w * .03, h * .05], [w * .97, h * .05], [w * .97, h * .95], [w * .03, h * .95]], { fill: null, stroke: rgba(SF.glow, .35), lwPx: 1.5 });
+  const U = w / 100, ch = { stroke: SF.chalk, lwPx: Math.max(2, U * .9) }, part = (pts, a, b) => { const f = seg(d, a, b); if (f > 0) line(f < 1 ? polySlice(pts, 0, f) : pts, ch); };
+  X.save(); X.shadowColor = SF.glow; X.shadowBlur = U * 1.2;
+  const label = (txt, lx, ly, size, a) => { if (d < a) return; X.globalAlpha = seg(d, a, a + .12); X.font = `700 ${size * U}px ${SF_CHALK}`; X.textAlign = 'center'; X.textBaseline = 'middle'; X.fillStyle = SF.chalk; X.fillText(txt, lx * U, ly * U); X.globalAlpha = 1; };
+  if (o.title) label(o.title, 50, 9, 7, 0);
+  const top = o.title ? 17 : 8;
+  if (kind === 'graph') {
+    part([[12 * U, top * U], [12 * U, 56 * U], [90 * U, 56 * U]], 0, .3);
+    const c = []; for (let i = 0; i <= 30; i++) { const u = i / 30; c.push([(14 + u * 72) * U, (52 - 34 * u * u - 4 * Math.sin(u * 9) * (1 - u)) * U]); } part(c, .3, .85);
+    if (d > .85) circle(86 * U, 18 * U, 2 * U * backOut(seg(d, .85, 1)), { fill: SF.glowGold, stroke: SF.chalk, lwPx: 1.5 });
+  } else if (kind === 'steps') {
+    [0, 1, 2].forEach(i => {
+      const bx = (8 + i * 32) * U, a = i * .3;
+      part([[bx, (top + 14) * U], [bx + 22 * U, (top + 14) * U], [bx + 22 * U, (top + 34) * U], [bx, (top + 34) * U], [bx, (top + 14) * U]], a, a + .15);
+      label(String(i + 1), 19 + i * 32, top + 24, 11, a + .12);
+      if (i < 2) part([[bx + 24 * U, (top + 24) * U], [bx + 30 * U, (top + 24) * U], [bx + 27 * U, (top + 21) * U], [bx + 30 * U, (top + 24) * U], [bx + 27 * U, (top + 27) * U]], a + .15, a + .3);
+    });
+  } else if (kind === 'atom') {
+    const cx = 50 * U, cy = (top + 24) * U;
+    [0, 1, 2].forEach(i => { const e = ellPts(cx, cy, 30 * U, 9 * U, 40, i * Math.PI / 3); part([...e, e[0]], i * .22, i * .22 + .3); });
+    if (d > .3) circle(cx, cy, 4 * U, { fill: SF.glowGold, stroke: SF.chalk, lwPx: 1.5 });
+    if (d > .8) [0, 1, 2].forEach(i => { const a = t * 3 + i * 2.1, r = i * Math.PI / 3, ex = Math.cos(a) * 30 * U, ey = Math.sin(a) * 9 * U; circle(cx + ex * Math.cos(r) - ey * Math.sin(r), cy + ex * Math.sin(r) + ey * Math.cos(r), 1.8 * U, { fill: SF.glow, stroke: null }); });
+  } else if (kind === 'bulb') {
+    const cx = 50 * U, cy = (top + 20) * U, R = 15 * U, b = []; for (let i = 0; i <= 30; i++) { const a = Math.PI * .75 + i / 30 * Math.PI * 1.5; b.push([cx + Math.cos(a) * R, cy + Math.sin(a) * R]); }
+    part([[cx - 7 * U, cy + 20 * U], ...b, [cx + 7 * U, cy + 20 * U], [cx - 7 * U, cy + 20 * U]], 0, .5);
+    part([[cx - 6 * U, cy + 24 * U], [cx + 6 * U, cy + 24 * U]], .5, .6);
+    for (let i = 0; i < 7; i++) { const a = -Math.PI / 2 + (i - 3) * .45; part([[cx + Math.cos(a) * 20 * U, cy + Math.sin(a) * 20 * U], [cx + Math.cos(a) * 27 * U, cy + Math.sin(a) * 27 * U]], .6 + i * .05, .7 + i * .05); }
+  } else if (kind === 'story') {
+    const cx = 50 * U, cy = (top + 26) * U;
+    part([[cx, cy - 16 * U], [cx - 16 * U, cy - 20 * U], [cx - 34 * U, cy - 16 * U], [cx - 34 * U, cy + 14 * U], [cx - 16 * U, cy + 10 * U], [cx, cy + 14 * U], [cx, cy - 16 * U]], 0, .35);
+    part([[cx, cy - 16 * U], [cx + 16 * U, cy - 20 * U], [cx + 34 * U, cy - 16 * U], [cx + 34 * U, cy + 14 * U], [cx + 16 * U, cy + 10 * U], [cx, cy + 14 * U]], .2, .5);
+    for (let i = 0; i < 4; i++) { part([[cx - 29 * U, cy + (-10 + i * 6) * U], [cx - 6 * U, cy + (-10 + i * 6) * U]], .5 + i * .06, .6 + i * .06); part([[cx + 6 * U, cy + (-10 + i * 6) * U], [cx + 29 * U, cy + (-10 + i * 6) * U]], .62 + i * .06, .72 + i * .06); }
+    if (d > .9) [[-42, -8], [42, -8], [42, 9]].forEach(([dx, dy], i) => shape(starPts(cx + dx * U, cy + dy * U, 3 * U * backOut(seg(d, .9 + i * .03, 1)), .45, 5), { fill: SF.glowGold, stroke: SF.chalk, lwPx: 1.2 }));
+  } else if (kind === 'plate') {                                   // the healthy plate: veggies, fruit, grains, protein
+    const cx = 50 * U, cy = (top + 23) * U, R = 21 * U, pop = i => backOut(seg(d, .35 + i * .14, .5 + i * .14));
+    const ring = ellPts(cx, cy, R, R * .78, 40); part([...ring, ring[0]], 0, .2);
+    part([[cx - R, cy], [cx + R, cy]], .2, .28); part([[cx, cy - R * .78], [cx, cy + R * .78]], .26, .34);
+    const at = (dx, dy, i, fn) => { const k = pop(i); if (k <= 0) return; X.save(); X.translate(cx + dx * U, cy + dy * U); X.scale(k * U, k * U); fn(); X.restore(); };
+    const o2 = { stroke: SF.ink, lwPx: 1.5 };
+    at(-10, -8, 0, () => { line([[0, 5], [0, 0]], { stroke: '#7FB069', lwPx: Math.max(2, U * 1.2) }); [[-3, -1], [0, -3], [3, -1], [-1.5, -3.5], [1.8, -3.2]].forEach(([x, y]) => circle(x, y, 2.6, { fill: '#5E9E4A', ...o2 })); });
+    at(10, -7, 1, () => { circle(0, 0, 5, { fill: '#D9443A', ...o2 }); line([[0, -4.6], [.6, -7]], { stroke: '#6B4A2A', lwPx: 2 }); ellipse(2.2, -6.2, 2, 1, { fill: '#7FB069', stroke: SF.ink, lwPx: 1, rot: -.4 }); circle(-1.8, -1.8, 1.1, { fill: 'rgba(255,255,255,.6)', stroke: null }); });
+    at(-10, 8, 2, () => { shape([[-5, 4], [-5, -2], [-4, -5], [0, -6], [4, -5], [5, -2], [5, 4]], { fill: '#E8B96A', ...o2, smooth: .4 }); shape([[-3.6, 3], [-3.6, -1.6], [0, -4.2], [3.6, -1.6], [3.6, 3]], { fill: '#F6DDA8', stroke: null, smooth: .4 }); });
+    at(10, 8, 3, () => { ellipse(0, 0, 6, 4.5, { fill: '#FFFDF4', ...o2 }); circle(.5, -.3, 2.2, { fill: '#F5B82E', ...o2 }); });
+    [['veggies', 14, top + 15], ['fruit', 86, top + 15], ['grains', 14, top + 31], ['protein', 86, top + 31]].forEach(([w, lx, ly], i) => label(w, lx, ly, 4.6, .45 + i * .14));
+  } else if (kind === 'crash') {                                   // sugar: a spike and a crash · veggies: steady energy
+    part([[10 * U, top * U], [10 * U, 56 * U], [92 * U, 56 * U]], 0, .15);
+    const candy = [], veg = [];
+    for (let i = 0; i <= 40; i++) { const u = i / 40; candy.push([(12 + u * 78) * U, (50 - 34 * Math.exp(-((u - .28) ** 2) / .012) + (u > .28 ? 10 * seg(u, .28, .6) : 0)) * U]); veg.push([(12 + u * 78) * U, (46 - 16 * (1 - Math.exp(-u * 3))) * U]); }
+    const f1 = seg(d, .15, .6), f2 = seg(d, .55, .95);
+    X.save(); X.shadowColor = '#FF8FB8';
+    if (f1 > 0) line(f1 < 1 ? polySlice(candy, 0, f1) : candy, { stroke: '#FF9BC4', lwPx: Math.max(2, U * 1.1) });
+    X.restore();
+    if (f2 > 0) line(f2 < 1 ? polySlice(veg, 0, f2) : veg, { stroke: '#9FE08A', lwPx: Math.max(2, U * 1.1) });
+    label('ZOOM!', 34, top + 1, 5.5, .3); label('CRASH', 62, 62 - 4, 5, .55); label('veggies: steady', 76, 34, 4.2, .9);
+  } else if (kind === 'passing') {                                 // three players in a triangle, passes round it
+    const P3 = [[50, top + 6], [20, top + 40], [80, top + 40]].map(([px, py]) => [px * U, py * U]);
+    P3.forEach(([px, py], i) => { const k = backOut(seg(d, i * .1, i * .1 + .15)); if (k > 0) circle(px, py, 4.5 * U * k, { fill: null, stroke: SF.chalk, lwPx: Math.max(2, U * .9) }); });
+    [[0, 1], [1, 2], [2, 0]].forEach(([a, b], i) => {
+      const [ax, ay] = P3[a], [bx, by] = P3[b], dx = bx - ax, dy = by - ay, L = Math.hypot(dx, dy), ux = dx / L, uy = dy / L;
+      const p0 = [ax + ux * 6.5 * U, ay + uy * 6.5 * U], p1 = [bx - ux * 6.5 * U, by - uy * 6.5 * U], a0 = .3 + i * .2;
+      X.save(); X.setLineDash([2.2 * U, 1.6 * U]); part([p0, p1], a0, a0 + .15); X.restore();
+      part([[p1[0] - ux * 3 * U - uy * 2 * U, p1[1] - uy * 3 * U + ux * 2 * U], p1, [p1[0] - ux * 3 * U + uy * 2 * U, p1[1] - uy * 3 * U - ux * 2 * U]], a0 + .15, a0 + .2);
+    });
+    if (d > .9) { const u = frac(t * .6), e = Math.floor(u * 3), f = frac(u * 3), [ax, ay] = P3[e], [bx, by] = P3[(e + 1) % 3];
+      circle(lerp(ax, bx, f), lerp(ay, by, f), 2 * U, { fill: SF.glowGold, stroke: SF.chalk, lwPx: 1.5 }); }
+  } else if (kind === 'dribbling') {                               // a zig-zag through four cones
+    const cones = [22, 40, 58, 76], path = [];
+    cones.forEach((cx, i) => { const k = backOut(seg(d, i * .07, i * .07 + .12)); if (k > 0) shape([[cx * U, (top + 34 - 7 * k) * U], [(cx + 3.5) * U, (top + 34) * U], [(cx - 3.5) * U, (top + 34) * U]], { fill: '#FF9A4D', stroke: SF.chalk, lwPx: 1.5 }); });
+    for (let i = 0; i <= 40; i++) { const u = i / 40; path.push([(10 + u * 82) * U, (top + 31 + 13 * Math.sin(u * Math.PI * 4.5 + Math.PI)) * U]); }
+    part(path, .3, .85);
+    if (d > .85) { const f = frac(t * .35), [bx, by] = polyAt(path, f); circle(bx, by, 2 * U, { fill: SF.glowGold, stroke: SF.chalk, lwPx: 1.5 }); }
+    label('head up!', 50, top + 6, 5, .85);
+  } else if (kind === 'shooting') {                                // a goal, the keeper, and the angle into the top corner
+    const gx0 = 56 * U, gx1 = 92 * U, gy0 = (top + 6) * U, gy1 = (top + 30) * U, sp = [14 * U, (top + 40) * U];
+    part([[gx0, gy1], [gx0, gy0], [gx1, gy0], [gx1, gy1]], 0, .25);
+    for (let i = 1; i < 6; i++) part([[gx0 + (gx1 - gx0) * i / 6, gy0], [gx0 + (gx1 - gx0) * i / 6, gy1]], .2 + i * .02, .26 + i * .02);
+    if (d > .3) { const k = backOut(seg(d, .3, .42)); circle(74 * U, (top + 24) * U, 3 * U * k, { fill: null, stroke: SF.chalk, lwPx: Math.max(2, U * .9) }); }
+    const arc = []; for (let i = 0; i <= 30; i++) { const u = i / 30; arc.push([lerp(sp[0], gx1 - 4 * U, u), lerp(sp[1], gy0 + 4 * U, u) - 12 * U * Math.sin(Math.PI * u)]); }
+    X.save(); X.setLineDash([2.2 * U, 1.6 * U]); X.shadowColor = SF.glowGold; part(arc, .45, .8); X.restore();
+    part([[sp[0] + 16 * U, sp[1]], sp], .78, .85);
+    const ang = []; for (let i = 0; i <= 10; i++) { const a = -i / 10 * .62; ang.push([sp[0] + Math.cos(a) * 10 * U, sp[1] + Math.sin(a) * 10 * U]); } part(ang, .82, .92);
+    if (d > .3) circle(sp[0], sp[1], 2 * U, { fill: SF.glowGold, stroke: SF.chalk, lwPx: 1.5 });
+    label('θ', 30, top + 36, 5.5, .9);
+  } else if (kind === 'teamwork') {                                // a ring of stick players joined by arrows, a heart in the middle
+    const cx = 50 * U, cy = (top + 24) * U, R = 17 * U, n = 5;
+    for (let i = 0; i < n; i++) {
+      const a = -Math.PI / 2 + i * TAU / n, px = cx + Math.cos(a) * R * 1.5, py = cy + Math.sin(a) * R, a0 = i * .1;
+      part([[px, py - 3 * U], [px, py + 2 * U]], a0, a0 + .08); part([[px - 2.5 * U, py - 1 * U], [px + 2.5 * U, py - 1 * U]], a0 + .04, a0 + .1);
+      part([[px, py + 2 * U], [px - 2 * U, py + 5.5 * U]], a0 + .06, a0 + .12); part([[px, py + 2 * U], [px + 2 * U, py + 5.5 * U]], a0 + .06, a0 + .12);
+      if (d > a0 + .03) circle(px, py - 4.8 * U, 1.8 * U, { fill: null, stroke: SF.chalk, lwPx: Math.max(2, U * .9) });
+      const b = a + TAU / n, m0 = a + .3, m1 = b - .3, arr = [];
+      for (let j = 0; j <= 8; j++) { const aa = lerp(m0, m1, j / 8); arr.push([cx + Math.cos(aa) * R * 1.5, cy + Math.sin(aa) * R]); }
+      part(arr, .5 + i * .06, .58 + i * .06);
+    }
+    if (d > .88) { const k = backOut(seg(d, .88, 1)) * (1 + .08 * Math.sin(t * 6)); X.save(); X.translate(cx, cy); X.scale(4 * U * k, 4 * U * k);
+      shape([[0, .9], [-1.1, -.1], [-1.05, -.75], [-.5, -1.05], [0, -.6], [.5, -1.05], [1.05, -.75], [1.1, -.1]], { fill: '#FF6F8E', stroke: SF.chalk, lwPx: 1.5, smooth: .5 }); X.restore(); }
+  }
+  X.restore();
+  X.restore();
+}
+
+// Walk cycle: pose options for safadi() at walk phase p (steps; one step per 1.0) with amount k (0 = standing, 1 = full stride).
+// Tie p to the distance travelled (p = distance / stride) so the feet never slide. Measured, professorial stride.
+function safadiWalk(p, k = 1) {
+  const sn = Math.sin(p * Math.PI), a = Math.abs(sn);
+  return {
+    footL: [-1.25 + .12 * k * sn, -.8 - 1.1 * k * Math.max(0, sn)], footR: [1.25 + .12 * k * sn, -.8 - 1.1 * k * Math.max(0, -sn)],
+    dy: -.22 * k * a + .1 * k, tilt: .018 * k * sn, lean: .012 * k * sn,
+    handL: [-4.35 + .25 * k * a, -8.1 - .75 * k * sn], handR: [4.35 - .25 * k * a, -8.1 + .75 * k * sn],
+  };
+}
+
+// Registration for the studio's character browser (poses are also its model sheet).
+const sfTalk = t => lipFlap(t, frac(t * .5) < .7, 'smile');
+CHARACTERS.safadi = {
+  draw: safadi, unit: SAFADI_UNIT, palette: SF, size: [13, 31],
+  poses: {
+    'rest': (x, y, s, t) => safadi(x, y, s, {}),
+    'talk': (x, y, s, t) => safadi(x, y, s, { mouth: sfTalk(t), brows: 'up', handR: [5.3, -12.6], handPoseR: 'palm', turn: .2, tilt: .03 * wob(t, .7) }),
+    'explain': (x, y, s, t) => safadi(x, y, s, { mouth: sfTalk(t), brows: 'up', handL: [-5.3 - .3 * wob(t, 1.2), -12.4], handR: [5.3 + .3 * wob(t, 1.2, .5), -12.4], handPoseL: 'palm', handPoseR: 'palm', lean: .03 }),
+    'point up': (x, y, s, t) => safadi(x, y, s, { handR: [5.8, -21.4], handPoseR: 'point', mouth: 'open', brows: 'up', lookX: .5, lookY: -.8, tilt: -.05 }),
+    'pointer': (x, y, s, t) => safadi(x, y, s, { handR: [4.4, -12.2], handPoseR: 'pointer', pointerAng: -.95 + .08 * wob(t, .8), mouth: 'smile', brows: 'up', lookX: .6, lookY: -.5 }),
+    'thinking': (x, y, s, t) => safadi(x, y, s, { handR: [.8, -16.1], handPoseR: 'fist', handL: [.6, -10.6], handPoseL: 'fist', brows: 'quizzical', mouth: 'flat', lookX: -.6, lookY: -.7, eyes: 'narrow', tilt: -.06 }),
+    'idea!': (x, y, s, t) => safadi(x, y, s, { bulb: 1, eyes: 'wide', brows: 'up', mouth: 'grin', handR: [5.8, -21.4], handPoseR: 'point', dy: -.2 }),
+    'super explain': (x, y, s, t) => {
+      const A = safadi(x, y, s, { power: 1, eyes: 'glow', brows: 'up', mouth: 'grin', handL: [-5.6, -14.2], handR: [5.6, -14.2], handPoseL: 'palm', handPoseR: 'palm', jump: .6 + .4 * wob(t, .6) });
+      return A;
+    },
+    'surprised': (x, y, s, t) => safadi(x, y, s, { eyes: 'wide', mouth: 'O', brows: 'up', handL: [-4.6, -15.6], handR: [4.6, -15.6], handPoseL: 'palm', handPoseR: 'palm', dy: -.2 }),
+    'laugh': (x, y, s, t) => { const k = Math.abs(Math.sin(t * 13)); safadi(x, y, s, { handL: [-2.2, -9.5], handR: [2.2, -9.5], handPoseL: 'fist', handPoseR: 'fist', eyes: 'squeeze', mouth: k > .5 ? 'grin' : 'open', dy: .4 * k, tilt: -.08 }); },
+    'wink': (x, y, s, t) => safadi(x, y, s, { eyes: 'wink', mouth: 'grin', handR: [5.2, -13.6], handPoseR: 'thumb', brows: 'up' }),
+    'walk': (x, y, s, t) => safadi(x, y, s, { ...safadiWalk(t * 1.6), mouth: 'smile', turn: -.15 }),
+    'shrug': (x, y, s, t) => safadi(x, y, s, { handL: [-5.0, -13.4], handR: [5.0, -13.4], handPoseL: 'palm', handPoseR: 'palm', brows: 'worried', mouth: 'smirk', tilt: .12, emote: '?', emoteK: 1 }),
+  },
+};
+
+// Source: ../../characters/sami/sami.js
+// characters/sami/sami.js: Professor Sami, the professor with super explanatory powers (see reference.jpg, README.md).
+//
+// sami(x, y, s, o) → anchors
+//   (x, y) screen point on the floor between the feet · s = px per local unit. He is ~29.5 units tall (feet to hair top),
+//   so in a perspective set use s = SAMI_UNIT * P.k(Z) (he is ~177 world units tall).
+//
+// Local units: feet y = 0, y points DOWN (up is negative). Hips −8.0, shoulders −15.4, chin −17.0, head centre −23.0, hair top ≈ −29.5.
+// A big bobble head (≈ 40% of his height) on a tan three-piece suit, white shirt, red tie, brown oxfords. Front view.
+//
+// Pose     dy (hip drop; + = crouch) · lean (torso, rad) · tilt (head, rad) · turn (head −1..1) · rot (whole body, about the belly)
+//          jump (units off the floor) · sq (squash; negative stretches) · flip · breathe (default on)
+// Limbs    handL / handR: [x, y] wrist targets in local units (L = screen-left) · footL / footR: ankle targets (rest [∓1.25, −0.8])
+//          handPoseL / handPoseR: 'open' | 'palm' (spread, presenting) | 'point' (index finger) | 'fist' | 'thumb' | 'pointer' | 'stethoscope'
+//          pointerAng (screen angle of the pointer stick, rad; default up and outward) · pointerLen (units, default 7.5)
+// Face     eyes: open | wide | happy | closed | wink | squeeze | narrow | glow · lookX / lookY (−1..1) · blink (0..1, auto if unset)
+//          brows: normal | up | worried | angry | quizzical | focused · mouth: smile | grin | open | o | O | flat | frown | smirk | teeth | wobble
+//          blush (0..1)
+// Powers   power (0..1): the explanatory aura: golden-cyan glow, rays, glowing hands and a ring of chalk formulas orbiting him
+//          bulb (0..1): an idea light bulb pops on above his head
+// Extras   emote: '?' | '!' | 'sweat' | 'music' | 'heart' with emoteK (0..1 pop) · boil (px)
+//
+// Returns anchors in screen px: { head, mouth, top, eyeL, eyeR, chest, belly, handL, handR, pointerTip, stethoscope, bulb }
+//
+// Also: samiBoard(x, y, w, k, t, { kind, title }): his floating holographic chalkboard (screen px; k 0..1 = appear + draw).
+//   kind: 'graph' | 'steps' | 'atom' | 'bulb' | 'story' | 'plate' (healthy plate) | 'crash' (sugar spike vs steady veggies).
+//   samiWalk(p, k): walk-cycle pose options (p = steps travelled, k = stride amount).
+
+const SM = {
+  ink: '#3B2530', skin: '#F3C6A8', skinDk: '#D99D80', skinLt: '#FBDCC6', cheek: '#EE9A8E', lip: '#D88579',
+  hair: '#2E221D', hairLt: '#4D3A30', brow: '#2A1D18', eyeW: '#FFFDF7', iris: '#6B3A1F',
+  suit: '#FDFDFD', suitDk: '#E8E8E8', suitLt: '#FFFFFF', shirt: '#4C86A8', shirtDk: '#3A6B88', tie: '#2C5268', tieDk: '#1E3B4D',
+  shoe: '#F0F0F0', shoeDk: '#D0D0D0', shoeLt: '#FFFFFF', button: '#3A2A22', mouth: '#6E1F2E', tongue: '#EE7F8C',
+  glow: '#8AE5B3', glowGold: '#3ED982', chalk: '#E8FFF1', board: '#1A4D33', boardDk: '#0D2B1B',
+};
+const SAMI_UNIT = 6.0;    // world units per local unit
+const SM_HIP = -8.0;
+const SM_CHALK = '"Chalkboard SE", "Chalkduster", "Comic Sans MS", "Fredoka", sans-serif';
+
+function sami(x, y, s, o = {}) {
+  const t = o.t ?? T, A = {}, pw = clamp(o.power || 0);
+  const lw = clamp(s * .15, 1.6, 5.5) / s;
+  X.save();
+  X.translate(x, y); X.scale(s * (o.flip ? -1 : 1), s);
+  const air = o.jump || 0;
+  if (!o.noShadow) { const f = 1 - clamp(air / 22) * .55; ellipse(0, .15, 4.2 * f, .8 * f, { fill: 'rgba(40,20,30,.28)', stroke: null }); }
+  X.translate(0, -air);
+  if (o.rot) { X.translate(0, -12); X.rotate(o.rot); X.translate(0, 12); }
+  if (o.sq) X.scale(1 + o.sq * .55, 1 - o.sq);
+  if (pw > .01) { smAura(pw, t); smGlyphs(pw, t, false); }
+
+  withBoil(o.boil ?? .7, () => {
+    const hipY = SM_HIP + (o.dy || 0), lean = o.lean || 0, cl = Math.cos(lean), sl = Math.sin(lean);
+    const tl = (px, py) => [px * cl - py * sl, hipY + px * sl + py * cl];   // torso-local → body-local
+    const br = o.breathe === false ? 0 : wob(t, .22) * .06;
+    const arms = [[-1, o.handL || [-4.4, -8.1], o.handPoseL || 'open'], [1, o.handR || [4.4, -8.1], o.handPoseR || 'open']].map(([sd, tg, pose]) => {
+      const sh = tl(sd * 2.95, -7.2), { joint, end } = ik2(sh, tg, 3.75, 3.45, [sd * .25, 1]);
+      const ang = Math.atan2(end[1] - joint[1], end[0] - joint[0]);
+      return { sd, pose, sh, joint, end, ang };
+    });
+    const held = arms.find(a => a.pose === 'stethoscope');
+    let chestPiece = [1.95, -3.6];
+    if (held) {
+      const px = held.end[0] + Math.cos(held.ang) * .7 + held.sd * .65;
+      const py = held.end[1] + Math.sin(held.ang) * .7 - hipY;
+      chestPiece = [(px * cl + py * sl) / (1 + br * .3), (-px * sl + py * cl) / (1 + br)];
+    }
+
+    // ---- legs + shoes ----
+    [[-1, o.footL || [-1.25, -.8]], [1, o.footR || [1.25, -.8]]].forEach(([sd, f]) => {
+      const hp = tl(sd * 1.15, -.2), { joint, end } = ik2(hp, f, 3.75, 3.7, [sd * .15, .1]);
+      smLimb([hp, joint, end], 2.05, SM.suit, lw);
+      line([[lerp(hp[0], joint[0], .1) + sd * .15, lerp(hp[1], joint[1], .1)], [joint[0] + sd * .12, joint[1]], [end[0] + sd * .1, end[1] - .6]], { stroke: SM.suitDk, lw: lw * .8 });
+      smShoe(end, sd, lw);
+    });
+
+    // ---- torso: jacket, shirt, tie, vest, lapels ----
+    X.save(); X.translate(0, hipY); X.rotate(lean); X.scale(1 + br * .3, 1 + br);
+    smJacket(lw);
+    A.chest = toPx(0, -6.5); A.belly = toPx(0, -2.5);
+    shape(rectPts(-.75, -9.4, 1.5, 1.2), { fill: SM.skin, stroke: SM.ink, lw });          // neck
+
+    // ---- head ----
+    X.save(); X.translate(0, -8.9); X.rotate(o.tilt || 0); X.scale(1.1, 1.1); X.translate(0, -5.55);
+    smHead(o, t, lw, A);
+    X.restore();
+    smStethoscope(lw, chestPiece, !!held);
+    A.stethoscope = toPx(...chestPiece);
+    X.restore();
+
+    // ---- arms (in front of the body) ----
+    arms.forEach(({ sd, pose, sh, joint, end, ang }) => {
+      smLimb([sh, joint, end], 1.55, SM.suit, lw);
+      line([[sh[0] - sd * .1, sh[1] + .5], [joint[0] - sd * .35, joint[1]]], { stroke: SM.suitDk, lw: lw * .8 });
+      if (pw > .01) circle(end[0] + Math.cos(ang) * .6, end[1] + Math.sin(ang) * .6, 2.2, { fill: radGrad(end[0] + Math.cos(ang) * .6, end[1] + Math.sin(ang) * .6, 0, 2.2, [[0, rgba(SM.glow, .55 * pw)], [1, rgba(SM.glow, 0)]]), stroke: null });
+      const tip = smHand(end, ang, sd, pose, lw, o, pw);
+      A[sd < 0 ? 'handL' : 'handR'] = toPx(end[0] + Math.cos(ang) * .6, end[1] + Math.sin(ang) * .6);
+      if (tip) A.pointerTip = tip;
+      if (tip && pose === 'stethoscope') A.stethoscope = tip;
+    });
+  });
+  if (pw > .01) smGlyphs(pw, t, true);
+  if ((o.bulb || 0) > .01) smBulb(clamp(o.bulb), t, lw, A);
+  A.top = toPx(0, -29.5);
+  X.restore();
+  if (o.emote && (o.emoteK ?? 1) > .02) smEmote(o.emote, A, s, o.emoteK ?? 1, t);
+  return A;
+}
+
+// A limb as one stroked path: ink underlay, then colour. Points are jittered once so the layers stay aligned.
+function smLimb(pts, w, col, lw) {
+  if (JIT) { const a = JIT / pxScale(); pts = pts.map(p => [p[0] + jit(a), p[1] + jit(a)]); }
+  withBoil(0, () => { line(pts, { stroke: SM.ink, lw: w + lw * 2 }); line(pts, { stroke: col, lw: w }); });
+}
+
+// Brown oxford seen from the front, toes turned slightly out.
+function smShoe(a, sd, lw) {
+  X.save(); X.translate(a[0] + sd * .1, a[1]); X.scale(sd, 1);
+  shape([[-1.0, .05], [-.95, -.55], [-.4, -.85], [.55, -.8], [1.1, -.35], [1.3, .35], [.95, .9], [-.1, .95], [-.85, .7]], { fill: SM.shoe, stroke: SM.ink, lw, smooth: .8 });
+  shape([[-.55, -.75], [.45, -.72], [.55, -.05], [-.5, -.1]], { fill: SM.shoeDk, stroke: SM.ink, lw: lw * .7, smooth: .5 });
+  [[-.2, -.55], [.2, -.55], [-.2, -.3], [.2, -.3]].forEach(([x, y]) => circle(x, y, .07, { fill: SM.shoeLt, stroke: null }));
+  line([[-.2, -.55], [.2, -.3]], { stroke: SM.shoeLt, lw: lw * .6 }); line([[.2, -.55], [-.2, -.3]], { stroke: SM.shoeLt, lw: lw * .6 });
+  ellipse(.55, .3, .3, .16, { fill: 'rgba(255,230,210,.35)', stroke: null, rot: -.3 });
+  X.restore();
+}
+
+// Jacket, vest, shirt, tie and lapels in torso-local units (origin: hip centre).
+function smJacket(lw) {
+  const body = [[-3.25, -7.75], [-3.4, -6.2], [-3.05, -3.2], [-2.95, -.9], [-3.05, .45], [-1.2, .6], [-.3, .45], [0, .05], [.3, .45], [1.2, .6], [3.05, .45], [2.95, -.9], [3.05, -3.2], [3.4, -6.2], [3.25, -7.75], [2.2, -8.3], [.85, -8.6], [-.85, -8.6], [-2.2, -8.3]];
+  shape(body, { fill: SM.suit, stroke: SM.ink, lw, smooth: .35 });
+  // side shading
+  X.save(); tracePath(body, true, .35); X.clip();
+  withBoil(0, () => [-1, 1].forEach(sd => shape([[sd * 3.6, -8], [sd * 2.6, -8], [sd * 2.3, .8], [sd * 3.6, .8]], { fill: rgba(SM.suitDk, .35), stroke: null })));
+  X.restore();
+  // the V: shirt, tie, vest
+  const V = [[-.85, -8.6], [.85, -8.6], [0, -3.3]];
+  shape(V, { fill: SM.shirt, stroke: null });
+  shape([[-.32, -8.45], [.32, -8.45], [.22, -7.85], [-.22, -7.85]], { fill: SM.tie, stroke: SM.ink, lw: lw * .8 });
+  shape([[-.22, -7.85], [.22, -7.85], [.45, -5.7], [0, -5.0], [-.45, -5.7]], { fill: SM.tie, stroke: SM.ink, lw: lw * .8 });
+  line([[.05, -7.6], [.2, -5.8]], { stroke: SM.tieDk, lw: lw * .7 });
+  shape([[-.55, -6.95], [-.24, -6.95], [0, -5.15], [.24, -6.95], [.55, -6.95], [0, -3.3]], { fill: SM.suitLt, stroke: SM.ink, lw: lw * .8 });
+  circle(0, -4.45, .13, { fill: SM.button, stroke: null });
+  // shirt collar points
+  [-1, 1].forEach(sd => shape([[sd * .85, -8.62], [sd * .12, -8.5], [sd * .55, -7.85]], { fill: SM.shirt, stroke: SM.ink, lw: lw * .8 }));
+  // notch lapels
+  [-1, 1].forEach(sd => {
+    shape([[sd * .88, -8.62], [sd * 1.4, -8.4], [sd * 1.5, -7.6], [sd * 1.25, -7.45], [sd * 2.05, -7.2], [sd * 1.3, -5.0], [sd * .15, -3.25], [0, -3.3]],
+      { fill: SM.suitLt, stroke: SM.ink, lw });
+  });
+  circle(.12, -3.2, .22, { fill: SM.button, stroke: SM.ink, lw: lw * .6 });
+  // pocket flaps + breast welt
+  [-1, 1].forEach(sd => shape(rectPts(sd * 1.95 - .8, -1.95, 1.6, .5), { fill: SM.suit, stroke: SM.ink, lw: lw * .8 }));
+  line([[1.55, -5.75], [2.45, -5.95]], { stroke: SM.ink, lw: lw * .9 });
+}
+
+// Neck earpieces join a rubber Y-tube; the chest piece rests on the coat or follows the gripping hand.
+function smStethoscope(lw, chestPiece, held) {
+  withBoil(0, () => {
+    [-1, 1].forEach(sd => {
+      const metal = [[sd * 1.05, -8.35], [sd * 1.5, -8.05], [sd * 1.65, -7.15]];
+      line(metal, { stroke: SM.ink, lw: .24 + lw * 2, smooth: true });
+      line(metal, { stroke: '#CBD5E1', lw: .24, smooth: true });
+      ellipse(sd * 1.05, -8.35, .22, .3, { fill: '#334155', stroke: SM.ink, lw: lw * .6 });
+    });
+    const fork = [[-1.65, -7.15], [-1.55, -5.95], [0, -4.95], [1.55, -5.95], [1.65, -7.15]];
+    const tube = [[0, -4.95], [0, -3.35], [chestPiece[0] * .5, Math.max(-2.8, chestPiece[1] + 1.2)], chestPiece];
+    [fork, tube].forEach(pts => {
+      line(pts, { stroke: SM.ink, lw: .32 + lw * 2, smooth: true });
+      line(pts, { stroke: '#334155', lw: .32, smooth: true });
+    });
+    if (!held) smChestPiece(chestPiece, lw);
+  });
+}
+
+function smChestPiece(p, lw) {
+  circle(p[0], p[1], .72, { fill: '#CBD5E1', stroke: SM.ink, lw });
+  circle(p[0], p[1], .46, { fill: '#94A3B8', stroke: '#F8FAFC', lw: lw * .5 });
+  ellipse(p[0] - .16, p[1] - .2, .16, .09, { fill: '#F8FAFC', stroke: null });
+}
+
+function smHead(o, t, lw, A) {
+  const turn = o.turn || 0, tx = turn * .8;
+  // ears
+  [-1, 1].forEach(sd => {
+    const ex = sd * 3.9 - turn * .45;
+    shape(ellPts(ex, .7, .55, .95, 14), { fill: SM.skin, stroke: SM.ink, lw, smooth: true });
+    line([[ex - sd * .05, .2], [ex + sd * .2, .7], [ex, 1.2]], { stroke: SM.skinDk, lw: lw * .8, smooth: true });
+  });
+  // face
+  const face = [[0, -5.0], [2.8, -4.4], [3.8, -2.2], [3.95, .4], [3.7, 2.6], [2.9, 4.4], [1.5, 5.25], [0, 5.45], [-1.5, 5.25], [-2.9, 4.4], [-3.7, 2.6], [-3.95, .4], [-3.8, -2.2], [-2.8, -4.4]];
+  shape(face, { fill: SM.skin, stroke: SM.ink, lw, smooth: true });
+  X.save(); tracePath(face, true, true); X.clip();
+  withBoil(0, () => {
+    ellipse(0, 4.6, 3.2, 1.3, { fill: rgba(SM.skinDk, .22), stroke: null });          // jaw shade
+    ellipse(-1.2 + tx * .4, -2.4, 1.6, .8, { fill: rgba(SM.skinLt, .5), stroke: null });  // forehead light
+  });
+  X.restore();
+  // hair: side part on screen-left, a flick over the forehead on the right, short sideburns
+  const hair = [[-3.95, .45], [-4.1, -1.6], [-3.8, -3.6], [-2.75, -5.15], [-1.0, -5.85], [.8, -5.9], [2.55, -5.45], [3.65, -4.3], [4.1, -2.4], [3.98, .45], [3.62, .4], [3.45, -1.8], [3.0, -2.85], [2.35, -3.0], [2.05, -2.6], [1.8, -3.15], [.9, -3.3], [-.3, -3.2], [-1.6, -3.25], [-2.8, -2.95], [-3.4, -1.8], [-3.62, .4]]
+    .map(([x, y]) => [x - turn * .35, y]);
+  shape(hair, { fill: SM.hair, stroke: SM.ink, lw, smooth: .45 });
+  withBoil(0, () => {
+    line([[-1.9, -5.25], [-.2, -5.5], [1.6, -5.2]].map(([x, y]) => [x - turn * .35, y]), { stroke: SM.hairLt, lw: lw * 1.6, smooth: true });
+    line([[-2.1, -4.55], [-2.35, -3.6]].map(([x, y]) => [x - turn * .35, y]), { stroke: SM.hairLt, lw: lw * 1.1 });   // the part
+  });
+  // cheeks
+  const bl = o.blush ?? .35;
+  if (bl > .01) [-1, 1].forEach(sd => ellipse(sd * 2.5 + tx * .5, 2.2, .75, .42, { fill: rgba(SM.cheek, .5 * bl), stroke: null }));
+  // eyes + brows
+  const eyeX = [-1.6 + tx, 1.6 + tx];
+  eyeX.forEach((ex, i) => smEye(ex, .05, o, i === 0, lw, t, 1 - Math.abs(turn) * (turn * (i ? -1 : 1) > 0 ? .25 : 0)));
+  A.eyeL = toPx(eyeX[0], .05); A.eyeR = toPx(eyeX[1], .05);
+  smBrows(eyeX, o, lw);
+  // nose: a broad soft bulb with nostril wings
+  X.save(); X.translate(tx * 1.1, 0);
+  ellipse(0, 1.75, .78, .62, { fill: SM.skin, stroke: null });
+  line([[-.95, 1.65], [-1.0, 2.05], [-.65, 2.3], [-.3, 2.2]], { stroke: SM.ink, lw, smooth: true });
+  line([[.95, 1.65], [1.0, 2.05], [.65, 2.3], [.3, 2.2]], { stroke: SM.ink, lw, smooth: true });
+  line([[-.3, 2.38], [0, 2.46], [.3, 2.38]], { stroke: SM.skinDk, lw, smooth: true });
+  line([[.25, .1], [.38, 1.0]], { stroke: rgba(SM.skinDk, .8), lw: lw * .9 });
+  circle(-.15, 1.45, .2, { fill: rgba(SM.skinLt, .8), stroke: null });
+  X.restore();
+  // mouth
+  smMouth(o.mouth || 'smile', tx, lw);
+  A.mouth = toPx(tx, 3.3); A.head = toPx(0, 0);
+}
+
+function smEye(cx, cy, o, isLeft, lw, t, narrow) {
+  let kind = o.eyes || 'open';
+  if (kind === 'wink') kind = isLeft ? 'open' : 'happy';
+  const rx = .74 * narrow, ry = .5;
+  if (kind === 'happy') return line([[cx - .7, cy + .25], [cx, cy - .35], [cx + .7, cy + .25]], { stroke: SM.ink, lw: lw * 1.8, smooth: true });
+  if (kind === 'closed') return line([[cx - .7, cy], [cx, cy + .3], [cx + .7, cy]], { stroke: SM.ink, lw: lw * 1.8, smooth: true });
+  if (kind === 'squeeze') { const d = isLeft ? 1 : -1; return line([[cx - d * .6, cy - .42], [cx + d * .42, cy], [cx - d * .6, cy + .42]], { stroke: SM.ink, lw: lw * 1.8 }); }
+  const R = kind === 'wide' ? 1.25 : 1, glow = kind === 'glow';
+  const alm = [[cx - rx * R, cy + .05], [cx - rx * .4 * R, cy - ry * R], [cx + rx * .45 * R, cy - ry * R * 1.02], [cx + rx * R, cy], [cx + rx * .4 * R, cy + ry * .8 * R], [cx - rx * .45 * R, cy + ry * .8 * R]];
+  shape(alm, { fill: glow ? '#E9FBFF' : SM.eyeW, stroke: SM.ink, lw, smooth: .8 });
+  const lx = clamp(o.lookX || 0, -1, 1), ly = clamp(o.lookY || 0, -1, 1), ir = kind === 'wide' ? .3 : .36;
+  const ix = cx + lx * .34 * narrow, iy = cy + ly * .18;
+  X.save(); tracePath(alm, true, .8); X.clip();
+  withBoil(0, () => {
+    if (glow) { circle(ix, iy, ir * 1.1, { fill: SM.glow, stroke: null }); circle(ix, iy, ir * .5, { fill: '#FFFFFF', stroke: null }); }
+    else {
+      circle(ix, iy, ir, { fill: SM.iris, stroke: null });
+      circle(ix, iy, ir * .52, { fill: SM.ink, stroke: null });
+      circle(ix - ir * .38, iy - ir * .4, ir * .28, { fill: '#FFFFFF', stroke: null });
+    }
+    // eyelid: auto-blink every ~3.9 s unless o.blink is given; 'narrow' = half-lidded
+    const ph = (t + .6 + (o.blinkSeed || 0)) % 3.9, b = Math.max(o.blink ?? (ph < .16 ? Math.sin(ph / .16 * Math.PI) : 0), kind === 'narrow' ? .45 : 0);
+    if (b > .02) shape(rectPts(cx - 1.2, cy - 1.2, 2.4, .7 + 1.1 * b), { fill: SM.skin, stroke: null });
+    if (b > .02) line([[cx - rx * R, cy - .5 + b], [cx + rx * R, cy - .5 + b]], { stroke: SM.ink, lw: lw * 1.3 });
+  });
+  X.restore();
+  line([[cx - rx * R - .05, cy + .02], [cx - rx * .4 * R, cy - ry * R - .04], [cx + rx * .45 * R, cy - ry * R - .05], [cx + rx * R + .05, cy - .02]], { stroke: SM.ink, lw: lw * 1.6, smooth: .8 });
+  if (glow) circle(cx, cy, 1.1, { fill: radGrad(cx, cy, 0, 1.1, [[0, rgba(SM.glow, .5)], [1, rgba(SM.glow, 0)]]), stroke: null });
+}
+
+// Thick dark tapered brows. quizzical = one up (screen-right), one level; focused = low and flat.
+function smBrows(eyeX, o, lw) {
+  const kind = o.brows || 'normal';
+  eyeX.forEach((ex, i) => {
+    const sd = i ? 1 : -1;
+    let up = kind === 'up' ? .4 : kind === 'focused' ? -.18 : 0, inner = kind === 'worried' ? -.4 : kind === 'angry' ? .38 : 0;
+    if (kind === 'quizzical') { up = i ? .55 : -.05; inner = i ? -.1 : .15; }
+    const y = -1.05 - up, a = [ex - sd * .75, y + inner], m = [ex + sd * .1, y - .28 + inner * .35], b = [ex + sd * .95, y + .12];
+    shape([a, m, b, [b[0] - sd * .05, b[1] + .12], [m[0], m[1] + .36], [a[0], a[1] + .38]], { fill: SM.brow, stroke: SM.ink, lw: lw * .6, smooth: .6 });
+  });
+}
+
+function smMouth(kind, tx, lw) {
+  X.save(); X.translate(tx, 1.35);
+  const dark = { fill: SM.mouth, stroke: SM.ink, lw };
+  if (kind === 'smile') {
+    ellipse(0, 2.1, .75, .2, { fill: rgba(SM.lip, .45), stroke: null });
+    line([[-1.5, 1.55], [-.75, 1.85], [0, 1.92], [.75, 1.85], [1.5, 1.55]], { stroke: SM.ink, lw: lw * 1.4, smooth: true });
+  } else if (kind === 'grin' || kind === 'open') {
+    const pts = kind === 'grin' ? [[-1.55, 1.5], [0, 1.65], [1.55, 1.5], [1.05, 2.5], [0, 2.8], [-1.05, 2.5]] : [[-.8, 1.55], [0, 1.45], [.8, 1.55], [.8, 2.3], [0, 2.85], [-.8, 2.3]];
+    X.save(); tracePath(pts, true, .8); X.fillStyle = SM.mouth; X.fill(); X.clip();
+    withBoil(0, () => {
+      shape(rectPts(-1.7, 1.3, 3.4, kind === 'grin' ? .55 : .4), { fill: '#FFFDF7', stroke: null });
+      ellipse(0, 2.8, .8, .45, { fill: SM.tongue, stroke: null });
+    });
+    X.restore();
+    shape(pts, { stroke: SM.ink, lw, smooth: .8 });
+  } else if (kind === 'o') ellipse(0, 2.0, .35, .42, dark);
+  else if (kind === 'O') ellipse(0, 2.15, .62, .78, dark);
+  else if (kind === 'flat') line([[-.9, 1.85], [.9, 1.85]], { stroke: SM.ink, lw: lw * 1.5 });
+  else if (kind === 'frown') line([[-1.3, 2.25], [-.65, 1.8], [0, 1.7], [.65, 1.8], [1.3, 2.25]], { stroke: SM.ink, lw: lw * 1.5, smooth: true });
+  else if (kind === 'smirk') line([[-1.1, 1.85], [0, 1.95], [1.25, 1.45]], { stroke: SM.ink, lw: lw * 1.5, smooth: true });
+  else if (kind === 'wobble') line([[-1.1, 1.95], [-.65, 1.7], [-.2, 2.0], [.2, 1.7], [.65, 2.0], [1.1, 1.75]], { stroke: SM.ink, lw: lw * 1.4, smooth: true });
+  else if (kind === 'teeth') {
+    shape([[-1.2, 1.5], [1.2, 1.5], [1.1, 2.3], [-1.1, 2.3]], { fill: '#FFFDF7', stroke: SM.ink, lw, smooth: .3 });
+    line([[-1.15, 1.9], [1.15, 1.9]], { stroke: SM.ink, lw: lw * .8 });
+    [-.6, 0, .6].forEach(x => line([[x, 1.52], [x, 2.28]], { stroke: SM.ink, lw: lw * .7 }));
+  }
+  X.restore();
+}
+
+// Hand at wrist p, pointing along ang. Returns the pointer tip (screen px) when holding the pointer.
+function smHand(p, ang, sd, pose, lw, o, pw) {
+  let tip = null;
+  X.save(); X.translate(p[0], p[1]); X.rotate(ang); if (sd < 0) X.scale(1, -1);
+  const ink = { stroke: SM.ink, lw: .38 + lw * 2 }, skin = { stroke: SM.skin, lw: .38 };
+  shape(ellPts(-.05, 0, .3, .66, 12), { fill: SM.shirt, stroke: SM.ink, lw, smooth: true });            // shirt cuff
+  if (pose === 'open' || pose === 'palm' || pose === 'thumb' || pose === 'point') {
+    const f = pose === 'open' ? [[-.25, .8], [-.05, .9], [.15, .86], [.35, .74], [-1.1, .55]]
+      : pose === 'palm' ? [[-.6, .8], [-.22, .92], [.14, .88], [.5, .72], [-1.45, .62]]
+      : pose === 'thumb' ? [[-1.7, .85]] : [[0, 1.25]];
+    const fingers = f.map(([a, l]) => [[.6, 0], [.6 + Math.cos(a) * (.38 + l), Math.sin(a) * (.38 + l)]]);
+    withBoil(0, () => {
+      fingers.forEach(g => line(g, ink)); circle(.6, 0, .6, { stroke: SM.ink, lw: lw * 2 });
+      fingers.forEach(g => line(g, skin)); circle(.6, 0, .6, { fill: SM.skin, stroke: null });
+      if (pose === 'thumb' || pose === 'point') shape(ellPts(.85, .12, .5, .45, 12), { fill: SM.skin, stroke: SM.ink, lw, smooth: true });
+    });
+  } else {        // fist / pointer: a chunky mitten with finger creases
+    shape([[.1, -.55], [.65, -.66], [1.12, -.45], [1.25, 0], [1.12, .48], [.6, .64], [.1, .5]], { fill: SM.skin, stroke: SM.ink, lw, smooth: .9 });
+    [-.2, .1, .38].forEach(y => line([[.84, y], [1.15, y + .03]], { stroke: SM.skinDk, lw: lw * .8 }));
+    if (pose === 'pointer') {
+      X.restore(); X.save(); X.translate(p[0], p[1]);                                    // the stick, in body space
+      const a = o.pointerAng ?? (sd > 0 ? -1.05 : -Math.PI + 1.05), L = o.pointerLen ?? 7.5, c = [Math.cos(ang) * .7, Math.sin(ang) * .7];
+      const e = [c[0] + Math.cos(a) * L, c[1] + Math.sin(a) * L], b0 = [c[0] - Math.cos(a) * .9, c[1] - Math.sin(a) * .9];
+      withBoil(0, () => {
+        line([b0, e], { stroke: SM.ink, lw: .34 + lw * 2 }); line([b0, mixPt(b0, e, .45)], { stroke: '#5B3A2A', lw: .34 }); line([mixPt(b0, e, .45), e], { stroke: '#C9CED3', lw: .22 });
+        if (pw > .01) circle(e[0], e[1], 1.3, { fill: radGrad(e[0], e[1], 0, 1.3, [[0, rgba(SM.glow, .8 * pw)], [1, rgba(SM.glow, 0)]]), stroke: null });
+        circle(e[0], e[1], .28, { fill: SM.tie, stroke: SM.ink, lw });
+      });
+      tip = toPx(e[0], e[1]);
+      shape(ellPts(c[0], c[1], .62, .6, 12), { fill: SM.skin, stroke: SM.ink, lw, smooth: true });     // fingers wrapped over it
+    } else if (pose === 'stethoscope') {
+      X.restore(); X.save(); X.translate(p[0], p[1]);
+      const c = [Math.cos(ang) * .7, Math.sin(ang) * .7], e = [c[0] + sd * .65, c[1]];
+      withBoil(0, () => {
+        smChestPiece(e, lw);
+        if (pw > .01) circle(e[0], e[1], 1.3, { fill: radGrad(e[0], e[1], 0, 1.3, [[0, rgba(SM.glow, .8 * pw)], [1, rgba(SM.glow, 0)]]), stroke: null });
+      });
+      tip = toPx(e[0], e[1]);
+      shape(ellPts(c[0], c[1], .62, .6, 12), { fill: SM.skin, stroke: SM.ink, lw, smooth: true });
+    }
+  }
+  X.restore();
+  return tip;
+}
+
+// ---------- the explanatory powers ----------
+function smAura(k, t) {
+  X.save();
+  circle(0, -15, 15, { fill: radGrad(0, -15, 2, 15, [[0, rgba(SM.glowGold, .45 * k)], [.5, rgba(SM.glow, .22 * k)], [1, rgba(SM.glow, 0)]]), stroke: null });
+  X.globalCompositeOperation = 'lighter';
+  for (let i = 0; i < 12; i++) {
+    const a = i / 12 * TAU + t * .25, w = .09;
+    shape([[0, -15], [Math.cos(a - w) * 13, -15 + Math.sin(a - w) * 13], [Math.cos(a + w) * 13, -15 + Math.sin(a + w) * 13]], { fill: rgba(SM.glowGold, .045 * k), stroke: null });
+  }
+  X.restore();
+}
+const SM_GLYPHS = ['♥', '✚', '🍎', '🩹', '🥦', '💧', '💪', '🦷'];
+function smGlyphs(k, t, front) {
+  const m = X.getTransform(), sc = pxScale();
+  for (let i = 0; i < SM_GLYPHS.length; i++) {
+    const a = t * .8 + i / SM_GLYPHS.length * TAU, depth = Math.sin(a);
+    if ((depth > 0) !== front) continue;
+    const lx = Math.cos(a) * 8.6, ly = -14.5 + depth * 1.6 + Math.sin(a * 2 + i) * .9 - (i % 3) * 2.2;
+    const px = m.a * lx + m.c * ly + m.e, py = m.b * lx + m.d * ly + m.f, size = sc * (1.25 + .35 * depth) * (.6 + .4 * k);
+    X.save(); X.setTransform(1, 0, 0, 1, 0, 0);
+    X.globalAlpha = k * (front ? .95 : .55); X.font = `700 ${size}px ${SM_CHALK}`; X.textAlign = 'center'; X.textBaseline = 'middle';
+    X.shadowColor = SM.glow; X.shadowBlur = size * .45; X.fillStyle = SM.chalk; X.fillText(SM_GLYPHS[i], px, py);
+    X.restore();
+  }
+}
+function smBulb(k, t, lw, A) {
+  const p = backOut(k), cx = 0, cy = -33.2;
+  X.save(); X.translate(cx, cy); X.scale(p, p);
+  X.save(); X.globalCompositeOperation = 'lighter';
+  circle(0, 0, 3.4, { fill: radGrad(0, 0, .5, 3.4, [[0, 'rgba(255,230,120,.55)'], [1, 'rgba(255,230,120,0)']]), stroke: null });
+  X.restore();
+  for (let i = 0; i < 8; i++) { const a = -Math.PI / 2 + (i - 3.5) * .42, r0 = 1.9, r1 = 2.6 + .25 * wob(t, 2, i * .2); line([[Math.cos(a) * r0, Math.sin(a) * r0], [Math.cos(a) * r1, Math.sin(a) * r1]], { stroke: '#F2B634', lw: lw * 1.6 }); }
+  shape([[-.55, .95], [-1.25, 0], [-1.3, -.8], [-.7, -1.45], [0, -1.6], [.7, -1.45], [1.3, -.8], [1.25, 0], [.55, .95]], { fill: '#FFE68A', stroke: SM.ink, lw, smooth: .85 });
+  line([[-.3, .9], [-.35, -.2], [0, -.55], [.35, -.2], [.3, .9]], { stroke: '#E0A020', lw: lw * .9, smooth: true });
+  circle(-.55, -.75, .25, { fill: '#FFFFFF', stroke: null });
+  shape(rectPts(-.6, .95, 1.2, .75), { fill: '#AEB5BA', stroke: SM.ink, lw });
+  [1.2, 1.45].forEach(y => line([[-.6, y], [.6, y]], { stroke: SM.ink, lw: lw * .7 }));
+  shape([[-.3, 1.7], [.3, 1.7], [0, 2.05]], { fill: '#6E767B', stroke: SM.ink, lw: lw * .7 });
+  X.restore();
+  A.bulb = toPx(cx, cy);
+}
+
+function smEmote(kind, A, s, k, t) {
+  const [hx, hy] = A.head, x = hx + s * 5.2, y = hy - s * 6.4, pop = backOut(k);
+  if (kind === 'sweat') {
+    const [sx, sy] = [hx + s * 4.2, hy - s * 2.2 + (1 - k) * s];
+    overlay(() => { X.save(); X.translate(sx, sy); X.scale(pop * s, pop * s); shape([[0, -.9], [.45, .1], [0, .5], [-.45, .1]], { fill: '#8FD3F0', stroke: SM.ink, lwPx: 3, smooth: .7 }); X.restore(); });
+    return;
+  }
+  const txt = { '?': '?', '!': '!', '!?': '!?', music: '♪', heart: '♥' }[kind] ?? kind;
+  const col = kind === 'heart' ? SM.cheek : kind === 'music' ? PAL.blue : PAL.goldLt;
+  overlay(() => {
+    X.save(); X.translate(x, y + wob(t, 1.5) * s * .2); X.rotate(.12 + wob(t, 1.1) * .06); X.scale(pop, pop);
+    const size = s * 3.6; X.font = `${size}px ${FONT_SFX}`; X.textAlign = 'center'; X.textBaseline = 'middle';
+    X.lineJoin = 'round'; X.lineWidth = size * .14; X.strokeStyle = SM.ink; X.strokeText(txt, 0, 0);
+    X.fillStyle = col; X.fillText(txt, 0, 0); X.restore();
+  });
+}
+
+// His floating holographic chalkboard: screen px centre (x, y), width w. k 0..1: pops in (0–.2), then the drawing
+// chalks itself on (.2–1). o: { kind: 'graph' | 'steps' | 'atom' | 'bulb' | 'story', title }
+function samiBoard(x, y, w, k, t, o = {}) {
+  if (k <= 0) return;
+  const h = w * .62, pop = backOut(seg(k, 0, .2)), d = seg(k, .2, 1), kind = o.kind || 'graph';
+  X.save(); X.translate(x, y + wob(t, .35) * w * .01); X.scale(pop, pop); X.translate(-w / 2, -h / 2);
+  X.save(); X.shadowColor = SM.glow; X.shadowBlur = w * .06;
+  shape([[0, 0], [w, 0], [w, h], [0, h]], { fill: linGrad(0, 0, 0, h, [[0, SM.board], [1, SM.boardDk]]), stroke: SM.glow, lwPx: Math.max(2, w * .012) });
+  X.restore();
+  shape([[w * .03, h * .05], [w * .97, h * .05], [w * .97, h * .95], [w * .03, h * .95]], { fill: null, stroke: rgba(SM.glow, .35), lwPx: 1.5 });
+  const U = w / 100, ch = { stroke: SM.chalk, lwPx: Math.max(2, U * .9) }, part = (pts, a, b) => { const f = seg(d, a, b); if (f > 0) line(f < 1 ? polySlice(pts, 0, f) : pts, ch); };
+  X.save(); X.shadowColor = SM.glow; X.shadowBlur = U * 1.2;
+  const label = (txt, lx, ly, size, a) => { if (d < a) return; X.globalAlpha = seg(d, a, a + .12); X.font = `700 ${size * U}px ${SM_CHALK}`; X.textAlign = 'center'; X.textBaseline = 'middle'; X.fillStyle = SM.chalk; X.fillText(txt, lx * U, ly * U); X.globalAlpha = 1; };
+  if (o.title) label(o.title, 50, 9, 7, 0);
+  const top = o.title ? 17 : 8;
+  if (kind === 'graph') {
+    part([[12 * U, top * U], [12 * U, 56 * U], [90 * U, 56 * U]], 0, .3);
+    const c = []; for (let i = 0; i <= 30; i++) { const u = i / 30; c.push([(14 + u * 72) * U, (52 - 34 * u * u - 4 * Math.sin(u * 9) * (1 - u)) * U]); } part(c, .3, .85);
+    if (d > .85) circle(86 * U, 18 * U, 2 * U * backOut(seg(d, .85, 1)), { fill: SM.glowGold, stroke: SM.chalk, lwPx: 1.5 });
+  } else if (kind === 'steps') {
+    [0, 1, 2].forEach(i => {
+      const bx = (8 + i * 32) * U, a = i * .3;
+      part([[bx, (top + 14) * U], [bx + 22 * U, (top + 14) * U], [bx + 22 * U, (top + 34) * U], [bx, (top + 34) * U], [bx, (top + 14) * U]], a, a + .15);
+      label(String(i + 1), 19 + i * 32, top + 24, 11, a + .12);
+      if (i < 2) part([[bx + 24 * U, (top + 24) * U], [bx + 30 * U, (top + 24) * U], [bx + 27 * U, (top + 21) * U], [bx + 30 * U, (top + 24) * U], [bx + 27 * U, (top + 27) * U]], a + .15, a + .3);
+    });
+  } else if (kind === 'atom') {
+    const cx = 50 * U, cy = (top + 24) * U;
+    [0, 1, 2].forEach(i => { const e = ellPts(cx, cy, 30 * U, 9 * U, 40, i * Math.PI / 3); part([...e, e[0]], i * .22, i * .22 + .3); });
+    if (d > .3) circle(cx, cy, 4 * U, { fill: SM.glowGold, stroke: SM.chalk, lwPx: 1.5 });
+    if (d > .8) [0, 1, 2].forEach(i => { const a = t * 3 + i * 2.1, r = i * Math.PI / 3, ex = Math.cos(a) * 30 * U, ey = Math.sin(a) * 9 * U; circle(cx + ex * Math.cos(r) - ey * Math.sin(r), cy + ex * Math.sin(r) + ey * Math.cos(r), 1.8 * U, { fill: SM.glow, stroke: null }); });
+  } else if (kind === 'bulb') {
+    const cx = 50 * U, cy = (top + 20) * U, R = 15 * U, b = []; for (let i = 0; i <= 30; i++) { const a = Math.PI * .75 + i / 30 * Math.PI * 1.5; b.push([cx + Math.cos(a) * R, cy + Math.sin(a) * R]); }
+    part([[cx - 7 * U, cy + 20 * U], ...b, [cx + 7 * U, cy + 20 * U], [cx - 7 * U, cy + 20 * U]], 0, .5);
+    part([[cx - 6 * U, cy + 24 * U], [cx + 6 * U, cy + 24 * U]], .5, .6);
+    for (let i = 0; i < 7; i++) { const a = -Math.PI / 2 + (i - 3) * .45; part([[cx + Math.cos(a) * 20 * U, cy + Math.sin(a) * 20 * U], [cx + Math.cos(a) * 27 * U, cy + Math.sin(a) * 27 * U]], .6 + i * .05, .7 + i * .05); }
+  } else if (kind === 'story') {
+    const cx = 50 * U, cy = (top + 26) * U;
+    part([[cx, cy - 16 * U], [cx - 16 * U, cy - 20 * U], [cx - 34 * U, cy - 16 * U], [cx - 34 * U, cy + 14 * U], [cx - 16 * U, cy + 10 * U], [cx, cy + 14 * U], [cx, cy - 16 * U]], 0, .35);
+    part([[cx, cy - 16 * U], [cx + 16 * U, cy - 20 * U], [cx + 34 * U, cy - 16 * U], [cx + 34 * U, cy + 14 * U], [cx + 16 * U, cy + 10 * U], [cx, cy + 14 * U]], .2, .5);
+    for (let i = 0; i < 4; i++) { part([[cx - 29 * U, cy + (-10 + i * 6) * U], [cx - 6 * U, cy + (-10 + i * 6) * U]], .5 + i * .06, .6 + i * .06); part([[cx + 6 * U, cy + (-10 + i * 6) * U], [cx + 29 * U, cy + (-10 + i * 6) * U]], .62 + i * .06, .72 + i * .06); }
+    if (d > .9) [[-42, -8], [42, -8], [42, 9]].forEach(([dx, dy], i) => shape(starPts(cx + dx * U, cy + dy * U, 3 * U * backOut(seg(d, .9 + i * .03, 1)), .45, 5), { fill: SM.glowGold, stroke: SM.chalk, lwPx: 1.2 }));
+  } else if (kind === 'plate') {                                   // the healthy plate: veggies, fruit, grains, protein
+    const cx = 50 * U, cy = (top + 23) * U, R = 21 * U, pop = i => backOut(seg(d, .35 + i * .14, .5 + i * .14));
+    const ring = ellPts(cx, cy, R, R * .78, 40); part([...ring, ring[0]], 0, .2);
+    part([[cx - R, cy], [cx + R, cy]], .2, .28); part([[cx, cy - R * .78], [cx, cy + R * .78]], .26, .34);
+    const at = (dx, dy, i, fn) => { const k = pop(i); if (k <= 0) return; X.save(); X.translate(cx + dx * U, cy + dy * U); X.scale(k * U, k * U); fn(); X.restore(); };
+    const o2 = { stroke: SM.ink, lwPx: 1.5 };
+    at(-10, -8, 0, () => { line([[0, 5], [0, 0]], { stroke: '#7FB069', lwPx: Math.max(2, U * 1.2) }); [[-3, -1], [0, -3], [3, -1], [-1.5, -3.5], [1.8, -3.2]].forEach(([x, y]) => circle(x, y, 2.6, { fill: '#5E9E4A', ...o2 })); });
+    at(10, -7, 1, () => { circle(0, 0, 5, { fill: '#D9443A', ...o2 }); line([[0, -4.6], [.6, -7]], { stroke: '#6B4A2A', lwPx: 2 }); ellipse(2.2, -6.2, 2, 1, { fill: '#7FB069', stroke: SM.ink, lwPx: 1, rot: -.4 }); circle(-1.8, -1.8, 1.1, { fill: 'rgba(255,255,255,.6)', stroke: null }); });
+    at(-10, 8, 2, () => { shape([[-5, 4], [-5, -2], [-4, -5], [0, -6], [4, -5], [5, -2], [5, 4]], { fill: '#E8B96A', ...o2, smooth: .4 }); shape([[-3.6, 3], [-3.6, -1.6], [0, -4.2], [3.6, -1.6], [3.6, 3]], { fill: '#F6DDA8', stroke: null, smooth: .4 }); });
+    at(10, 8, 3, () => { ellipse(0, 0, 6, 4.5, { fill: '#FFFDF4', ...o2 }); circle(.5, -.3, 2.2, { fill: '#F5B82E', ...o2 }); });
+    [['veggies', 14, top + 15], ['fruit', 86, top + 15], ['grains', 14, top + 31], ['protein', 86, top + 31]].forEach(([w, lx, ly], i) => label(w, lx, ly, 4.6, .45 + i * .14));
+  } else if (kind === 'crash') {                                   // sugar: a spike and a crash · veggies: steady energy
+    part([[10 * U, top * U], [10 * U, 56 * U], [92 * U, 56 * U]], 0, .15);
+    const candy = [], veg = [];
+    for (let i = 0; i <= 40; i++) { const u = i / 40; candy.push([(12 + u * 78) * U, (50 - 34 * Math.exp(-((u - .28) ** 2) / .012) + (u > .28 ? 10 * seg(u, .28, .6) : 0)) * U]); veg.push([(12 + u * 78) * U, (46 - 16 * (1 - Math.exp(-u * 3))) * U]); }
+    const f1 = seg(d, .15, .6), f2 = seg(d, .55, .95);
+    X.save(); X.shadowColor = '#FF8FB8';
+    if (f1 > 0) line(f1 < 1 ? polySlice(candy, 0, f1) : candy, { stroke: '#FF9BC4', lwPx: Math.max(2, U * 1.1) });
+    X.restore();
+    if (f2 > 0) line(f2 < 1 ? polySlice(veg, 0, f2) : veg, { stroke: '#9FE08A', lwPx: Math.max(2, U * 1.1) });
+    label('ZOOM!', 34, top + 1, 5.5, .3); label('CRASH', 62, 62 - 4, 5, .55); label('veggies: steady', 76, 34, 4.2, .9);
+  }
+  X.restore();
+  X.restore();
+}
+
+// Walk cycle: pose options for sami() at walk phase p (steps; one step per 1.0) with amount k (0 = standing, 1 = full stride).
+// Tie p to the distance travelled (p = distance / stride) so the feet never slide. Measured, professorial stride.
+function samiWalk(p, k = 1) {
+  const sn = Math.sin(p * Math.PI), a = Math.abs(sn);
+  return {
+    footL: [-1.25 + .12 * k * sn, -.8 - 1.1 * k * Math.max(0, sn)], footR: [1.25 + .12 * k * sn, -.8 - 1.1 * k * Math.max(0, -sn)],
+    dy: -.22 * k * a + .1 * k, tilt: .018 * k * sn, lean: .012 * k * sn,
+    handL: [-4.35 + .25 * k * a, -8.1 - .75 * k * sn], handR: [4.35 - .25 * k * a, -8.1 + .75 * k * sn],
+  };
+}
+
+// Registration for the studio's character browser (poses are also its model sheet).
+const smTalk = t => lipFlap(t, frac(t * .5) < .7, 'smile');
+CHARACTERS.sami = {
+  draw: sami, unit: SAMI_UNIT, palette: SM, size: [13, 31],
+  poses: {
+    'rest': (x, y, s, t) => sami(x, y, s, {}),
+    'talk': (x, y, s, t) => sami(x, y, s, { mouth: smTalk(t), brows: 'up', handR: [5.3, -12.6], handPoseR: 'palm', turn: .2, tilt: .03 * wob(t, .7) }),
+    'examine': (x, y, s, t) => sami(x, y, s, { handR: [4.4, -12.2 + .15 * wob(t, .8)], handPoseR: 'stethoscope', mouth: 'smile', brows: 'focused', lookX: .6, lookY: .2, tilt: .05 }),
+    'explain': (x, y, s, t) => sami(x, y, s, { mouth: smTalk(t), brows: 'up', handL: [-5.3 - .3 * wob(t, 1.2), -12.4], handR: [5.3 + .3 * wob(t, 1.2, .5), -12.4], handPoseL: 'palm', handPoseR: 'palm', lean: .03 }),
+    'point up': (x, y, s, t) => sami(x, y, s, { handR: [5.8, -21.4], handPoseR: 'point', mouth: 'open', brows: 'up', lookX: .5, lookY: -.8, tilt: -.05 }),
+    'pointer': (x, y, s, t) => sami(x, y, s, { handR: [4.4, -12.2], handPoseR: 'pointer', pointerAng: -.95 + .08 * wob(t, .8), mouth: 'smile', brows: 'up', lookX: .6, lookY: -.5 }),
+    'thinking': (x, y, s, t) => sami(x, y, s, { handR: [.8, -16.1], handPoseR: 'fist', handL: [.6, -10.6], handPoseL: 'fist', brows: 'quizzical', mouth: 'flat', lookX: -.6, lookY: -.7, eyes: 'narrow', tilt: -.06 }),
+    'idea!': (x, y, s, t) => sami(x, y, s, { bulb: 1, eyes: 'wide', brows: 'up', mouth: 'grin', handR: [5.8, -21.4], handPoseR: 'point', dy: -.2 }),
+    'super explain': (x, y, s, t) => {
+      const A = sami(x, y, s, { power: 1, eyes: 'glow', brows: 'up', mouth: 'grin', handL: [-5.6, -14.2], handR: [5.6, -14.2], handPoseL: 'palm', handPoseR: 'palm', jump: .6 + .4 * wob(t, .6) });
+      return A;
+    },
+    'surprised': (x, y, s, t) => sami(x, y, s, { eyes: 'wide', mouth: 'O', brows: 'up', handL: [-4.6, -15.6], handR: [4.6, -15.6], handPoseL: 'palm', handPoseR: 'palm', dy: -.2 }),
+    'laugh': (x, y, s, t) => { const k = Math.abs(Math.sin(t * 13)); sami(x, y, s, { handL: [-2.2, -9.5], handR: [2.2, -9.5], handPoseL: 'fist', handPoseR: 'fist', eyes: 'squeeze', mouth: k > .5 ? 'grin' : 'open', dy: .4 * k, tilt: -.08 }); },
+    'wink': (x, y, s, t) => sami(x, y, s, { eyes: 'wink', mouth: 'grin', handR: [5.2, -13.6], handPoseR: 'thumb', brows: 'up' }),
+    'walk': (x, y, s, t) => sami(x, y, s, { ...samiWalk(t * 1.6), mouth: 'smile', turn: -.15 }),
+    'shrug': (x, y, s, t) => sami(x, y, s, { handL: [-5.0, -13.4], handR: [5.0, -13.4], handPoseL: 'palm', handPoseR: 'palm', brows: 'worried', mouth: 'smirk', tilt: .12, emote: '?', emoteK: 1 }),
+  },
+};
+
+// Source: ../../characters/housam/housam.js
+// Housam: a soccer-playing teenager with a knack for mathematics.
+// (x, y) is the floor point between his feet; s is pixels per local unit.
+// Feet are y=0, the jersey hem is y=-10, eyes are near y=-25, hair top is y=-32.
+// All movement is a pure function of pose options and time.
+
+const HO = {
+  ink: '#3B2530', skin: '#DCA887', skinShade: '#BC8068', skinLight: '#F3C5A6',
+  cheek: '#D88B78', hair: '#282027', hairShade: '#17151B', hairLight: '#554149',
+  brow: '#34252B', eyeWhite: '#FFF9F2', iris: '#754622', irisLight: '#B17A40',
+  mouth: '#843C45', jersey: '#F1F0EA', jerseyShade: '#D5D8DB', blue: '#425DA0',
+  blueDark: '#2C4684', crest: '#5D8795', shorts: '#363641', shortsLight: '#52515D',
+  shoe: '#F8F7F2', shoeShade: '#D7D8DC', ball: '#FBFBF7',
+};
+const HOUSAM_UNIT = 5.25; // ~168 world units tall
+
+function housam(x, y, s, o = {}) {
+  const t = o.t ?? T, A = {}, lw = clamp(s * .13, 1.5, 5) / s;
+  const dy = o.dy || 0, air = o.jump || 0;
+  X.save(); X.translate(x, y); X.scale(s * (o.flip ? -1 : 1), s);
+  if (!o.noShadow) {
+    const q = 1 - clamp(air / 12) * .4;
+    ellipse(0, .18, 3.7 * q, .68 * q, { fill: 'rgba(32,26,38,.22)', stroke: null });
+  }
+  X.translate(0, -air);
+  if (o.rot) { X.translate(0, -10); X.rotate(o.rot); X.translate(0, 10); }
+  if (o.sq) X.scale(1 + o.sq * .45, 1 - o.sq);
+
+  withBoil(o.boil ?? .45, () => {
+    // Independent ankle targets allow a planted foot, run cycle, kick, and juggle.
+    [[-1, o.footL || [-1.5, -1.05]], [1, o.footR || [1.5, -1.05]]].forEach(([sd, target]) => {
+      const hip = [sd * 1.25, -8.25 + dy];
+      const { joint, end } = ik2(hip, target, 3.5, 3.76, [sd * .55, .12]);
+      hoLimb([hip, joint, end], .94, HO.skin, lw);
+      // A soft knee cap and slim ankle keep the teenage silhouette.
+      circle(joint[0], joint[1], .39, { fill: HO.skin, stroke: null });
+      line([[joint[0] - sd * .1, joint[1] + .5], [end[0], end[1]]], { stroke: rgba(HO.skinShade, .35), lw: .16 });
+      hoShoe(end, sd, lw);
+      A[sd < 0 ? 'footL' : 'footR'] = toPx(end[0], end[1]);
+      A[sd < 0 ? 'kneeL' : 'kneeR'] = toPx(joint[0], joint[1]);
+    });
+
+    // Shorts and torso lean together about the hips.
+    X.save(); X.translate(0, dy); X.translate(0, -8.6); X.rotate(o.lean || 0); X.translate(0, 8.6);
+    hoShorts(lw);
+    const breath = o.breathe === false ? 0 : .025 * wob(t, .35);
+    X.save(); X.translate(0, -14); X.scale(1 + breath, 1 + breath); X.translate(0, 14);
+    hoJersey(lw);
+    A.chest = toPx(0, -15.2); A.belly = toPx(0, -11.3);
+    X.restore();
+
+    // Neck and head have a separate tilt control.
+    shape(rectPts(-.82, -20.1, 1.64, 2.1), { fill: HO.skin, stroke: HO.ink, lw, smooth: .3 });
+    ellipse(0, -18.7, .85, .28, { fill: rgba(HO.skinShade, .4), stroke: null });
+    X.save(); X.translate(0, -25.3); X.rotate(o.tilt || 0);
+    hoHead(o, t, lw, A);
+    A.top = toPx(0, -6.7);
+    X.restore();
+
+    // Arms use two-bone IK; sleeves stop above the elbows.
+    [[-1, o.handL || [-4.05, -10.7], o.handPoseL || 'open'],
+      [1, o.handR || [4.05, -10.7], o.handPoseR || 'open']].forEach(([sd, target, pose]) => {
+      const shoulder = [sd * 2.9, -17.45];
+      const { joint, end } = ik2(shoulder, target, 3.45, 3.7, [sd * .8, .25]);
+      hoLimb([shoulder, joint, end], .89, HO.skin, lw);
+      const cuff = mixPt(shoulder, joint, .6);
+      hoLimb([shoulder, cuff], 1.53, HO.jersey, lw);
+      line([mixPt(shoulder, cuff, .24), mixPt(shoulder, cuff, .8)], { stroke: HO.blue, lw: .18 });
+      line([[cuff[0] - sd * .61, cuff[1]], [cuff[0] + sd * .61, cuff[1]]], { stroke: HO.jerseyShade, lw: .13 });
+      const angle = Math.atan2(end[1] - joint[1], end[0] - joint[0]);
+      hoHand(end, angle, sd, pose, lw);
+      A[sd < 0 ? 'handL' : 'handR'] = toPx(end[0], end[1]);
+    });
+    X.restore();
+  });
+  X.restore();
+  return A;
+}
+
+function hoLimb(points, width, fill, lw) {
+  withBoil(0, () => {
+    line(points, { stroke: HO.ink, lw: width + lw * 1.8 });
+    line(points, { stroke: fill, lw: width });
+  });
+}
+
+function hoShorts(lw) {
+  const outline = [[-2.65, -10.1], [2.65, -10.1], [2.75, -6.65], [.5, -6.65], [0, -8.15], [-.5, -6.65], [-2.75, -6.65]];
+  shape(outline, { fill: HO.shorts, stroke: HO.ink, lw, smooth: .3 });
+  shape([[-2.65, -10], [-1.7, -9.95], [-1.65, -7], [-2.73, -6.75]], { fill: rgba(HO.shortsLight, .6), stroke: null });
+  line([[0, -9.9], [0, -8.15]], { stroke: rgba('#9B9AA6', .5), lw: .11 });
+  line([[-2.6, -7.0], [-.62, -7.0]], { stroke: HO.shortsLight, lw: .16 });
+  line([[.62, -7.0], [2.6, -7.0]], { stroke: HO.shortsLight, lw: .16 });
+}
+
+function hoJersey(lw) {
+  const body = [[-1.2, -18.4], [-2.85, -18.2], [-3.35, -16.45], [-3.15, -10.05],
+    [-2.25, -9.88], [0, -9.92], [2.25, -9.88], [3.15, -10.05], [3.35, -16.45], [2.85, -18.2], [1.2, -18.4]];
+  shape(body, { fill: HO.jersey, stroke: HO.ink, lw, smooth: .4 });
+  X.save(); tracePath(body, true, .4); X.clip();
+  shape([[-3.45, -18.6], [-2.75, -18.6], [-2.75, -9.7], [-3.45, -9.7]], { fill: HO.blue, stroke: null });
+  shape([[2.75, -18.6], [3.45, -18.6], [3.45, -9.7], [2.75, -9.7]], { fill: HO.blue, stroke: null });
+  shape([[-3.25, -10.6], [3.25, -10.6], [3.25, -9.84], [-3.25, -9.84]], { fill: rgba(HO.jerseyShade, .42), stroke: null });
+  X.restore();
+  // Crew neck and the double shoulder piping from the reference.
+  shape([[-1.16, -18.47], [0, -17.95], [1.16, -18.47], [.9, -18.75], [0, -18.29], [-.9, -18.75]],
+    { fill: HO.blue, stroke: HO.ink, lw: lw * .65, smooth: .5 });
+  [-1, 1].forEach(sd => {
+    line([[sd * 1.25, -18.5], [sd * 2.45, -18.16], [sd * 3.1, -17.25]], { stroke: HO.blue, lw: .25, smooth: true });
+    line([[sd * 1.45, -18.72], [sd * 2.62, -18.36], [sd * 3.23, -17.44]], { stroke: HO.blue, lw: .12, smooth: true });
+  });
+  // Small soccer shield on his left chest (screen-right).
+  shape([[1.22, -16.7], [2.25, -16.7], [2.27, -15.75], [1.74, -15.38], [1.2, -15.75]],
+    { fill: HO.crest, stroke: HO.blueDark, lw: .12 });
+  shape([[1.35, -16.56], [2.1, -16.56], [2.09, -15.82], [1.74, -15.55], [1.37, -15.82]],
+    { fill: HO.jersey, stroke: null });
+  circle(1.73, -16.12, .28, { fill: HO.ball, stroke: HO.blueDark, lw: .09 });
+  shape(starPts(1.73, -16.12, .15, .7, 5), { fill: HO.blueDark, stroke: null });
+}
+
+function hoShoe(p, sd, lw) {
+  X.save(); X.translate(p[0], p[1]); X.scale(sd, 1);
+  shape([[-.7, -.22], [-.48, -.63], [.17, -.75], [.64, -.43], [1.03, .03], [.98, .43], [.49, .62], [-.55, .53], [-.83, .23]],
+    { fill: HO.shoe, stroke: HO.ink, lw, smooth: .55 });
+  shape([[-.85, .28], [-.4, .47], [.47, .47], [1.01, .26], [.98, .52], [.48, .72], [-.6, .62]],
+    { fill: HO.shoeShade, stroke: HO.ink, lw: lw * .75, smooth: .35 });
+  [-.38, -.17, .04].forEach(v => line([[-.28, v], [.32, v + .07]], { stroke: HO.shoeShade, lw: .11 }));
+  X.restore();
+}
+
+function hoHand(p, ang, sd, pose, lw) {
+  X.save(); X.translate(p[0], p[1]); X.rotate(ang); if (sd < 0) X.scale(1, -1);
+  const palm = [[-.2, -.48], [.35, -.54], [.79, -.3], [.9, .16], [.56, .55], [0, .49]];
+  shape(palm, { fill: HO.skin, stroke: HO.ink, lw, smooth: .7 });
+  if (pose === 'fist') {
+    line([[.54, -.17], [.79, -.11]], { stroke: HO.skinShade, lw: .1 });
+  } else if (pose === 'point') {
+    hoLimb([[.65, -.16], [1.55, -.19]], .23, HO.skin, lw * .55);
+  } else {
+    const spread = pose === 'palm' ? .3 : .13;
+    [[.7, -.29], [.85, -.06], [.84, .17]].forEach(([ex, ey], i) => {
+      const v = i - 1;
+      hoLimb([[ex, ey], [ex + .45, ey + v * spread]], .19, HO.skin, lw * .45);
+    });
+    hoLimb([[.1, .33], [.5, .82]], .24, HO.skin, lw * .45);
+  }
+  X.restore();
+}
+
+function hoHead(o, t, lw, A) {
+  const turn = clamp(o.turn || 0, -1, 1), shift = turn * .62;
+  [-1, 1].forEach(sd => {
+    ellipse(sd * 4.63 - turn * .23, .68, .75, 1.12, { fill: HO.skin, stroke: HO.ink, lw });
+    ellipse(sd * 4.84 - turn * .23, .75, .3, .54, { fill: rgba(HO.skinShade, .46), stroke: null });
+  });
+  const face = [[0, -5.3], [3.35, -4.8], [4.55, -2.8], [4.7, .55], [4.27, 2.65], [3.25, 4.17],
+    [1.42, 5.0], [0, 5.1], [-1.42, 5.0], [-3.25, 4.17], [-4.27, 2.65], [-4.7, .55], [-4.55, -2.8], [-3.35, -4.8]];
+  shape(face, { fill: HO.skin, stroke: HO.ink, lw, smooth: .8 });
+  X.save(); tracePath(face, true, .8); X.clip();
+  ellipse(-1.8, -2.7, 2.5, 1.4, { fill: rgba(HO.skinLight, .32), stroke: null });
+  ellipse(0, 5, 3.6, 1.25, { fill: rgba(HO.skinShade, .25), stroke: null });
+  X.restore();
+  [-1, 1].forEach(sd => ellipse(sd * 3.18 + shift * .35, 2.28, .9, .47, { fill: rgba(HO.cheek, .21 * (o.blush ?? 1)), stroke: null }));
+
+  [-1, 1].forEach(sd => {
+    const ex = sd * 2.12 + shift, ey = .16;
+    hoEye(ex, ey, o, t, sd, lw);
+    A[sd < 0 ? 'eyeL' : 'eyeR'] = toPx(ex, ey);
+    const brow = o.brows || 'normal';
+    const raise = brow === 'up' ? -.52 : brow === 'focused' ? .25 : brow === 'worried' ? (sd < 0 ? -.36 : .05) : 0;
+    const inner = brow === 'focused' ? .34 : brow === 'worried' ? -.2 : 0;
+    shape([[ex - .92, -1.72 + raise], [ex - .26, -2.03 + raise + inner], [ex + .53, -1.95 + raise],
+      [ex + .92, -1.66 + raise], [ex + .48, -1.55 + raise], [ex - .3, -1.62 + raise]],
+    { fill: HO.brow, stroke: HO.ink, lw: lw * .6, smooth: .5 });
+  });
+  // A small nose and the soft, confident smile in the reference.
+  ellipse(shift * 1.12, 2.01, .44, .36, { fill: HO.skinShade, stroke: null, alpha: .43 });
+  circle(shift * 1.12 - .14, 1.87, .14, { fill: rgba(HO.skinLight, .8), stroke: null });
+  hoMouth(o.mouth || 'smile', shift, lw);
+  A.mouth = toPx(shift, 3.36); A.head = toPx(0, 0);
+
+  // Tousled dark hair: rounded crown, irregular short fringe, sculpted strands.
+  const hair = [[-4.5, -1.15], [-4.85, -3.2], [-4.15, -5.24], [-3.25, -6.03], [-2.15, -6.31],
+    [-1.4, -6.08], [-.65, -6.64], [.42, -6.48], [1.2, -6.15], [2.08, -6.34], [3.08, -5.86],
+    [4.05, -4.95], [4.48, -3.68], [4.38, -.95], [3.9, -1.9], [3.2, -3.55], [2.3, -3.62],
+    [1.62, -3.02], [1.07, -3.77], [.35, -3.5], [-.37, -3.08], [-1.13, -3.33],
+    [-2.1, -2.7], [-3.02, -2.47], [-3.87, -1.68]];
+  shape(hair, { fill: HO.hair, stroke: HO.ink, lw, smooth: .45 });
+  withBoil(0, () => {
+    line([[-3.75, -4.4], [-2.48, -5.55], [-.8, -5.83], [.95, -5.52]], { stroke: HO.hairLight, lw: .31, smooth: true, alpha: .75 });
+    line([[.45, -6.05], [2.2, -5.84], [3.67, -4.76]], { stroke: HO.hairLight, lw: .25, smooth: true, alpha: .7 });
+    line([[-2.96, -4.32], [-1.83, -3.25]], { stroke: HO.hairShade, lw: .26 });
+    line([[2.38, -4.71], [1.06, -3.65]], { stroke: HO.hairShade, lw: .25 });
+  });
+}
+
+function hoEye(cx, cy, o, t, sd, lw) {
+  let kind = o.eyes || 'open';
+  if (kind === 'wink') kind = sd > 0 ? 'closed' : 'open';
+  if (kind === 'happy' || kind === 'closed') {
+    line([[cx - 1.05, cy + .17], [cx, cy + (kind === 'happy' ? -.44 : .37)], [cx + 1.05, cy + .17]],
+      { stroke: HO.ink, lw: lw * 1.8, smooth: true });
+    return;
+  }
+  if (kind === 'squeeze') {                              // screwed shut: > <
+    const d = sd < 0 ? 1 : -1;
+    line([[cx - d * .85, cy - .6], [cx + d * .6, cy], [cx - d * .85, cy + .6]], { stroke: HO.ink, lw: lw * 1.9 });
+    return;
+  }
+  const wide = kind === 'wide' ? 1.15 : 1, rx = 1.2, ry = 1.33 * wide;
+  ellipse(cx, cy, rx, ry, { fill: HO.eyeWhite, stroke: HO.ink, lw });
+  const ix = cx + clamp(o.lookX || 0, -1, 1) * .35, iy = cy + .08 + clamp(o.lookY || 0, -1, 1) * .3;
+  X.save(); X.beginPath(); X.ellipse(cx, cy, rx, ry, 0, 0, TAU); X.clip();
+  circle(ix, iy, .86, { fill: HO.iris, stroke: null });
+  circle(ix, iy - .19, .57, { fill: HO.irisLight, stroke: null, alpha: .55 });
+  circle(ix, iy, .58, { fill: HO.hairShade, stroke: null });
+  circle(ix - .32, iy - .39, .28, { fill: '#FFFFFF', stroke: null });
+  circle(ix + .31, iy + .31, .1, { fill: '#FFFFFF', stroke: null });
+  const ph = (t + .8 + (o.blinkSeed || 0)) % 3.4;
+  const blink = clamp(o.blink ?? (ph < .16 ? Math.sin(ph / .16 * Math.PI) : 0));
+  if (blink > .02) shape(rectPts(cx - 1.4, cy - 1.55, 2.8, 2.45 * blink), { fill: HO.skin, stroke: null });
+  X.restore();
+  line([[cx - 1.12, cy - .34], [cx - .72, cy - 1.12 * wide], [cx + .25, cy - 1.31 * wide], [cx + 1.08, cy - .53]],
+    { stroke: HO.ink, lw: lw * 1.15, smooth: true });
+}
+
+function hoMouth(kind, x, lw) {
+  if (kind === 'smile' || kind === 'smirk') {
+    const right = kind === 'smirk' ? 2.87 : 3.24;
+    line([[x - 1.1, 2.8], [x - .5, 3.13], [x + .2, 3.22], [x + 1.12, right]],
+      { stroke: HO.mouth, lw: lw * 1.35, smooth: true });
+  } else if (kind === 'grin' || kind === 'open') {
+    shape([[x - 1.25, 2.7], [x, 2.89], [x + 1.3, 2.7], [x + .9, 3.73], [x, 3.94], [x - .9, 3.73]],
+      { fill: HO.mouth, stroke: HO.ink, lw, smooth: .7 });
+    if (kind === 'grin') shape(rectPts(x - 1.04, 2.7, 2.08, .48), { fill: HO.eyeWhite, stroke: null });
+  } else if (kind === 'o') ellipse(x, 3.25, .36, .5, { fill: HO.mouth, stroke: HO.ink, lw });
+  else if (kind === 'flat') line([[x - .83, 3.21], [x + .83, 3.21]], { stroke: HO.mouth, lw: lw * 1.25 });
+  else if (kind === 'frown') line([[x - 1, 3.55], [x, 3.04], [x + 1, 3.55]], { stroke: HO.mouth, lw: lw * 1.25, smooth: true });
+  else if (kind === 'wobble') line([[x - 1.1, 3.3], [x - .65, 3.05], [x - .2, 3.35], [x + .2, 3.05], [x + .65, 3.35], [x + 1.1, 3.1]], { stroke: HO.mouth, lw: lw * 1.3, smooth: true });
+}
+
+// Screen-space prop: x,y are the ball centre and s is Housam's pixel scale.
+function housamBall(x, y, s, o = {}) {
+  X.save(); X.translate(x, y); X.rotate(o.spin || 0); X.scale(s, s);
+  const r = o.radius ?? 1.35, lw = clamp(s * .11, 1.2, 4) / s;
+  circle(0, 0, r, { fill: HO.ball, stroke: HO.ink, lw });
+  shape(starPts(0, 0, r * .48, .86, 5), { fill: HO.shorts, stroke: HO.ink, lw: lw * .65 });
+  for (let i = 0; i < 5; i++) {
+    const a = -Math.PI / 2 + i * TAU / 5, px = Math.cos(a) * r * .48, py = Math.sin(a) * r * .48;
+    const edge = [Math.cos(a) * r * .9, Math.sin(a) * r * .9];
+    line([[px, py], edge], { stroke: HO.ink, lw: lw * .7 });
+  }
+  circle(-r * .35, -r * .46, r * .22, { fill: 'rgba(255,255,255,.55)', stroke: null });
+  X.restore();
+}
+
+// Screen-space notebook, held near a hand anchor to show his mathematical side.
+function housamNotebook(x, y, s, o = {}) {
+  X.save(); X.translate(x, y); X.rotate(o.ang ?? -.12); X.scale(s, s);
+  const lw = clamp(s * .1, 1.2, 4) / s;
+  shape([[-1.4, -1.65], [1.3, -1.65], [1.3, 1.6], [-1.4, 1.6]], { fill: '#F6F3E9', stroke: HO.blueDark, lw });
+  line([[-1.05, -1.55], [-1.05, 1.48]], { stroke: '#D59393', lw: .08 });
+  [-.92, -.36, .2, .76, 1.32].forEach(v => line([[-1.25, v], [1.18, v]], { stroke: '#B7CBE3', lw: .07 }));
+  X.fillStyle = HO.blueDark; X.font = 'bold 1.03px serif'; X.textAlign = 'center'; X.textBaseline = 'middle';
+  X.fillText('x² + y²', .05, -.54); X.fillText('= r²', .05, .52);
+  X.restore();
+}
+
+// Pose options for a short controlled dribble cycle; p is distance divided by stride.
+function housamDribble(p, k = 1) {
+  const q = Math.sin(p * Math.PI), lift = Math.max(0, q), other = Math.max(0, -q);
+  return {
+    footL: [-1.55 + .5 * k * q, -1.05 - 2.0 * k * lift],
+    footR: [1.55 + .5 * k * q, -1.05 - 2.0 * k * other],
+    handL: [-4.25, -12.0 + .7 * k * q], handR: [4.25, -12.0 - .7 * k * q],
+    lean: -.045 * k, tilt: .025 * k * q, dy: .15 * k * Math.abs(q),
+  };
+}
+
+CHARACTERS.housam = {
+  draw: housam, unit: HOUSAM_UNIT, palette: HO, size: [14, 33],
+  poses: {
+    'rest': (x, y, s, t) => housam(x, y, s),
+    'hello': (x, y, s, t) => housam(x, y, s, { handR: [4.7 + .22 * wob(t, 1.5), -24.3], handPoseR: 'palm', mouth: 'grin', brows: 'up', tilt: -.05 }),
+    'ready': (x, y, s, t) => { housamBall(x + 4.2 * s, y - 1.35 * s, s); return housam(x, y, s, { handL: [-4.7, -12.7], handR: [4.7, -12.7], footL: [-2, -1.05], footR: [2, -1.05], brows: 'focused', mouth: 'smirk', dy: .38 }); },
+    'dribble': (x, y, s, t) => { const p = t * 2; housamBall(x + (2.9 + .6 * Math.sin(p * Math.PI)) * s, y - (1.35 + .2 * Math.abs(Math.sin(p * Math.PI))) * s, s, { spin: t * 3 }); return housam(x, y, s, { ...housamDribble(p), brows: 'focused', mouth: 'smile', lookY: .55 }); },
+    'kick': (x, y, s, t) => { const q = Math.sin(t * 2.2) * .3; housamBall(x + (5.9 + q) * s, y - 2.5 * s, s, { spin: t * 5 }); return housam(x, y, s, { footR: [4.7, -3.7], footL: [-1.75, -1.05], handL: [-5, -14.5], handR: [4.7, -15.4], lean: -.15, rot: -.035, mouth: 'grin', brows: 'focused' }); },
+    'juggle': (x, y, s, t) => { const h = 2.1 + 2.1 * Math.abs(Math.sin(t * 3.1)); const A = housam(x, y, s, { footR: [2.4, -2.1], handL: [-4.9, -13], handR: [4.8, -13], mouth: 'grin', lookY: .75 }); housamBall(x + 3.7 * s, y - h * s, s, { spin: t * 4 }); return A; },
+    'thinking': (x, y, s, t) => housam(x, y, s, { handR: [1.1, -21.2], handPoseR: 'fist', handL: [-3.6, -11.8], brows: 'focused', mouth: 'flat', lookX: -.55, lookY: -.6, tilt: .08 }),
+    'math genius': (x, y, s, t) => { const A = housam(x, y, s, { handL: [-2.6, -15.2], handR: [4.6, -22.6], handPoseR: 'point', brows: 'up', mouth: 'grin', lookY: -.2 }); housamNotebook(A.handL[0] + .1 * s, A.handL[1] - 1.15 * s, s); return A; },
+    'eureka!': (x, y, s, t) => { const A = housam(x, y, s, { handR: [4.1, -24], handPoseR: 'point', eyes: 'wide', brows: 'up', mouth: 'grin', jump: .35 + .2 * wob(t, .7) }); X.save(); X.fillStyle = HO.blueDark; X.font = `${Math.max(26, s * 2)}px serif`; X.textAlign = 'center'; X.fillText('π', A.head[0] + 6.4 * s, A.top[1] + 2.1 * s); X.restore(); return A; },
+    'laugh': (x, y, s, t) => housam(x, y, s, { eyes: 'happy', mouth: 'open', handL: [-4.1, -14.1], handR: [4.1, -14.1], tilt: -.1, dy: .18 * Math.abs(Math.sin(t * 10)) }),
+    'surprised': (x, y, s, t) => housam(x, y, s, { eyes: 'wide', brows: 'up', mouth: 'o', handL: [-4.3, -15], handR: [4.3, -15], handPoseL: 'palm', handPoseR: 'palm' }),
+  },
+};
+
+// Source: ../../characters/alma/alma.js
+// characters/alma/alma.js: Alma, a cute girl with super dance powers (see reference.webp, README.md).
+//
+// alma(x, y, s, o) → anchors
+//   (x, y) screen point on the floor between the feet · s = px per local unit. She is ~23.8 units tall (feet to hair top),
+//   so in a perspective set use s = ALMA_UNIT * P.k(Z) (she is ~120 world units tall: a kid).
+//
+// Local units: feet y = 0, y points DOWN (up is negative). Hips −4.2, shoulders −9.4, chin −11.6, head centre −16.0, hair top ≈ −23.8.
+// Chibi proportions: the head (with its long wavy hair) is about half her height and twice as wide as her body.
+//
+// Pose     dy (hip drop; + = crouch) · lean (torso, rad) · tilt (head, rad) · turn (head −1..1) · rot (whole body, about the belly)
+//          jump (units off the floor) · sq (squash; negative stretches) · flip · spin (rad: twirl about her vertical axis; she shows
+//          her back while cos(spin) < 0) · hairSwing (−1..1: the hair swings out to that side) · breathe (default on)
+// Limbs    handL / handR: [x, y] wrist targets in local units (L = screen-left) · handPoseL / handPoseR: 'open' | 'palm' | 'point' | 'fist'
+//          footL / footR: ankle targets (rest [∓0.9, −0.55])
+// Face     eyes: open | wide | happy | closed | wink | squeeze | star | heart · lookX / lookY (−1..1) · blink (0..1, auto if unset)
+//          brows: normal | up | worried | angry · mouth: smile | grin | open | o | O | flat | frown | smirk | wobble · blush (0..1, default .8)
+// Powers   power (0..1): the dance aura: a glowing rainbow dance-floor ring that pulses on the beat, twinkling sparkles and music
+//          notes floating up around her. Pair it with almaDance(t, move) for the moves.
+// Extras   emote: '?' | '!' | 'sweat' | 'music' | 'heart' with emoteK (0..1 pop) · boil (px)
+//
+// Returns anchors in screen px: { head, mouth, top, eyeL, eyeR, chest, belly, handL, handR, footL, footR }
+//
+// Also: almaDance(t, move, { bpm, k }) → pose options for a dance move, to spread into alma():
+//   move: 'bounce' | 'sway' | 'disco' | 'twirl' | 'star jump' | 'floss' | 'arm wave'. bpm (default 112) sets the tempo, k (0..1) the energy.
+// almaSkip(p, k): skip-cycle pose options (p = steps travelled). almaLollipop(x, y, s, { ang, bite }): her swirly lollipop prop.
+
+const AL = {
+  ink: '#3B2530', skin: '#F6C9AC', skinDk: '#E2A487', skinLt: '#FCE0CD', cheek: '#F29A8E', nose: '#EFA893',
+  hair: '#5B3C2D', hairDk: '#43291F', hairLt: '#7B5541', purple: '#8F5CB3', purpleLt: '#B48AD0', clip: '#6F8FCB', clipDk: '#4F6DA6',
+  eyeW: '#FFFDF7', iris: '#8A5024', irisDk: '#5B3014', lash: '#2B1B18', brow: '#6A4431', mouth: '#8A2E3C', tongue: '#EE8595', lip: '#E88C86',
+  sweater: '#F4EEDF', sweaterDk: '#DCD2BE', rainbow: ['#9B6BC0', '#C7A6DB', '#84A98C'],
+  jeans: '#4F6E9F', jeansDk: '#3D5782', jeansLt: '#7F9CC7', shoe: '#F2EDE2', shoeTop: '#5D5470',
+  glow: '#E9B8FF', gold: '#FFD66B',
+};
+const ALMA_UNIT = 5.0;      // world units per local unit
+const AL_HIP = -4.2;
+const AL_NOTES = ['♪', '♫', '♪', '♬', '♫', '♪'];
+
+function alma(x, y, s, o = {}) {
+  const t = o.t ?? T, A = {}, pw = clamp(o.power || 0);
+  const lw = clamp(s * .17, 1.6, 5.5) / s;
+  X.save();
+  X.translate(x, y); X.scale(s * (o.flip ? -1 : 1), s);
+  if (pw > .01) alFloor(pw, t);
+  const air = o.jump || 0;
+  if (!o.noShadow) { const f = 1 - clamp(air / 14) * .55; ellipse(0, .12, 3.2 * f, .6 * f, { fill: 'rgba(40,20,30,.28)', stroke: null }); }
+  if (pw > .01) alAura(pw, t);
+  X.translate(0, -air);
+  if (o.rot) { X.translate(0, -8); X.rotate(o.rot); X.translate(0, 8); }
+  if (o.sq) X.scale(1 + o.sq * .55, 1 - o.sq);
+  const cs = Math.cos(o.spin || 0), back = cs < 0;
+  if (o.spin) X.scale(Math.sign(cs || 1) * Math.max(.14, Math.abs(cs)), 1);
+  if (pw > .01) alSparkles(pw, t, false);
+
+  withBoil(o.boil ?? .7, () => {
+    const hipY = AL_HIP + (o.dy || 0), lean = o.lean || 0, cl = Math.cos(lean), sl = Math.sin(lean);
+    const tl = (px, py) => [px * cl - py * sl, hipY + px * sl + py * cl];   // torso-local → body-local
+    const br = o.breathe === false ? 0 : wob(t, .25) * .05;
+    const headT = () => { X.translate(0, hipY); X.rotate(lean); X.translate(0, -6.2); X.rotate(o.tilt || 0); X.translate(0, -5.6); };
+    const swing = (o.hairSwing ?? 0) + wob(t, .45) * .06;
+
+    // ---- the long hair behind her ----
+    if (!back) { X.save(); headT(); alBackHair(swing, t, lw); X.restore(); }
+
+    // ---- legs + sneakers ----
+    [[-1, o.footL || [-.9, -.55]], [1, o.footR || [.9, -.55]]].forEach(([sd, f]) => {
+      const hp = tl(sd * .85, -.1), { joint, end } = ik2(hp, f, 1.95, 1.9, [sd * .15, .1]);
+      alLimb([hp, joint, end], 1.55, AL.jeans, lw);
+      alCuff(end, joint, lw);
+      alShoe(end, sd, lw);
+      A[sd < 0 ? 'footL' : 'footR'] = toPx(end[0], end[1]);
+    });
+
+    // ---- torso: the cream sweatshirt with the rainbow ----
+    X.save(); X.translate(0, hipY); X.rotate(lean); X.scale(1 + br * .3, 1 + br);
+    shape(rectPts(-.85, -7.9, 1.7, 1.9), { fill: AL.skin, stroke: AL.ink, lw });              // neck
+    shape(rectPts(-.85, -7.9, 1.7, .7), { fill: rgba(AL.skinDk, .5), stroke: null });
+    alSweater(lw, back);
+    A.chest = toPx(0, -3); A.belly = toPx(0, -1.2);
+    X.restore();
+
+    // ---- head: face and front curtains, or the back of her head while twirling ----
+    X.save(); headT();
+    if (back) { alBackHair(swing, t, lw, true); A.head = toPx(0, 0); A.mouth = toPx(0, 3.4); A.eyeL = A.eyeR = A.head; }
+    else alHead(o, t, lw, A, swing);
+    X.restore();
+
+    // ---- arms (in front of the body) ----
+    [[-1, o.handL || [-3.4, -4.9], o.handPoseL || 'open'], [1, o.handR || [3.4, -4.9], o.handPoseR || 'open']].forEach(([sd, tg, pose]) => {
+      const sh = tl(sd * 2.55, -5.3), { joint, end } = ik2(sh, tg, 2.55, 2.35, [sd * .25, 1]);
+      alLimb([sh, joint, end], 1.6, AL.sweater, lw);
+      const ang = Math.atan2(end[1] - joint[1], end[0] - joint[0]);
+      alHand(end, ang, sd, pose, lw);
+      A[sd < 0 ? 'handL' : 'handR'] = toPx(end[0] + Math.cos(ang) * .5, end[1] + Math.sin(ang) * .5);
+    });
+  });
+  if (pw > .01) alSparkles(pw, t, true);
+  A.top = toPx(0, -23.8);
+  X.restore();
+  if (pw > .01) alNotes(pw, t, A, s);
+  if (o.emote && (o.emoteK ?? 1) > .02) alEmote(o.emote, A, s, o.emoteK ?? 1, t);
+  return A;
+}
+
+function alLimb(pts, w, col, lw) {
+  if (JIT) { const a = JIT / pxScale(); pts = pts.map(p => [p[0] + jit(a), p[1] + jit(a)]); }
+  withBoil(0, () => { line(pts, { stroke: AL.ink, lw: w + lw * 2 }); line(pts, { stroke: col, lw: w }); });
+}
+// rolled-up jeans cuff just above the ankle
+function alCuff(end, knee, lw) {
+  const a = Math.atan2(end[1] - knee[1], end[0] - knee[0]);
+  X.save(); X.translate(end[0], end[1]); X.rotate(a - Math.PI / 2);
+  shape(rectPts(-.88, -.95, 1.76, .6), { fill: AL.jeansLt, stroke: AL.ink, lw, smooth: .3 });
+  X.restore();
+}
+// Sneaker seen from the front: cream sole and toe cap, purple-grey upper, white laces.
+function alShoe(a, sd, lw) {
+  X.save(); X.translate(a[0] + sd * .05, a[1]); X.scale(sd, 1);
+  shape([[-.8, .1], [-.75, -.35], [-.3, -.55], [.45, -.5], [.85, -.1], [.95, .45], [.7, .7], [-.1, .72], [-.7, .55]], { fill: AL.shoeTop, stroke: AL.ink, lw, smooth: .8 });
+  shape([[-.8, .25], [.95, .3], [.95, .5], [.7, .72], [-.1, .74], [-.72, .6]], { fill: AL.shoe, stroke: AL.ink, lw, smooth: .5 });
+  shape([[-.1, .05], [.6, .05], [.75, .3], [-.05, .3]], { fill: AL.shoe, stroke: null });
+  [-.28, -.05].forEach(y => line([[-.3, y], [.3, y]], { stroke: '#FFFFFF', lw: lw * 1.1 }));
+  X.restore();
+}
+
+function alSweater(lw, back) {
+  const body = [[-1.25, -6.35], [-2.6, -5.9], [-3.2, -4.8], [-3.15, -2.5], [-3.2, -.5], [-3.05, .35], [0, .45], [3.05, .35], [3.2, -.5], [3.15, -2.5], [3.2, -4.8], [2.6, -5.9], [1.25, -6.35], [0, -6.0]];
+  shape(body, { fill: AL.sweater, stroke: AL.ink, lw, smooth: .45 });
+  X.save(); tracePath(body, true, .45); X.clip();
+  withBoil(0, () => {
+    [-1, 1].forEach(sd => shape([[sd * 3.4, -6.5], [sd * 2.5, -6.5], [sd * 2.3, .6], [sd * 3.4, .6]], { fill: rgba(AL.sweaterDk, .45), stroke: null }));
+    shape(rectPts(-3.4, -.55, 6.8, 1.2), { fill: AL.sweaterDk, stroke: null });                       // ribbed hem
+    for (let x = -3; x <= 3; x += .3) line([[x, -.5], [x, .45]], { stroke: rgba('#C2B69E', .6), lw: lw * .5 });
+  });
+  X.restore();
+  line([[-3.1, -.55], [3.1, -.55]], { stroke: AL.ink, lw: lw * .8 });
+  if (back) return;
+  // ribbed crew collar
+  shape([[-1.3, -6.35], [0, -5.75], [1.3, -6.35], [1.05, -6.7], [0, -6.2], [-1.05, -6.7]], { fill: AL.sweaterDk, stroke: AL.ink, lw, smooth: .5 });
+  // the rainbow, and a line of tiny script above it
+  AL.rainbow.forEach((c, i) => {
+    const r = 1.25 - i * .33, a = []; for (let j = 0; j <= 16; j++) { const an = Math.PI + j / 16 * Math.PI; a.push([Math.cos(an) * r, -2.5 + Math.sin(an) * r]); }
+    line(a, { stroke: AL.ink, lw: .32 + lw * 1.6 }); line(a, { stroke: c, lw: .32 });
+  });
+  const sc = []; for (let i = 0; i <= 26; i++) { const u = i / 26; sc.push([-1.6 + u * 3.2, -4.15 - Math.sin(u * Math.PI) * .25 + Math.sin(u * 40) * .07]); }
+  line(sc, { stroke: rgba('#2E3550', .75), lw: lw * .7 });
+}
+
+// Back hair: the long wavy mass behind the head and shoulders (head-local, origin at the face centre). As `front`, it is the
+// back of her head (shown while she twirls away from camera).
+function alBackHair(swing, t, lw, front = false) {
+  const side = sd => {
+    const pts = []; for (let i = 0; i <= 14; i++) {
+      const u = i / 14, y = -1 + u * 11.4, w = sd * (6.0 + 2.3 * u + 1.05 * Math.sin(u * 8.5 + t * 1.3 + sd) * Math.min(1, u * 2.5)) + swing * 3 * u * u;
+      pts.push([w, y]);
+    } return pts;
+  };
+  const R = side(1), L = side(-1), bottom = [];
+  bottom.push([R[14][0] + .35, 10.5], [R[14][0] - .3, 11.0]);
+  for (let i = 1; i < 12; i++) { const u = i / 12, x = lerp(R[14][0] - .6, L[14][0] + .6, u); bottom.push([x, 10.6 - 1.6 * Math.sin(u * Math.PI) + .7 * Math.abs(Math.sin(u * TAU * 2.5 + t * .5)) + swing * 1.2 * Math.sin(u * Math.PI)]); }
+  bottom.push([L[14][0] + .3, 11.0], [L[14][0] - .35, 10.5]);
+  const top = [[-5.9, -1], [-5.9, -4.4], [-4.5, -7.2], [-1.6, -8.35], [1.6, -8.35], [4.6, -7.2], [5.95, -4.4], [5.9, -1]];
+  const mass = [...top, ...R.slice(1), ...bottom, ...L.slice(1).reverse()];
+  shape(mass, { fill: AL.hair, stroke: AL.ink, lw, smooth: .6 });
+  X.save(); tracePath(mass, true, .6); X.clip();
+  withBoil(0, () => {
+    // wavy strands with purple streaks
+    for (let k = 0; k < 16; k++) {                   // sculpted wavy bands, a few purple streaks among them
+      const sd = k % 2 ? 1 : -1, x0 = sd * (2.9 + (k >> 1) * .52), pts = [];
+      for (let i = 0; i <= 20; i++) { const u = i / 20, y = -6.5 + u * 16.6; pts.push([x0 + sd * 2.3 * u + 1.05 * Math.sin(u * 8.5 + t * 1.3 + sd + k * .05) * Math.min(1, u * 2.5) + swing * 3 * u * u, y]); }
+      const purple = k === 4 || k === 7 || k === 13;
+      line(pts, { stroke: purple ? AL.purple : k % 3 === 0 ? AL.hairLt : AL.hairDk, lw: purple ? .34 : k % 3 === 0 ? .3 : .13, smooth: true, alpha: purple ? .9 : .75 });
+    }
+    if (front) {                                   // the crown seen from behind: parting swirl + clip
+      line([[0, -8.2], [0, -3], [.3, 2]], { stroke: AL.hairDk, lw: .18, smooth: true });
+      ellipse(0, -3.2, 3.8, 3.2, { fill: rgba(AL.hairLt, .35), stroke: null });
+    }
+  });
+  X.restore();
+}
+
+function alHead(o, t, lw, A, swing) {
+  const turn = o.turn || 0, tx = turn * .9;
+  // ears peek under the hair
+  [-1, 1].forEach(sd => shape(ellPts(sd * 4.95 - turn * .5, 1.4, .55, .8, 12), { fill: AL.skin, stroke: AL.ink, lw, smooth: true }));
+  const face = [[0, -5.9], [3.5, -5.2], [4.8, -2.5], [5.05, .6], [4.6, 2.7], [3.2, 3.95], [1.4, 4.4], [0, 4.45], [-1.4, 4.4], [-3.2, 3.95], [-4.6, 2.7], [-5.05, .6], [-4.8, -2.5], [-3.5, -5.2]];
+  shape(face, { fill: AL.skin, stroke: AL.ink, lw, smooth: true });
+  X.save(); tracePath(face, true, true); X.clip();
+  withBoil(0, () => { ellipse(0, 4.4, 3.6, 1.1, { fill: rgba(AL.skinDk, .22), stroke: null }); ellipse(-1 + tx * .4, -2.9, 2.0, .9, { fill: rgba(AL.skinLt, .3), stroke: null }); });
+  X.restore();
+  // cheeks
+  const bl = o.blush ?? .8;
+  if (bl > .01) [-1, 1].forEach(sd => ellipse(sd * 3.3 + tx * .5, 2.1, 1.15, .72, { fill: rgba(AL.cheek, .45 * bl), stroke: null }));
+  // eyes + brows
+  const eyeX = [-2.6 + tx, 2.6 + tx];
+  eyeX.forEach((ex, i) => alEye(ex, .5, o, i === 0, lw, t, 1 - Math.abs(turn) * (turn * (i ? -1 : 1) > 0 ? .22 : 0)));
+  A.eyeL = toPx(eyeX[0], .5); A.eyeR = toPx(eyeX[1], .5);
+  alBrows(eyeX, o, lw);
+  // a little button nose
+  X.save(); X.translate(tx * 1.15, 0);
+  ellipse(0, 2.4, .5, .4, { fill: AL.nose, stroke: null });
+  line([[-.55, 2.45], [-.45, 2.8], [-.15, 2.85]], { stroke: AL.ink, lw: lw * .9, smooth: true });
+  line([[.55, 2.45], [.45, 2.8], [.15, 2.85]], { stroke: AL.ink, lw: lw * .9, smooth: true });
+  circle(-.18, 2.2, .16, { fill: 'rgba(255,255,255,.7)', stroke: null });
+  X.restore();
+  alMouth(o.mouth || 'smile', tx, lw);
+  A.mouth = toPx(tx, 3.4); A.head = toPx(0, 0);
+  // front curtains of hair: a parting just right of centre, framing the face down past the jaw
+  const part = .8;
+  [-1, 1].forEach(sd => {
+    const w = u => 1.0 * Math.sin(u * 8.5 + t * 1.3 + sd) * Math.min(1, u * 2) + swing * 2.2 * u * u, pts = [];
+    const outer = [[part, -8.25], [sd * 2.2 + part * .4, -8.1], [sd * 4.5, -6.9], [sd * 5.8, -4.3], [sd * 6.1, -1]];
+    for (let i = 1; i <= 8; i++) { const u = i / 8; outer.push([sd * (6.1 + .9 * u) + w(u), -1 + u * 10.5]); }
+    const inner = [];
+    for (let i = 8; i >= 1; i--) { const u = i / 8; inner.push([sd * (5.0 + .6 * u) + w(u) * .8, -1.6 + u * 9.2]); }
+    inner.push([sd * 4.75, -2.6], [sd * 3.9, -4.6], [sd * 2.3 + part * .3, -5.75], [part, -6.05]);
+    const c = [...outer, ...inner];
+    shape(c, { fill: AL.hair, stroke: AL.ink, lw, smooth: .55 });
+    X.save(); tracePath(c, true, .55); X.clip();
+    withBoil(0, () => {
+      for (let k = 0; k < 4; k++) {
+        const s0 = [];
+        for (let i = 0; i <= 14; i++) { const u = i / 14; s0.push([lerp(part + sd * (1 + k * .9), sd * (5.2 + k * .35), Math.min(1, u * 2.2)) + (u > .45 ? w((u - .45) / .55) : 0), -7.9 + k * .2 + u * 16]); }
+        const purple = (sd < 0 && k === 1) || (sd > 0 && k === 2);
+        line(s0, { stroke: purple ? AL.purple : k % 2 ? AL.hairDk : AL.hairLt, lw: purple ? .3 : .14, smooth: true, alpha: purple ? .9 : .7 });
+      }
+    });
+    X.restore();
+  });
+  // the blue clip on screen-left
+  X.save(); X.translate(-4.35, -5.0); X.rotate(-.95);
+  shape([[-1.0, -.32], [.95, -.32], [1.05, 0], [.95, .32], [-1.0, .32], [-1.1, 0]], { fill: AL.clip, stroke: AL.ink, lw, smooth: .6 });
+  line([[-.7, -.05], [.7, -.05]], { stroke: AL.clipDk, lw: lw * .8 });
+  X.restore();
+}
+
+function alEye(cx, cy, o, isLeft, lw, t, narrow) {
+  let kind = o.eyes || 'open';
+  if (kind === 'wink') kind = isLeft ? 'open' : 'happy';
+  const rx = 1.28 * narrow, ry = 1.42;
+  if (kind === 'happy') return line([[cx - 1.0, cy + .35], [cx, cy - .55], [cx + 1.0, cy + .35]], { stroke: AL.lash, lw: lw * 2.2, smooth: true });
+  if (kind === 'closed') { line([[cx - 1.0, cy], [cx, cy + .45], [cx + 1.0, cy]], { stroke: AL.lash, lw: lw * 2.2, smooth: true }); return; }
+  if (kind === 'squeeze') { const d = isLeft ? 1 : -1; return line([[cx - d * .85, cy - .6], [cx + d * .6, cy], [cx - d * .85, cy + .6]], { stroke: AL.lash, lw: lw * 2.2 }); }
+  if (kind === 'star' || kind === 'heart') {
+    const pts = kind === 'star' ? starPts(cx, cy, 1.25, .5, 5) : [[cx, cy + 1.05], [cx - 1.15, cy - .05], [cx - .95, cy - .8], [cx - .35, cy - .95], [cx, cy - .45], [cx + .35, cy - .95], [cx + .95, cy - .8], [cx + 1.15, cy - .05]];
+    shape(pts, { fill: kind === 'star' ? AL.gold : '#F06C8E', stroke: AL.ink, lw, smooth: kind === 'heart' ? .5 : false });
+    circle(cx - .35, cy - .35, .2, { fill: '#FFFFFF', stroke: null });
+    return;
+  }
+  const R = kind === 'wide' ? 1.1 : 1;
+  ellipse(cx, cy, rx * R, ry * R, { fill: AL.eyeW, stroke: AL.ink, lw });
+  const lx = clamp(o.lookX || 0, -1, 1), ly = clamp(o.lookY || 0, -1, 1), ir = kind === 'wide' ? .78 : .95;
+  const ix = cx + lx * .32 * narrow, iy = cy + .1 + ly * .38;
+  X.save(); X.beginPath(); X.ellipse(cx, cy, rx * R, ry * R, 0, 0, TAU); X.clip();
+  withBoil(0, () => {
+    circle(ix, iy, ir, { fill: radGrad(ix, iy + ir * .3, ir * .2, ir, [[0, '#B8763A'], [1, AL.iris]]), stroke: null });
+    circle(ix, iy, ir * .62, { fill: AL.lash, stroke: null });
+    circle(ix + ir * .32, iy - ir * .38, ir * .3, { fill: '#FFFFFF', stroke: null });
+    circle(ix - ir * .3, iy + ir * .35, ir * .12, { fill: '#FFFFFF', stroke: null });
+    const ph = (t + 2.1 + (o.blinkSeed || 0)) % 3.1, b = o.blink ?? (ph < .15 ? Math.sin(ph / .15 * Math.PI) : 0);
+    if (b > .02) shape(rectPts(cx - 1.6, cy - 1.7, 3.2, .3 + 3.2 * b), { fill: AL.skin, stroke: null });
+  });
+  X.restore();
+  // upper lid with lashes and a little flick at the outer corner
+  const sd = isLeft ? -1 : 1;
+  line([[cx - rx * R, cy - .1], [cx - rx * .5 * R, cy - ry * R * .92], [cx + rx * .5 * R, cy - ry * R * .92], [cx + rx * R, cy - .1]], { stroke: AL.lash, lw: lw * 2.3, smooth: .9 });
+  line([[cx + sd * rx * R * .92, cy - .45], [cx + sd * (rx * R + .45), cy - .85]], { stroke: AL.lash, lw: lw * 1.9 });
+  line([[cx + sd * rx * R * .72, cy - .95], [cx + sd * (rx * R + .25), cy - 1.35]], { stroke: AL.lash, lw: lw * 1.5 });
+}
+
+function alBrows(eyeX, o, lw) {
+  const kind = o.brows || 'normal';
+  eyeX.forEach((ex, i) => {
+    const sd = i ? 1 : -1, up = kind === 'up' ? .45 : 0, inner = kind === 'worried' ? -.45 : kind === 'angry' ? .45 : 0, y = -2.15 - up;
+    shape([[ex - sd * 1.05, y + .25 + inner], [ex + sd * .1, y - .35 + inner * .3], [ex + sd * 1.25, y + .1], [ex + sd * 1.2, y + .35], [ex + sd * .1, y - .05 + inner * .3], [ex - sd * 1.05, y + .5 + inner]],
+      { fill: AL.brow, stroke: null, smooth: .6 });
+  });
+}
+
+function alMouth(kind, tx, lw) {
+  X.save(); X.translate(tx, 1.9);
+  const dark = { fill: AL.mouth, stroke: AL.ink, lw };
+  if (kind === 'smile') {
+    line([[-1.75, 1.2], [-.9, 1.65], [0, 1.78], [.9, 1.65], [1.75, 1.2]], { stroke: AL.ink, lw: lw * 1.3, smooth: true });
+    ellipse(0, 1.95, .7, .15, { fill: rgba(AL.lip, .45), stroke: null });
+    [-1, 1].forEach(sd => line([[sd * 1.72, 1.05], [sd * 1.9, 1.35]], { stroke: AL.ink, lw: lw * .9 }));
+  } else if (kind === 'grin' || kind === 'open') {
+    const pts = kind === 'grin' ? [[-1.5, 1.2], [0, 1.4], [1.5, 1.2], [1.0, 2.2], [0, 2.5], [-1.0, 2.2]] : [[-.75, 1.3], [0, 1.2], [.75, 1.3], [.75, 2.0], [0, 2.55], [-.75, 2.0]];
+    X.save(); tracePath(pts, true, .8); X.fillStyle = AL.mouth; X.fill(); X.clip();
+    withBoil(0, () => { shape(rectPts(-1.7, 1.05, 3.4, kind === 'grin' ? .45 : .32), { fill: '#FFFDF7', stroke: null }); ellipse(0, 2.5, .75, .45, { fill: AL.tongue, stroke: null }); });
+    X.restore();
+    shape(pts, { stroke: AL.ink, lw, smooth: .8 });
+  } else if (kind === 'o') ellipse(0, 1.7, .32, .38, dark);
+  else if (kind === 'O') ellipse(0, 1.85, .58, .72, dark);
+  else if (kind === 'flat') line([[-.8, 1.6], [.8, 1.6]], { stroke: AL.ink, lw: lw * 1.4 });
+  else if (kind === 'frown') line([[-1.1, 2.0], [-.55, 1.6], [0, 1.5], [.55, 1.6], [1.1, 2.0]], { stroke: AL.ink, lw: lw * 1.4, smooth: true });
+  else if (kind === 'smirk') line([[-1.0, 1.6], [0, 1.72], [1.15, 1.25]], { stroke: AL.ink, lw: lw * 1.4, smooth: true });
+  else if (kind === 'wobble') line([[-1, 1.7], [-.6, 1.45], [-.2, 1.75], [.2, 1.45], [.6, 1.75], [1, 1.5]], { stroke: AL.ink, lw: lw * 1.3, smooth: true });
+  X.restore();
+}
+
+function alHand(p, ang, sd, pose, lw) {
+  X.save(); X.translate(p[0], p[1]); X.rotate(ang); if (sd < 0) X.scale(1, -1);
+  const ink = { stroke: AL.ink, lw: .28 + lw * 2 }, skin = { stroke: AL.skin, lw: .28 };
+  shape(ellPts(-.1, 0, .32, .78, 12), { fill: AL.sweaterDk, stroke: AL.ink, lw, smooth: true });          // ribbed cuff
+  if (pose === 'fist') {
+    shape([[.1, -.42], [.5, -.5], [.85, -.34], [.95, 0], [.85, .36], [.45, .48], [.1, .38]], { fill: AL.skin, stroke: AL.ink, lw, smooth: .9 });
+  } else {
+    const f = pose === 'palm' ? [[-.6, .55], [-.2, .62], [.2, .6], [.55, .5], [-1.45, .45]] : pose === 'point' ? [[0, .85]] : [[-.25, .5], [-.05, .56], [.15, .54], [.35, .47], [-1.1, .38]];
+    const fingers = f.map(([a, l]) => [[.45, 0], [.45 + Math.cos(a) * (.3 + l), Math.sin(a) * (.3 + l)]]);
+    withBoil(0, () => {
+      fingers.forEach(g => line(g, ink)); circle(.45, 0, .45, { stroke: AL.ink, lw: lw * 2 });
+      fingers.forEach(g => line(g, skin)); circle(.45, 0, .45, { fill: AL.skin, stroke: null });
+      if (pose === 'point') shape(ellPts(.62, .1, .38, .34, 12), { fill: AL.skin, stroke: AL.ink, lw, smooth: true });
+    });
+  }
+  X.restore();
+}
+
+// ---------- the dance powers ----------
+function alFloor(k, tt) {
+  const b = pulse(tt, 5), hue = tt * 60;
+  X.save(); X.globalCompositeOperation = 'lighter';
+  ellipse(0, .1, 6.5 + 1.2 * b, 1.3 + .25 * b, { fill: radGrad(0, .1, .5, 6.5, [[0, `hsla(${hue % 360},90%,75%,${.35 * k})`], [1, 'hsla(0,0%,100%,0)']]), stroke: null });
+  X.restore();
+  for (let i = 0; i < 3; i++) {
+    const r = 3.4 + i * 1.3 + b * .6, c = `hsla(${(hue + i * 110) % 360},85%,70%,${(.75 - i * .2) * k})`;
+    ellipse(0, .1, r, r * .2, { fill: null, stroke: c, lw: .22 });
+  }
+}
+function alAura(k, t) {
+  circle(0, -12, 12, { fill: radGrad(0, -12, 1, 12, [[0, rgba('#FFE3F4', .45 * k)], [.55, rgba(AL.glow, .2 * k)], [1, rgba(AL.glow, 0)]]), stroke: null });
+}
+function alSparkles(k, t, front) {
+  for (let i = 0; i < 12; i++) {
+    const a = t * .7 + i / 12 * TAU, depth = Math.sin(a);
+    if ((depth > 0) !== front) continue;
+    const tw = Math.max(0, Math.sin(t * 4 + i * 1.7)), x = Math.cos(a) * (7.5 + (i % 3)), y = -11 + depth * 1.2 + ((i * 5) % 9 - 4) * 1.6 + Math.sin(t * 1.3 + i) * .6;
+    const r = (.35 + .5 * tw) * k * (front ? 1 : .7);
+    if (r > .05) shape(starPts(x, y, r, .32, 4, t * 2 + i), { fill: [AL.gold, '#FFFFFF', AL.purpleLt, '#9FE0C2'][i % 4], stroke: AL.ink, lw: .08 });
+  }
+}
+function alNotes(k, t, A, s) {
+  const [hx, hy] = A.head;
+  overlay(() => {
+    X.save(); X.textAlign = 'center'; X.textBaseline = 'middle';
+    for (let i = 0; i < AL_NOTES.length; i++) {
+      const age = frac(t * .45 + i / AL_NOTES.length), sd = i % 2 ? 1 : -1;
+      const x = hx + sd * s * (6.5 + 3 * age) + Math.sin(age * 7 + i) * s * .8, y = hy + s * (6 - 16 * age), size = s * (2.2 + .6 * (i % 3));
+      X.globalAlpha = k * Math.sin(age * Math.PI); X.font = `${size}px ${FONT_SFX}`;
+      X.lineWidth = size * .12; X.strokeStyle = AL.ink; X.strokeText(AL_NOTES[i], x, y);
+      X.fillStyle = [AL.purple, '#84A98C', '#F06C8E', AL.clip][i % 4]; X.fillText(AL_NOTES[i], x, y);
+    }
+    X.restore();
+  });
+}
+function alEmote(kind, A, s, k, t) {
+  const [hx, hy] = A.head, x = hx + s * 6.8, y = hy - s * 7.5, pop = backOut(k);
+  if (kind === 'sweat') {
+    const [sx, sy] = [hx + s * 5.2, hy - s * 2.6 + (1 - k) * s];
+    overlay(() => { X.save(); X.translate(sx, sy); X.scale(pop * s * 1.2, pop * s * 1.2); shape([[0, -.9], [.45, .1], [0, .5], [-.45, .1]], { fill: '#8FD3F0', stroke: AL.ink, lwPx: 3, smooth: .7 }); X.restore(); });
+    return;
+  }
+  const txt = { '?': '?', '!': '!', '!?': '!?', music: '♪', heart: '♥' }[kind] ?? kind;
+  const col = kind === 'heart' ? '#F06C8E' : kind === 'music' ? AL.purple : PAL.goldLt;
+  overlay(() => {
+    X.save(); X.translate(x, y + wob(t, 1.5) * s * .25); X.rotate(.12 + wob(t, 1.1) * .06); X.scale(pop, pop);
+    const size = s * 4.2; X.font = `${size}px ${FONT_SFX}`; X.textAlign = 'center'; X.textBaseline = 'middle';
+    X.lineJoin = 'round'; X.lineWidth = size * .14; X.strokeStyle = AL.ink; X.strokeText(txt, 0, 0);
+    X.fillStyle = col; X.fillText(txt, 0, 0); X.restore();
+  });
+}
+
+// Dance moves: pose options for alma() as a pure function of t. { bpm, k (energy 0..1) }
+function almaDance(t, move, o = {}) {
+  const b = t * (o.bpm ?? 112) / 60, k = o.k ?? 1, S = Math.sin, P = Math.PI, hop = Math.abs(S(b * P));
+  const face = { eyes: 'happy', mouth: 'grin', brows: 'up' };
+  switch (move) {
+    case 'bounce': return { ...face, dy: .45 * k * hop, jump: .3 * k * hop, tilt: .07 * k * S(b * P), hairSwing: .35 * k * S(b * P),
+      handL: [-3.1, -6.2 - 1.2 * hop * k], handR: [3.1, -6.2 - 1.2 * hop * k], handPoseL: 'fist', handPoseR: 'fist' };
+    case 'sway': { const sw = S(b * P / 2); return { ...face, eyes: 'closed', mouth: 'smile', lean: .09 * k * sw, tilt: .12 * k * sw, hairSwing: .6 * k * sw,
+      handL: [-5.0 + .6 * sw, -10.8 - .8 * sw], handR: [5.0 + .6 * sw, -10.8 + .8 * sw], handPoseL: 'palm', handPoseR: 'palm' }; }
+    case 'disco': { const up = frac(b / 2) < .5; return { ...face, mouth: up ? 'O' : 'grin', eyes: 'open', lookX: up ? .7 : -.4, lookY: up ? -.8 : .3, dy: .3 * hop,
+      lean: (up ? -.07 : .07) * k, hairSwing: (up ? -.4 : .4) * k, handR: up ? [4.9, -13.4] : [-1.6, -3.3], handPoseR: 'point', handL: [-2.6, -4.6], handPoseL: 'fist',
+      footR: up ? [1.3, -.55] : [.7, -1.1] }; }
+    case 'twirl': { const sp = b * P; return { ...face, spin: sp, hairSwing: .9 * k * S(sp), dy: .2, handL: [-5.3, -9.6], handR: [5.3, -9.6], handPoseL: 'palm', handPoseR: 'palm',
+      footL: [-.4, -.55], footR: [.5, -1.5] }; }
+    case 'star jump': { const j = S(frac(b / 2) * P), sq = kick(frac(b / 2), 0, 14) * .15; return { ...face, mouth: j > .5 ? 'open' : 'grin', jump: 3.2 * k * j, sq: sq - .06 * j,
+      handL: mixPt([-3.2, -5.2], [-5.0, -12.2], j), handR: mixPt([3.2, -5.2], [5.0, -12.2], j), handPoseL: 'palm', handPoseR: 'palm',
+      footL: mixPt([-.9, -.55], [-2.1, -.8], j), footR: mixPt([.9, -.55], [2.1, -.8], j), hairSwing: .15 * S(b * P) }; }
+    case 'floss': { const f = S(b * P); return { ...face, mouth: 'grin', eyes: 'open', lookX: -f * .5, lean: -.08 * k * f, dy: .15,
+      handL: [-.6 + 2.6 * f * k, -4.4], handR: [.6 + 2.6 * f * k, -4.4], handPoseL: 'fist', handPoseR: 'fist', hairSwing: -.45 * k * f }; }
+    case 'arm wave': { const w = u => S(b * P + u); return { ...face, tilt: .08 * w(0), hairSwing: .3 * w(.5), dy: .2 * hop,
+      handL: [-4.7, -9.8 - 2.2 * w(0) * k], handR: [4.7, -9.8 - 2.2 * w(P) * k], handPoseL: 'palm', handPoseR: 'palm' }; }
+  }
+  return {};
+}
+
+// Skip cycle: pose options for alma() at phase p (steps; one hop-step per 1.0) with amount k (0 = standing, 1 = full skip).
+// Tie p to the distance travelled (p = distance / stride) so the feet never slide.
+function almaSkip(p, k = 1) {
+  const sn = Math.sin(p * Math.PI), a = Math.abs(sn);
+  return {
+    jump: .7 * k * a * a, dy: .25 * k * (1 - a), hairSwing: .18 * k * sn, tilt: .04 * k * sn,
+    footL: [-.9, -.55 - 1.5 * k * Math.max(0, sn)], footR: [.9, -.55 - 1.5 * k * Math.max(0, -sn)],
+    handL: [-3.5 + .3 * k * a, -4.9 - 1.4 * k * Math.max(0, -sn)], handR: [3.5 - .3 * k * a, -4.9 - 1.4 * k * Math.max(0, sn)],
+  };
+}
+
+// Her big swirly lollipop, in screen px: (x, y) = where the hand grips the stick, s = px per Alma unit.
+// o: { ang (stick angle from straight up, rad), bite (0..1: a bite missing) }
+function almaLollipop(x, y, s, o = {}) {
+  X.save(); X.translate(x, y); X.rotate(o.ang || 0); X.scale(s, s);
+  const lw = clamp(s * .17, 1.6, 5.5) / s;
+  line([[0, 1.2], [0, -4.6]], { stroke: AL.ink, lw: .42 + lw * 2 }); line([[0, 1.2], [0, -4.6]], { stroke: '#FBF7F0', lw: .42 });
+  const cy = -6.6, R = 2.1;
+  circle(0, cy, R, { fill: '#F7B6D2', stroke: AL.ink, lw });
+  X.save(); X.beginPath(); X.arc(0, cy, R, 0, TAU); X.clip();
+  const sp = []; for (let i = 0; i <= 60; i++) { const a = i * .32, r = i / 60 * R; sp.push([Math.cos(a) * r, cy + Math.sin(a) * r]); }
+  withBoil(0, () => { line(sp, { stroke: AL.purple, lw: .42, smooth: true }); line(sp.map(([px, py]) => [px * .9, cy + (py - cy) * .9]), { stroke: '#FFFFFF', lw: .18, smooth: true }); });
+  if (o.bite) circle(R * .95, cy - R * .6, R * .45 * o.bite, { fill: '#F4EEDF', stroke: null });
+  X.restore();
+  circle(-.8, cy - .9, .45, { fill: 'rgba(255,255,255,.75)', stroke: null });
+  X.restore();
+}
+
+// Registration for the studio's character browser (poses are also its model sheet).
+CHARACTERS.alma = {
+  draw: alma, unit: ALMA_UNIT, palette: AL, size: [17, 25],
+  poses: {
+    'rest': (x, y, s, t) => alma(x, y, s, {}),
+    'hi!': (x, y, s, t) => alma(x, y, s, { handR: [4.2 + .5 * wob(t, 1.6), -12.2], handPoseR: 'palm', mouth: 'grin', brows: 'up', tilt: .06, hairSwing: .1 }),
+    'talk': (x, y, s, t) => alma(x, y, s, { mouth: lipFlap(t, frac(t * .5) < .7, 'smile'), brows: 'up', handR: [3.5, -7.4], handPoseR: 'palm', turn: .2 }),
+    'giggle': (x, y, s, t) => { const k = Math.abs(Math.sin(t * 12)); alma(x, y, s, { handL: [-.6, -10.6], handR: [.6, -10.6], handPoseL: 'fist', handPoseR: 'fist', eyes: 'happy', mouth: k > .5 ? 'grin' : 'smile', dy: .25 * k, tilt: -.1, blush: 1 }); },
+    'surprised': (x, y, s, t) => alma(x, y, s, { eyes: 'wide', mouth: 'O', brows: 'up', handL: [-1.1, -11.6], handR: [1.1, -11.6], handPoseL: 'palm', handPoseR: 'palm' }),
+    'wink': (x, y, s, t) => alma(x, y, s, { eyes: 'wink', mouth: 'grin', handR: [3.9, -9.2], handPoseR: 'point', brows: 'up', tilt: .08 }),
+    'shy': (x, y, s, t) => alma(x, y, s, { handL: [-.5, -4.6], handR: [.5, -4.6], handPoseL: 'fist', handPoseR: 'fist', lookX: -.6, lookY: .5, mouth: 'smile', tilt: -.12, blush: 1, footR: [.5, -.9] }),
+    'sad': (x, y, s, t) => alma(x, y, s, { mouth: 'frown', brows: 'worried', lookY: .7, dy: .2, tilt: .08, emote: 'sweat', emoteK: 1 }),
+    'skip': (x, y, s, t) => { const A = alma(x, y, s, { ...almaSkip(t * 2.4), handR: [3.1, -6.4], handPoseR: 'fist', mouth: 'grin', eyes: 'happy', turn: .15 }); almaLollipop(A.handR[0], A.handR[1], s, { ang: .15 }); },
+    'dance: bounce': (x, y, s, t) => alma(x, y, s, almaDance(t, 'bounce')),
+    'dance: disco': (x, y, s, t) => alma(x, y, s, almaDance(t, 'disco')),
+    'dance: twirl': (x, y, s, t) => alma(x, y, s, almaDance(t, 'twirl')),
+    'dance: star jump': (x, y, s, t) => alma(x, y, s, almaDance(t, 'star jump')),
+    'dance: floss': (x, y, s, t) => alma(x, y, s, almaDance(t, 'floss')),
+    'super dance': (x, y, s, t) => alma(x, y, s, { ...almaDance(t, 'arm wave'), power: 1, eyes: 'star' }),
+  },
+};
+
+// Source: ../../characters/danny/danny.js
+// Danny: a funny six-year-old who loves soccer and Minecraft.
+// (x, y) is the floor point between his feet; s is pixels per local unit.
+// Feet are y=0, the jersey hem is y=-10, eyes are near y=-22, hair top is y=-29.
+// All movement is a pure function of pose options and time.
+
+const DN = {
+  ink: '#3B2530', skin: '#f0dbcf', skinShade: '#ded4d0', skinLight: '#F8CFB0',
+  cheek: '#D88B78', hair: '#2f2623', hairShade: '#231e1e', hairLight: '#57443B',
+  brow: '#34252B', eyeWhite: '#FFF9F2', iris: '#754622', irisLight: '#B17A40',
+  mouth: '#843C45', jersey: '#353969', jerseyShade: '#282D55', blue: '#8BB1D9',
+  blueDark: '#2C4684', crest: '#5D8795', shorts: '#426E92', shortsLight: '#638AAD',
+  shoe: '#854831', shoeShade: '#4A3028', yellow: '#E8CF74', ball: '#FBFBF7',
+};
+const DANNY_UNIT = 4.2; // ~122 world units tall
+
+function danny(x, y, s, o = {}) {
+  const t = o.t ?? T, A = {}, lw = clamp(s * .13, 1.5, 5) / s;
+  const dy = o.dy || 0, air = o.jump || 0;
+  X.save(); X.translate(x, y); X.scale(s * (o.flip ? -1 : 1), s);
+  if (!o.noShadow) {
+    const q = 1 - clamp(air / 12) * .4;
+    ellipse(0, .18, 3.7 * q, .68 * q, { fill: 'rgba(32,26,38,.22)', stroke: null });
+  }
+  X.translate(0, -air);
+  if (o.rot) { X.translate(0, -10); X.rotate(o.rot); X.translate(0, 10); }
+  if (o.sq) X.scale(1 + o.sq * .45, 1 - o.sq);
+
+  withBoil(o.boil ?? .45, () => {
+    // Independent ankle targets allow a planted foot, run cycle, kick, and juggle.
+    [[-1, o.footL || [-1.5, -1.05]], [1, o.footR || [1.5, -1.05]]].forEach(([sd, target]) => {
+      const hip = [sd * 1.25, -8.25 + dy];
+      const { joint, end } = ik2(hip, target, 3.5, 3.76, [sd * .55, .12]);
+      dnLimb([hip, joint, end], 2.0, DN.shorts, lw);
+      // Rounded denim knees and seams follow the two-bone leg rig.
+      circle(joint[0], joint[1], .9, { fill: DN.shorts, stroke: null });
+      line([[joint[0] - sd * .1, joint[1] + .5], [end[0], end[1]]], { stroke: rgba(DN.shortsLight, .65), lw: .16 });
+      dnShoe(end, sd, lw);
+      A[sd < 0 ? 'footL' : 'footR'] = toPx(end[0], end[1]);
+      A[sd < 0 ? 'kneeL' : 'kneeR'] = toPx(joint[0], joint[1]);
+    });
+
+    // Shorts and torso lean together about the hips.
+    X.save(); X.translate(0, dy); X.translate(0, -8.6); X.rotate(o.lean || 0); X.translate(0, 8.6);
+    dnJeans(lw);
+    const breath = o.breathe === false ? 0 : .025 * wob(t, .35);
+    X.save(); X.translate(0, -14); X.scale(1 + breath, 1 + breath); X.translate(0, 14);
+    dnPolo(lw);
+    A.chest = toPx(0, -13.5); A.belly = toPx(0, -11.3);
+    X.restore();
+
+    // Neck and head have a separate tilt control.
+    shape(rectPts(-.82, -17.1, 1.64, 2.1), { fill: DN.skin, stroke: DN.ink, lw, smooth: .3 });
+    ellipse(0, -15.7, .85, .28, { fill: rgba(DN.skinShade, .4), stroke: null });
+    X.save(); X.translate(0, -22.3); X.rotate(o.tilt || 0);
+    dnHead(o, t, lw, A);
+    A.top = toPx(0, -6.7);
+    X.restore();
+
+    // Arms use two-bone IK; sleeves stop above the elbows.
+    [[-1, o.handL || [-3.5, -9.8], o.handPoseL || 'open'],
+      [1, o.handR || [3.5, -9.8], o.handPoseR || 'open']].forEach(([sd, target, pose]) => {
+      const shoulder = [sd * 2.7, -14.45];
+      const { joint, end } = ik2(shoulder, target, 2.5, 3.0, [sd * .8, .25]);
+      dnLimb([shoulder, joint, end], .89, DN.skin, lw);
+      const cuff = mixPt(shoulder, joint, .6);
+      dnLimb([shoulder, cuff], 1.53, DN.jersey, lw);
+      
+      line([[cuff[0] - sd * .61, cuff[1]], [cuff[0] + sd * .61, cuff[1]]], { stroke: DN.yellow, lw: .3 });
+      const angle = Math.atan2(end[1] - joint[1], end[0] - joint[0]);
+      dnHand(end, angle, sd, pose, lw);
+      A[sd < 0 ? 'handL' : 'handR'] = toPx(end[0], end[1]);
+    });
+    X.restore();
+  });
+  X.restore();
+  return A;
+}
+
+function dnLimb(points, width, fill, lw) {
+  withBoil(0, () => {
+    line(points, { stroke: DN.ink, lw: width + lw * 1.8 });
+    line(points, { stroke: fill, lw: width });
+  });
+}
+
+function dnJeans(lw) {
+  shape([[-2.65, -10.1], [2.65, -10.1], [2.55, -7.5], [.6, -7.5], [0, -8.2], [-.6, -7.5], [-2.55, -7.5]],
+    { fill: DN.shorts, stroke: null, smooth: .3 });
+  line([[-2.65, -10.1], [2.65, -10.1]], { stroke: DN.ink, lw });
+  line([[.1, -9.8], [.1, -8.3], [.6, -8.6], [.6, -9.8]], { stroke: '#B69A6D', lw: .1, smooth: true });
+  [-1, 1].forEach(sd => line([[sd * 2.5, -9.7], [sd * 1.85, -8.95], [sd * 1.2, -9.05]], { stroke: DN.shortsLight, lw: .14, smooth: true }));
+}
+
+
+function dnPolo(lw) {
+  const body = [[-1.1, -15.5], [-2.6, -15.2], [-3.05, -13.8], [-2.95, -10.05],
+    [-2.1, -9.85], [0, -9.8], [2.1, -9.85], [2.95, -10.05], [3.05, -13.8], [2.6, -15.2], [1.1, -15.5]];
+  shape(body, { fill: DN.jersey, stroke: DN.ink, lw, smooth: .4 });
+  X.save(); tracePath(body, true, .4); X.clip();
+  shape(rectPts(-3.2, -13.0, 6.4, 1.55), { fill: DN.blue, stroke: null });
+  shape(rectPts(-3.2, -10.65, 6.4, 1), { fill: DN.yellow, stroke: null });
+  line([[-2.5, -10.05], [0, -9.98], [2.5, -10.05]], { stroke: '#CCB661', lw: .12, smooth: true });
+  X.restore();
+  shape([[-1.06, -15.6], [-.2, -15.02], [.55, -14.7], [.3, -13.7], [-.25, -13.7], [-.4, -14.7]],
+    { fill: DN.blue, stroke: DN.ink, lw: lw * .6 });
+  [-1, 1].forEach(sd => shape([[sd * .82, -15.85], [sd * 1.4, -15.3], [sd * 1.18, -14.65], [sd * .15, -15.1]],
+    { fill: DN.blue, stroke: DN.ink, lw: lw * .65, smooth: .18 }));
+  circle(.02, -14.62, .12, { fill: '#F4EBD1', stroke: null });
+  circle(.02, -14.05, .12, { fill: '#F4EBD1', stroke: null });
+  // Tiny stitched horse-and-rider emblem, echoing the reference polo.
+  ellipse(1.85, -13.8, .35, .16, { fill: '#EDE6C9', stroke: null });
+  line([[1.57, -13.8], [1.45, -13.4]], { stroke: '#EDE6C9', lw: .12 });
+  line([[2.08, -13.8], [2.18, -13.4]], { stroke: '#EDE6C9', lw: .12 });
+  line([[2.05, -13.8], [2.18, -14.15], [2.35, -14.1]], { stroke: '#EDE6C9', lw: .14 });
+  line([[1.85, -13.8], [1.82, -14.28], [2.2, -14.55]], { stroke: '#EDE6C9', lw: .12 });
+  circle(1.82, -14.4, .12, { fill: '#EDE6C9', stroke: null });
+}
+
+
+function dnShoe(p, sd, lw) {
+  X.save(); X.translate(p[0], p[1]); X.scale(sd * 1.35, 1.35);
+  shape([[-.7, -.22], [-.48, -.63], [.17, -.75], [.64, -.43], [1.03, .03], [.98, .43], [.49, .62], [-.55, .53], [-.83, .23]],
+    { fill: DN.shoe, stroke: DN.ink, lw, smooth: .55 });
+  shape([[-.85, .28], [-.4, .47], [.47, .47], [1.01, .26], [.98, .52], [.48, .72], [-.6, .62]],
+    { fill: DN.shoeShade, stroke: DN.ink, lw: lw * .75, smooth: .35 });
+  line([[-.45, -.12], [.05, -.22], [.55, -.05]], { stroke: '#B77A55', lw: .12, smooth: true });
+  line([[-.35, .1], [.38, .16]], { stroke: DN.shoeShade, lw: .19 });
+  X.restore();
+}
+
+function dnHand(p, ang, sd, pose, lw) {
+  X.save(); X.translate(p[0], p[1]); X.rotate(ang); if (sd < 0) X.scale(1, -1);
+  const palm = [[-.2, -.48], [.35, -.54], [.79, -.3], [.9, .16], [.56, .55], [0, .49]];
+  shape(palm, { fill: DN.skin, stroke: DN.ink, lw, smooth: .7 });
+  if (pose === 'fist') {
+    line([[.54, -.17], [.79, -.11]], { stroke: DN.skinShade, lw: .1 });
+  } else if (pose === 'point') {
+    dnLimb([[.65, -.16], [1.55, -.19]], .23, DN.skin, lw * .55);
+  } else {
+    const spread = pose === 'palm' ? .3 : .13;
+    [[.7, -.29], [.85, -.06], [.84, .17]].forEach(([ex, ey], i) => {
+      const v = i - 1;
+      dnLimb([[ex, ey], [ex + .45, ey + v * spread]], .19, DN.skin, lw * .45);
+    });
+    dnLimb([[.1, .33], [.5, .82]], .24, DN.skin, lw * .45);
+  }
+  X.restore();
+}
+
+function dnHead(o, t, lw, A) {
+  const turn = clamp(o.turn || 0, -1, 1), shift = turn * .62;
+  [-1, 1].forEach(sd => {
+    ellipse(sd * 4.63 - turn * .23, .68, .75, 1.12, { fill: DN.skin, stroke: DN.ink, lw });
+    ellipse(sd * 4.84 - turn * .23, .75, .3, .54, { fill: rgba(DN.skinShade, .46), stroke: null });
+  });
+  const face = [[0, -5.3], [3.35, -4.8], [4.55, -2.8], [4.7, .55], [4.27, 2.65], [3.25, 4.17],
+    [1.42, 5.0], [0, 5.1], [-1.42, 5.0], [-3.25, 4.17], [-4.27, 2.65], [-4.7, .55], [-4.55, -2.8], [-3.35, -4.8]];
+  shape(face, { fill: DN.skin, stroke: DN.ink, lw, smooth: .8 });
+  X.save(); tracePath(face, true, .8); X.clip();
+  ellipse(-1.8, -2.7, 2.5, 1.4, { fill: rgba(DN.skinLight, .32), stroke: null });
+  ellipse(0, 5, 3.6, 1.25, { fill: rgba(DN.skinShade, .25), stroke: null });
+  X.restore();
+  [-1, 1].forEach(sd => ellipse(sd * 3.18 + shift * .35, 2.28, .9, .47, { fill: rgba(DN.cheek, .21 * (o.blush ?? 1)), stroke: null }));
+
+  [-1, 1].forEach(sd => {
+    const ex = sd * 2.12 + shift, ey = .16;
+    dnEye(ex, ey, o, t, sd, lw);
+    A[sd < 0 ? 'eyeL' : 'eyeR'] = toPx(ex, ey);
+    const brow = o.brows || 'normal';
+    const raise = brow === 'up' ? -.52 : brow === 'focused' ? .25 : brow === 'worried' ? (sd < 0 ? -.36 : .05) : 0;
+    const inner = brow === 'focused' ? .34 : brow === 'worried' ? -.2 : 0;
+    shape([[ex - .92, -1.72 + raise], [ex - .26, -2.03 + raise + inner], [ex + .53, -1.95 + raise],
+      [ex + .92, -1.66 + raise], [ex + .48, -1.55 + raise], [ex - .3, -1.62 + raise]],
+    { fill: DN.brow, stroke: DN.ink, lw: lw * .6, smooth: .5 });
+  });
+  // A small nose and the soft, confident smile in the reference.
+  ellipse(shift * 1.12, 2.01, .44, .36, { fill: DN.skinShade, stroke: null, alpha: .43 });
+  circle(shift * 1.12 - .14, 1.87, .14, { fill: rgba(DN.skinLight, .8), stroke: null });
+  dnMouth(o.mouth || 'smile', shift, lw);
+  A.mouth = toPx(shift, 3.36); A.head = toPx(0, 0);
+
+  // Smooth side part and swept quiff from Danny's reference.
+  const hair = [[-4.5, -1.0], [-4.86, -3.2], [-4.05, -5.23], [-2.8, -6.15],
+    [-1.0, -6.65], [1.2, -6.6], [2.8, -5.95], [3.1, -4.65], [4.0, -4.7],
+    [4.65, -3.55], [4.4, -.8], [3.95, -1.75], [3.55, -3.7], [2.5, -4.05],
+    [1.35, -4.18], [.1, -3.7], [-1.2, -3.23], [-2.5, -3.45], [-3.35, -2.5], [-4.1, -1.65]];
+  shape(hair, { fill: DN.hair, stroke: DN.ink, lw, smooth: .55 });
+  withBoil(0, () => {
+    line([[-4.05, -3.7], [-2.9, -4.15], [-1.6, -4.5], [.05, -5.55], [1.7, -5.85], [2.6, -5.5]],
+      { stroke: DN.hairLight, lw: .28, smooth: true, alpha: .7 });
+    line([[-2.9, -3.7], [-1.4, -3.9], [.5, -4.85], [2.6, -4.9]],
+      { stroke: DN.hairLight, lw: .18, smooth: true, alpha: .55 });
+    line([[3.45, -4.2], [4.02, -3.0], [4.05, -1.8]], { stroke: DN.hairLight, lw: .2, smooth: true });
+  });
+}
+
+function dnEye(cx, cy, o, t, sd, lw) {
+  let kind = o.eyes || 'open';
+  if (kind === 'wink') kind = sd > 0 ? 'closed' : 'open';
+  if (kind === 'happy' || kind === 'closed') {
+    line([[cx - 1.05, cy + .17], [cx, cy + (kind === 'happy' ? -.44 : .37)], [cx + 1.05, cy + .17]],
+      { stroke: DN.ink, lw: lw * 1.8, smooth: true });
+    return;
+  }
+  if (kind === 'squeeze') {                              // screwed shut: > <
+    const d = sd < 0 ? 1 : -1;
+    line([[cx - d * .85, cy - .6], [cx + d * .6, cy], [cx - d * .85, cy + .6]], { stroke: DN.ink, lw: lw * 1.9 });
+    return;
+  }
+  const wide = kind === 'wide' ? 1.15 : 1, rx = 1.2, ry = 1.33 * wide;
+  ellipse(cx, cy, rx, ry, { fill: DN.eyeWhite, stroke: DN.ink, lw });
+  const ix = cx + clamp(o.lookX || 0, -1, 1) * .35, iy = cy + .08 + clamp(o.lookY || 0, -1, 1) * .3;
+  X.save(); X.beginPath(); X.ellipse(cx, cy, rx, ry, 0, 0, TAU); X.clip();
+  circle(ix, iy, .86, { fill: DN.iris, stroke: null });
+  circle(ix, iy - .19, .57, { fill: DN.irisLight, stroke: null, alpha: .55 });
+  circle(ix, iy, .58, { fill: DN.hairShade, stroke: null });
+  circle(ix - .32, iy - .39, .28, { fill: '#FFFFFF', stroke: null });
+  circle(ix + .31, iy + .31, .1, { fill: '#FFFFFF', stroke: null });
+  const ph = (t + .8 + (o.blinkSeed || 0)) % 3.4;
+  const blink = clamp(o.blink ?? (ph < .16 ? Math.sin(ph / .16 * Math.PI) : 0));
+  if (blink > .02) shape(rectPts(cx - 1.4, cy - 1.55, 2.8, 2.45 * blink), { fill: DN.skin, stroke: null });
+  X.restore();
+  line([[cx - 1.12, cy - .34], [cx - .72, cy - 1.12 * wide], [cx + .25, cy - 1.31 * wide], [cx + 1.08, cy - .53]],
+    { stroke: DN.ink, lw: lw * 1.15, smooth: true });
+}
+
+function dnMouth(kind, x, lw) {
+  if (kind === 'smile' || kind === 'smirk') {
+    const right = kind === 'smirk' ? 2.87 : 3.24;
+    line([[x - 1.1, 2.8], [x - .5, 3.13], [x + .2, 3.22], [x + 1.12, right]],
+      { stroke: DN.mouth, lw: lw * 1.35, smooth: true });
+  } else if (kind === 'grin' || kind === 'open') {
+    shape([[x - 1.25, 2.7], [x, 2.89], [x + 1.3, 2.7], [x + .9, 3.73], [x, 3.94], [x - .9, 3.73]],
+      { fill: DN.mouth, stroke: DN.ink, lw, smooth: .7 });
+    if (kind === 'grin') shape(rectPts(x - 1.04, 2.7, 2.08, .48), { fill: DN.eyeWhite, stroke: null });
+  } else if (kind === 'o') ellipse(x, 3.25, .36, .5, { fill: DN.mouth, stroke: DN.ink, lw });
+  else if (kind === 'flat') line([[x - .83, 3.21], [x + .83, 3.21]], { stroke: DN.mouth, lw: lw * 1.25 });
+  else if (kind === 'frown') line([[x - 1, 3.55], [x, 3.04], [x + 1, 3.55]], { stroke: DN.mouth, lw: lw * 1.25, smooth: true });
+  else if (kind === 'wobble') line([[x - 1.1, 3.3], [x - .65, 3.05], [x - .2, 3.35], [x + .2, 3.05], [x + .65, 3.35], [x + 1.1, 3.1]], { stroke: DN.mouth, lw: lw * 1.3, smooth: true });
+}
+
+// Screen-space prop: x,y are the ball centre and s is Danny's pixel scale.
+function dannyBall(x, y, s, o = {}) {
+  X.save(); X.translate(x, y); X.rotate(o.spin || 0); X.scale(s, s);
+  const r = o.radius ?? 1.35, lw = clamp(s * .11, 1.2, 4) / s;
+  circle(0, 0, r, { fill: DN.ball, stroke: DN.ink, lw });
+  shape(starPts(0, 0, r * .48, .86, 5), { fill: DN.ink, stroke: DN.ink, lw: lw * .65 });
+  for (let i = 0; i < 5; i++) {
+    const a = -Math.PI / 2 + i * TAU / 5, px = Math.cos(a) * r * .48, py = Math.sin(a) * r * .48;
+    const edge = [Math.cos(a) * r * .9, Math.sin(a) * r * .9];
+    line([[px, py], edge], { stroke: DN.ink, lw: lw * .7 });
+  }
+  circle(-r * .35, -r * .46, r * .22, { fill: 'rgba(255,255,255,.55)', stroke: null });
+  X.restore();
+}
+
+// Screen-space grass block: an optional Minecraft-inspired building prop.
+function dannyBlock(x, y, s, o = {}) {
+  X.save(); X.translate(x, y); X.rotate(o.ang || 0); X.scale(s, s);
+  const lw = clamp(s * .1, 1.2, 4) / s;
+  shape([[-1.35, -.7], [0, -1.4], [1.35, -.7], [0, 0]], { fill: '#76AF42', stroke: DN.ink, lw });
+  shape([[-1.35, -.7], [0, 0], [0, 1.5], [-1.35, .8]], { fill: '#98643D', stroke: DN.ink, lw });
+  shape([[0, 0], [1.35, -.7], [1.35, .8], [0, 1.5]], { fill: '#724A30', stroke: DN.ink, lw });
+  shape([[-1.35, -.7], [0, 0], [0, .4], [-.45, .17], [-.45, .02], [-.9, -.17], [-.9, -.02], [-1.35, -.25]], { fill: '#5E9736', stroke: null });
+  shape([[0, 0], [1.35, -.7], [1.35, -.25], [.9, -.03], [.9, -.18], [.45, .05], [.45, .22], [0, .4]], { fill: '#467B2F', stroke: null });
+  [[-.98, .18], [-.5, .63], [.4, .72], [.94, .18]].forEach(([bx, by], i) =>
+    shape(rectPts(bx, by, .22, .2), { fill: i % 2 ? '#B88352' : '#5C3D29', stroke: null }));
+  X.restore();
+}
+
+// Pose options for a short controlled dribble cycle; p is distance divided by stride.
+function dannyDribble(p, k = 1) {
+  const q = Math.sin(p * Math.PI), lift = Math.max(0, q), other = Math.max(0, -q);
+  return {
+    footL: [-1.55 + .5 * k * q, -1.05 - 2.0 * k * lift],
+    footR: [1.55 + .5 * k * q, -1.05 - 2.0 * k * other],
+    handL: [-4.25, -12.0 + .7 * k * q], handR: [4.25, -12.0 - .7 * k * q],
+    lean: -.045 * k, tilt: .025 * k * q, dy: .15 * k * Math.abs(q),
+  };
+}
+
+// Viewer-facing laptop so the Scratch blocks remain visible at pose-preview scale.
+function dannyLaptop(x, y, s, o = {}) {
+  X.save(); X.translate(x, y); X.scale(s, s);
+  const lw = clamp(s * .1, 1.2, 4) / s, open = o.open ?? 1;
+  shape([[-4.2, 0], [4.2, 0], [4.8, 2], [-4.8, 2]], { fill: '#AAB8CC', stroke: DN.ink, lw });
+  for (let row = 0; row < 3; row++) {
+    for (let col = 0; col < 10; col++) {
+      shape(rectPts(-3.65 + col * .74 - row * .08, .3 + row * .35, .56, .22), { fill: '#45516B', stroke: null });
+    }
+  }
+  shape(rectPts(-.85, 1.4, 1.7, .4), { fill: '#DCE5EF', stroke: null });
+  line([[-4.8, 2], [4.8, 2]], { stroke: '#697B96', lw: .18 });
+  // The lid unfolds from the hinge; at zero it covers the keyboard.
+  X.save(); X.scale(1, 1 - 3 * open);
+  shape(rectPts(-4.2, 0, 8.4, 2), { fill: '#45516B', stroke: DN.ink, lw });
+  X.restore();
+  if (open > .05) {
+    X.save(); X.scale(1, open);
+    shape(rectPts(-3.85, -3.65, 7.7, 3.3), { fill: '#F6F8FC', stroke: null });
+    shape(rectPts(-3.85, -3.65, 7.7, .6), { fill: '#855CD6', stroke: null });
+    X.fillStyle = '#FFFFFF'; X.font = 'bold .43px sans-serif'; X.textAlign = 'left';
+    X.fillText('Scratch', -3.57, -3.22);
+    shape([ [2.3, -3.5], [2.3, -3.12], [2.75, -3.25], [2.3, -3.38] ], { fill: '#63CD78', stroke: null });
+    circle(3.18, -3.31, .14, { fill: '#F47777', stroke: null });
+    shape(rectPts(-3.85, -3.05, 1.05, 2.7), { fill: '#E2E8F2', stroke: null });
+    ['#FFBF00', '#4C97FF', '#9966FF', '#FFAB19'].forEach((col, i) => {
+      shape(rectPts(-3.7, -2.85 + i * .57, .74, .3), { fill: col, stroke: null });
+    });
+    // Interlocking event, control, motion, and looks blocks.
+    const labels = ['when flag clicked', 'repeat 10', 'move 10 steps', 'say Hello!'];
+    ['#FFBF00', '#FFAB19', '#4C97FF', '#9966FF'].forEach((col, i) => {
+      const bx = -2.48 + (i > 1 ? .22 : 0), by = -2.83 + i * .55;
+      shape([[bx, by], [bx + .3, by], [bx + .4, by + .1], [bx + .75, by + .1],
+        [bx + .85, by], [bx + 2.9, by], [bx + 2.9, by + .5], [bx + .85, by + .5],
+        [bx + .75, by + .6], [bx + .4, by + .6], [bx + .3, by + .5], [bx, by + .5]],
+      { fill: col, stroke: null });
+      X.fillStyle = '#FFFFFF'; X.font = 'bold .25px sans-serif';
+      X.fillText(labels[i], bx + .12, by + .34);
+    });
+    shape(rectPts(1.05, -2.87, 2.5, 2.3), { fill: '#FFFFFF', stroke: '#CDD6E4', lw: .06 });
+    // A little orange cat on the Scratch stage.
+    const catX = 2.25 + .18 * Math.sin((o.t ?? 0) * 3);
+    ellipse(catX, -1.25, .45, .35, { fill: '#FF9D32', stroke: null });
+    shape([[catX - .42, -1.68], [catX - .38, -2.22], [catX - .1, -2.02],
+      [catX + .15, -2.02], [catX + .4, -2.22], [catX + .45, -1.68]], { fill: '#FF9D32', stroke: null });
+    ellipse(catX, -1.74, .45, .35, { fill: '#FF9D32', stroke: null });
+    [-1, 1].forEach(sd => circle(catX + sd * .18, -1.83, .07, { fill: DN.ink, stroke: null }));
+    line([[catX + .35, -1.23], [catX + .72, -1.35], [catX + .7, -1.63]], { stroke: '#FF9D32', lw: .16, smooth: true });
+    X.restore();
+  }
+  X.restore();
+}
+
+function dannyIdea(x, y, s, t, glow = 1) {
+  X.save(); X.translate(x, y); X.scale(s, s);
+  const lw = clamp(s * .1, 1.2, 4) / s;
+  circle(0, 0, 2.15, { fill: rgba('#FFD45C', (.12 + .04 * wob(t, 1)) * glow), stroke: null });
+  ellipse(0, -.2, 1.05, 1.2, { fill: mixCol('#E2D9B8', '#FFE477', glow), stroke: DN.ink, lw });
+  shape(rectPts(-.5, .65, 1, .65), { fill: '#AAB8CC', stroke: DN.ink, lw });
+  line([[-.45, .97], [.45, .97]], { stroke: '#697B96', lw: .12 });
+  line([[-.35, -.2], [0, .18], [.35, -.2]], { stroke: '#D29128', lw: .13 });
+  if (glow > .01) {
+    for (let i = 0; i < 5; i++) {
+      const a = Math.PI + i * Math.PI / 4;
+      line([[Math.cos(a) * 1.65, Math.sin(a) * 1.65 - .2],
+        [Math.cos(a) * 2.2, Math.sin(a) * 2.2 - .2]], { stroke: '#E9AB32', lw: .18, alpha: glow });
+    }
+  }
+  X.restore();
+}
+
+// Six-second loop: pull out, open, type, then close and tuck away.
+function dannyProgrammer(x, y, s, t) {
+  const p = ((t % 6) + 6) % 6;
+  const pull = ease(seg(p, 0, .8)) * (1 - ease(seg(p, 5.3, 6)));
+  const open = ease(seg(p, .65, 1.35)) * (1 - ease(seg(p, 4.95, 5.4)));
+  const typing = ease(seg(p, 1.3, 1.6)) * (1 - ease(seg(p, 4.7, 5)));
+  const laptopX = lerp(4.3, 0, pull), laptopY = lerp(-8.5, -12.2, pull);
+  const handL = mixPt([-3.5, -9.8], [-1.9, laptopY + 1.05 + .13 * wob(t, 5)], pull);
+  const handR = [laptopX + 1.9, laptopY + 1.05 - .13 * wob(t, 5) * typing];
+  const A = danny(x, y, s, { t, handL, handR, handPoseL: 'fist', handPoseR: 'fist',
+    lookY: .8 * open, brows: typing ? 'focused' : 'up', mouth: 'smile', breathe: false });
+  X.save(); X.globalAlpha *= pull;
+  dannyLaptop(x + laptopX * s, y + laptopY * s, s, { open, t });
+  // Keep typing hands in front of the keyboard, using the rig's actual endpoints.
+  [A.handL, A.handR].forEach((hand, i) => {
+    X.save(); X.translate(hand[0], hand[1]); X.scale(s, s);
+    ellipse(0, 0, .62, .32, { fill: DN.skin, stroke: DN.ink, lw: clamp(s * .1, 1.2, 4) / s });
+    for (let finger = 0; finger < 3; finger++) {
+      line([[-.3 + finger * .22, -.1], [-.3 + finger * .22, .14 + .06 * typing * wob(t, 5, i * .5)]],
+        { stroke: DN.skinShade, lw: .08 });
+    }
+    X.restore();
+  });
+  X.restore();
+  dannyIdea(A.top[0], A.top[1] - 2.7 * s, s, t, open);
+  return A;
+}
+
+CHARACTERS.danny = {
+  draw: danny, unit: DANNY_UNIT, palette: DN, size: [14, 30],
+  poses: {
+    'rest': (x, y, s, t) => danny(x, y, s, { t, mouth: 'grin' }),
+    'hello': (x, y, s, t) => danny(x, y, s, { t, handR: [4.1 + .22 * wob(t, 1.5), -19.2], handPoseR: 'palm', mouth: 'grin', brows: 'up', tilt: -.05 }),
+    'pockets': (x, y, s, t) => danny(x, y, s, { t, handL: [-2.0, -9.5], handR: [2.0, -9.5], handPoseL: 'fist', handPoseR: 'fist', mouth: 'grin' }),
+    'ready': (x, y, s, t) => { dannyBall(x + 4.2 * s, y - 1.35 * s, s); return danny(x, y, s, { t, handL: [-4.2, -11.7], handR: [4.2, -11.7], footL: [-2, -1.05], footR: [2, -1.05], brows: 'focused', mouth: 'smirk', dy: .38 }); },
+    'dribble': (x, y, s, t) => { const p = t * 2; dannyBall(x + (2.9 + .6 * Math.sin(p * Math.PI)) * s, y - (1.35 + .2 * Math.abs(Math.sin(p * Math.PI))) * s, s, { spin: t * 3 }); return danny(x, y, s, { ...dannyDribble(p), t, brows: 'focused', mouth: 'smile', lookY: .55 }); },
+    'kick': (x, y, s, t) => { dannyBall(x + (5.9 + .3 * Math.sin(t * 2.2)) * s, y - 2.5 * s, s, { spin: t * 5 }); return danny(x, y, s, { t, footR: [4.7, -3.7], footL: [-1.75, -1.05], handL: [-4.5, -13.5], handR: [4.3, -14.4], lean: -.15, rot: -.035, mouth: 'grin', brows: 'focused' }); },
+    'builder': (x, y, s, t) => { const A = danny(x, y, s, { t, handL: [-3.2, -13], handR: [3.2, -13], handPoseL: 'fist', handPoseR: 'fist', mouth: 'grin', lookY: .5 }); dannyBlock(A.handL[0], A.handL[1] - .7 * s, s, { ang: -.1 }); return A; },
+    'block tower': (x, y, s, t) => { for (let i = 0; i < 3; i++) dannyBlock(x + 5.5 * s, y - (1.5 + 1.5 * i) * s, s); return danny(x, y, s, { t, handR: [4.4, -11.5], handPoseR: 'point', mouth: 'grin', brows: 'up', lookX: .7 }); },
+    'programmer': dannyProgrammer,
+    'goofy': (x, y, s, t) => danny(x, y, s, { t, eyes: 'wink', mouth: 'grin', handL: [-4.5, -15.6], handR: [4.5, -15.6], handPoseL: 'palm', handPoseR: 'palm', tilt: .13 * Math.sin(t * 3), lean: -.06 }),
+    'goal!': (x, y, s, t) => danny(x, y, s, { t, handL: [-4.3, -19.3], handR: [4.3, -19.3], handPoseL: 'palm', handPoseR: 'palm', eyes: 'happy', mouth: 'grin', jump: 1.2 * Math.abs(Math.sin(t * 3)) }),
+    'laugh': (x, y, s, t) => danny(x, y, s, { t, eyes: 'happy', mouth: 'open', handL: [-3.5, -12.1], handR: [3.5, -12.1], tilt: -.1, dy: .18 * Math.abs(Math.sin(t * 10)) }),
+    'surprised': (x, y, s, t) => danny(x, y, s, { t, eyes: 'wide', brows: 'up', mouth: 'o', handL: [-4.3, -14], handR: [4.3, -14], handPoseL: 'palm', handPoseR: 'palm' }),
+  },
+};
+
+// Source: ../../characters/jenna/jenna.js
+// characters/jenna/jenna.js: Jenna, Alma's funny 9-year-old cousin.
+// Description and look live in README.md; reference art next to it.
+//
+// jenna(x, y, s, o) → anchors. (x, y) = floor point between the feet (screen px), s = px per local unit.
+
+const JENNA_UNIT = 5.0;   // world units per local unit
+const JENNA_SCALE = 1.06; // a small overall size increase, including the face
+
+const JE = {
+  ink: '#29221F',
+  skin: '#F4C09E', skinDk: '#CC8F76', cheek: '#DE9991', nose: '#BB806A',
+  hair: '#543722', hairDk: '#201C19', hairLt: '#51443A',
+  shirt: '#F5D6D9', shirtDk: '#DDB0BC',
+  skirtBase: '#DFA4AE', skirtTulle: '#F1C1C8',
+  shoe: '#F2B8C6', shoeTop: '#E6A5B5', shoeSole: '#FFFFFF', sock: '#FFFFFF',
+  clip: '#DFA0C4',
+  eyeW: '#FFFFFF', iris: '#201C19', lash: '#140A05', brow: '#302924', mouth: '#9C3D49', lip: '#D68A92', tongue: '#E88494', teeth: '#FFFFFF',
+  graphic: { butterfly: '#D66D9F', flowerY: '#F0E675', flowerG: '#9BD687', flowerB: '#688AB5', flowerP: '#F2A2CA' }
+};
+
+function jenna(x, y, s, o = {}) {
+  s *= JENNA_SCALE;
+  const t = o.t ?? T, A = {}, lw = clamp(s * .12, 1.2, 5.0) / s;
+  X.save(); X.translate(x, y); X.scale(s * (o.flip ? -1 : 1), s);
+  
+  const air = o.jump || 0;
+  if (!o.noShadow) { const f = 1 - clamp(air / 14) * .55; ellipse(0, .12, 3.2 * f, .6 * f, { fill: 'rgba(40,20,30,.28)', stroke: null }); }
+
+  X.translate(0, -air);
+  if (o.sq) X.scale(1 + o.sq * .55, 1 - o.sq);
+
+  withBoil(o.boil ?? .7, () => {
+    // Reference proportions: expressive child face and a knee-length tulle skirt.
+    const hipY = -10.0 + (o.dy || 0), lean = o.lean || 0, cl = Math.cos(lean), sl = Math.sin(lean);
+    const tl = (px, py) => [px * cl - py * sl, hipY + px * sl + py * cl];
+    const headT = () => { X.translate(0, hipY); X.rotate(lean); X.translate(0, -6.0); X.rotate(o.tilt || 0); X.translate(0, -6.35); };
+
+    // Legs
+    [[-1, o.footL || [-1.25, -.65]], [1, o.footR || [1.25, -.65]]].forEach(([sd, f]) => {
+      const hp = tl(sd * 1.1, 0), { joint, end } = ik2(hp, f, 4.75, 4.75, [sd * .15, 1]);
+      jeLimb([hp, joint, end], 1.6, JE.skin, lw);
+      jeSockAndShoe(end, sd, lw);
+      A[sd < 0 ? 'footL' : 'footR'] = toPx(end[0], end[1]);
+    });
+
+    // Torso & Skirt
+    X.save(); X.translate(0, hipY); X.rotate(lean);
+    // Neck
+    shape([[-.95, -8.3], [.95, -8.3], [1.15, -6.7], [0, -6.3], [-1.15, -6.7]], { fill: JE.skin, stroke: JE.ink, lw, smooth: .4 });
+    shape([[-.95, -8.3], [.95, -8.3], [.9, -7.5], [0, -7.15]], { fill: JE.skinDk, stroke: null, smooth: .4 });
+    // Skirt back/underskirt
+    const skirtW = 3.65;
+    const skirtL = 5.5; 
+    shape([[-2.5, -0.5], [2.5, -0.5], [skirtW, skirtL], [-skirtW, skirtL]], { fill: JE.skirtBase, stroke: JE.ink, lw, smooth: .2 });
+    // Tulle skirt layers
+    shape([[-2.5, -0.5], [2.5, -0.5], [skirtW + 0.3, skirtL + 0.3], [-(skirtW + 0.3), skirtL + 0.3]], { fill: rgba(JE.skirtTulle, .85), stroke: JE.ink, lw, smooth: .2 });
+    X.save();
+    tracePath([[-2.5, -.5], [2.5, -.5], [skirtW + .3, skirtL + .3], [-skirtW - .3, skirtL + .3]], true, .2); X.clip();
+    for (let i = -4; i <= 4; i++) {
+      line([[i * .53, 0], [i * .85, skirtL + .4]], { stroke: rgba(JE.skirtBase, .6), lw: .22 });
+      line([[i * .53 + .12, 0], [i * .85 + .17, skirtL + .4]], { stroke: rgba('#FFF3EF', .45), lw: .14 });
+    }
+    X.restore();
+    // Shirt
+    X.save(); X.scale(1.4, 1.15); jeShirt(lw / 1.4); X.restore();
+    A.chest = toPx(0, -5.5); A.belly = toPx(0, -2);
+    X.restore();
+
+    // The plush follows the left hand through every pose and the whole-body transform.
+    const hasGiraffe = o.giraffe !== false;
+    // Arms (in front)
+    [[-1, o.handL || tl(hasGiraffe ? -1.6 : -2.65, hasGiraffe ? -3.4 : -1.1), o.handPoseL || (hasGiraffe ? 'grip' : 'hip')], [1, o.handR || tl(2.65, -1.1), o.handPoseR || 'hip']].forEach(([sd, tg, pose]) => {
+      const sh = tl(sd * 3.0, -6.3), { joint, end } = ik2(sh, tg, 3.5, 3.5, [sd * 1, 0.5]);
+      jeLimb([sh, joint, end], 1.05, JE.skin, lw);
+      // Sleeve (over upper arm)
+      const slvEnd = mixPt(sh, joint, .45);
+      const slvW = 1.65;
+      line([sh, slvEnd], { stroke: JE.ink, lw: slvW + lw * 2, lineCap: 'round' });
+      line([sh, slvEnd], { stroke: JE.shirt, lw: slvW, lineCap: 'round' });
+      const sleeveAngle = Math.atan2(joint[1] - sh[1], joint[0] - sh[0]);
+      const cuff = [-Math.sin(sleeveAngle) * slvW * .46, Math.cos(sleeveAngle) * slvW * .46];
+      line([[slvEnd[0] - cuff[0], slvEnd[1] - cuff[1]], [slvEnd[0] + cuff[0], slvEnd[1] + cuff[1]]], { stroke: JE.shirtDk, lw: lw * .8 });
+      // Hand
+      const ang = Math.atan2(end[1] - joint[1], end[0] - joint[0]);
+      if (sd < 0 && hasGiraffe) {
+        X.save(); X.translate(end[0] + .3, end[1]); X.rotate(lean);
+        jeGiraffe(lw); A.giraffe = toPx(0, -2.55); X.restore();
+        jeHand(end, 0, sd, 'grip', lw);
+      } else jeHand(end, ang, sd, pose, lw);
+      A[sd < 0 ? 'handL' : 'handR'] = toPx(end[0] + Math.cos(ang)*.5, end[1] + Math.sin(ang)*.5);
+    });
+
+    // Head
+    X.save(); headT(); X.scale(1.25, 1.25);
+    jeHead(o, t, lw, A);
+    A.top = toPx(0, -4.6);
+    X.restore();
+
+  });
+  X.restore();
+  return A;
+}
+
+function jeLimb(pts, w, col, lw) {
+  if (JIT) { const a = JIT / pxScale(); pts = pts.map(p => [p[0] + jit(a), p[1] + jit(a)]); }
+  line(pts, { stroke: JE.ink, lw: w + lw * 2, lineJoin: 'round', lineCap: 'round' });
+  line(pts, { stroke: col, lw: w, lineJoin: 'round', lineCap: 'round' });
+}
+
+function jeSockAndShoe(a, sd, lw) {
+  X.save(); X.translate(a[0], a[1]); X.scale(sd * 1.15, 1);
+  // Sock
+  shape(rectPts(-.7, -1.8, 1.4, 1.8), { fill: JE.sock, stroke: JE.ink, lw });
+  line([[-.7, -1.8], [.7, -1.8]], { stroke: '#DAD6D1', lw: .2 });
+  for (let i = -2; i <= 2; i++) line([[i * .22, -1.75], [i * .22, -1.4]], { stroke: '#DAD6D1', lw: .06 });
+  // Shoe (slip-on)
+  shape([[-.9, -.2], [-.75, -1.0], [-.2, -1.2], [.5, -1.1], [1.1, -.4], [1.2, .4], [.9, .6], [-.2, .6], [-.9, .4]], { fill: JE.shoe, stroke: JE.ink, lw, smooth: .6 });
+  // Sole
+  line([[-1.0, .3], [1.2, .3]], { stroke: JE.ink, lw: lw });
+  shape([[-1.0, .3], [1.2, .3], [.9, .6], [-.2, .6], [-.9, .4]], { fill: JE.shoeSole, stroke: null, smooth: .4 });
+  // Elastic detail
+  shape([[0, -1.1], [.2, -.8], [.4, -1.1]], { fill: '#E6A8B8', stroke: null });
+  X.restore();
+}
+
+function jeFlower(x, y, r, color, center) {
+  for (let i = 0; i < 6; i++) {
+    const a = i * TAU / 6;
+    X.save(); X.translate(x + Math.cos(a) * r * .55, y + Math.sin(a) * r * .55); X.rotate(a);
+    ellipse(0, 0, r * .5, r * .25, { fill: color, stroke: null }); X.restore();
+  }
+  circle(x, y, r * .24, { fill: center, stroke: null });
+}
+
+function jeButterfly(x, y, size, ang = 0) {
+  X.save(); X.translate(x, y); X.rotate(ang); X.scale(size, size);
+  [-1, 1].forEach(sd => {
+    shape([[0, 0], [sd * .75, -1.05], [sd * 1.15, -.9], [sd * .94, -.3], [sd * .25, .12]],
+      { fill: JE.graphic.butterfly, stroke: null, smooth: .55 });
+    shape([[0, .05], [sd * .8, .18], [sd * .68, .92], [sd * .3, .83]],
+      { fill: JE.graphic.flowerP, stroke: null, smooth: .6 });
+    line([[sd * .1, -.02], [sd * .67, -.75], [sd * .88, -.7], [sd * .35, -.2]],
+      { stroke: '#A94478', lw: .055, smooth: true });
+    line([[sd * .08, .12], [sd * .42, .66]], { stroke: '#B45080', lw: .055 });
+    line([[0, -.08], [sd * .15, -.42]], { stroke: '#7FAA82', lw: .04 });
+  });
+  line([[0, -.14], [0, .6]], { stroke: '#7FAA82', lw: .1 });
+  X.restore();
+}
+
+function jeShirt(lw) {
+  const body = [[-1.8, -.5], [-2.05, -1.5], [-1.9, -3], [-2.2, -6], [-1.2, -6.5],
+    [0, -6.2], [1.2, -6.5], [2.2, -6], [1.9, -3], [2.05, -1.5], [1.8, -.5], [0, -.3]];
+  shape(body, { fill: JE.shirt, stroke: JE.ink, lw, smooth: .4 });
+  shape([[-1.05, -6.42], [-.95, -5.95], [0, -5.7], [.95, -5.95], [1.05, -6.42], [0, -6.12]], { fill: JE.shirt, stroke: JE.ink, lw: lw * .8, smooth: .5 });
+  X.save(); tracePath(body, true, .4); X.clip();
+  withBoil(0, () => {
+    line([[-1.85, -.75], [0, -.62], [1.85, -.75]], { stroke: JE.shirtDk, lw: .09, smooth: true });
+    jeFlower(-1.1, -4.92, .58, JE.graphic.flowerY, JE.graphic.butterfly);
+    jeFlower(.02, -5.12, .68, JE.graphic.flowerG, JE.graphic.butterfly);
+    jeFlower(1.45, -5.4, .34, '#E9AB58', '#F8D991');
+    jeFlower(-.77, -3.65, .62, '#EBAAB9', '#E9AB58');
+    jeFlower(.25, -3.94, .36, JE.graphic.flowerB, '#F2D1DC');
+    jeFlower(1.15, -2.95, .66, JE.graphic.flowerG, JE.graphic.butterfly);
+    jeFlower(-1.25, -1.72, .37, JE.graphic.flowerB, '#F2D1DC');
+    jeFlower(1.28, -1.62, .5, JE.graphic.flowerY, JE.graphic.butterfly);
+    jeFlower(.62, -2.15, .28, '#E9AB58', '#F8D991');
+    jeButterfly(1.0, -4.65, .63, .18);
+    jeButterfly(-.36, -2.45, .83, -.18);
+  });
+  X.restore();
+}
+
+function jeHead(o, t, lw, A) {
+  const turn = clamp(o.turn || 0, -1, 1), tx = turn * .45;
+  
+  // Hair is tied back, leaving both ears visible.
+  shape([[0, -4.35], [2.05, -3.9], [3.05, -2.2], [2.87, 1.0], [-2.87, 1.0], [-3.05, -2.2], [-2.05, -3.9]],
+    { fill: JE.hair, stroke: JE.ink, lw, smooth: .65 });
+  // Portrait curves use landmarks from the supplied reference (55 px per head unit).
+  // Keep the facial curves steady while the surrounding rig retains its drawing boil.
+  withBoil(0, () => {
+    const edge = lw * .65;
+    [-1, 1].forEach(sd => {
+      X.save(); X.translate(-turn * .2, 0);
+      if (sd > 0) { X.translate(.12, 0); X.scale(-1, 1); }
+      jePortraitPath([['M', 544, 399], ['C', 525, 375, 508, 390, 510, 422],
+        ['C', 510, 460, 518, 488, 541, 495], ['C', 554, 496, 556, 473, 551, 451], ['Z']],
+        { fill: JE.skin, stroke: JE.ink, lw: edge });
+      jePortraitPath([['M', 522, 406], ['C', 516, 423, 526, 444, 536, 453],
+        ['C', 524, 455, 532, 470, 536, 476]], { stroke: JE.ink, lw: edge * .7 });
+      jePortraitPath([['M', 524, 407], ['C', 533, 408, 542, 425, 545, 440]],
+        { stroke: JE.ink, lw: edge * .7 });
+      X.restore();
+    });
+    // A broad forehead and gently tapered oval jaw match the illustrated portrait.
+    const face = [['M', 731, 244], ['C', 700, 234, 654, 239, 623, 255],
+      ['C', 574, 277, 549, 327, 546, 384], ['C', 542, 432, 547, 485, 561, 521],
+      ['C', 580, 558, 623, 586, 670, 590], ['C', 714, 593, 753, 572, 778, 540],
+      ['C', 805, 516, 817, 470, 814, 423], ['C', 814, 365, 800, 313, 777, 283],
+      ['C', 760, 264, 746, 249, 731, 244], ['Z']];
+    jePortraitPath(face, { fill: JE.skin, stroke: JE.ink, lw: edge });
+    // Narrow temple and jaw shadows give the face the reference's warm volume.
+    X.save(); jePortraitPath(face); X.clip();
+    jePortraitPath([['M', 556, 315], ['C', 544, 397, 548, 481, 568, 525],
+      ['C', 590, 568, 624, 599, 665, 616], ['C', 619, 607, 569, 562, 551, 517],
+      ['C', 530, 453, 532, 358, 556, 315], ['Z']], { fill: JE.skinDk, stroke: null });
+    jePortraitPath([['M', 781, 288], ['C', 818, 372, 818, 459, 795, 519],
+      ['C', 780, 556, 750, 584, 728, 596], ['C', 778, 574, 811, 529, 829, 462],
+      ['L', 828, 319], ['Z']], { fill: JE.skinDk, stroke: null });
+    X.restore();
+    const blush = o.blush ?? .18;
+    if (blush > .01) [-1, 1].forEach(sd => ellipse(sd * 1.65 + tx * .5, 1.55, .65, .38,
+      { fill: rgba(JE.cheek, .35 * blush), stroke: null }));
+
+    X.save(); X.translate(tx, 0);
+    // Thick, gently angled brows with rounded inner ends.
+    const lift = o.brows === 'up' ? -.28 : o.brows === 'worried' ? -.12 : 0;
+    X.save(); X.translate(0, lift - .22);
+    jePortraitPath([['M', 563, 351], ['C', 583, 327, 601, 326, 620, 334],
+      ['C', 635, 340, 648, 346, 647, 358], ['C', 643, 367, 629, 356, 615, 349],
+      ['C', 593, 338, 577, 343, 563, 351], ['Z']],
+      { fill: JE.brow, stroke: JE.ink, lw: edge * .5 });
+    jePortraitPath([['M', 710, 354], ['C', 709, 343, 724, 340, 740, 340],
+      ['C', 769, 339, 786, 347, 792, 368], ['C', 777, 351, 754, 354, 727, 357],
+      ['C', 718, 359, 711, 359, 710, 354], ['Z']],
+      { fill: JE.brow, stroke: JE.ink, lw: edge * .5 });
+    X.restore();
+    jeEye((610 - 680) / 55, (395 - 400) / 55, { ...o, t }, true, edge);
+    jeEye((744 - 680) / 55, (398 - 400) / 55, { ...o, t }, false, edge);
+    // A gentle bridge and rounded tip, with subtle nostril marks.
+    jePortraitPath([['M', 677, 421], ['C', 675, 442, 664, 461, 664, 474]],
+      { stroke: rgba(JE.nose, .45), lw: edge * .65 });
+    ellipse(-.07, 1.38, .38, .23, { fill: rgba(JE.nose, .38), stroke: null });
+    line([[-.43, 1.43], [-.27, 1.57], [-.12, 1.58]],
+      { stroke: JE.ink, lw: edge * .8, smooth: true });
+    line([[.32, 1.44], [.21, 1.57], [.08, 1.58]],
+      { stroke: JE.ink, lw: edge * .8, smooth: true });
+    ellipse(-.07, 1.26, .13, .065, { fill: 'rgba(255,255,255,.28)', stroke: null });
+    X.restore();
+    jeMouth(o.mouth || 'grin', tx, edge);
+    A.eyeL = toPx((610 - 680) / 55 + tx, (395 - 400) / 55);
+    A.eyeR = toPx((744 - 680) / 55 + tx, (398 - 400) / 55);
+    A.mouth = toPx(tx, 2.45); A.head = toPx(0, 0);
+  });
+
+  // Off-centre part and a long, loose sweep over the left temple.
+  jePortraitPath([['M', 736, 166], ['C', 695, 143, 643, 148, 603, 172],
+    ['C', 557, 185, 531, 222, 519, 260], ['C', 503, 293, 507, 331, 503, 365],
+    ['C', 496, 393, 515, 428, 540, 440], ['C', 523, 414, 531, 383, 550, 359],
+    ['C', 572, 327, 583, 298, 607, 280], ['C', 639, 258, 677, 259, 705, 241],
+    ['C', 718, 229, 728, 217, 735, 203], ['C', 739, 191, 741, 178, 736, 166], ['Z']],
+    { fill: JE.hair, stroke: JE.ink, lw: lw * .65 });
+  jePortraitPath([['M', 736, 166], ['C', 777, 161, 814, 188, 831, 222],
+    ['C', 853, 252, 857, 286, 849, 317], ['C', 857, 352, 843, 389, 816, 425],
+    ['C', 823, 391, 811, 357, 801, 327], ['C', 787, 305, 774, 282, 768, 259],
+    ['C', 760, 239, 743, 234, 731, 244], ['C', 739, 215, 744, 186, 736, 166], ['Z']],
+    { fill: JE.hair, stroke: JE.ink, lw: lw * .65 });
+  const waves = [
+    [['M', 725, 174], ['C', 673, 160, 601, 192, 568, 236]],
+    [['M', 721, 190], ['C', 676, 181, 618, 210, 590, 246]],
+    [['M', 713, 211], ['C', 675, 234, 615, 237, 585, 277]],
+    [['M', 580, 236], ['C', 541, 269, 544, 305, 522, 343]],
+    [['M', 574, 286], ['C', 562, 322, 526, 347, 527, 384]],
+    [['M', 746, 181], ['C', 786, 189, 815, 218, 821, 259]],
+    [['M', 750, 210], ['C', 786, 230, 779, 279, 810, 313]],
+    [['M', 818, 282], ['C', 842, 326, 822, 362, 831, 380]],
+  ];
+  waves.forEach(path => jePortraitPath(path, { stroke: JE.hairDk, lw: lw * .75 }));
+  waves.slice(0, 6).forEach(path => {
+    X.save(); X.translate(.08, -.08);
+    jePortraitPath(path, { stroke: rgba(JE.hairLt, .65), lw: lw * .4 }); X.restore();
+  });
+  // Smooth low ponytail falls over her right shoulder (viewer left).
+  shape([[-2.35, 1.5], [-3.15, 2.3], [-3.55, 3.75], [-3.35, 5.0],
+    [-2.8, 5.65], [-3.0, 6.8], [-2.65, 8.1], [-1.9, 8.8], [-1.95, 7.35],
+    [-2.25, 6.1], [-2.0, 5.25], [-1.85, 3.9], [-2.0, 2.7]],
+    { fill: JE.hair, stroke: JE.ink, lw: lw * .85, smooth: .65 });
+  [[-2.9, -2.55], [-2.5, -2.2]].forEach(([outer, inner]) => {
+    line([[inner, 2.2], [outer, 3.75], [outer + .15, 4.8], [-2.55, 5.55]],
+      { stroke: JE.hairLt, lw: .11, smooth: .8 });
+    line([[-2.6, 5.95], [outer + .2, 7.1], [-2.1, 8.3]],
+      { stroke: JE.hairLt, lw: .09, smooth: .8 });
+  });
+  // Pink ribbon tied around the ponytail.
+  shape([[-2.62, 5.65], [-3.65, 5.25], [-3.8, 5.8], [-3.4, 6.15], [-2.62, 5.85]],
+    { fill: '#EE9CB8', stroke: JE.ink, lw: lw * .7, smooth: .45 });
+  shape([[-2.6, 5.7], [-1.65, 5.2], [-1.4, 5.8], [-1.85, 6.1], [-2.6, 5.85]],
+    { fill: '#EE9CB8', stroke: JE.ink, lw: lw * .7, smooth: .45 });
+  shape([[-2.7, 5.9], [-3.25, 7.3], [-2.8, 7.1], [-2.5, 7.4], [-2.4, 6.0]],
+    { fill: '#EE9CB8', stroke: JE.ink, lw: lw * .7 });
+  shape([[-2.5, 5.9], [-1.6, 6.95], [-1.65, 6.45], [-1.3, 6.4], [-2.35, 5.8]],
+    { fill: '#EE9CB8', stroke: JE.ink, lw: lw * .7 });
+  circle(-2.55, 5.75, .2, { fill: '#E988A8', stroke: JE.ink, lw: lw * .7 });
+
+}
+
+function jeClip(x, y, ang, lw, color = JE.clip) {
+  X.save(); X.translate(x, y); X.rotate(ang);
+  [-1, 1].forEach(sd => {
+    ellipse(sd * .18, -.12, .15, .28, { fill: color, stroke: JE.ink, lw: lw * .6, rot: sd * .35 });
+    ellipse(sd * .16, .2, .12, .18, { fill: color, stroke: JE.ink, lw: lw * .6, rot: -sd * .3 });
+  });
+  line([[0, -.26], [0, .31]], { stroke: JE.hairDk, lw: .065 });
+  X.restore();
+}
+
+// Draw cubic portrait paths in reference-image coordinates, mapped into the existing head rig.
+function jePortraitPath(commands, style) {
+  X.beginPath();
+  for (const [kind, ...p] of commands) {
+    const q = p.map((v, i) => (v - (i % 2 ? 400 : 680)) / 55);
+    if (kind === 'M') X.moveTo(...q);
+    else if (kind === 'L') X.lineTo(...q);
+    else if (kind === 'C') X.bezierCurveTo(...q);
+    else if (kind === 'Z') X.closePath();
+  }
+  if (style) paintPath(style);
+}
+
+// Alma's rounded eyes and lashes, scaled to Jenna's portrait proportions.
+function jeEye(cx, cy, o, isLeft, lw) {
+  X.save(); X.translate(cx, cy); X.scale(.56, .56);
+  jeEyeShape(0, 0, o, isLeft, lw / .56, o.t ?? T, 1);
+  X.restore();
+}
+
+function jeEyeShape(cx, cy, o, isLeft, lw, t, narrow) {
+  let kind = o.eyes || 'open';
+  if (kind === 'wink') kind = isLeft ? 'open' : 'happy';
+  const rx = 1.28 * narrow, ry = 1.42;
+  if (kind === 'happy') return line([[cx - 1.0, cy + .35], [cx, cy - .55], [cx + 1.0, cy + .35]], { stroke: JE.lash, lw: lw * 2.2, smooth: true });
+  if (kind === 'closed') { line([[cx - 1.0, cy], [cx, cy + .45], [cx + 1.0, cy]], { stroke: JE.lash, lw: lw * 2.2, smooth: true }); return; }
+  if (kind === 'squeeze') { const d = isLeft ? 1 : -1; return line([[cx - d * .85, cy - .6], [cx + d * .6, cy], [cx - d * .85, cy + .6]], { stroke: JE.lash, lw: lw * 2.2 }); }
+  if (kind === 'star' || kind === 'heart') {
+    const pts = kind === 'star' ? starPts(cx, cy, 1.25, .5, 5) : [[cx, cy + 1.05], [cx - 1.15, cy - .05], [cx - .95, cy - .8], [cx - .35, cy - .95], [cx, cy - .45], [cx + .35, cy - .95], [cx + .95, cy - .8], [cx + 1.15, cy - .05]];
+    shape(pts, { fill: kind === 'star' ? JE.graphic.flowerY : '#F06C8E', stroke: JE.ink, lw, smooth: kind === 'heart' ? .5 : false });
+    circle(cx - .35, cy - .35, .2, { fill: '#FFFFFF', stroke: null });
+    return;
+  }
+  const R = kind === 'wide' ? 1.1 : 1;
+  ellipse(cx, cy, rx * R, ry * R, { fill: JE.eyeW, stroke: JE.ink, lw });
+  const lx = clamp(o.lookX || 0, -1, 1), ly = clamp(o.lookY || 0, -1, 1), ir = kind === 'wide' ? .78 : .95;
+  const ix = cx + lx * .32 * narrow, iy = cy + .1 + ly * .38;
+  X.save(); X.beginPath(); X.ellipse(cx, cy, rx * R, ry * R, 0, 0, TAU); X.clip();
+  withBoil(0, () => {
+    circle(ix, iy, ir, { fill: radGrad(ix, iy + ir * .3, ir * .2, ir, [[0, '#B8763A'], [1, JE.iris]]), stroke: null });
+    circle(ix, iy, ir * .62, { fill: JE.lash, stroke: null });
+    circle(ix + ir * .32, iy - ir * .38, ir * .3, { fill: '#FFFFFF', stroke: null });
+    circle(ix - ir * .3, iy + ir * .35, ir * .12, { fill: '#FFFFFF', stroke: null });
+    const ph = (t + 2.1 + (o.blinkSeed || 0)) % 3.1, b = o.blink ?? (ph < .15 ? Math.sin(ph / .15 * Math.PI) : 0);
+    if (b > .02) shape(rectPts(cx - 1.6, cy - 1.7, 3.2, .3 + 3.2 * b), { fill: JE.skin, stroke: null });
+  });
+  X.restore();
+  // upper lid with lashes and a little flick at the outer corner
+  const sd = isLeft ? -1 : 1;
+  line([[cx - rx * R, cy - .1], [cx - rx * .5 * R, cy - ry * R * .92], [cx + rx * .5 * R, cy - ry * R * .92], [cx + rx * R, cy - .1]], { stroke: JE.lash, lw: lw * 2.3, smooth: .9 });
+  line([[cx + sd * rx * R * .92, cy - .45], [cx + sd * (rx * R + .45), cy - .85]], { stroke: JE.lash, lw: lw * 1.9 });
+  line([[cx + sd * rx * R * .72, cy - .95], [cx + sd * (rx * R + .25), cy - 1.35]], { stroke: JE.lash, lw: lw * 1.5 });
+}
+
+function jeMouth(kind, tx, lw) {
+  // Match Alma's smile shapes while keeping them below Jenna's nose.
+  X.save(); X.translate(tx, 1.1); X.scale(.72, .72); lw /= .72;
+  const dark = { fill: JE.mouth, stroke: JE.ink, lw };
+  if (kind === 'smile') {
+    line([[-1.75, 1.2], [-.9, 1.65], [0, 1.78], [.9, 1.65], [1.75, 1.2]], { stroke: JE.ink, lw: lw * 1.3, smooth: true });
+    ellipse(0, 1.95, .7, .15, { fill: rgba(JE.lip, .45), stroke: null });
+    [-1, 1].forEach(sd => line([[sd * 1.72, 1.05], [sd * 1.9, 1.35]], { stroke: JE.ink, lw: lw * .9 }));
+  } else if (kind === 'grin' || kind === 'open') {
+    const pts = kind === 'grin' ? [[-1.5, 1.2], [0, 1.4], [1.5, 1.2], [1.0, 2.2], [0, 2.5], [-1.0, 2.2]] : [[-.75, 1.3], [0, 1.2], [.75, 1.3], [.75, 2.0], [0, 2.55], [-.75, 2.0]];
+    X.save(); tracePath(pts, true, .8); X.fillStyle = JE.mouth; X.fill(); X.clip();
+    withBoil(0, () => { shape(rectPts(-1.7, 1.05, 3.4, kind === 'grin' ? .45 : .32), { fill: JE.teeth, stroke: null }); ellipse(0, 2.5, .75, .45, { fill: JE.tongue, stroke: null }); });
+    X.restore();
+    shape(pts, { stroke: JE.ink, lw, smooth: .8 });
+  } else if (kind === 'o') ellipse(0, 1.7, .32, .38, dark);
+  else if (kind === 'O') ellipse(0, 1.85, .58, .72, dark);
+  else if (kind === 'flat') line([[-.8, 1.6], [.8, 1.6]], { stroke: JE.ink, lw: lw * 1.4 });
+  else if (kind === 'frown') line([[-1.1, 2.0], [-.55, 1.6], [0, 1.5], [.55, 1.6], [1.1, 2.0]], { stroke: JE.ink, lw: lw * 1.4, smooth: true });
+  else if (kind === 'smirk') line([[-1.0, 1.6], [0, 1.72], [1.15, 1.25]], { stroke: JE.ink, lw: lw * 1.4, smooth: true });
+  else if (kind === 'wobble') line([[-1, 1.7], [-.6, 1.45], [-.2, 1.75], [.2, 1.45], [.6, 1.75], [1, 1.5]], { stroke: JE.ink, lw: lw * 1.3, smooth: true });
+  X.restore();
+}
+
+// Yellow plush giraffe, drawn upright with the hand wrapped around its long neck.
+function jeGiraffe(lw) {
+  const yellow = '#F9D64E', gold = '#F4AE38', cream = '#F4E6AF';
+  const style = { fill: yellow, stroke: JE.ink, lw: lw * .9, smooth: .65 };
+  // Four soft legs and orange hooves sit below the pear-shaped body.
+  [-1, 1].forEach(sd => {
+    ellipse(sd * .82, 3.25, .43, .93, { ...style, rot: sd * -.22 });
+    ellipse(sd * .86, 3.84, .43, .46, { fill: gold, stroke: JE.ink, lw: lw * .8, rot: sd * -.2 });
+  });
+  shape([[-.43, -1.55], [.43, -1.55], [.48, .65], [1.03, 2.35], [.82, 3.5],
+    [0, 3.8], [-.85, 3.48], [-1.02, 2.36], [-.5, .65]], style);
+  [-1, 1].forEach(sd => {
+    ellipse(sd * .46, -.05, .17, .26, { fill: gold, stroke: null, rot: sd * .3 });
+    ellipse(sd * .8, 2.25, .22, .35, { fill: gold, stroke: null, rot: sd * -.4 });
+    ellipse(sd * .56, 3.6, .46, .69, { ...style, rot: sd * -.18 });
+    ellipse(sd * .58, 4.0, .45, .43, { fill: gold, stroke: JE.ink, lw: lw * .85 });
+    // Orange ossicones and wide, floppy ears.
+    ellipse(sd * .38, -3.0, .18, .46, { fill: gold, stroke: JE.ink, lw: lw * .85, rot: sd * .25 });
+    shape([[sd * .55, -2.45], [sd * 1.19, -2.98], [sd * 1.28, -2.55], [sd * .78, -1.95]], style);
+  });
+  ellipse(0, -2.05, .83, .91, style);
+  [-1, 1].forEach(sd => ellipse(sd * .29, -2.35, .07, .13, { fill: JE.ink, stroke: null }));
+  ellipse(0, -1.72, .76, .63, { fill: cream, stroke: JE.ink, lw: lw * .85 });
+  [-1, 1].forEach(sd => ellipse(sd * .2, -1.92, .045, .07, { fill: JE.ink, stroke: null }));
+  line([[-.52, -1.64], [-.3, -1.38], [0, -1.3], [.3, -1.38], [.52, -1.64]],
+    { stroke: JE.ink, lw: lw * .85, smooth: .8 });
+  line([[-.65, 2.75], [-.38, 3.08]], { stroke: '#D4A22E', lw: lw * .65 });
+  line([[.65, 2.75], [.38, 3.08]], { stroke: '#D4A22E', lw: lw * .65 });
+}
+
+function jeHand(p, ang, sd, pose, lw) {
+  X.save(); X.translate(p[0], p[1]); X.rotate(ang); if (sd < 0) X.scale(1, -1);
+  if (pose === 'grip') {
+    shape([[-.2, -.35], [.25, -.48], [.83, -.36], [1.05, -.1], [.96, .18],
+      [.62, .36], [.15, .4], [-.2, .26]], { fill: JE.skin, stroke: JE.ink, lw, smooth: .65 });
+    line([[.2, -.12], [.85, -.06]], { stroke: JE.skinDk, lw: lw * .7 });
+    line([[.2, .12], [.78, .16]], { stroke: JE.skinDk, lw: lw * .7 });
+  } else if (pose === 'hip') {
+    shape([[0, -.35], [.45, -.3], [.85, -.12], [1, .12], [.8, .24], [.35, .2], [0, .3]], { fill: JE.skin, stroke: JE.ink, lw, smooth: .5 });
+    line([[.35, -.1], [.78, .08]], { stroke: JE.skinDk, lw: lw * .7 });
+  } else if (pose === 'fist') {
+     shape([[.1, -.3], [.4, -.4], [.7, -.2], [.8, 0], [.7, .2], [.3, .3], [.1, .2]], { fill: JE.skin, stroke: JE.ink, lw, smooth: .6 });
+  } else {
+     const f = pose === 'palm' ? [[-.4, .4], [-.1, .5], [.2, .4], [.5, .3], [-1.0, .3]] : [[-.2, .3], [0, .4], [.2, .4], [.4, .3], [-1.0, .2]];
+     const fingers = f.map(([a, l]) => [[.3, 0], [.3 + Math.cos(a) * (.2 + l), Math.sin(a) * (.2 + l)]]);
+     fingers.forEach(g => line(g, { stroke: JE.ink, lw: .2 + lw * 2 }));
+     circle(.3, 0, .3, { stroke: JE.ink, lw: lw * 2 });
+     fingers.forEach(g => line(g, { stroke: JE.skin, lw: .2 }));
+     circle(.3, 0, .3, { fill: JE.skin, stroke: null });
+  }
+  X.restore();
+}
+
+function jennaDance(t, move, o = {}) {
+  const b = t * (o.bpm ?? 112) / 60, k = o.k ?? 1, S = Math.sin, P = Math.PI, hop = Math.abs(S(b * P));
+  const face = { eyes: 'happy', mouth: 'grin', brows: 'up' };
+  switch (move) {
+    case 'bounce': return { ...face, dy: .45 * k * hop, jump: .3 * k * hop, tilt: .07 * k * S(b * P),
+      handL: [-3.1, -13.5 - 1.2 * hop * k], handR: [3.1, -13.5 - 1.2 * hop * k], handPoseL: 'fist', handPoseR: 'fist' };
+    case 'sway': { const sw = S(b * P / 2); return { ...face, eyes: 'closed', mouth: 'smile', lean: .09 * k * sw, tilt: .12 * k * sw,
+      handL: [-5.0 + .6 * sw, -19.0 - .8 * sw], handR: [5.0 + .6 * sw, -19.0 + .8 * sw], handPoseL: 'palm', handPoseR: 'palm' }; }
+    case 'disco': { const up = frac(b / 2) < .5; return { ...face, mouth: up ? 'open' : 'grin', eyes: 'open', lookX: up ? .7 : -.4, lookY: up ? -.8 : .3, dy: .3 * hop,
+      lean: (up ? -.07 : .07) * k, handR: up ? [4.9, -23.0] : [-1.6, -10.5], handPoseR: 'point', handL: [-2.6, -11.5], handPoseL: 'fist',
+      footR: up ? [1.3, -.55] : [.7, -1.1] }; }
+    case 'twirl': { const sp = b * P; return { ...face, spin: sp, dy: .2, handL: [-5.3, -17.5], handR: [5.3, -17.5], handPoseL: 'palm', handPoseR: 'palm',
+      footL: [-.4, -.55], footR: [.5, -1.5] }; }
+    case 'star jump': { const j = S(frac(b / 2) * P), sq = kick(frac(b / 2), 0, 14) * .15; return { ...face, mouth: j > .5 ? 'open' : 'grin', jump: 3.2 * k * j, sq: sq - .06 * j,
+      handL: mixPt([-3.2, -12.5], [-5.0, -22.0], j), handR: mixPt([3.2, -12.5], [5.0, -22.0], j), handPoseL: 'palm', handPoseR: 'palm',
+      footL: mixPt([-.9, -.55], [-2.1, -.8], j), footR: mixPt([.9, -.55], [2.1, -.8], j) }; }
+    case 'floss': { const f = S(b * P); return { ...face, mouth: 'grin', eyes: 'open', lookX: -f * .5, lean: -.08 * k * f, dy: .15,
+      handL: [-.6 + 2.6 * f * k, -11.5], handR: [.6 + 2.6 * f * k, -11.5], handPoseL: 'fist', handPoseR: 'fist' }; }
+    case 'arm wave': { const w = u => S(b * P + u); return { ...face, tilt: .08 * w(0), dy: .2 * hop,
+      handL: [-4.7, -17.5 - 2.2 * w(0) * k], handR: [4.7, -17.5 - 2.2 * w(P) * k], handPoseL: 'palm', handPoseR: 'palm' }; }
+  }
+  return {};
+}
+
+function jennaSkip(p, k = 1) {
+  const sn = Math.sin(p * Math.PI), a = Math.abs(sn);
+  return {
+    jump: .7 * k * a * a, dy: .25 * k * (1 - a), tilt: .04 * k * sn,
+    footL: [-.9, -.55 - 1.5 * k * Math.max(0, sn)], footR: [.9, -.55 - 1.5 * k * Math.max(0, -sn)],
+    handL: [-3.5 + .3 * k * a, -11.5 - 1.4 * k * Math.max(0, -sn)], handR: [3.5 - .3 * k * a, -11.5 - 1.4 * k * Math.max(0, sn)],
+  };
+}
+
+// Tiny story illustrations shared by the thought bubbles and the sketch pad.
+function jeComicIdea(kind, progress = 1) {
+  X.save(); X.beginPath(); X.rect(-1.65, -1.5, 3.3 * clamp(progress), 3); X.clip();
+  const ink = { stroke: JE.ink, lw: .08 };
+  if (kind === 'cat') {
+    shape([[-.4, -.1], [-1.4, .4], [-1.05, 1.0], [.35, .55]], { fill: '#E97F9E', ...ink });
+    ellipse(0, .35, .42, .6, { fill: '#EDB75D', ...ink });
+    shape([[-.6, -.25], [-.57, -1.1], [-.15, -.78], [.2, -.78], [.58, -1.1], [.6, -.25]],
+      { fill: '#EDB75D', ...ink });
+    ellipse(0, -.35, .62, .5, { fill: '#EDB75D', ...ink });
+    shape(rectPts(-.49, -.57, .98, .22), { fill: '#8667C9', stroke: null });
+    [-1, 1].forEach(sd => circle(sd * .25, -.46, .065, { fill: '#FFFFFF', stroke: null }));
+    line([[-.18, -.15], [0, -.05], [.18, -.15]], ink);
+    line([[.4, .45], [.9, .75], [1.15, .35]], { stroke: '#EDB75D', lw: .16, smooth: true });
+    line([[-1.4, -.8], [-.95, -.8]], { stroke: '#8667C9', lw: .09 });
+  } else {
+    circle(.9, -.65, .48, { fill: '#F6DF8A', ...ink });
+    circle(1.02, -.76, .1, { fill: '#D5B965', stroke: null });
+    circle(.75, -.49, .07, { fill: '#D5B965', stroke: null });
+    X.save(); X.translate(-.35, .05); X.rotate(.45);
+    shape([[-.24, .62], [0, 1.2], [.24, .62]], { fill: '#FFB64E', stroke: null });
+    shape([[-.35, .15], [-.7, .75], [0, .52], [.7, .75], [.35, .15]], { fill: '#DC85A9', ...ink });
+    shape([[0, -1.1], [.4, -.45], [.35, .65], [-.35, .65], [-.4, -.45]], { fill: '#E5EFF9', ...ink });
+    circle(0, -.2, .2, { fill: '#83B9DC', ...ink }); X.restore();
+    [[-1.2, -.9], [1.35, .6]].forEach(([px, py]) => shape(starPts(px, py, .15), { fill: '#C7A057', stroke: null }));
+  }
+  X.restore();
+}
+
+function jeComicPad(x, y, s, progress) {
+  X.save(); X.translate(x, y); X.scale(s, s);
+  const lw = clamp(s * .1, 1.2, 4) / s;
+  shape(rectPts(-3.85, -3.15, 7.7, 6.3), { fill: '#9A79B9', stroke: JE.ink, lw });
+  shape(rectPts(-3.6, -2.95, 7.05, 5.85), { fill: '#FFFCF2', stroke: JE.ink, lw: lw * .65 });
+  for (let i = 0; i < 9; i++) {
+    line([[-3.98, -2.6 + i * .61], [-3.46, -2.6 + i * .61]], { stroke: '#5C526B', lw: .13 });
+  }
+  X.fillStyle = '#8667C9'; X.font = 'bold .42px sans-serif'; X.textAlign = 'center'; X.textBaseline = 'middle';
+  X.fillText('JENNA’S COMICS', 0, -2.47);
+  [[-3.12, 'cat'], [.22, 'space']].forEach(([px, kind], i) => {
+    shape(rectPts(px, -1.9, 3.05, 3.05), { fill: '#FFFFFF', stroke: JE.ink, lw: .09 });
+    X.save(); X.translate(px + 1.53, -.38); X.scale(.83, .83);
+    jeComicIdea(kind, seg(progress, i * .35, i * .35 + .35)); X.restore();
+  });
+  const final = seg(progress, .7, 1);
+  if (final > 0) {
+    X.save(); X.beginPath(); X.rect(-3.15, 1.35, 6.4 * final, 1.15); X.clip();
+    shape(starPts(-1.85, 1.94, .55, .7, 9), { fill: '#FFE382', stroke: '#B68449', lw: .05 });
+    X.fillStyle = JE.ink; X.font = 'bold .29px sans-serif'; X.fillText('POW!', -1.85, 1.94);
+    X.font = 'bold .31px sans-serif'; X.fillText('Next stop: the Moon!', 1.0, 1.94); X.restore();
+  }
+  X.restore();
+}
+
+function jeComicThought(x, y, s, kind, pop, t) {
+  if (pop < .01) return;
+  X.save(); X.translate(x, y); X.scale(s * pop, s * pop);
+  const pts = Array.from({ length: 48 }, (_, i) => {
+    const a = i * TAU / 48, bump = 1 + .05 * Math.cos(a * 12);
+    return [Math.cos(a) * 3.5 * bump, Math.sin(a) * 2.45 * bump];
+  });
+  const style = { fill: '#FFFDFA', stroke: '#8C6A9C', lw: .11 };
+  shape(pts, { ...style, smooth: true });
+  const sd = kind === 'cat' ? 1 : -1;
+  circle(sd * 2.55, 2.2, .32, style); circle(sd * 2.05, 2.9, .17, style);
+  X.save(); X.translate(0, -.25 + .07 * wob(t, .7)); jeComicIdea(kind); X.restore();
+  X.fillStyle = '#68507C'; X.textAlign = 'center'; X.textBaseline = 'middle'; X.font = 'bold .44px sans-serif';
+  X.fillText(kind === 'cat' ? 'SUPER CAT!' : 'MOON QUEST!', 0, 1.57);
+  X.restore();
+}
+
+function jeComicBulb(x, y, s, t, glow) {
+  X.save(); X.translate(x, y); X.scale(s, s);
+  circle(0, 0, 1.65, { fill: rgba('#FFD969', (.14 + .03 * wob(t)) * glow), stroke: null });
+  ellipse(0, -.15, .77, .91, { fill: mixCol('#E5DDBF', '#FFE481', glow), stroke: JE.ink, lw: .1 });
+  shape(rectPts(-.36, .54, .72, .48), { fill: '#B9B1C8', stroke: JE.ink, lw: .1 });
+  line([[-.25, -.17], [0, .1], [.25, -.17]], { stroke: '#CB923A', lw: .1 });
+  line([[-.32, .78], [.32, .78]], { stroke: '#756B83', lw: .1 });
+  for (let i = 0; i < 5; i++) {
+    const a = Math.PI + i * Math.PI / 4;
+    line([[Math.cos(a) * 1.2, Math.sin(a) * 1.2], [Math.cos(a) * 1.65, Math.sin(a) * 1.65]],
+      { stroke: '#DDA237', lw: .14, alpha: glow });
+  }
+  X.restore();
+}
+
+// Eight-second story loop. Props use the rig's internal scale and screen anchors.
+function jennaBrainstormComics(x, y, s, t) {
+  const p = ((t % 8) + 8) % 8, ps = s * JENNA_SCALE;
+  const pull = ease(seg(p, 0, .9)) * (1 - ease(seg(p, 7.1, 8)));
+  const drawing = ease(seg(p, 1, 1.3)) * (1 - ease(seg(p, 6.7, 7.1)));
+  const progress = seg(p, 1.3, 6.5);
+  const padX = lerp(-5.0, -.35, pull), padY = lerp(-9, -12.5, pull);
+  const strokeX = lerp(-2.4, 2.1, frac(progress * 3)) + .1 * wob(t, 3);
+  const strokeY = progress < .7 ? -13.2 + .3 * wob(t, 2) : -10.7 + .12 * wob(t, 2);
+  const A = jenna(x, y, s, { t, giraffe: false,
+    handL: mixPt([-3.4, -10.8], [padX - 3.65, padY + .3], pull), handPoseL: 'grip',
+    handR: mixPt([3.2, -11.3], [strokeX + .55, strokeY - .55], drawing), handPoseR: 'grip',
+    lookY: .8 * drawing, brows: drawing ? 'focused' : 'up', mouth: 'smile' });
+  X.save(); X.globalAlpha *= pull;
+  jeComicPad(x + padX * ps, y + padY * ps, ps, progress);
+  // Redraw the supporting hand above the pad's spiral binding.
+  X.save(); X.translate(A.handL[0], A.handL[1]); X.scale(ps, ps);
+  jeHand([0, 0], -.15, -1, 'grip', .1); X.restore();
+  X.save(); X.translate(A.handR[0], A.handR[1]); X.scale(ps, ps);
+  line([[-.65, .65], [1.05, -1.05]], { stroke: JE.ink, lw: .25 });
+  line([[-.49, .49], [.9, -.9]], { stroke: '#F4CC65', lw: .17 });
+  line([[.91, -.91], [1.08, -1.08]], { stroke: '#E88FA8', lw: .22 });
+  jeHand([-.45, -.05], -.6, 1, 'grip', .1); X.restore(); X.restore();
+  const fade = 1 - ease(seg(p, 6.9, 7.5));
+  jeComicBulb(A.top[0], A.top[1] - 2.1 * ps, ps, t, ease(seg(p, .65, 1.4)) * fade);
+  jeComicThought(A.top[0] - 8 * ps, A.top[1] - .7 * ps, ps, 'cat', ease(seg(p, 1.4, 1.9)) * fade, t);
+  jeComicThought(A.top[0] + 8 * ps, A.top[1] - .7 * ps, ps, 'space', ease(seg(p, 2.5, 3)) * fade, t);
+  return A;
+}
+
+CHARACTERS.jenna = {
+  // Include the brainstorming thought bubbles and bulb in preview/model-sheet framing.
+  draw: jenna, unit: JENNA_UNIT, palette: JE, size: [27, 36],
+  poses: {
+    'rest': (x, y, s, t) => jenna(x, y, s, {}),
+    'hi!': (x, y, s, t) => jenna(x, y, s, { handR: [4.2 + .5 * wob(t, 1.6), -19.0], handPoseR: 'palm', mouth: 'grin', brows: 'up', tilt: .06 }),
+    'talk': (x, y, s, t) => jenna(x, y, s, { mouth: lipFlap(t, frac(t * .5) < .7, 'smile'), brows: 'up', handR: [3.5, -14.5], handPoseR: 'palm', turn: .2 }),
+    'giggle': (x, y, s, t) => { const k = Math.abs(Math.sin(t * 12)); jenna(x, y, s, { handL: [-.6, -19.0], handR: [.6, -19.0], handPoseL: 'fist', handPoseR: 'fist', eyes: 'happy', mouth: k > .5 ? 'grin' : 'smile', dy: .25 * k, tilt: -.1, blush: 1 }); },
+    'surprised': (x, y, s, t) => jenna(x, y, s, { eyes: 'wide', mouth: 'o', brows: 'up', handL: [-1.1, -21.0], handR: [1.1, -21.0], handPoseL: 'palm', handPoseR: 'palm' }),
+    'wink': (x, y, s, t) => jenna(x, y, s, { eyes: 'wink', mouth: 'grin', handR: [3.9, -17.5], handPoseR: 'point', brows: 'up', tilt: .08 }),
+    'shy': (x, y, s, t) => jenna(x, y, s, { handL: [-.5, -12.0], handR: [.5, -12.0], handPoseL: 'fist', handPoseR: 'fist', lookX: -.6, lookY: .5, mouth: 'smile', tilt: -.12, blush: 1, footR: [.5, -.9] }),
+    'sad': (x, y, s, t) => jenna(x, y, s, { mouth: 'o', lookY: .7, dy: .2, tilt: .08 }),
+    'skip': (x, y, s, t) => jenna(x, y, s, { ...jennaSkip(t * 2.4), handR: [3.1, -14.0], handPoseR: 'fist', mouth: 'grin', eyes: 'happy', turn: .15 }),
+    'brainstorming:comics': jennaBrainstormComics,
+    'dance: bounce': (x, y, s, t) => jenna(x, y, s, jennaDance(t, 'bounce')),
+    'dance: disco': (x, y, s, t) => jenna(x, y, s, jennaDance(t, 'disco')),
+    'dance: twirl': (x, y, s, t) => jenna(x, y, s, jennaDance(t, 'twirl')),
+    'dance: star jump': (x, y, s, t) => jenna(x, y, s, jennaDance(t, 'star jump')),
+    'dance: floss': (x, y, s, t) => jenna(x, y, s, jennaDance(t, 'floss')),
+    'super dance': (x, y, s, t) => jenna(x, y, s, { ...jennaDance(t, 'arm wave'), eyes: 'happy' }),
+  },
+};
+
+// Source: ../../characters/jester_fester/jester_fester.js
+// characters/jester_fester/jester_fester.js: Jester Fester, the court jester (see reference.webp and README.md).
+//
+// jester(x, y, s, o) → anchors
+//   (x, y) screen point on the floor between the feet · s = px per jester unit. He is ~27 units tall (feet to hat tip),
+//   so in a perspective set use s = JF_UNIT * P.k(Z) (JF_UNIT = world units per jester unit; he is ~170 world units tall).
+//
+// Local units: feet y = 0, y points DOWN (up is negative). Hips at y -8.4, shoulders -13.3, head centre -17.3, hat tips ≈ -26.
+//
+// Pose     dy (hip drop; + = crouch) · lean (torso, rad) · tilt (head, rad) · turn (head -1..1) · rot (whole body, about the
+//          belly) · jump (units off the floor) · sq (squash; negative stretches) · flip · sway (tunic hem swing)
+// Limbs    handL / handR: [x, y] wrist targets in local units (L = screen-left) · handPoseL / handPoseR: 'open' | 'cup' | 'fist' | 'thumb'
+//          footL / footR: [x, y] ankle targets (rest: [∓1.25, -0.85])
+// Face     eyes: open | wide | happy | closed | squeeze | swirl | x | star | wink · lookX / lookY (-1..1) · blink (0..1, auto if unset)
+//          brows: normal | up | worried | angry · mouth: smile | grin | open | o | O | flat | frown | wobble | teeth | smirk · blush (default on)
+// Hat      hatSway [dx, dy] (tips swing) · hatDroop (0..1, the points flop down: sad) · hatAskew (rad) · hatLift · hatDrop · noHat (see jesterHat)
+// Extras   referee (black-and-white striped shirt and sleeves) · stars (0..1 dizzy stars) · emote: '?' | '!' | '!?' | 'sweat' | 'music' | 'heart' with emoteK (0..1 pop) · boil (px)
+//
+// Returns anchors in screen px: { head, mouth, hatTip, hatTipL, hatTipR, hatBase, handL, handR, belly, top }
+
+const JF = {
+  ink: '#3B2530', skin: '#F7CBAA', skinDk: '#E3A487', cheek: '#F08A86', nose: '#F29A84', hair: '#6A3B22', hairLt: '#8E5534',
+  eyeW: '#FFFDF7', iris: '#7A4422', brow: '#5A3020',
+  crimson: '#A8284C', crimsonDk: '#7C1B38', gold: '#E4AE3E', goldDk: '#B07E22', blue: '#4568B5', plum: '#6E2D5E',
+  shoe: '#8E5234', shoeDk: '#5E3420', bell: '#F3C54F', mouth: '#6E1F2E', tongue: '#EE7F8C',
+  pom: ['#3F5FC4', '#4FAA4F', '#EF8B2C'],
+};
+const JF_UNIT = 6.3;        // world units per jester unit
+const JF_HIP = -8.4;
+
+function jester(x, y, s, o = {}) {
+  const t = o.t ?? T, A = {};
+  const lw = clamp(s * .15, 1.6, 5.5) / s;                        // outline width in local units (~constant px)
+  X.save();
+  X.translate(x, y); X.scale(s * (o.flip ? -1 : 1), s);
+  const air = o.jump || 0;
+  if (!o.noShadow) { const f = 1 - clamp(air / 22) * .55; ellipse(0, .15, 4 * f, .75 * f, { fill: 'rgba(40,20,30,.28)', stroke: null }); }
+  X.translate(0, -air);
+  if (o.rot) { X.translate(0, -11); X.rotate(o.rot); X.translate(0, 11); }
+  if (o.sq) X.scale(1 + o.sq * .55, 1 - o.sq);
+
+  withBoil(o.boil ?? .7, () => {
+    const hipY = JF_HIP + (o.dy || 0), lean = o.lean || 0, cl = Math.cos(lean), sl = Math.sin(lean);
+    const tl = (px, py) => [px * cl - py * sl, hipY + px * sl + py * cl];   // torso-local → body-local
+
+    // ---- legs + shoes ----
+    [[-1, o.footL || [-1.25, -.85]], [1, o.footR || [1.25, -.85]]].forEach(([sd, f]) => {
+      const hp = tl(sd * .8, .3), { joint, end } = ik2(hp, f, 4.0, 3.95, [sd, .1]);
+      jfLimb([hp, joint, end], 1.15, JF.crimson, [[.08, .2], [.32, .44], [.56, .68], [.8, .92]], JF.blue, lw);
+      jfShoe(end, sd, lw, t);
+    });
+
+    // ---- torso (neck, tunic, collar) ----
+    X.save(); X.translate(0, hipY); X.rotate(lean);
+    shape(rectPts(-.45, -6.5, .9, 1.6), { fill: JF.skin, stroke: JF.ink, lw });
+    jfTunic(o, t, lw);
+    A.belly = toPx(0, -2);
+
+    // ---- head ----
+    X.save(); X.translate(0, -6.0); X.rotate(o.tilt || 0); X.translate(0, -2.95);
+    jfHead(o, t, lw, A);
+    X.restore();
+    X.restore();
+
+    // ---- arms (in front of the body) ----
+    [[-1, o.handL || [-3.3, -8.4], o.handPoseL || 'open'], [1, o.handR || [3.3, -8.4], o.handPoseR || 'open']].forEach(([sd, tg, pose]) => {
+      const sh = tl(sd * 1.95, -4.85), { joint, end } = ik2(sh, tg, 2.75, 2.55, [sd, .6]);
+      if (o.referee) jfLimb([sh, joint, end], 1.1, '#26232B', [[.12, .26], [.4, .54], [.7, .84]], '#F4F2EC', lw);
+      else jfLimb([sh, joint, end], 1.1, JF.crimson, [[.12, .26], [.4, .54], [.7, .84]], JF.gold, lw);
+      const ang = Math.atan2(end[1] - joint[1], end[0] - joint[0]);
+      jfHand(end, ang, sd, pose, lw);
+      A[sd < 0 ? 'handL' : 'handR'] = toPx(end[0], end[1]);
+    });
+  });
+  X.restore();
+  if (o.emote && (o.emoteK ?? 1) > .02) jfEmote(o.emote, A, s, o.emoteK ?? 1, t);
+  return A;
+}
+
+// A limb as one stroked path: ink underlay, colour, then stripes. Points are jittered once so the layers stay aligned.
+function jfLimb(pts, w, col, bands, bandCol, lw) {
+  if (JIT) { const a = JIT / pxScale(); pts = pts.map(p => [p[0] + jit(a), p[1] + jit(a)]); }
+  withBoil(0, () => {
+    line(pts, { stroke: JF.ink, lw: w + lw * 2 });
+    line(pts, { stroke: col, lw: w });
+    for (const [a, b] of bands) line(polySlice(pts, a, b), { stroke: bandCol, lw: w - lw * .2, cap: 'butt' });
+  });
+}
+
+function jfShoe(a, sd, lw, t) {
+  X.save(); X.translate(a[0], a[1]); X.scale(sd, 1);
+  shape([[-.75, .85], [-.95, .25], [-.5, -.35], [.45, -.25], [1.3, .05], [1.95, -.3], [2.3, -.95], [2.0, -1.15], [1.85, -.65], [1.55, .4], [.8, .85]],
+    { fill: JF.shoe, stroke: JF.ink, lw, smooth: .75 });
+  line([[-.5, .55], [.9, .6], [1.4, .35]], { stroke: JF.shoeDk, lw: lw * .8, smooth: true });
+  jfBell(2.12, -1.3, .32, lw, wob(t, 2.3, sd) * .3);
+  shape(ellPts(0, -.3, .78, .34, 14), { fill: JF.crimson, stroke: JF.ink, lw, smooth: true });
+  X.restore();
+}
+
+function jfBell(x, y, r, lw, swing = 0) {
+  X.save(); X.translate(x, y); X.rotate(swing);
+  circle(0, 0, r, { fill: JF.bell, stroke: JF.ink, lw });
+  line([[-r * .55, r * .25], [r * .55, r * .25]], { stroke: JF.goldDk, lw: lw * .8 });
+  circle(-r * .35, -r * .35, r * .22, { fill: '#FFF6D8', stroke: null });
+  X.restore();
+}
+
+function jfTunic(o, t, lw) {
+  const sw = (o.sway ?? 0) + wob(t, .8) * .08;                          // hem swing
+  const hem = [[-3.05, 1.95], [-2.25, .95], [-1.5, 2.15], [-.75, 1.0], [0, 2.25], [.75, 1.0], [1.5, 2.15], [2.25, .95], [3.05, 1.95]]
+    .map(([x, y]) => [x + sw * (y + 5.2) * .12, y]);
+  const pts = [[-2.05, -5.05], [-2.05, -3.9], [-1.8, -2.3], [-2.35, .1], ...hem, [2.35, .1], [1.8, -2.3], [2.05, -3.9], [2.05, -5.05], [1.0, -5.45], [0, -5.2], [-1.0, -5.45]];
+  // stripes, clipped to the tunic
+  X.save(); tracePath(pts, true, false); X.clip();
+  const b = [-3.4, -1.95, -.62, .62, 1.95, 3.4], cols = [JF.crimson, JF.gold, JF.blue, JF.gold, JF.crimson];
+  withBoil(0, () => {
+    if (o.referee) {                                                     // a referee's black-and-white striped shirt
+      for (let i = 0; i < 9; i++) { const x0 = -3.6 + i * .8; shape([[x0, -6], [x0 + .8, -6], [x0 + .8 + sw * .9, 2.6], [x0 + sw * .9, 2.6]], { fill: i % 2 ? '#26232B' : '#F4F2EC', stroke: null }); }
+      shape([[-2.4, -1.2], [2.4, -1.2], [2.6, -.6], [-2.6, -.6]], { fill: 'rgba(60,20,40,.12)', stroke: null });
+      return;
+    }
+    for (let i = 0; i < 5; i++) shape([[b[i] * .72, -6], [b[i + 1] * .72, -6], [b[i + 1] * 1.22 + sw * .9, 2.6], [b[i] * 1.22 + sw * .9, 2.6]], { fill: cols[i], stroke: null });
+    for (let i = 1; i < 5; i++) line([[b[i] * .72, -5.6], [b[i] * 1.22 + sw * .9, 2.4]], { stroke: 'rgba(255,240,210,.75)', lw: .07, dash: [.28, .22], cap: 'butt' });
+    shape([[-2.4, -1.2], [2.4, -1.2], [2.6, -.6], [-2.6, -.6]], { fill: 'rgba(60,20,40,.12)', stroke: null });   // soft belt shadow
+  });
+  X.restore();
+  shape(pts, { stroke: JF.ink, lw });
+  // bells on the hem points
+  [0, 2, 4, 6, 8].forEach((i, k) => jfBell(hem[i][0], hem[i][1] + .4, .36, lw, sw * .8 + wob(t, 2.1, k * .3) * .15));
+  // ruffled collar
+  const col = []; for (let i = 0; i <= 10; i++) { const a = Math.PI * i / 10, r = i % 2 ? 1.0 : 1.25; col.push([-Math.cos(a) * 1.6 * r, -5.35 + Math.sin(a) * .75 * r]); }
+  shape([...col, [1.3, -5.7], [-1.3, -5.7]], { fill: o.referee ? '#26232B' : JF.crimson, stroke: JF.ink, lw, smooth: .5 });
+  line(col.slice(2, 9).map(([x, y]) => [x * .8, y - .08]), { stroke: JF.gold, lw: .12, dash: [.2, .2], smooth: true });
+}
+
+function jfHead(o, t, lw, A) {
+  const turn = o.turn || 0, tx = turn * .75;
+  // ears
+  [-1, 1].forEach(sd => {
+    const ex = sd * 2.9 - turn * .35;
+    shape(ellPts(ex, .2, .6, .8, 14), { fill: JF.skin, stroke: JF.ink, lw, smooth: true });
+    line([[ex - sd * .05, -.2], [ex + sd * .2, .15], [ex, .5]], { stroke: JF.skinDk, lw: lw * .8, smooth: true });
+  });
+  // head
+  shape([[0, -3.1], [2.2, -2.5], [3.0, -.6], [2.8, 1.3], [1.7, 2.75], [0, 3.2], [-1.7, 2.75], [-2.8, 1.3], [-3.0, -.6], [-2.2, -2.5]],
+    { fill: JF.skin, stroke: JF.ink, lw, smooth: true });
+  // side hair tufts
+  [-1, 1].forEach(sd => shape([[sd * 2.3, -2.2], [sd * 3.35, -1.95], [sd * 2.95, -1.45], [sd * 3.5, -1.05], [sd * 2.85, -.75], [sd * 3.1, -.3], [sd * 2.55, -.55], [sd * 2.4, -1.6]].map(([x, y]) => [x - turn * .3, y]),
+    { fill: JF.hair, stroke: JF.ink, lw, smooth: .35 }));
+  // cheeks
+  if (o.blush !== false) [-1, 1].forEach(sd => ellipse(sd * 1.95 + tx * .6, .95, .62, .38, { fill: rgba(JF.cheek, .55), stroke: null }));
+  // eyes + brows
+  const eyeX = [-1.15 + tx, 1.15 + tx];
+  eyeX.forEach((ex, i) => jfEye(ex, -.3, o, i === 0, lw, t, 1 - Math.abs(turn) * (turn * (i ? -1 : 1) > 0 ? .25 : 0)));
+  jfBrows(eyeX, o, lw);
+  // nose
+  ellipse(.05 + tx * 1.15, .6, .62, .52, { fill: JF.nose, stroke: JF.ink, lw });
+  circle(-.12 + tx * 1.15, .42, .16, { fill: 'rgba(255,255,255,.7)', stroke: null });
+  // mouth
+  jfMouth(o.mouth || 'smile', tx, lw);
+  A.mouth = toPx(tx, 1.7); A.head = toPx(0, 0);
+  // fringe under the headband
+  shape([[-2.55, -1.95], [-2.2, -1.3], [-1.75, -1.85], [-1.1, -1.1], [-.6, -1.8], [.05, -1.15], [.55, -1.8], [1.15, -1.2], [1.65, -1.85], [2.15, -1.35], [2.55, -1.95], [2.4, -2.4], [-2.4, -2.4]].map(([x, y]) => [x + tx * .4, y]),
+    { fill: JF.hair, stroke: JF.ink, lw, smooth: .25 });
+  // hat
+  A.hatBase = toPx(0, -2.4 - (o.hatLift || 0) + (o.hatDrop || 0));   // headband centre: where jesterHat() goes
+  if (!o.noHat) {
+    X.save(); X.translate(0, -2.4 - (o.hatLift || 0) + (o.hatDrop || 0)); X.rotate(o.hatAskew || 0);
+    jfHat(o, t, lw, A);
+    X.restore();
+  } else A.hatTip = toPx(0, -2.4);                                 // no hat: the anchor sits on the crown
+  if (o.stars > .02) jfStars(o.stars, t, lw);
+  A.top = toPx(0, -4);
+}
+
+function jfEye(cx, cy, o, isLeft, lw, t, narrow) {
+  let kind = o.eyes || 'open';
+  if (kind === 'wink') kind = isLeft ? 'open' : 'happy';
+  const rx = .8 * narrow, ry = 1.02;
+  if (kind === 'happy') return line([[cx - .62, cy + .3], [cx, cy - .38], [cx + .62, cy + .3]], { stroke: JF.ink, lw: lw * 1.7, smooth: true });
+  if (kind === 'closed') return line([[cx - .62, cy], [cx, cy + .35], [cx + .62, cy]], { stroke: JF.ink, lw: lw * 1.7, smooth: true });
+  if (kind === 'squeeze') { const d = isLeft ? 1 : -1; return line([[cx - d * .55, cy - .45], [cx + d * .4, cy], [cx - d * .55, cy + .45]], { stroke: JF.ink, lw: lw * 1.7 }); }
+  const R = kind === 'wide' ? 1.15 : 1;
+  ellipse(cx, cy, rx * R, ry * R, { fill: JF.eyeW, stroke: JF.ink, lw });
+  if (kind === 'x') { line([[cx - .45, cy - .5], [cx + .45, cy + .5]], { stroke: JF.ink, lw: lw * 1.6 }); line([[cx + .45, cy - .5], [cx - .45, cy + .5]], { stroke: JF.ink, lw: lw * 1.6 }); return; }
+  if (kind === 'swirl') {
+    const sp = []; for (let i = 0; i <= 26; i++) { const a = i * .55 + t * 9 * (isLeft ? 1 : -1), r = .08 + i * .026; sp.push([cx + Math.cos(a) * r * narrow, cy + Math.sin(a) * r * 1.2]); }
+    return line(sp, { stroke: JF.ink, lw: lw * 1.1, smooth: true });
+  }
+  if (kind === 'star') { shape(starPts(cx, cy, .62, .45, 5), { fill: JF.gold, stroke: JF.ink, lw }); return; }
+  const lx = clamp(o.lookX || 0, -1, 1), ly = clamp(o.lookY || 0, -1, 1), ir = kind === 'wide' ? .36 : .5;
+  const ix = cx + lx * .32 * narrow, iy = cy + ly * .42;
+  withBoil(0, () => {
+    circle(ix, iy, ir, { fill: JF.iris, stroke: null });
+    circle(ix, iy, ir * .55, { fill: JF.ink, stroke: null });
+    circle(ix - ir * .38, iy - ir * .42, ir * .3, { fill: '#FFFFFF', stroke: null });
+  });
+  // eyelid (blink): auto-blinks every ~3.4 s unless o.blink is given
+  const ph = (t + 1.3 + (o.blinkSeed || 0)) % 3.4, b = o.blink ?? (ph < .16 ? Math.sin(ph / .16 * Math.PI) : 0);
+  if (b > .02) {
+    X.save(); X.beginPath(); X.ellipse(cx, cy, rx * R + .02, ry * R + .02, 0, 0, TAU); X.clip();
+    withBoil(0, () => shape(rectPts(cx - 1.2, cy - 1.3, 2.4, 2.5 * b), { fill: JF.skin, stroke: null }));
+    X.restore();
+    line([[cx - rx * R, cy - ry * R + 2 * ry * R * b], [cx, cy - ry * R + 2 * ry * R * b + .12], [cx + rx * R, cy - ry * R + 2 * ry * R * b]], { stroke: JF.ink, lw: lw * 1.2, smooth: true });
+  }
+}
+
+function jfBrows(eyeX, o, lw) {
+  const kind = o.brows || 'normal', up = kind === 'up' ? .35 : 0;
+  eyeX.forEach((ex, i) => {
+    const sd = i ? 1 : -1, inner = kind === 'worried' ? -.35 : kind === 'angry' ? .35 : 0, y = -1.62 - up;
+    line([[ex - sd * .6, y + inner], [ex, y - .18 + inner * .4], [ex + sd * .65, y + .05]], { stroke: JF.brow, lw: lw * 1.8, smooth: true });
+  });
+}
+
+function jfMouth(kind, tx, lw) {
+  X.save(); X.translate(tx, 0);
+  const dark = { fill: JF.mouth, stroke: JF.ink, lw };
+  if (kind === 'smile') {
+    line([[-1.3, 1.05], [-.7, 1.62], [0, 1.82], [.7, 1.62], [1.3, 1.05]], { stroke: JF.ink, lw: lw * 1.5, smooth: true });
+    line([[-1.45, .95], [-1.2, 1.2]], { stroke: JF.ink, lw }); line([[1.45, .95], [1.2, 1.2]], { stroke: JF.ink, lw });
+  } else if (kind === 'grin' || kind === 'open') {
+    const pts = kind === 'grin' ? [[-1.4, 1.1], [0, 1.28], [1.4, 1.1], [.95, 2.15], [0, 2.5], [-.95, 2.15]] : [[-.7, 1.25], [0, 1.15], [.7, 1.25], [.72, 2.0], [0, 2.55], [-.72, 2.0]];
+    X.save(); tracePath(pts, true, .8); X.fillStyle = JF.mouth; X.fill(); X.clip();
+    withBoil(0, () => {
+      if (kind === 'grin') shape(rectPts(-1.6, .9, 3.2, .55), { fill: '#FFFDF7', stroke: null });
+      ellipse(0, 2.45, .75, .45, { fill: JF.tongue, stroke: null });
+    });
+    X.restore();
+    shape(pts, { stroke: JF.ink, lw, smooth: .8 });
+  } else if (kind === 'o') ellipse(0, 1.75, .32, .4, dark);
+  else if (kind === 'O') ellipse(0, 1.85, .55, .68, dark);
+  else if (kind === 'flat') line([[-.75, 1.62], [.75, 1.62]], { stroke: JF.ink, lw: lw * 1.5 });
+  else if (kind === 'frown') line([[-1.2, 2.0], [-.6, 1.55], [0, 1.45], [.6, 1.55], [1.2, 2.0]], { stroke: JF.ink, lw: lw * 1.5, smooth: true });
+  else if (kind === 'smirk') line([[-1.0, 1.45], [0, 1.72], [1.15, 1.2]], { stroke: JF.ink, lw: lw * 1.5, smooth: true });
+  else if (kind === 'wobble') line([[-1, 1.7], [-.6, 1.45], [-.2, 1.75], [.2, 1.45], [.6, 1.75], [1, 1.5]], { stroke: JF.ink, lw: lw * 1.4, smooth: true });
+  else if (kind === 'teeth') {
+    shape([[-1.1, 1.3], [1.1, 1.3], [1.0, 2.05], [-1.0, 2.05]], { fill: '#FFFDF7', stroke: JF.ink, lw, smooth: .3 });
+    line([[-1.05, 1.67], [1.05, 1.67]], { stroke: JF.ink, lw: lw * .8 });
+    [-.55, 0, .55].forEach(x => line([[x, 1.32], [x, 2.02]], { stroke: JF.ink, lw: lw * .7 }));
+  }
+  X.restore();
+}
+
+// The hat on its own, as a prop (knocked off, held, flying): (x, y) is the headband centre in screen px, s the jester's scale.
+// o: { rot (rad), hatSway, hatDroop, t }. Pair it with jester(..., { noHat: true }).
+function jesterHat(x, y, s, o = {}) {
+  const lw = clamp(s * .15, 1.6, 5.5) / s;
+  X.save(); X.translate(x, y); X.scale(s, s); X.rotate(o.rot || 0);
+  withBoil(o.boil ?? .7, () => jfHat(o, o.t ?? T, lw, {}));
+  X.restore();
+}
+
+// Hat group origin: top of the head (headband centre). Tips can swing (hatSway) and idle-bob.
+function jfHat(o, t, lw, A) {
+  const sw = o.hatSway || [0, 0], dr = o.hatDroop || 0, droop = [[-1.6, 3.4], [2.6, 3.2], [1.6, 3.4]];
+  const bob = i => [wob(t, .9, i * .31) * .2 * (1 - dr) + sw[0] * [1.1, .7, 1.1][i] + droop[i][0] * dr, wob(t, 1.2, i * .53) * .14 * (1 - dr) + sw[1] * [.8, 1, .8][i] + droop[i][1] * dr];
+  const tip = (base, i) => { const d = bob(i); return [base[0] + d[0], base[1] + d[1]]; };
+  const mid = (base, i, f = .5) => { const d = bob(i); return [base[0] + d[0] * f, base[1] + d[1] * f]; };
+  const tL = tip([-5.5, -5.2], 0), tM = tip([.25, -6.9], 1), tR = tip([5.4, -5.0], 2);
+  const lobes = [
+    { pts: [[-3.1, -.2], mid([-4.5, -1.9], 0), tL, mid([-2.7, -3.9], 0), [-.5, -.6]], col: JF.plum, tipP: tL, pom: JF.pom[0], deco: 'diamond', dc: JF.gold, i: 0 },
+    { pts: [[.5, -.6], mid([2.8, -3.8], 2), tR, mid([4.5, -1.8], 2), [3.1, -.2]], col: JF.gold, tipP: tR, pom: JF.pom[2], deco: 'diamond', dc: JF.plum, i: 2 },
+    { pts: [[-1.2, -.5], mid([-1.35, -3.6], 1), tM, mid([1.45, -3.7], 1), [1.2, -.5]], col: JF.crimson, tipP: tM, pom: JF.pom[1], deco: 'zig', dc: JF.gold, i: 1 },
+  ];
+  for (const L of lobes) {
+    shape(L.pts, { fill: L.col, stroke: JF.ink, lw, smooth: .9 });
+    const c = polyAt([L.pts[0], L.pts[1], L.tipP], .5), c2 = polyAt([L.pts[4], L.pts[3], L.tipP], .5), m = mixPt(c, c2, .5);
+    if (L.deco === 'diamond') shape([[m[0], m[1] - .55], [m[0] + .4, m[1]], [m[0], m[1] + .55], [m[0] - .4, m[1]]], { fill: L.dc, stroke: JF.ink, lw: lw * .7 });
+    else line([[m[0] - .4, m[1] + 1.2], [m[0] + .35, m[1] + .6], [m[0] - .35, m[1]], [m[0] + .3, m[1] - .6], [m[0] - .25, m[1] - 1.2]], { stroke: L.dc, lw: lw * 1.1 });
+  }
+  // pompoms with bells
+  for (const L of [lobes[0], lobes[1], lobes[2]]) {
+    const [px, py] = L.tipP, fl = [];
+    for (let i = 0; i < 16; i++) { const a = i / 16 * TAU, r = i % 2 ? .98 : 1.18; fl.push([px + Math.cos(a) * r, py + Math.sin(a) * r]); }
+    shape(fl, { fill: L.pom, stroke: JF.ink, lw, smooth: .9 });
+    for (let i = 0; i < 4; i++) { const a = i * 1.7 + .4; line([[px + Math.cos(a) * .35, py + Math.sin(a) * .35], [px + Math.cos(a) * .75, py + Math.sin(a) * .7]], { stroke: 'rgba(40,20,40,.35)', lw: lw * .8 }); }
+    jfBell(px, py + .35, .4, lw, wob(t, 1.8, L.i * .4) * .25);
+  }
+  A.hatTipL = toPx(...tL); A.hatTip = toPx(tM[0], tM[1] - 1.1); A.hatTipR = toPx(...tR);
+  // headband (over the lobe bases)
+  const band = [[-3.15, .75], [-1.5, .5], [0, .45], [1.5, .5], [3.15, .75], [3.2, -.25], [1.5, -.55], [0, -.6], [-1.5, -.55], [-3.2, -.25]];
+  shape(band, { fill: JF.crimson, stroke: JF.ink, lw, smooth: .5 });
+  line([[-2.9, .25], [-1.5, 0], [0, -.05], [1.5, 0], [2.9, .25]], { stroke: JF.gold, lw: lw * .9, dash: [.3, .25], smooth: true });
+}
+
+function jfStars(k, t, lw) {
+  for (let i = 0; i < 3; i++) {
+    const a = t * 5 + i * TAU / 3, x = Math.cos(a) * 3.9, y = -3.4 + Math.sin(a) * .9;
+    shape(starPts(x, y, .62 * k, .45, 5, a), { fill: JF.bell, stroke: JF.ink, lw });
+  }
+}
+
+function jfHand(p, ang, sd, pose, lw) {
+  X.save(); X.translate(p[0], p[1]); X.rotate(ang); if (sd < 0) X.scale(1, -1);
+  const ink = { stroke: JF.ink, lw: .36 + lw * 2 }, skin = { stroke: JF.skin, lw: .36 };
+  // cuff
+  shape(ellPts(-.05, 0, .32, .62, 12), { fill: JF.crimson, stroke: JF.ink, lw, smooth: true });
+  if (pose === 'open' || pose === 'thumb') {
+    const fingers = pose === 'open' ? [[-.5, .75], [-.17, .88], [.16, .84], [.48, .68], [-1.35, .6]] : [[-1.7, .8]];
+    const tips = fingers.map(([a, l]) => [[.55, 0], [.55 + Math.cos(a) * (.35 + l), Math.sin(a) * (.35 + l)]]);
+    withBoil(0, () => {
+      tips.forEach(f => line(f, ink)); circle(.55, 0, .56, { stroke: JF.ink, lw: lw * 2 });
+      tips.forEach(f => line(f, skin)); circle(.55, 0, .56, { fill: JF.skin, stroke: null });
+      if (pose === 'thumb') shape(ellPts(.75, 0, .45, .42, 12), { fill: JF.skin, stroke: JF.ink, lw, smooth: true });
+    });
+  } else {        // cup / fist: a chunky mitten with finger creases
+    shape([[.1, -.5], [.6, -.62], [1.05, -.42], [1.18, 0], [1.05, .45], [.55, .6], [.1, .45]], { fill: JF.skin, stroke: JF.ink, lw, smooth: .9 });
+    [-.2, .1, .38].forEach(y => line([[.78, y], [1.08, y + .03]], { stroke: JF.skinDk, lw: lw * .8 }));
+    shape(ellPts(.55, -.55, .3, .2, 10), { fill: JF.skin, stroke: JF.ink, lw: lw * .8, smooth: true });
+  }
+  X.restore();
+}
+
+function jfEmote(kind, A, s, k, t) {
+  const [hx, hy] = A.head, x = hx + s * 4.2, y = hy - s * 6.2, pop = backOut(k);
+  if (kind === 'sweat') {
+    const [sx, sy] = [hx + s * 3.2, hy - s * 1.8 + (1 - k) * s];
+    overlay(() => { X.save(); X.translate(sx, sy); X.scale(pop * s, pop * s); shape([[0, -.9], [.45, .1], [0, .5], [-.45, .1]], { fill: '#8FD3F0', stroke: JF.ink, lwPx: 3, smooth: .7 }); X.restore(); });
+    return;
+  }
+  const txt = { '?': '?', '!': '!', '!?': '!?', music: '♪', heart: '♥' }[kind] ?? kind;
+  const col = kind === 'heart' ? JF.cheek : kind === 'music' ? JF.pom[0] : JF.bell;
+  overlay(() => {
+    X.save(); X.translate(x, y + wob(t, 1.5) * s * .2); X.rotate(.12 + wob(t, 1.1) * .06); X.scale(pop, pop);
+    const size = s * 3.4; X.font = `${size}px ${FONT_SFX}`; X.textAlign = 'center'; X.textBaseline = 'middle';
+    X.lineJoin = 'round'; X.lineWidth = size * .14; X.strokeStyle = JF.ink; X.strokeText(txt, 0, 0);
+    X.fillStyle = col; X.fillText(txt, 0, 0); X.restore();
+  });
+}
+
+// Registration for the studio's character browser (poses are also its model sheet).
+// Each pose draws Fester standing at (x, y) with scale s at time t; juggling poses add their balls.
+const jfJuggle = (n, tau, h) => (x, y, s, t) => {
+  const c = cascade(t, { n, tau, h });
+  jester(x, y, s, { handL: c.handL, handR: c.handR, handPoseL: 'cup', handPoseR: 'cup', lookY: -.8, lookX: c.balls.reduce((a, b) => (b.y < a.y ? b : a)).x / 4, mouth: 'grin', dy: .2 + .2 * Math.sin(c.s * Math.PI) ** 2 });
+  c.balls.forEach(b => jugglerBall(x + b.x * s, y + b.y * s, BALL_R * s, b.col, b.rot));
+};
+CHARACTERS.jester_fester = {
+  draw: jester, unit: JF_UNIT, palette: JF, size: [13, 28],
+  poses: {
+    'rest': (x, y, s, t) => jester(x, y, s, {}),
+    'ta-da': (x, y, s, t) => jester(x, y, s, { handL: [-5.2, -15.5], handR: [5.2, -15.5], eyes: 'happy', mouth: 'grin', dy: .3 }),
+    'juggle 3': jfJuggle(3, .34, 13),
+    'juggle 5': jfJuggle(5, .26, 18),
+    'talk': (x, y, s, t) => jester(x, y, s, { mouth: lipFlap(t, true), brows: 'up', handR: [4.6, -12], handL: [-3, -8.5], turn: .3 }),
+    'laugh': (x, y, s, t) => { const k = Math.abs(Math.sin(t * 15)); jester(x, y, s, { handL: [-1.9, -10.6], handR: [1.9, -10.6], handPoseL: 'fist', handPoseR: 'fist', eyes: 'squeeze', mouth: k > .5 ? 'grin' : 'open', dy: .5 * k, tilt: -.1 }); },
+    'shrug': (x, y, s, t) => jester(x, y, s, { handL: [-4.4, -13.2], handR: [4.4, -13.2], brows: 'worried', mouth: 'smirk', tilt: .15, dy: -.2, emote: '?', emoteK: 1 }),
+    'wink': (x, y, s, t) => jester(x, y, s, { eyes: 'wink', mouth: 'grin', handR: [3.6, -12.6], handPoseR: 'thumb' }),
+    'surprised': (x, y, s, t) => jester(x, y, s, { eyes: 'wide', mouth: 'O', brows: 'up', hatLift: 1.2, lookY: -1, handL: [-4, -11], handR: [4, -11] }),
+    'dizzy': (x, y, s, t) => jester(x, y, s, { eyes: 'swirl', mouth: 'wobble', stars: 1, hatAskew: .35, dy: .8, lean: .1 * wob(t, .7), tilt: .15 * wob(t, .5) }),
+    'sad (fired)': (x, y, s, t) => jester(x, y, s, { mouth: 'frown', brows: 'worried', lookY: .7, hatDroop: 1, dy: .4, emote: 'sweat', emoteK: 1 }),
+    'somersault': (x, y, s, t) => jester(x, y, s, { rot: t * 4, footL: [-1, -5], footR: [1, -5], handL: [-2.5, -14], handR: [2.5, -14], eyes: 'squeeze', mouth: 'grin', jump: 4 }),
+  },
+};
+
 // Source: ../../characters/robo_safadi/robo_safadi.js
 // characters/robo_safadi/robo_safadi.js: Robo-Safadi, the robot professor Alma and Jenna dreamed up for Halloween (README.md).
 //
@@ -1188,7 +4305,7 @@ class Game {
   reset() {
     this.state = 'playing'; this.score = 0; this.lives = 3; this.wave = 1; this.time = 0;
     this.player = { x: WIDTH / 2, y: 516, immune: 1.5 }; this.cooldown = 0;
-    this.bolts = []; this.drops = []; this.sparks = []; this.nextWave = 0; this.spawn();
+    this.events = []; this.bolts = []; this.drops = []; this.sparks = []; this.nextWave = 0; this.spawn();
   }
   spawn() {
     this.invaders = [];
@@ -1205,7 +4322,7 @@ class Game {
   }
   hurt() {
     if (this.player.immune > 0 || this.state !== 'playing') return;
-    this.lives--; this.player.immune = 2; this.burst(this.player.x, 473, '#ff8b9c');
+    this.events.push('hurt'); this.lives--; this.player.immune = 2; this.burst(this.player.x, 473, '#ff8b9c');
     if (!this.lives) this.state = 'over';
   }
   update(dt, input = {}) {
@@ -1215,6 +4332,7 @@ class Game {
     this.player.x = Math.max(60, Math.min(WIDTH - 60, this.player.x + ((input.right ? 1 : 0) - (input.left ? 1 : 0)) * 360 * dt));
     this.cooldown -= dt;
     if (input.fire && this.cooldown <= 0) {
+      this.events.push('shot');
       this.bolts.push({ x: this.player.x + 38, y: this.player.y - 122 }); this.cooldown = .22;
     }
     for (const bolt of this.bolts) {
@@ -1222,7 +4340,7 @@ class Game {
       const target = this.invaders.find(e => Math.abs(e.x - bolt.x) < 26 && bolt.y > e.y - 78 && bolt.y < e.y + 5);
       if (target) {
         this.invaders.splice(this.invaders.indexOf(target), 1); bolt.y = -100;
-        this.score += 350; this.burst(target.x, target.y - 28, '#FFE066');
+        this.events.push('hit'); this.score += 350; this.burst(target.x, target.y - 28, '#FFE066');
       }
     }
     this.bolts = this.bolts.filter(b => b.y > -20);
@@ -1261,6 +4379,90 @@ const canvas = $('game'), ctx = canvas.getContext('2d'), game = new Game();
 const RENDER_SCALE = 2, CHARACTER_SCALE = 1.1, ROBOT_SIZE = 110;
 canvas.width = WIDTH * RENDER_SCALE; canvas.height = HEIGHT * RENDER_SCALE;
 const input = { left: false, right: false, fire: false }, keys = new Set(), touches = new Map();
+const heroes = {
+  neptune: { name: 'Neptune', draw: neptune, scale: 5.2 },
+  jester_fester: { name: 'Jester Fester', draw: jester, scale: 4.4 },
+  safadi: { name: 'Professor Safadi', draw: safadi, scale: 4 },
+  sami: { name: 'Dr Sami', draw: sami, scale: 4 },
+  housam: { name: 'Housam', draw: housam, scale: 3.75 },
+  alma: { name: 'Alma', draw: alma, scale: 5 },
+  danny: { name: 'Danny', draw: danny, scale: 4.1 },
+  jenna: { name: 'Jenna', draw: jenna, scale: 4.1 },
+};
+let heroId = 'neptune', audioContext, soundEnabled = true;
+// Short, locally synthesized arcade effects; audio is unlocked by a user gesture.
+function unlockAudio() {
+  if (!soundEnabled) return;
+  try {
+    const Audio = window.AudioContext || window.webkitAudioContext;
+    if (Audio) { audioContext ||= new Audio(); audioContext.resume().catch(() => {}); }
+  } catch { /* Gameplay also works in browsers without audio support. */ }
+}
+function playSound(kind) {
+  if (!soundEnabled || audioContext?.state !== 'running') return;
+  const now = audioContext.currentTime;
+  const [from, to, duration, type] = {
+    shot: [1000, 180, .09, 'square'], hit: [260, 55, .16, 'sawtooth'], hurt: [140, 35, .25, 'triangle'],
+  }[kind];
+  const oscillator = audioContext.createOscillator(), gain = audioContext.createGain();
+  oscillator.type = type; oscillator.frequency.setValueAtTime(from, now);
+  oscillator.frequency.exponentialRampToValueAtTime(to, now + duration);
+  gain.gain.setValueAtTime(.0001, now); gain.gain.exponentialRampToValueAtTime(.055, now + .005);
+  gain.gain.exponentialRampToValueAtTime(.0001, now + duration);
+  oscillator.connect(gain); gain.connect(audioContext.destination);
+  oscillator.onended = () => { oscillator.disconnect(); gain.disconnect(); };
+  oscillator.start(now); oscillator.stop(now + duration);
+}
+$('sound').onclick = () => {
+  soundEnabled = !soundEnabled; $('sound').textContent = `Sound: ${soundEnabled ? 'on' : 'off'}`;
+  $('sound').setAttribute('aria-pressed', String(soundEnabled));
+  if (soundEnabled) unlockAudio();
+};
+const heroIds = Object.keys(heroes);
+const taglines = ['Ruler of the seven seas', 'The last laugh is yours', 'Knowledge is power', 'A healthy dose of heroism', 'Quick feet. Brilliant mind.', 'Let your rainbow powers shine', 'Small hero. Big adventure.', 'Creativity takes the crown'];
+const portraits = {};
+// Paint the original rigs into local portraits so the selection screen also works offline.
+for (const [index, id] of heroIds.entries()) {
+  const portrait = document.createElement('canvas'); portrait.width = 300; portrait.height = 360;
+  X = portrait.getContext('2d'); T = 0; boilSeed(T); OVERLAYS = []; CAM = null; JIT = 0;
+  const hero = heroes[id];
+  hero.draw(150, 335, hero.scale * 2.35, { t: 0, sit: 1, mouth: 'grin', eyes: 'open', boil: 0, noShadow: true });
+  OVERLAYS = [];
+  portraits[id] = portrait.toDataURL();
+  const button = document.createElement('button');
+  button.type = 'button'; button.className = 'hero-card'; button.dataset.hero = id;
+  button.setAttribute('aria-pressed', String(id === heroId)); button.tabIndex = id === heroId ? 0 : -1;
+  const img = document.createElement('img'); img.src = portraits[id]; img.alt = ''; img.draggable = false;
+  const name = document.createElement('span'); name.textContent = hero.name;
+  const number = document.createElement('small'); number.textContent = `0${index + 1}`;
+  button.append(number, img, name); button.onclick = () => selectHero(id);
+  $('hero-grid').append(button);
+}
+function selectHero(id, focus = false) {
+  heroId = id;
+  for (const button of document.querySelectorAll('.hero-card')) {
+    const selected = button.dataset.hero === id;
+    button.setAttribute('aria-pressed', String(selected)); button.tabIndex = selected ? 0 : -1;
+    if (selected && focus) button.focus();
+  }
+  $('hero-preview').src = portraits[id]; $('hero-preview').alt = heroes[id].name;
+  $('hero-name').textContent = heroes[id].name;
+  $('hero-tagline').textContent = taglines[heroIds.indexOf(id)];
+  announce(`${heroes[id].name} selected.`);
+}
+selectHero(heroId);
+$('hero-grid').addEventListener('keydown', e => {
+  const columns = getComputedStyle($('hero-grid')).gridTemplateColumns.split(' ').length;
+  const offset = { ArrowLeft: -1, ArrowRight: 1, ArrowUp: -columns, ArrowDown: columns }[e.code];
+  if (offset !== undefined) {
+    e.preventDefault(); selectHero(heroIds[(heroIds.indexOf(heroId) + offset + heroIds.length) % heroIds.length], true);
+  } else if (e.code === 'Enter') { e.preventDefault(); start(); }
+});
+$('confirm-hero').onclick = start;
+$('choose-hero').onclick = () => {
+  release(); game.reset(); game.state = 'ready'; sync();
+  document.querySelector(`[data-hero="${heroId}"]`).focus();
+};
 X = ctx;
 // Cache the detailed rig once for each marching frame, rather than repainting every robot.
 const robots = Array.from({ length: 4 }, (_, i) => {
@@ -1279,9 +4481,10 @@ function controls() {
 }
 function release() { keys.clear(); touches.clear(); controls(); document.querySelectorAll('.touch button').forEach(b => b.classList.remove('active')); }
 function announce(text) { $('announcement').textContent = text; }
-function start() { release(); game.reset(); canvas.focus(); sync(); announce('Game started. Three crowns.'); }
+function start() { unlockAudio(); release(); game.reset(); sync(); canvas.focus(); announce(`${heroes[heroId].name} started. Three crowns.`); }
 function pause() {
   if (!['playing', 'paused'].includes(game.state)) return;
+  unlockAudio();
   game.state = game.state === 'playing' ? 'paused' : 'playing'; release(); sync();
   if (game.state === 'playing') canvas.focus();
 }
@@ -1291,7 +4494,7 @@ window.addEventListener('keydown', e => {
   if (['KeyP', 'Escape'].includes(e.code)) {
     e.preventDefault(); if (!e.repeat) pause(); return;
   }
-  if (e.target instanceof HTMLButtonElement || e.target instanceof HTMLAnchorElement) return;
+  if (e.target instanceof HTMLButtonElement || e.target instanceof HTMLAnchorElement || e.target instanceof HTMLSelectElement) return;
   if (['ArrowLeft', 'ArrowRight', 'Space', 'KeyA', 'KeyD', 'KeyP', 'Escape'].includes(e.code)) e.preventDefault();
   if (['KeyP', 'Escape'].includes(e.code) && !e.repeat) pause();
   else { keys.add(e.code); controls(); }
@@ -1301,7 +4504,7 @@ window.addEventListener('blur', () => { release(); if (game.state === 'playing')
 document.addEventListener('visibilitychange', () => { if (document.hidden) { release(); if (game.state === 'playing') pause(); } });
 for (const button of document.querySelectorAll('[data-control]')) {
   button.addEventListener('pointerdown', e => {
-    e.preventDefault(); button.setPointerCapture(e.pointerId);
+    unlockAudio(); e.preventDefault(); button.setPointerCapture(e.pointerId);
     touches.set(e.pointerId, button.dataset.control); button.classList.add('active'); controls();
   });
   const up = e => {
@@ -1315,17 +4518,23 @@ function sync() {
   const signature = [game.score, game.wave, game.lives, game.state, game.invaders.length === 0].join(':');
   if (signature === lastUi) return;
   lastUi = signature;
+  const selecting = game.state === 'ready';
+  $('fighter-select').hidden = !selecting;
+  canvas.hidden = selecting;
+  canvas.parentElement.classList.toggle('selecting', selecting);
+  $('choose-hero').disabled = selecting;
+  $('restart').disabled = selecting;
   $('score').textContent = String(game.score).padStart(5, '0');
   $('wave').textContent = String(game.wave).padStart(2, '0');
   $('lives').textContent = '♛ '.repeat(game.lives).trim() || '—';
   $('pause').disabled = !['playing', 'paused'].includes(game.state);
   $('pause').textContent = game.state === 'paused' ? 'Resume' : 'Pause';
   $('state-label').textContent = ({ ready: 'READY WHEN YOU ARE', playing: 'RAINBOW POWER ONLINE', paused: 'TAKE A BREATHER', over: 'THE ROBOTS GOT THROUGH' })[game.state];
-  $('overlay').hidden = game.state === 'playing';
+  $('overlay').hidden = ['playing', 'ready'].includes(game.state);
   $('wave-notice').hidden = game.state !== 'playing' || game.invaders.length > 0;
   const copy = {
-    ready: ['PLAYER 1: PROF. SAFADI', 'ROBO INVASION!', 'Raise your trident. Clear the Robo-Safadis.\nThree crowns. Endless waves. Rainbow power.', 'Start game'],
-    paused: ['TRIDENT DOWN. DEEP BREATH.', 'On a little break.', 'Your wave is waiting right here.\nReady to get back to the robots?', 'Resume game'],
+    ready: [`YOUR HERO: ${heroes[heroId].name.toUpperCase()}`, 'ROBO INVASION!', 'Choose your hero above. Clear the Robo-Safadis.\nThree crowns. Endless waves. Rainbow power.', 'Start game'],
+    paused: ['POWER DOWN. DEEP BREATH.', 'On a little break.', 'Your wave is waiting right here.\nReady to get back to the robots?', 'Resume game'],
     over: ['THE SEVEN SEAS NEED YOU', 'The robots win. For now.', `You scored ${game.score} points and reached wave ${game.wave}.\nReady for another invasion?`, 'Play again'],
   }[game.state];
   if (copy) {
@@ -1348,7 +4557,6 @@ function render() {
   ctx.fillStyle = sky; ctx.fillRect(0, 0, WIDTH, HEIGHT);
   for (const star of stars) { ctx.globalAlpha = .4 + star.r * .2; ctx.fillStyle = '#ffffff'; ctx.beginPath(); ctx.arc(star.x, (star.y + game.time * 12 * star.r) % HEIGHT, star.r, 0, Math.PI * 2); ctx.fill(); }
   ctx.globalAlpha = 1;
-  ctx.fillStyle = '#3BE07A'; ctx.fillRect(0, 518, WIDTH, 4);
   arcade('SCORE ' + String(game.score).padStart(6, '0'), 22, 26, 22, '#FFFFFF', 'left');
   arcade('ROBO INVASION', WIDTH / 2, 26, 27, '#FF5A5A');
   arcade('WAVE ' + String(game.wave).padStart(2,'0'), WIDTH - 22, 26, 22, '#FFE066', 'right');
@@ -1357,8 +4565,13 @@ function render() {
     ctx.drawImage(robots[frame], enemy.x - ROBOT_SIZE / 2, enemy.y - 88 * CHARACTER_SCALE, ROBOT_SIZE, ROBOT_SIZE);
   }
   ctx.save();
-  if (game.player.immune > 0 && game.state === 'playing') ctx.globalAlpha = .55 + .45 * Math.sin(game.time * 25) ** 2;
-  neptune(game.player.x, game.player.y, 5.2, { t: game.time, sit: 1, trident: true, tridentAng: -Math.PI / 2, eyes: 'smug', mouth: 'grin', headTilt: .1, power: .3, boil: 0, noShadow: true });
+  const hero = heroes[heroId];
+  if (heroId === 'neptune') {
+    hero.draw(game.player.x, game.player.y, hero.scale, { t: game.time, sit: 1, trident: true, tridentAng: -Math.PI / 2, eyes: 'smug', mouth: 'grin', headTilt: .1, power: .3, boil: 0, noShadow: true });
+  } else {
+    hero.draw(game.player.x, game.player.y, hero.scale, { t: game.time, eyes: 'open', mouth: 'grin', handR: [5, -16], handPoseR: 'fist', boil: 0, noShadow: true });
+
+  }
   ctx.restore();
   for (const bolt of game.bolts) {
     ctx.shadowColor = '#7FD3FF'; ctx.shadowBlur = 12 * RENDER_SCALE;
@@ -1381,7 +4594,9 @@ function tick(now) {
   const elapsed = previous ? Math.min((now - previous) / 1000, .1) : 0; previous = now;
   if (game.state === 'playing') {
     accumulator += elapsed;
-    while (accumulator >= 1 / 120) { game.update(1 / 120, input); accumulator -= 1 / 120; }
+    while (accumulator >= 1 / 120) { game.update(1 / 120, input);
+      for (const event of game.events.splice(0)) playSound(event);
+      accumulator -= 1 / 120; }
   } else accumulator = 0;
   if (game.state !== previousState || game.wave !== previousWave || game.lives !== previousLives) {
     if (game.state === 'over') announce(`Game over. Score ${game.score}. Wave ${game.wave}.`);

@@ -8,24 +8,40 @@
 <body>
 <main>
   <header><span>PROF. SAFADI’S ARCADE</span><span class="edition">SCENE 32 / VERSION 2</span></header>
-  <section class="intro"><div><p class="eyebrow">THE PROFESSOR’S FAVOURITE “RESEARCH”</p><h1>Robo<span>Invader</span><small>VERSION 2</small></h1></div><p class="mission">King Neptune vs. the robot invasion.<br>Straight from Screen Time.</p></section>
+  <section class="intro"><div><p class="eyebrow">THE PROFESSOR’S FAVOURITE “RESEARCH”</p><h1>Robo<span>Invader</span><small>VERSION 2</small></h1></div><p class="mission">Choose your hero. Stop the robot invasion.<br>Straight from Screen Time.</p></section>
   <section class="cabinet" aria-label="Robo Invader Version 2 game">
     <div class="dashboard"><div>SCORE<strong id="score">00000</strong></div><div>WAVE<strong id="wave">01</strong></div><div class="health">CROWNS<strong id="lives">♛ ♛ ♛</strong></div></div>
-    <div class="screen">
-      <canvas id="game" width="1920" height="1080" tabindex="0" aria-label="Move King Neptune with arrow keys or A and D. Hold Space to fire. P pauses."></canvas>
+    <div class="screen selecting">
+      <section id="fighter-select" aria-labelledby="fighter-title">
+        <p class="eyebrow">PLAYER 1 · EIGHT HEROES · ONE MISSION</p>
+        <h2 id="fighter-title">CHOOSE YOUR HERO</h2>
+        <div class="fighter-layout">
+          <div class="fighter-preview"><div class="fighter-aura"></div><img id="hero-preview" alt=""><span class="fighter-player">PLAYER 1</span><h3 id="hero-name">Neptune</h3><p id="hero-tagline">Ruler of the seven seas</p></div>
+          <div class="fighter-roster"><div id="hero-grid" role="group" aria-label="Heroes"></div><p class="fighter-instructions">SELECT YOUR HERO · THEN ENTER THE ARENA</p><button id="confirm-hero">Choose hero · Play ↗</button></div>
+        </div>
+        <p class="fighter-keyboard">← → ↑ ↓ SELECT &nbsp; · &nbsp; ENTER CONFIRM &nbsp; · &nbsp; TAP TO CHOOSE</p>
+      </section>
+      <canvas id="game" width="1920" height="1080" tabindex="0" aria-label="Move your hero with arrow keys or A and D. Hold Space to fire. P pauses."></canvas>
       <div class="overlay" id="overlay"><p class="eyebrow" id="overlay-label">PLAYER 1: PROF. SAFADI</p><h2 id="overlay-title">ROBO INVASION!</h2><p id="overlay-copy">Raise your trident. Clear the Robo-Safadis.<br>Three crowns. Endless waves. Rainbow power.</p><button id="start">Start game <span>↗</span></button></div>
       <div id="wave-notice" hidden>WAVE CLEARED</div>
     </div>
-    <div class="console"><span><i></i> <span id="state-label">READY WHEN YOU ARE</span></span><button id="pause" disabled>Pause</button><button id="restart">Restart</button></div>
+    <div class="console"><span><i></i> <span id="state-label">READY WHEN YOU ARE</span></span><button id="sound" aria-pressed="true">Sound: on</button><button id="choose-hero">Choose hero</button><button id="pause" disabled>Pause</button><button id="restart">Restart</button></div>
   </section>
   <div class="touch" aria-label="Touch controls"><button data-control="left" aria-label="Move left">←</button><button data-control="right" aria-label="Move right">→</button><button data-control="fire" class="fire">ZAP! ✦</button></div>
-  <footer><p><kbd>←</kbd> <kbd>→</kbd> move <span>·</span> <kbd>SPACE</kbd> fire <span>·</span> <kbd>P</kbd> pause</p><p>Inspired by Scene 32 · Screen Time. <span class="mint">Long live King Neptune.</span></p></footer>
+  <footer><p><kbd>←</kbd> <kbd>→</kbd> move <span>·</span> <kbd>SPACE</kbd> fire <span>·</span> <kbd>P</kbd> pause</p><p>Inspired by Scene 32 · Screen Time. <span class="mint">Eight heroes. One robot invasion.</span></p></footer>
   <p class="sr-only" id="announcement" aria-live="polite"></p>
 </main>
 <script src="../../engine/core.js"></script>
 <script src="../../engine/callout.js"></script>
 <script src="../../engine/timeline.js"></script>
 <script src="../../characters/neptune/neptune.js"></script>
+<script src="../../characters/safadi/safadi.js"></script>
+<script src="../../characters/sami/sami.js"></script>
+<script src="../../characters/housam/housam.js"></script>
+<script src="../../characters/alma/alma.js"></script>
+<script src="../../characters/danny/danny.js"></script>
+<script src="../../characters/jenna/jenna.js"></script>
+<script src="../../characters/jester_fester/jester_fester.js"></script>
 <script src="../../characters/robo_safadi/robo_safadi.js"></script>
 <script type="module" src="game.js"></script>
 </body></html>

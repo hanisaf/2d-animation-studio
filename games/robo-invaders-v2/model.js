@@ -4,7 +4,7 @@ export class Game {
   reset() {
     this.state = 'playing'; this.score = 0; this.lives = 3; this.wave = 1; this.time = 0;
     this.player = { x: WIDTH / 2, y: 516, immune: 1.5 }; this.cooldown = 0;
-    this.bolts = []; this.drops = []; this.sparks = []; this.nextWave = 0; this.spawn();
+    this.events = []; this.bolts = []; this.drops = []; this.sparks = []; this.nextWave = 0; this.spawn();
   }
   spawn() {
     this.invaders = [];
@@ -21,7 +21,7 @@ export class Game {
   }
   hurt() {
     if (this.player.immune > 0 || this.state !== 'playing') return;
-    this.lives--; this.player.immune = 2; this.burst(this.player.x, 473, '#ff8b9c');
+    this.events.push('hurt'); this.lives--; this.player.immune = 2; this.burst(this.player.x, 473, '#ff8b9c');
     if (!this.lives) this.state = 'over';
   }
   update(dt, input = {}) {
@@ -31,6 +31,7 @@ export class Game {
     this.player.x = Math.max(60, Math.min(WIDTH - 60, this.player.x + ((input.right ? 1 : 0) - (input.left ? 1 : 0)) * 360 * dt));
     this.cooldown -= dt;
     if (input.fire && this.cooldown <= 0) {
+      this.events.push('shot');
       this.bolts.push({ x: this.player.x + 38, y: this.player.y - 122 }); this.cooldown = .22;
     }
     for (const bolt of this.bolts) {
@@ -38,7 +39,7 @@ export class Game {
       const target = this.invaders.find(e => Math.abs(e.x - bolt.x) < 26 && bolt.y > e.y - 78 && bolt.y < e.y + 5);
       if (target) {
         this.invaders.splice(this.invaders.indexOf(target), 1); bolt.y = -100;
-        this.score += 350; this.burst(target.x, target.y - 28, '#FFE066');
+        this.events.push('hit'); this.score += 350; this.burst(target.x, target.y - 28, '#FFE066');
       }
     }
     this.bolts = this.bolts.filter(b => b.y > -20);
