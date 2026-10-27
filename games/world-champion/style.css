@@ -1,0 +1,52 @@
+:root{color-scheme:dark;font-family:system-ui,sans-serif;background:#081e22;color:#f6f1db}*{box-sizing:border-box}body{margin:0;background:radial-gradient(ellipse at 60% 0,#164e4b,transparent 65%);min-height:100vh}main{max-width:1120px;margin:auto;padding:26px 30px}header{display:flex;justify-content:space-between;gap:16px;font-size:10px;letter-spacing:1.5px;color:#97bcb5}a{color:#c3dfcf;text-decoration:none}.title{display:flex;align-items:center;justify-content:space-between;margin:32px 0 22px}.eyebrow{font-size:10px;letter-spacing:2px;color:#e9cb73;font-weight:800}h1{font:clamp(30px,5vw,60px) Impact,'Arial Black',sans-serif;letter-spacing:1px;margin:8px 0}h1 em{color:#f2ce70;font-style:normal}.badge{border:1px solid #5c8178;border-radius:50%;width:105px;height:105px;display:flex;flex-direction:column;justify-content:center;text-align:center;font-size:11px;line-height:1.6;transform:rotate(8deg);flex-shrink:0}.cabinet{border:6px solid #183536;border-radius:14px;overflow:hidden;box-shadow:0 22px 65px #0005;background:#0c2528}.scoreboard{display:grid;grid-template-columns:1fr 1fr 1fr;background:#0a2227;text-align:center;padding:17px 12px}.scoreboard span{font-size:10px;letter-spacing:1.5px;color:#acd0c4}.scoreboard strong{display:block;font-size:32px;line-height:1.2;color:#f5d684}.timer strong{color:#fff6da}.screen{position:relative}canvas{display:block;width:100%;height:auto;aspect-ratio:16/9;outline-offset:-4px}.overlay{position:absolute;inset:0;background:#081e22ed;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:14px}h2{font:clamp(19px,3vw,34px) Impact,'Arial Black',sans-serif;letter-spacing:1px;margin:5px 0 10px}.heroes{display:flex;gap:14px;justify-content:center}.heroes button{width:200px;padding:8px 14px 12px;border:2px solid #41665d;background:#133b3a}.heroes button[aria-pressed=true]{border-color:#f2ce70;background:#29534a;box-shadow:0 0 22px #f2ce7017}.heroes img{width:88px;height:106px;object-fit:contain;display:block;margin:auto}.heroes strong,.heroes small{display:block}.heroes small{font-size:10px;color:#b6cebf;margin-top:6px}.overlay p{font-size:12px;line-height:1.7;margin:10px 0}.overlay .eyebrow{font-size:10px}button{font:inherit;font-size:12px;font-weight:750;cursor:pointer;min-height:40px;border:1px solid #44645c;border-radius:5px;background:#173b3a;color:#f4f1df;padding:8px 14px;touch-action:none}button:focus-visible,a:focus-visible,canvas:focus-visible{outline:3px solid #ffe291;outline-offset:2px}button:disabled{opacity:.4;cursor:default}.primary{background:#efce75;color:#182c29;border-color:#ffe6a0;padding:11px 25px}.console{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:12px 16px}.console span{font-size:10px;letter-spacing:1px;color:#e9d085}.console label{display:flex;align-items:center;gap:9px;font-size:9px;color:#a4c4b7;margin-top:7px}meter{height:8px;width:100px}nav{display:flex;gap:7px}.touch{display:flex;justify-content:space-between;gap:16px;margin-top:16px}.dpad,.actions{display:flex;gap:6px}.dpad button{width:45px;font-size:22px}.active{filter:brightness(1.5);transform:translateY(2px)}footer{text-align:center;color:#96b9ad;font-size:11px;line-height:1.9;margin-top:22px}footer b{color:#d6dbb8;font-size:10px}.sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0)}[hidden]{display:none!important}@media(max-width:600px){main{padding:16px 10px}header span,.badge{display:none}.title{margin:20px 0 15px}.eyebrow{font-size:8px;letter-spacing:1px}h1{font-size:34px}.cabinet{border-width:3px;border-radius:8px}.scoreboard{padding:10px 3px}.scoreboard span{font-size:8px;letter-spacing:.5px}.scoreboard strong{font-size:24px}.overlay{padding:5px}h2{font-size:17px;margin:2px 0 5px}.overlay .eyebrow{display:none}.heroes{gap:8px}.heroes button{width:135px;padding:3px 5px 6px;font-size:11px}.heroes img{height:60px;width:55px}.heroes small{display:none}.overlay p{font-size:9px;line-height:1.4;margin:5px 0}.overlay .primary{min-height:32px;padding:6px 20px;font-size:10px}.console{padding:9px 7px;gap:5px}.console span{font-size:8px}nav{gap:4px}nav button{font-size:10px;padding:6px;min-height:34px}.touch{gap:7px}.dpad,.actions{gap:4px}.dpad button{width:32px;min-height:47px;padding:3px}.actions button{font-size:10px;padding:8px;min-height:47px}footer{font-size:10px}}
+
+@media(max-width:600px){.console{flex-wrap:wrap}.console>div{display:flex;align-items:center;justify-content:space-between;width:100%;gap:8px}.console label{margin:0}.console nav{width:100%;justify-content:flex-end}}
+
+/* Keep browser gestures on the page, and reserve held input for the controls. */
+button, a { touch-action: manipulation; }
+button { min-height: 44px; min-width: 44px; }
+.touch { touch-action: none; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }
+.touch button { touch-action: none; -webkit-tap-highlight-color: transparent; }
+.touch-help { color: #e9d085; }
+@media (any-pointer: coarse) {
+  main { padding-left: max(10px, env(safe-area-inset-left)); padding-right: max(10px, env(safe-area-inset-right)); padding-bottom: max(12px, env(safe-area-inset-bottom)); }
+}
+/* Fit the field and thumb controls together on a landscape phone. Selection stays scrollable. */
+@media (any-pointer: coarse) and (orientation: landscape) and (max-height: 600px) {
+  .play-session main { display: grid; grid-template-columns: minmax(0, 1fr) 144px; align-items: center; gap: 12px; max-width: calc((100dvh - 154px) * 16 / 9 + 176px); padding-top: max(8px, env(safe-area-inset-top)); }
+  .play-session header, .play-session .title, .play-session .intro, .play-session footer { display: none; }
+  .play-session .cabinet { min-width: 0; }
+  .play-session .touch { margin: 0; flex-direction: column; }
+  .play-session .console { gap: 4px; padding: 6px; }
+  .play-session .console button { font-size: 10px; padding: 6px; }
+  .play-session .console > span { display: none; }
+}
+
+.dpad { display: grid; grid-template-columns: repeat(3, 44px); grid-template-rows: repeat(3, 44px); gap: 4px; }
+.dpad button { width: 44px; min-height: 44px; padding: 0; font-size: 22px; }
+.dpad [data-control="right"] { grid-column: 3; }
+.actions { display: grid; grid-template-columns: repeat(2, minmax(44px, 1fr)); align-content: center; }
+.actions [data-control="shoot"] { grid-column: 1 / -1; }
+.actions button { min-height: 44px; min-width: 44px; }
+.touch { align-items: center; }
+@media(max-width:600px) {
+  nav button { min-height: 44px; min-width: 44px; }
+  .overlay .primary { min-height: 44px; }
+  /* The picker can grow beyond the pitch so its buttons never overlap. */
+  .screen:has(#selection:not([hidden])) { min-height: 230px; }
+}
+@media (any-pointer: coarse) and (orientation: landscape) and (max-height: 600px) {
+  .play-session .scoreboard { padding: 6px 3px; }
+  .play-session .scoreboard strong { font-size: 22px; }
+  .play-session .scoreboard span { font-size: 8px; letter-spacing: 0; }
+  .play-session .console { flex-wrap: wrap; }
+  .play-session .console > div { width: 100%; display: flex; justify-content: space-between; gap: 6px; }
+  .play-session .console label { margin: 0; }
+  .play-session .console nav { width: 100%; justify-content: flex-end; }
+  .play-session .actions { width: 100%; }
+}
+
+@media (any-pointer: coarse) and (max-width: 600px) {
+  .play-session header, .play-session .title, .play-session .intro, .play-session footer { display: none; }
+  .play-session main { padding-top: max(8px, env(safe-area-inset-top)); }
+}

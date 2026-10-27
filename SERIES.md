@@ -35,6 +35,9 @@ Each character's folder holds its description, look, personality and rig notes (
 | 🟧 | [Clawd](characters/clawd/README.md) | A little clay-orange block of an AI: the large language model that lives in Housam's laptop and pops out as a hologram. Give him a prompt and expect the unexpected |
 | 🐬 | [Neptune](characters/neptune/README.md) | A plush blue dolphin with a rainbow-striped belly who insists on being called *King* Neptune (he isn't a king). Hilarious, kind, and packing ultra-awesome water powers: a crackling trident, rainbow water blasts, an orbiting ring of water |
 | 🎒 | [Students](characters/student/README.md) | The kids of DCES: one parameterized rig (a seed picks skin, hair, clothes, glasses, caps, bows, backpacks, height) for crowds and audiences; `outfit: 'greek'` dresses them in chitons, wreaths and sandals |
+| 💜 | [Roudaynah](characters/roudaynah/README.md) | A loving, busy mom and avid programmer with superpowers of love and original ideas from her laptop |
+| 🏐 | [Sarah](characters/sarah/README.md) | A rebellious ninth grader who loves woodworking, texting, and volleyball |
+| 📚 | [Dr. P](characters/patrick/README.md) | A fictional, officious clinic administrator whose idea of employment etiquette arrives by drone |
 
 ## Sets
 
@@ -54,6 +57,8 @@ Each character's folder holds its description, look, personality and rig notes (
 | 🏛️ | [Ancient Athens](locations/ancient_athens/README.md) | The agora below the Acropolis, for Professor Safadi's *Know thyself* story: a round speaker's platform, a Doric stoa, olive trees, Athena's owl on a column and the Parthenon on its rocky hill; looking back, white houses and the sea |
 | 🛋️ | [Living room](locations/living_room/README.md) | The family living room inside the house, shot toward the TV or back at the sofa: a big TV over the game console, shelves of board games, a family portrait, a curtained window, an archway to the stairs, a ceiling fan; day, TV on or evening |
 | ⚽ | [Housam's bedroom](locations/housam_bedroom/README.md) | Housam's soccer-and-maths room, shot toward the bed or back at the door: a framed #10 jersey, a soccer-pitch rug, a mini goal, trophy shelves, his laptop under a whiteboard of trajectories; tidy, messy or at night |
+| 🌾 | [Meadow Ridge Elementary School](locations/meadow-ridge-elementary-school/README.md) | A brick school in Plymouth, Minnesota: blue-trimmed glass entrance, vertical lettering and a picnic-table courtyard |
+| 🏡 | [Home and clinic office](locations/home_clinic/README.md) | A cozy living room, an officious clinic office, and a front yard awaiting an absurd delivery |
 
 ## Episodes (movie order)
 
@@ -98,6 +103,22 @@ Each scene's folder holds its synopsis, script, shot list and editing notes (`RE
 | 34 | [Game Over!](scenes/scene34_game_over/README.md) | 136 s | In Housam's room the kids plan: *"software only this time."* Clawd can hop into any game, so he flies to the living room and sparkles into the brothers' games. The twins brag and laugh, and tiny Clawd turns the difficulty dial to SUPER HARD: *GAME OVER* for the professor, *KIDS WIN* against the doctor. *"Impossible!"* *"Losing is not fun, let us take a break."* The kids drop in: *"How did the research go?"* *"…space…"* *"…importance of sport!"* *"How about we all play board games?"* *"HOORAY!"* *To be continued…* |
 | 35 | [Game Night](scenes/scene35_game_night/README.md) | 152 s | Family game night: the professor plays *Oligarchy* with Housam and Danny, the doctor *Crazy Dolphins* with Jenna and Alma. *"Allow me to explain the rules—"* *"No, Professor. This time, allow ME to explain!"* Danny's towers bankrupt the professor; the doctor slaps the wrong dolphins. As evening falls the twins doze off head to head (*"Doctors recommend eight hours of sleep… I will just do eight minutes…"*); the kids giggle and play on, Danny taking the professor's turn. *"What do you think they are dreaming about?"* Two dream bubbles swell. *To be continued…* |
 | 36 | [Dream Mode](scenes/scene36_dream_mode/README.md) | 180 s | A music video, the Screen Time arc's finale (picture cut; the song comes next). The sleeping brothers dream they're inside their video games with the kids: PRESS START, character select, then *Robo Invasion* (mission: research… space), *World Champion* (a bicycle kick off Fester's head: GOAL), *Craft Blocks* (a Broccreeper, a giant Rubik's cube) and *Fight Planet* (DOUBLE K.O.… FAMILY-TY!). Final boss: THE ALARM CLOCK. *CONTINUE?* They wake up to the kids, a ringing clock and the board games. **The End.** |
+
+## Dr. Sami's lessons and other shorts (not in the movie)
+
+Standalone scenes from Sami's studio. They are registered (open them in the studio) but left out of the movie order.
+
+| # | Scene | Length | Logline |
+|---|---|---|---|
+| | [Meadow Ridge Elementary School](scenes/meadow-ridge-elementary-school/README.md) | 12 s | An establishing view of the brick school and its blue-trimmed glass entrance in Plymouth, Minnesota |
+| 37 | [A Breath of Innovation](scenes/scene37_vent_tutor/README.md) | 68 s | Doctor Sami celebrates Vent-Tutor with a demonstration of interactive waveforms, ventilation modes, clinical scenarios, and changing settings: *"One simulated breath at a time."* |
+| 38 | [Jenna Teaches Danny Division](scenes/scene38_jenna_division/README.md) | 235 s | At Meadow Ridge Elementary, Jenna teaches Danny division with toy cars and a whiteboard candy example. Danny solves fourteen divided by two, earns cars and candies, and meets Jenna's toy giraffe Fafy |
+| 39 | [The Etiquette of Employment](scenes/scene39_employment_etiquette/README.md) | 42 s | Workplace satire: Sami asks to transfer clinics. Dr. P's ominous warning becomes a drone delivering one massive etiquette textbook by parachute. |
+| 40 | [Dr. Sami Explains Access Recirculation](scenes/scene40_access_recirculation/README.md) | 168 s | Dr. Sami follows the local dialysis shortcut, explains access causes and sampling pitfalls, then calculates recirculation from three BUN values. |
+| 41 | [Dr. Sami: When Should CRRT Start?](scenes/scene41_crrt_timing/README.md) | 154 s | A board-style ICU AKI question, a deliberate pause, and an evidence-based lesson on when to defer renal replacement therapy |
+| 42 | [Dr. Sami: iHD or CRRT in Shock?](scenes/scene42_ihd_vs_crrt/README.md) | 154 s | A board-style ICU question on initial RRT modality, the 2026 ICRAKI findings, and when CRRT has a physiologic advantage |
+| 43 | [Giraffe Groove](scenes/scene43_giraffe_groove/README.md) | 18 s | Jenna dances with a towering, friendly giraffe while keeping her little plush giraffe tucked safely in her hand |
+| 44 | [Dr. Sami: The Horse of Imru' al-Qays](scenes/scene44_imru_al_qays/README.md) | 72 s | In Arabic: Dr. Sami explains the classical poet's description of his horse, line by line |
 
 ## Where the story is heading
 

@@ -39,3 +39,7 @@ desktop.ini
 .idea/
 *.swp
 .env
+%SystemDrive%
+# Local container credentials
+.env.*
+!.env.example
