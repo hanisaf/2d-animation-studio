@@ -16,6 +16,8 @@ No network connection or studio server is required.
 
 Edit `page.html`, `style.css`, `model.js`, and `game.js`, then run `npm run build:game`. The bundle includes the shared engine and original eight hero rigs and Robo-Safadi rig. Rebuild after changing those dependencies.
 
+Hero artwork is cached before play as a four-second, 12 fps animation. Movement still renders every display frame. Only the current hero's cache is retained (about 37 MiB of raw pixels at 2× density), and restarting reuses it. Switching heroes releases the previous frames when the next game starts.
+
 Checks:
 
 ```sh
