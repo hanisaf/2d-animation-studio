@@ -3,9 +3,9 @@
 //   GEMINI_API_KEY=… node scripts/tts_gemini.mjs scene27_dynamics_of_mirroring [--no-retime] [--force]
 //
 // Reads the scene's asset.js: `dialogue` and `tts: { model, voice, style, level, gap, panelGap, tempo }`.
-// For every line it asks Gemini for speech (24 kHz PCM), trims the silence, and stores an MP3 in scenes/<id>/voice/
+// For every line it asks Gemini for speech (24 kHz PCM), trims the silence, and stores an MP3 in scenes/<series>/<id>/voice/
 // (cached by model + voice + style + text, so re-running only records new or changed lines; --force re-records all).
-// Then it writes scenes/<id>/voice.js (the clips as data URLs; works from file:// in the renderer and in the studio),
+// Then it writes scenes/<series>/<id>/voice.js (the clips as data URLs; works from file:// in the renderer and in the studio),
 // sped up by `tempo` (pitch-preserving ffmpeg atempo; 1 = as recorded; the takes in voice/ stay untouched)
 // and, unless --no-retime, rewrites each line's `at` and `cps` in asset.js so lines follow each other with `gap`
 // seconds of silence (`panelGap` when the line's `slide` changes) and each bubble types exactly as long as it's spoken.
@@ -14,16 +14,18 @@ import { createHash } from 'node:crypto';
 import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import vm from 'node:vm';
+import { REGISTRY, sceneDir } from './registry.mjs';
 
 process.chdir(resolve(import.meta.dirname, '..'));
 const args = process.argv.slice(2), id = args.find(a => !a.startsWith('--'));
 const force = args.includes('--force'), retime = !args.includes('--no-retime');
 if (!id) { console.log('usage: node scripts/tts_gemini.mjs <scene_id> [--no-retime] [--force]'); process.exit(1); }
+if (!REGISTRY.scenes.includes(id)) { console.error(`unknown scene "${id}"`); process.exit(1); }
 const KEY = process.env.GEMINI_API_KEY;
 if (!KEY) { console.error('GEMINI_API_KEY is not set'); process.exit(1); }
 const FFMPEG = process.env.FFMPEG || (spawnSync('ffmpeg', ['-version']).status === 0 ? 'ffmpeg' : (await import('ffmpeg-static')).default);
 
-const dir = `scenes/${id}`, assetPath = `${dir}/asset.js`, voiceDir = `${dir}/voice`;
+const dir = sceneDir(id), assetPath = `${dir}/asset.js`, voiceDir = `${dir}/voice`;
 let meta = null;
 vm.runInNewContext(readFileSync(assetPath, 'utf8'), { asset: m => { meta = m; } });
 const tts = { model: 'gemini-3.1-flash-tts-preview', voice: 'Charon', style: '', gap: .45, panelGap: 1.5, tempo: 1, ...meta.tts };

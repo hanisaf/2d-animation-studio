@@ -1,6 +1,6 @@
 # Dr. P
 
-A fictional physician in [The Etiquette of Employment](../../scenes/scene39_employment_etiquette/README.md). Dr. P speaks with absolute seriousness even when his response is wildly disproportionate.
+A fictional physician in [The Etiquette of Employment](../../scenes/sami_shorts/scene39_employment_etiquette/README.md). Dr. P speaks with absolute seriousness even when his response is wildly disproportionate.
 
 His appearance follows [reference.png](reference.png): swept, side-parted brown hair, a clean-shaven adult face with dark eyes and a slight smile, an open-collar light blue shirt with rolled sleeves, a stethoscope, tan trousers, a brown belt, and brown lace-up shoes. The rest pose has his left hand tucked into his pocket and his right hand holding the stethoscope chestpiece. The rig uses adult proportions within the existing 30-unit height.
 

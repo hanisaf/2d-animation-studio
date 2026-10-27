@@ -64,7 +64,12 @@
   const PROJECT_DOCS = [['README.md', 'Project README'], ['SERIES.md', 'Series bible'], ['ANIMATION_GUIDE.md', 'Animation guide'], ['docs/HANDBOOK.md', 'Handbook']];
   function buildSidebar() {
     const movie = REGISTRY.movie, li = (mode, id, ico, title, sub, tip) => `<li data-mode="${mode}" data-id="${esc(id)}" title="${esc(tip || '')}"><span class="ico">${ico}</span>${esc(title)}<span class="sub">${sub}</span></li>`;
-    $('#list-scenes').innerHTML = REGISTRY.scenes.filter(id => SCENES[id]).map(id => { const m = META('scene', id), n = movie.indexOf(id); return li('scene', id, '🎬', m.title, `${n >= 0 ? '#' + (n + 1) + ' · ' : ''}${SCENES[id].duration}s`, m.logline); }).join('');
+    // Scenes grouped by category, then series (headings are plain items without data-mode, so they don't select anything).
+    const sceneLi = id => { const m = META('scene', id), n = movie.indexOf(id); return li('scene', id, '🎬', m.title, `${n >= 0 ? '#' + (n + 1) + ' · ' : ''}${SCENES[id].duration}s`, m.logline); };
+    const categories = [...new Set(REGISTRY.series.map(sid => SERIES[sid].category))];
+    $('#list-scenes').innerHTML = categories.map(cat => `<li class="grp cat">${esc(cat || 'Uncategorized')}</li>` +
+      REGISTRY.series.filter(sid => SERIES[sid].category === cat).map(sid => `<li class="grp" title="${esc(SERIES[sid].logline || '')}">${esc(SERIES[sid].title)}</li>` +
+        SERIES[sid].scenes.filter(id => SCENES[id]).map(sceneLi).join('')).join('')).join('');
     $('#list-characters').innerHTML = REGISTRY.characters.filter(id => CHARACTERS[id]).map(id => { const m = META('character', id); return li('character', id, '🎭', m.title, `${Object.keys(CHARACTERS[id].poses || {}).length} poses`, m.logline); }).join('');
     $('#list-locations').innerHTML = REGISTRY.locations.filter(id => LOCATIONS[id]).map(id => { const m = META('location', id); return li('location', id, '🏰', m.title, `${Object.keys(LOCATIONS[id].cameras || {}).length} cams`, m.logline); }).join('');
     $('#list-docs').innerHTML = PROJECT_DOCS.map(([f, t]) => li('doc', f, '📄', t, f.split('/').pop(), f)).join('');
