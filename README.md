@@ -150,7 +150,7 @@ npm run studio                                 # → http://localhost:5173
 
 - **Scenes**: play/scrub with a shot timeline and audio preview; **Export scene MP4** straight from the browser (WebCodecs; Chrome/Edge). Scene 01 synthesizes music and cartoon dialogue from `scenes/scene01_juggling/asset.js`. **Copy play link** gives a URL such as `studio.html?scene=scene01_juggling&play=true`, which starts playback in a full-window view without the tools. If the browser blocks autoplay with sound, click **Tap for sound**; after the scene ends, **Replay with sound** starts it again.
 - **Movie composer**: choose scenes, set in/out points, reorder or remove clips, preview the cut, and export the selected movie as MP4. The composition is saved in this browser.
-- **Characters**: every pose (on paper or standing in a location at true scale) and the full model sheet, next to the reference art.
+- **Characters**: every pose (on paper or standing in a location at true scale) and the full model sheet, next to the reference art. Choose **Backdrop → Transparent** for a checkerboard preview and transparent PNG snapshots or GIF exports, including model sheets. **Export SVG** downloads the current animation frame as editable vector paths on a transparent 1920×1080 canvas. Pose view exports the selected pose at the current zoom; model-sheet view exports all poses. Backdrops, grain, and sheet labels are omitted. Canvas glow/shadow and additive blending effects may look different, and text props use fonts installed in the viewer.
 - **📄 Docs**: each asset's `README.md` (description, script, shot list, API) beside its preview, cross-linked (a scene ↔ its cast ↔ its locations); project docs in the sidebar.
 - **Locations**: fly a camera through the set (presets, sliders, drag/wheel, WASD, **⇄ Reverse** for a reverse angle), drop a character on a spot for scale, and **Copy camera** as code for your scene.
 
@@ -255,3 +255,20 @@ true) and playbackRate (default 1; supported range 0.25–4). Set autoplay: fals
 first frame, or controls: false when providing your own controls. The canvas scales
 to the container's width. Loading both variants for the same scene makes the last
 loaded variant the one used by subsequent mounts.
+
+
+## Robo Invaders
+
+Open [games/robo-invaders/index.html](games/robo-invaders/index.html) directly in your browser to play. The game runs standalone and offline: keep `index.html`, `style.css`, and `runtime.js` together in one folder to copy or share it. No studio, server, installation, or internet connection is required. You can also play from the studio's **Arcade** link. Play Dr. Sami against rows of Robo-Safadi replicas using the original character rigs.
+
+To change the game, edit `games/robo-invaders/page.html`, `style.css`, `model.js`, or `game.js`, then run `npm run build:game` to rebuild the portable `index.html` and bundled `runtime.js`. The stylesheet stays separate as `style.css`. Rebuild after changes to the shared engine or character rigs too.
+
+Move with **← / →** or **A / D**, hold **Space** to fire chalk bolts, and press **P** or **Escape** to pause. On a phone or tablet, hold the arrow and Fire buttons together. Dodge broccoli projectiles, protect your three lives, and clear increasingly fast waves. The game pauses when its tab loses focus. Restart starts a fresh score.
+
+Game logic checks: `node scripts/test-robo-invaders.mjs`. Browser checks: `CHROME=/path/to/chrome node scripts/test-robo-invaders-browser.mjs`.
+
+### Robo Invader · Version 2
+
+Open [Version 2](games/robo-invaders-v2/index.html) directly in your browser or from the studio’s **Arcade** menu. Inspired by the game in **Scene 32 · Screen Time**, this edition stars King Neptune with rainbow trident blasts, red-eyed Robo-Safadis, a purple starfield, and a monitor frame. Move with arrows or A/D, hold Space to fire, and press P to pause; touch controls are included. The original game remains available.
+
+Run `npm run build:game:v2` to rebuild. Share `index.html`, `style.css`, and `runtime.js` together for offline play. See the [Version 2 README](games/robo-invaders-v2/README.md) for source and verification commands.

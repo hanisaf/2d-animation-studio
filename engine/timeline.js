@@ -53,14 +53,17 @@ function makeGrain() {
 
 // Paint one complete frame with any painter fn(): resets per-frame state, then paper grain + vignette, then overlays.
 // Scenes go through drawFrame(); the studio's character / location views call paintFrame() directly.
-function paintFrame(t, fn) {
+function paintFrame(t, fn, { transparent = false } = {}) {
   T = t; boilSeed(t); OVERLAYS = []; CAM = null; JIT = 0;
   X.setTransform(1, 0, 0, 1, 0, 0); X.globalAlpha = 1; X.globalCompositeOperation = 'source-over';
-  X.fillStyle = '#1E1418'; X.fillRect(0, 0, W, H);
+  if (transparent) X.clearRect(0, 0, W, H);
+  else { X.fillStyle = '#1E1418'; X.fillRect(0, 0, W, H); }
   X.save(); fn(t); X.restore();
   CAM = null; JIT = 0; X.setTransform(1, 0, 0, 1, 0, 0);
-  if (!GRAIN) GRAIN = makeGrain();
-  X.globalCompositeOperation = 'multiply'; X.drawImage(GRAIN, 0, 0); X.globalCompositeOperation = 'source-over';
+  if (!transparent) {
+    if (!GRAIN) GRAIN = makeGrain();
+    X.globalCompositeOperation = 'multiply'; X.drawImage(GRAIN, 0, 0); X.globalCompositeOperation = 'source-over';
+  }
   flushOverlays();
 }
 

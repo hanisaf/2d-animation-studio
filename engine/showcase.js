@@ -15,8 +15,8 @@ function drawPose(entry, name, x, y, s, t) {
   return f ? f(x, y, s, t) : entry.draw(x, y, s, {});
 }
 // Every pose on one page, labelled.
-function drawModelSheet(entry, t) {
-  paperBackdrop();
+function drawModelSheet(entry, t, o = {}) {
+  if (!o.transparent) paperBackdrop();
   const names = poseNames(entry), n = names.length, cols = Math.min(n, Math.ceil(Math.sqrt(n * 2.2))), rows = Math.ceil(n / cols);
   const cw = W / cols, ch = H / rows, [uw, uh] = entry.size || [12, 28], s = Math.min(cw * .78 / uw, (ch - 70) * .88 / uh);
   names.forEach((nm, i) => {
@@ -36,7 +36,7 @@ function drawCharacterView(entry, pose, t, o = {}) {
     drawPose(entry, pose, sx, sy, entry.unit * k, t);
     loc.front(P, t, { splitZ: m.z });
   } else {
-    paperBackdrop();
+    if (o.location !== 'transparent') paperBackdrop();
     const s = Math.min(H * .78 / uh, W * .8 / uw) * zoom;
     drawPose(entry, pose, W / 2, H * .9, s, t);
   }

@@ -68,7 +68,7 @@
     $('#list-characters').innerHTML = REGISTRY.characters.filter(id => CHARACTERS[id]).map(id => { const m = META('character', id); return li('character', id, '🎭', m.title, `${Object.keys(CHARACTERS[id].poses || {}).length} poses`, m.logline); }).join('');
     $('#list-locations').innerHTML = REGISTRY.locations.filter(id => LOCATIONS[id]).map(id => { const m = META('location', id); return li('location', id, '🏰', m.title, `${Object.keys(LOCATIONS[id].cameras || {}).length} cams`, m.logline); }).join('');
     $('#list-docs').innerHTML = PROJECT_DOCS.map(([f, t]) => li('doc', f, '📄', t, f.split('/').pop(), f)).join('');
-    document.querySelectorAll('#side li').forEach(el => el.onclick = () => select(el.dataset.mode, el.dataset.id));
+    document.querySelectorAll('#side li[data-mode]').forEach(el => el.onclick = () => select(el.dataset.mode, el.dataset.id));
   }
 
   function select(mode, id, keepT = false) {
@@ -145,7 +145,7 @@
         useScene(at.clip.id); drawFrame(at.local, SCENES[at.clip.id]);
       } else { X.fillStyle = '#100c12'; X.fillRect(0, 0, W, H); }
     }
-    else if (S.mode === 'character') { const e = CHARACTERS[S.id]; paintFrame(S.t, t => S.char.view === 'sheet' ? drawModelSheet(e, t) : drawCharacterView(e, S.char.pose, t, { location: S.char.backdrop, zoom: S.char.zoom })); }
+    else if (S.mode === 'character') { const e = CHARACTERS[S.id]; paintFrame(S.t, t => S.char.view === 'sheet' ? drawModelSheet(e, t, { transparent: S.char.backdrop === 'transparent' }) : drawCharacterView(e, S.char.pose, t, { location: S.char.backdrop, zoom: S.char.zoom }), { transparent: S.char.backdrop === 'transparent' }); }
     else if (S.mode === 'location') paintFrame(S.t, t => drawLocationView(LOCATIONS[S.id], S.loc.cam, t, { character: S.loc.character, pose: S.loc.pose, spot: S.loc.spot }));
     paintedFrame = frameKey();
     hud();
@@ -250,7 +250,7 @@
       ${sceneButtons ? `<button id="exp-scene" class="accent">⬇ Export scene MP4</button><button id="exp-js-silent">Export JavaScript (without sound)</button><button id="exp-js-sound">Export JavaScript (with sound)</button><button id="share-scene">Copy play link</button><button id="exp-movie">🎞 Movie composer</button>
       <select id="quality" title="video bitrate"><option value="16000000">High · 16 Mbps</option><option value="8000000" selected>Standard · 8 Mbps</option><option value="4000000">Small · 4 Mbps</option></select>` : ''}
       <button id="snap">📷 Snapshot PNG</button>
-      ${gif ? `<button id="exp-gif" title="Export the current character view as a looping 960×540 animation at 20 fps">⬇ Export GIF</button>
+      ${gif ? `<button id="exp-svg" title="Export the current pose or all model-sheet poses as editable SVG on a transparent background (without backdrop)">⬇ Export SVG</button><button id="exp-gif" title="Export the current character view as a looping 960×540 animation at 20 fps">⬇ Export GIF</button>
       <label class="ck">GIF length <select id="gif-duration"><option value="2">2 s</option><option value="4" selected>4 s</option><option value="6">6 s</option><option value="10">10 s</option></select></label>` : ''}
       <div class="progress" id="progress" hidden><div class="track"><div class="bar"></div></div><button id="cancel">Cancel</button></div>
       <span id="status"></span>
@@ -338,7 +338,7 @@
         <div class="row links">${linksHtml('character', S.id)}</div></div>${refsHtml(META('character', S.id).refs)}${docBtn()}</div>
       <div class="row">
         <div class="chips"><button class="chip" data-v="pose">Pose</button><button class="chip" data-v="sheet">Model sheet</button></div>
-        <label class="ck">Backdrop <select id="bd"><option value="">Paper</option>${locs.map(([id]) => `<option value="${id}">${esc(META('location', id).title)} (true scale)</option>`).join('')}</select></label>
+        <label class="ck">Backdrop <select id="bd"><option value="">Paper</option><option value="transparent">Transparent</option>${locs.map(([id]) => `<option value="${id}">${esc(META('location', id).title)} (true scale)</option>`).join('')}</select></label>
         <label class="ck">Zoom <input type="range" id="zoom" min=".5" max="2.5" step=".05" value="${S.char.zoom}"></label>
         <label class="ck"><input type="checkbox" id="anim" checked> animate</label>
       </div>
@@ -347,7 +347,7 @@
     const mark = () => {
       document.querySelectorAll('[data-v]').forEach(b => b.classList.toggle('on', b.dataset.v === S.char.view));
       document.querySelectorAll('[data-p]').forEach(b => { b.classList.toggle('on', b.dataset.p === S.char.pose); b.disabled = S.char.view === 'sheet'; });
-      $('#bd').disabled = $('#zoom').disabled = S.char.view === 'sheet';
+      $('#zoom').disabled = S.char.view === 'sheet';
     };
     document.querySelectorAll('[data-v]').forEach(b => b.onclick = () => { S.char.view = b.dataset.v; mark(); S.dirty = true; });
     document.querySelectorAll('[data-p]').forEach(b => b.onclick = () => { S.char.pose = b.dataset.p; mark(); S.dirty = true; });
@@ -355,6 +355,14 @@
     $('#zoom').oninput = ev => { S.char.zoom = +ev.target.value; S.dirty = true; };
     $('#anim').onchange = ev => ev.target.checked ? play() : pause();
     const name = () => `${S.id}_${S.char.view === 'sheet' ? 'sheet' : (S.char.pose || 'pose').replace(/\W+/g, '-')}`;
+    $('#exp-svg').onclick = () => {
+      if (S.exporting) return;
+      try {
+        const blob = exportCharacterSvg({ entry: e, ...S.char, time: S.t });
+        downloadBlob(blob, `${name()}.svg`);
+        status(`Saved ${name()}.svg · editable vectors · transparent background`, 'ok');
+      } catch (error) { status('⚠ ' + error.message, 'warn'); console.error(error); }
+    };
     bindSnap(name); $('#exp-gif').onclick = () => runGifExport(name()); bindRefs(); bindLinks(); mark();
   }
 
