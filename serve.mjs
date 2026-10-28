@@ -1,5 +1,5 @@
 // serve.mjs: a tiny local web server for the studio (no dependencies).
-//   node serve.mjs [port] [--open]      → http://localhost:5173/
+//   node serve.mjs [port] [--open]      → http://localhost:5173/ (index.html: movies or games) · --open opens studio.html
 // Opening studio.html straight from disk works too, but over http:// the in-browser exporter can also load scene audio.
 import http from 'node:http';
 import { createReadStream, statSync } from 'node:fs';
@@ -14,7 +14,6 @@ const MIME = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; cha
 
 http.createServer((req, res) => {
   let p = decodeURIComponent(new URL(req.url, 'http://x').pathname);
-  if (p === '/') p = '/studio.html';
   let f = normalize(join(root, p));
   if (f !== root && !f.startsWith(root + sep)) { res.writeHead(403).end('forbidden'); return; }
   let st; try {
@@ -40,10 +39,10 @@ http.createServer((req, res) => {
     createReadStream(f).pipe(res);
   }
 }).listen(port, host, () => {
-  const url = `http://localhost:${port}/`;
-  console.log(`Safadi Animation Studio → ${url}   (Ctrl+C to stop)`);
+  const url = `http://localhost:${port}/`, studio = url + 'studio.html';
+  console.log(`Safadi Animation Studio → ${url} (movies or games) · ${studio}   (Ctrl+C to stop)`);
   if (process.argv.includes('--open')) {
-    const [cmd, args] = process.platform === 'darwin' ? ['open', [url]] : process.platform === 'win32' ? ['cmd', ['/c', 'start', '', url]] : ['xdg-open', [url]];
+    const [cmd, args] = process.platform === 'darwin' ? ['open', [studio]] : process.platform === 'win32' ? ['cmd', ['/c', 'start', '', studio]] : ['xdg-open', [studio]];
     spawn(cmd, args, { stdio: 'ignore', detached: true }).on('error', () => {}).unref();
   }
 });

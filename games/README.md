@@ -7,7 +7,7 @@
 1. Commit and push these files to the branch you want to publish.
 2. In the GitHub repository, open **Settings → Pages**.
 3. Select **Deploy from a branch**, choose your branch, select **/ (root)**, and save.
-4. Open the website URL shown by GitHub Pages once deployment finishes. The repository’s root `index.html` opens the game directory automatically.
+4. Open the website URL shown by GitHub Pages once deployment finishes. The repository’s root `index.html` asks visitors to choose between the movie studio and the arcade.
 
 GitHub Pages branch publishing supports the repository root or `/docs`; it does not offer `/games` as a source folder. Use the root option above for this layout.
 

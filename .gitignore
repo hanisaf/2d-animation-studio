@@ -25,6 +25,7 @@ brag-output/
 !locations/**/*.jpeg
 !docs/**/*.png
 !docs/**/*.jpg
+!assets/*.jpg
 
 # ---- dependencies (reinstall with: npm install; ffmpeg-static is OS-specific) ----
 node_modules/
