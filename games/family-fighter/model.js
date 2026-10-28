@@ -1,3 +1,17 @@
+export const ARENAS = [
+ {id:'throne_room',name:'Pearl’s Throne Room'},
+ {id:'safadi_study',name:'Safadi’s Study'},
+ {id:'school_gym',name:'Dove Creek Gym'},
+ {id:'ancient_athens',name:'Ancient Athens'},
+ {id:'soccer_field',name:'County Soccer Field'},
+ {id:'sami_clinic',name:'Sami’s Clinic'},
+ {id:'roman_bath',name:'Roman Bath'},
+ {id:'science_room',name:'Science Room'},
+ {id:'alma_bedroom',name:'Alma’s Bedroom'},
+ {id:'housam_bedroom',name:'Housam’s Bedroom'},
+ {id:'school_library',name:'School Library'},
+ {id:'house',name:'Family House'}
+];
 export const ROSTER = [
  ['jester_fester','Jester Fester',30],['princess_pearl','Princess Pearl',22],['safadi','Professor Safadi',31],['alma','Alma',24],['dragon','Dragon',28],['housam','Housam',32],['danny','Danny',29],['sami','Doctor Sami',31],['jenna','Jenna',30],['robo_safadi','Robo Safadi',32],['clawd','Clawd',13],['neptune','Neptune',23],['sarah','Sarah',36]
 ];
@@ -8,18 +22,25 @@ export const ATTACKS = {
 };
 export class Tournament {
  constructor(random = Math.random) { this.random=random; this.state='select'; this.elapsed=0; }
- start(id) { this.hero=id; this.opponents=ROSTER.map(r=>r[0]).filter(x=>x!==id); this.index=0; this.match(); }
+ start(id) { this.hero=id; this.opponents=ROSTER.map(r=>r[0]).filter(x=>x!==id); this.index=0; this.matchVictories=0; this.match(); }
+ get arena() { return ARENAS[Math.min(this.index ?? 0,(this.opponents?.length ?? 1)-1) % ARENAS.length]; }
  match() { this.wins=[0,0]; this.round=1; this.newRound(); }
  newRound() {
   this.fighters=[this.make(this.hero,300,1),this.make(this.opponents[this.index],660,-1)];
   this.timer=60; this.phaseTime=1.3; this.state='intro'; this.aiTime=.3; this.flash=0; this.message=`ROUND ${this.round}`;
  }
  make(id,x,facing) { return {id,x,facing,hp:100,y:0,vy:0,move:'stance',moveTime:0,attack:null,stun:0,block:false,crouch:false,energy:100}; }
- pause() { if(['fight','intro'].includes(this.state)) { this.previous=this.state; this.state='paused'; } else if(this.state==='paused') this.state=this.previous; }
+ pause() { if(['fight','intro','roundEnd','matchWin','matchLost'].includes(this.state)) { this.previous=this.state; this.state='paused'; } else if(this.state==='paused') this.state=this.previous; }
  next() {
-  if(this.state==='roundEnd') { this.round++; this.newRound(); }
-  else if(this.state==='matchWin') { this.index++; if(this.index===this.opponents.length) {this.state='champion';this.message='FAMILY CHAMPION!';} else this.match(); }
-  else if(this.state==='matchLost') this.match();
+  if(this.state==='roundEnd'&&this.resultTime<=0) { if(this.winner!==-1)this.round++; this.newRound(); }
+  else if(['matchWin','matchLost'].includes(this.state)&&this.resultTime<=0) {
+   if(this.state==='matchWin')this.matchVictories++;
+   this.index++;
+   if(this.index===this.opponents.length){
+    this.state=this.matchVictories===this.opponents.length?'champion':'complete';
+    this.message=this.state==='champion'?'FAMILY CHAMPION!':'TOURNAMENT COMPLETE!';
+   }else this.match();
+  }
  }
  endRound() {
   // A tied timer is a draw: replay the round without awarding either fighter a win.
@@ -28,11 +49,19 @@ export class Tournament {
   if(this.winner>=0) this.wins[this.winner]++;
   this.message=this.winner<0?'DRAW · REPLAY ROUND':this.winner===0?'YOU WIN THE ROUND':'RIVAL WINS THE ROUND';
   this.state=this.wins[0]===2?'matchWin':this.wins[1]===2?'matchLost':'roundEnd';
+  this.resultTime=this.state==='roundEnd'?5:4;
   if(this.state==='matchWin')this.message='MATCH WON!';
-  if(this.state==='matchLost')this.message='REMATCH?';
+  if(this.state==='matchLost')this.message='RIVAL WINS THE MATCH';
   for(let i=0;i<2;i++){const f=this.fighters[i];f.attack=null;f.move=i===this.winner?'victory':'defeat';f.moveTime=0;}
  }
  update(dt,input={}) {
+  if(['roundEnd','matchWin','matchLost'].includes(this.state)){
+   this.elapsed+=dt;
+   for(const f of this.fighters)f.moveTime+=dt;
+   this.resultTime=Math.max(0,this.resultTime-dt);
+   if(this.resultTime===0)this.next();
+   return;
+  }
   if(!['fight','intro'].includes(this.state))return;
   this.elapsed+=dt;this.flash=Math.max(0,this.flash-dt);
   if(this.state==='intro'){this.phaseTime-=dt;if(this.phaseTime<=0)this.state='fight';return;}
@@ -58,6 +87,7 @@ export class Tournament {
      target.move=blocked?(target.crouch?'block recoil low':'block recoil high'):'hit body';target.moveTime=0;
      if(!blocked)target.attack=null;
      target.x=Math.max(100,Math.min(860,target.x+attacker.facing*(blocked?7:20)));
+     this.onEvent?.(blocked?'block':'hit');
      this.flash=.12; this.lastHit={x:(attacker.x+target.x)/2,y:target.y,blocked};
     }
    }
@@ -72,9 +102,9 @@ export class Tournament {
   f.block=!!i.block&&!f.attack&&!f.y;f.crouch=!!i.crouch&&!f.y;
   if(f.attack)return;
   if(!f.block){for(const key of ['special','kick','punch'])if(i[key]&&(key!=='special'||f.energy>=40)){
-   f.attack={...ATTACKS[key],hit:false};f.move=f.attack.move;f.moveTime=0;if(key==='special')f.energy-=40;return;
+   this.onEvent?.(key);f.attack={...ATTACKS[key],hit:false};f.move=f.attack.move;f.moveTime=0;if(key==='special')f.energy-=40;return;
   }}
-  if(i.jump&&!f.y&&!f.crouch&&!f.block){f.vy=410;f.y=1;f.moveTime=0;}
+  if(i.jump&&!f.y&&!f.crouch&&!f.block){this.onEvent?.('jump');f.vy=410;f.y=1;f.moveTime=0;}
   const direction=Number(!!i.right)-Number(!!i.left);
   if(!f.block&&!f.crouch)f.x+=direction*190*dt;
   f.move=f.block?(f.crouch?'block low':'block high'):f.y?'jump':f.crouch?'crouch':direction?(direction===f.facing?'walk forward':'walk backward'):'stance';
