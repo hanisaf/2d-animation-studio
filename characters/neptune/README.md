@@ -98,3 +98,9 @@ Use `measure(() => neptune(...))` to get his anchors (e.g. for a speech bubble o
 | `asset.js` | manifest: title, logline, files, docs, reference art, voice |
 | `neptune.js` | the rig, his crown, trident and powers, `neptuneBlast`, registered poses |
 | `reference.webp` | reference photo (the plush we match) |
+
+## Fighting poses
+
+The asset manifest loads [the shared fighting pose library](../fighting-poses.js) after this rig. In the studio, select a `fight:` pose to preview its looping animation. Existing scene poses remain available.
+
+See [the fighting pose guide](../FIGHTING.md) for the move list, character-specific specials, timing, and the drawing API for either facing direction.

@@ -1,7 +1,7 @@
 asset({
   title: 'Danny',
   logline: 'A funny six-year-old boy who loves soccer, Minecraft, and making everyone laugh.',
-  files: ['danny.js'],
+  files: ['danny.js', '../fighting-poses.js'],
   docs: 'README.md',
   refs: ['reference.jpeg'],
   voice: {

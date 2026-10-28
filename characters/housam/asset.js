@@ -1,7 +1,7 @@
 asset({
   title: 'Housam',
   logline: 'A teenage soccer prodigy with a quick smile and an even quicker mind for mathematics.',
-  files: ['housam.js'],
+  files: ['housam.js', '../fighting-poses.js'],
   docs: 'README.md',
   refs: ['reference.jpeg'],
   voice: {

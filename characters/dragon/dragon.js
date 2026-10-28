@@ -51,7 +51,9 @@ function dragon(x, y, s, o = {}) {
 
     // Forelegs remain visible in a hover: they tuck up and the claws dangle.
     for (const sd of [-1, 1]) {
-      const fx = sd < 0 ? -5.2 : 1.0, fy = lerp(-.4, -5.8, flight);
+      const target = o[sd < 0 ? 'pawL' : 'pawR'];
+      const fx = target ? target[0] : sd < 0 ? -5.2 : 1.0;
+      const fy = target ? target[1] : lerp(-.4, -5.8, flight);
       shape([[sd < 0 ? -5.5 : 1.1, -10.1], [fx + sd * .7, -9.5],
         [fx + sd * .45, -3.5], [fx + sd * .95, fy], [fx - sd * 1.1, fy + .35],
         [fx - sd * 1.35, -3.7]], { fill: DR.greenLight, stroke: DR.ink, lw, smooth: .7 });

@@ -2,7 +2,7 @@
 asset({
   title: 'Professor Safadi',
   logline: 'A big-headed professor in a tan three-piece suit with super explanatory powers: glowing chalk formulas, idea bulbs and floating chalkboards.',
-  files: ['safadi.js'],                         // code, in load order
+  files: ['safadi.js', '../fighting-poses.js'],                         // code, in load order
   docs: 'README.md',                            // description, look, personality, rig API
   refs: ['reference.jpg'],                      // reference art in this folder
   voice: {
