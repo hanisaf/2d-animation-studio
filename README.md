@@ -191,7 +191,7 @@ scripts/preview.sh clip scene01_juggling 20:26
 ```bash
 scripts/new.sh character princess_petunia     # characters/princess_petunia/ {asset.js, README.md, rig} + registry
 scripts/new.sh location castle_kitchen        # locations/castle_kitchen/ {asset.js, README.md, set} + registry
-scripts/new.sh series auditions "Jester Fester"   # scenes/auditions/series.js + registry (add to movieSeries for the movie)
+scripts/new.sh series auditions "Professor Safadi Studio"   # scenes/auditions/series.js + registry (add to movieSeries for the movie)
 scripts/new.sh scene auditions scene45_auditions  # scenes/auditions/scene45_auditions/ {asset.js, README.md, scene.js} + series.js
 ```
 

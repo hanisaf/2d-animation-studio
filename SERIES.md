@@ -64,7 +64,7 @@ Each character's folder holds its description, look, personality and rig notes (
 
 Scenes are grouped into series (`scenes/<series>/`, each with a `series.js` listing its scenes in order), and series into categories. Each scene's folder holds its synopsis, script, shot list and editing notes (`README.md`).
 
-## Category: Jester Fester
+## Category: Professor Safadi Studio
 
 The movie: these series, in this order (`movieSeries` in `registry.js`).
 

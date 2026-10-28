@@ -498,7 +498,7 @@ Paths in a manifest are relative to its folder. A scene's `id`, `title` and `aud
 ```js
 series({
   title: 'Halloween',
-  category: 'Jester Fester',                        // the studio groups series under their category
+  category: 'Professor Safadi Studio',                        // the studio groups series under their category
   logline: 'Alma and Jenna plan Halloween, build Robo-Safadi…',
   scenes: ['scene16_spooky_plan', 'scene17_broccoli_directive', /* … */],
 });

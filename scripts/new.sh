@@ -2,7 +2,7 @@
 # Create a new, self-contained asset folder from a template and register it.
 #   scripts/new.sh character princess_petunia             → characters/princess_petunia/{asset.js, README.md, princess_petunia.js} (+ registry.js)
 #   scripts/new.sh location  castle_kitchen               → locations/castle_kitchen/{asset.js, README.md, castle_kitchen.js} (+ registry.js)
-#   scripts/new.sh series    auditions ["Jester Fester"]  → scenes/auditions/series.js (+ registry.js series; add it to movieSeries by hand)
+#   scripts/new.sh series    auditions ["Professor Safadi Studio"]  → scenes/auditions/series.js (+ registry.js series; add it to movieSeries by hand)
 #   scripts/new.sh scene     auditions scene37_auditions  → scenes/auditions/scene37_auditions/{asset.js, README.md, scene.js} (+ the series' scene list)
 # Then: fill in README.md (description / script), put reference art in the folder and list it in asset.js.
 set -euo pipefail

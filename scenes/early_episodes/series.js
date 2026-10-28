@@ -1,7 +1,7 @@
 // scenes/early_episodes/series.js: the "Early Episodes" series. Its scene folders live next to this file; list them here in order.
 series({
   title: 'Early Episodes',
-  category: 'Jester Fester',
+  category: 'Professor Safadi Studio',
   logline: 'Fester gets fired, and Professor Safadi, Alma and Housam take over the stories: healthy food, primes, debates and soccer.',
   scenes: [
     'scene01_juggling',
