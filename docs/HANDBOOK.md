@@ -132,7 +132,8 @@ JesterFester/
 ├── registry.js                ★ the asset folder names, the scene series + which series make the movie
 ├── studio.html                the studio page; also the page render.mjs paints frames in (?render)
 ├── studio/                    the studio UI: studio.js (asset browsers, player) · export.js (in-browser MP4) · studio.css
-├── serve.mjs                  tiny local web server for the studio (npm run studio → http://localhost:5173)
+├── index.html                 the front page: choose the movie studio or the arcade (also the GitHub Pages home)
+├── serve.mjs                  tiny local web server (npm run studio opens http://localhost:5173/studio.html; / is index.html)
 ├── render.mjs                 the command-line renderer / encoder / movie assembler / doctor
 │
 ├── engine/                    shared code, loaded before everything else
