@@ -112,3 +112,9 @@ safadi(x, y, s, { ...safadiWalk(dist / 58, speedK), turn: -.3 });
 | `asset.js` | manifest: title, logline, files, docs, reference art |
 | `safadi.js` | the rig, his powers (aura, formulas, bulb, `safadiBoard`) and registered poses |
 | `reference.jpg` | reference art (the look we match) |
+
+## Fighting poses
+
+The asset manifest loads [the shared fighting pose library](../fighting-poses.js) after this rig. In the studio, select a `fight:` pose to preview its looping animation. Existing scene poses remain available.
+
+See [the fighting pose guide](../FIGHTING.md) for the move list, character-specific specials, timing, and the drawing API for either facing direction.

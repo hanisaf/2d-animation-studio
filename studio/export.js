@@ -129,15 +129,16 @@ function downloadBlob(blob, name) {
 
 // Capture deterministic character frames, one at a time, without retaining RGBA frames.
 // GIF timing uses hundredths of a second; 20 fps gives an exact 50 ms delay.
-async function exportCharacterGif({ entry, pose, view, backdrop, zoom, start = 0, duration = 4,
+async function exportCharacterGif({ entry, pose, view, backdrop, zoom, start = 0, duration = 4, width = 960,
   signal, onProgress = () => {} }) {
   const stop = () => { if (signal?.aborted) throw new DOMException('Export cancelled', 'AbortError'); };
   if (!Number.isFinite(duration) || duration < 1 || duration > 10) throw new Error('GIF duration must be between 1 and 10 seconds');
+  if (![960, 1920].includes(width)) throw new Error('GIF width must be 960 or 1920 pixels');
   if (location.protocol === 'file:') throw new Error('Start the studio with npm run studio to export animated GIFs');
   const { GIFEncoder, quantize, applyPalette } = await import('../node_modules/gifenc/dist/gifenc.esm.js');
   stop();
   const transparent = backdrop === 'transparent';
-  const fps = 20, width = 960, height = 540, total = Math.round(duration * fps);
+  const fps = 20, height = width * 9 / 16, total = Math.round(duration * fps);
   const frame = document.createElement('canvas'); frame.width = width; frame.height = height;
   const ctx = frame.getContext('2d', { willReadFrequently: true }), gif = GIFEncoder();
   for (let i = 0; i < total; i++) {
@@ -161,6 +162,6 @@ async function exportCharacterGif({ entry, pose, view, backdrop, zoom, start = 0
   }
   stop(); gif.finish();
   const blob = new Blob([gif.bytes()], { type: 'image/gif' });
-  blob.frames = total;
+  blob.frames = total; blob.width = width; blob.height = height;
   return blob;
 }

@@ -80,3 +80,9 @@ Use `measure(() => pearl(...))` to get her anchors (e.g. her mouth, for a speech
 | `asset.js` | manifest: title, logline, files, docs, reference art |
 | `princess_pearl.js` | the rig + her registered poses |
 | `reference.webp` | reference photo (the plush we match) |
+
+## Fighting poses
+
+The asset manifest loads [the shared fighting pose library](../fighting-poses.js) after this rig. In the studio, select a `fight:` pose to preview its looping animation. Existing scene poses remain available.
+
+See [the fighting pose guide](../FIGHTING.md) for the move list, character-specific specials, timing, and the drawing API for either facing direction.

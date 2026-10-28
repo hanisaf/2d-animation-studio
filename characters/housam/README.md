@@ -58,3 +58,9 @@ The ball and notebook are optional props in their respective browser poses. The 
 | `asset.js` | Studio manifest |
 | `housam.js` | Rig, props, motion helper, and poses |
 | `reference.jpeg` | Supplied visual reference |
+
+## Fighting poses
+
+The asset manifest loads [the shared fighting pose library](../fighting-poses.js) after this rig. In the studio, select a `fight:` pose to preview its looping animation. Existing scene poses remain available.
+
+See [the fighting pose guide](../FIGHTING.md) for the move list, character-specific specials, timing, and the drawing API for either facing direction.

@@ -2,7 +2,7 @@
 asset({
   title: 'Clawd',
   logline: 'A little clay-orange block of an AI with two slit eyes and four stubby legs: the large language model that lives in Housam\'s laptop.',
-  files: ['clawd.js'],
+  files: ['clawd.js', '../fighting-poses.js'],
   docs: 'README.md',
   refs: [],
   voice: {

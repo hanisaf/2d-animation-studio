@@ -11,7 +11,8 @@
     "movie": "node render.mjs --movie",
     "doctor": "node render.mjs --doctor",
     "build:game": "node scripts/build-robo-invaders.mjs",
-    "build:world-champion": "node scripts/build-world-champion.mjs"
+    "build:world-champion": "node scripts/build-world-champion.mjs",
+    "build:family-fighter": "node scripts/build-family-fighter.mjs"
   },
   "dependencies": {
     "canvas2svg": "^1.0.16",

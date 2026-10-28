@@ -15,4 +15,4 @@ GitHub Pages branch publishing supports the repository root or `/docs`; it does 
 
 Set the publish directory to `games` with no build command, or upload the contents of `games` to your website’s public folder. Keep each game’s subfolder intact. All links are relative, so the arcade also works under a website subpath.
 
-The existing game bundles are committed and ready to serve. If you edit game source files, rebuild the affected game with `npm run build:game` (Robo Invader) or `npm run build:world-champion` (World Champion) before publishing.
+The existing game bundles are committed and ready to serve. If you edit game source files, rebuild the affected game with `npm run build:game` (Robo Invader) or `npm run build:world-champion` (World Champion), or `npm run build:family-fighter` (Family Fighter) before publishing.

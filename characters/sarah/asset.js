@@ -1,7 +1,7 @@
 asset({
   title: 'Sarah',
   logline: 'A rebellious ninth grader who loves woodworking, texting, and volleyball.',
-  files: ['sarah.js'],
+  files: ['sarah.js', '../fighting-poses.js'],
   docs: 'README.md',
   refs: ['reference.jpeg'],
   voice: {

@@ -255,7 +255,8 @@
       ${sceneButtons ? `<button id="exp-scene" class="accent">⬇ Export scene MP4</button><button id="exp-js-silent">Export JavaScript (without sound)</button><button id="exp-js-sound">Export JavaScript (with sound)</button><button id="share-scene">Copy play link</button><button id="exp-movie">🎞 Movie composer</button>
       <select id="quality" title="video bitrate"><option value="16000000">High · 16 Mbps</option><option value="8000000" selected>Standard · 8 Mbps</option><option value="4000000">Small · 4 Mbps</option></select>` : ''}
       <button id="snap">📷 Snapshot PNG</button>
-      ${gif ? `<button id="exp-svg" title="Export the current pose or all model-sheet poses as editable SVG on a transparent background (without backdrop)">⬇ Export SVG</button><button id="exp-gif" title="Export the current character view as a looping 960×540 animation at 20 fps">⬇ Export GIF</button>
+      ${gif ? `<button id="exp-svg" title="Export the current pose or all model-sheet poses as editable SVG on a transparent background (without backdrop)">⬇ Export SVG</button><button id="exp-gif" title="Export the current character view as a looping animation at the selected resolution at 20 fps">⬇ Export GIF</button>
+      <label class="ck">GIF resolution <select id="gif-resolution"><option value="960" selected>960×540 · Standard</option><option value="1920">1920×1080 · Full HD</option></select></label>
       <label class="ck">GIF length <select id="gif-duration"><option value="2">2 s</option><option value="4" selected>4 s</option><option value="6">6 s</option><option value="10">10 s</option></select></label>` : ''}
       <div class="progress" id="progress" hidden><div class="track"><div class="bar"></div></div><button id="cancel">Cancel</button></div>
       <span id="status"></span>
@@ -462,7 +463,7 @@
   async function runGifExport(name) {
     if (S.exporting) return;
     const options = { entry: CHARACTERS[S.id], ...S.char, backdrop: S.char.backdrop,
-      start: S.t, duration: +$('#gif-duration').value };
+      start: S.t, duration: +$('#gif-duration').value, width: +$('#gif-resolution').value };
     const wasPlaying = S.playing;
     pause(); S.exporting = true; ctrl = new AbortController();
     const controls = [...document.querySelectorAll('#panel button, #panel input, #panel select')]
@@ -475,7 +476,7 @@
       const blob = await exportCharacterGif({ ...options, signal: ctrl.signal,
         onProgress: (p, msg) => { bar.style.width = (p * 100).toFixed(1) + '%'; status(msg); } });
       downloadBlob(blob, `${name}.gif`);
-      status(`Saved ${name}.gif · ${options.duration} s · ${blob.frames} frames · ${(blob.size / 1e6).toFixed(1)} MB`, 'ok');
+      status(`Saved ${name}.gif · ${blob.width}×${blob.height} · ${options.duration} s · ${blob.frames} frames · ${(blob.size / 1e6).toFixed(1)} MB`, 'ok');
     } catch (e) {
       status(e.name === 'AbortError' ? 'Export cancelled' : '⚠ ' + e.message, 'warn');
       if (e.name !== 'AbortError') console.error(e);

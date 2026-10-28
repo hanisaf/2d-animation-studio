@@ -39,8 +39,9 @@ function clawd(x, y, s, o = {}) {
     [-4, -2, 1, 3].forEach((lx, i) => {
       let h = 2.2;
       if (o.walk != null) { const ph = Math.sin((o.walk + (i % 2 ? .5 : 0)) * TAU); if (ph > 0) h = 2.2 - ph * .9; }
-      shape(rectPts(lx, -2.4, 1, h), { fill: CL.clayDk, ...ink, lw: lw * .85 });
-      if (i === 0) A.footL = toPx(lx + .5, -2.4 + h); if (i === 3) A.footR = toPx(lx + .5, -2.4 + h);
+      const target = o[i === 0 ? 'legL' : i === 3 ? 'legR' : ''], fx = target ? target[0] : lx + .5, fy = target ? target[1] : -2.4 + h;
+      shape([[lx, -2.4], [lx + 1, -2.4], [fx + .5, fy], [fx - .5, fy]], { fill: CL.clayDk, ...ink, lw: lw * .85 });
+      if (i === 0) A.footL = toPx(fx, fy); if (i === 3) A.footR = toPx(fx, fy);
     });
     // arms: stubby blocks pivoting at the body's sides
     const arm = (sd, a, hook) => {
