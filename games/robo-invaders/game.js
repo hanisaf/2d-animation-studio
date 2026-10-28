@@ -130,12 +130,12 @@ function cacheHeroAnimation() {
 }
 const stars = Array.from({ length: 65 }, (_, i) => ({ x: hash(i * 3 + 1) * WIDTH, y: hash(i * 3 + 2) * 490, r: .6 + hash(i * 3 + 3) * 1.2 }));
 function controls() {
-  const held = new Set(touches.values());
+  const held = new Set([...touches.values()].flatMap(v => v.split('-')));
   input.left = keys.has('ArrowLeft') || keys.has('KeyA') || held.has('left');
   input.right = keys.has('ArrowRight') || keys.has('KeyD') || held.has('right');
   input.fire = keys.has('Space') || held.has('fire');
 }
-function release() { keys.clear(); touches.clear(); controls(); document.querySelectorAll('.touch button').forEach(b => b.classList.remove('active')); }
+function release() { resetJoystick(); keys.clear(); touches.clear(); controls(); document.querySelectorAll('.touch button').forEach(b => b.classList.remove('active')); }
 function announce(text) { $('announcement').textContent = text; }
 function start() { unlockAudio(); release(); cacheHeroAnimation(); game.reset(); sync(); canvas.focus({preventScroll:true}); announce(`${heroes[heroId].name} started. Three crowns.`); }
 function pause() {
@@ -158,6 +158,41 @@ window.addEventListener('keydown', e => {
 window.addEventListener('keyup', e => { keys.delete(e.code); controls(); });
 window.addEventListener('blur', () => { release(); if (game.state === 'playing') pause(); });
 document.addEventListener('visibilitychange', () => { if (document.hidden) { release(); if (game.state === 'playing') pause(); } });
+
+const joystick = document.querySelector('.joystick');
+let steeringPointer = null;
+function resetJoystick() {
+  steeringPointer = null;
+  joystick.classList.remove('active');
+  joystick.style.setProperty('--stick-x', '0px');
+  joystick.style.setProperty('--stick-y', '0px');
+  joystick.dataset.direction = '';
+}
+function steer(e) {
+  const r = joystick.getBoundingClientRect(), radius = r.width / 2;
+  // This game has one movement axis; vertical thumb drift must not affect steering.
+  const dx = e.clientX - r.x - radius, travel = radius * .5;
+  joystick.style.setProperty('--stick-x', `${Math.max(-travel, Math.min(travel, dx))}px`);
+  joystick.style.setProperty('--stick-y', '0px');
+  const directions = [];
+  if (Math.abs(dx) > radius * .18) directions.push(dx < 0 ? 'left' : 'right');
+  const direction = directions.join('-');
+  touches.set(e.pointerId, direction);
+  joystick.dataset.direction = direction;
+  controls();
+}
+joystick.addEventListener('pointerdown', e => {
+  if (game.state !== 'playing' || steeringPointer !== null || (e.pointerType === 'mouse' && e.button !== 0)) return;
+  unlockAudio();
+  e.preventDefault(); steeringPointer = e.pointerId;
+  joystick.setPointerCapture(e.pointerId); joystick.classList.add('active'); steer(e);
+});
+joystick.addEventListener('pointermove', e => { if (steeringPointer === e.pointerId) { e.preventDefault(); steer(e); } });
+function endSteering(e) {
+  if (steeringPointer !== e.pointerId) return;
+  touches.delete(e.pointerId); resetJoystick(); controls();
+}
+for (const event of ['pointerup', 'pointercancel', 'lostpointercapture']) joystick.addEventListener(event, endSteering);
 for (const button of document.querySelectorAll('[data-control]')) {
   button.addEventListener('pointerdown', e => {
     if (game.state !== 'playing' || (e.pointerType === 'mouse' && e.button !== 0)) return;

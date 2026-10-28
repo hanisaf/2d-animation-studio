@@ -11,14 +11,14 @@ export async function checkGameTouch(page, game) {
   ]) {
     await page.setViewport({ ...viewport, isMobile: true, hasTouch: true });
     await page.goto(url);
-    await page.tap(soccer ? '[data-hero="sami"]' : '[data-hero="neptune"]');
+    await page.tap(soccer ? '[data-team="0"]' : '[data-hero="neptune"]');
     await page.tap(soccer ? '#start' : '#confirm-hero');
     await page.evaluate(() => scrollTo(0, 0));
     const geometry = await page.evaluate(() => {
       const rect = el => { const r = el.getBoundingClientRect(); return { x:r.x, y:r.y, width:r.width, height:r.height, bottom:r.bottom, right:r.right }; };
       return {
         overflow: document.documentElement.scrollWidth > innerWidth,
-        targets: [...document.querySelectorAll('.touch button, #pause, #restart')].map(rect),
+        targets: [...document.querySelectorAll('.joystick, .touch button, #pause, #restart')].map(rect),
         field: rect(document.querySelector('canvas')), width: innerWidth, height: innerHeight,
       };
     });
@@ -30,24 +30,46 @@ export async function checkGameTouch(page, game) {
         `${game} control outside phone viewport ${viewport.width}: ${JSON.stringify(r)}`);
     }
     if (viewport.width < 900) assert(geometry.field.y >= 0 && geometry.field.bottom <= geometry.height, `${game} field fits`);
-    await page.$eval('.touch', el=>el.scrollIntoView({block:'nearest'}));
+    await page.evaluate(() => {
+      const field=document.querySelector('canvas').getBoundingClientRect();
+      for(const el of document.querySelectorAll('.joystick, .actions')) {
+        const r=el.getBoundingClientRect();
+        if(r.left<field.left || r.right>field.right || r.top<field.top || r.bottom>field.bottom) throw Error('Controls must be inside field');
+      }
+    });
+    await page.$eval('.joystick', el=>el.scrollIntoView({block:'center'}));
     const session = await page.createCDPSession();
     const point = async (control, id) => page.$eval(`[data-control="${control}"]`, (el, id) => {
       const r=el.getBoundingClientRect(); return { x:r.x+r.width/2, y:r.y+r.height/2, id };
     }, id);
-    const direction = soccer ? 'up-right' : 'right';
+    const stickPoint = async (x, y, id=1) => page.$eval('.joystick', (el, {x,y,id}) => {
+      const r=el.getBoundingClientRect(); return {x:r.x+r.width*x,y:r.y+r.height*y,id};
+    }, {x,y,id});
     const action = soccer ? 'shoot' : 'fire';
-    const moving = await point(direction, 1), firing = await point(action, 2);
+    const moving = await stickPoint(.8, .2), firing = await point(action, 2);
     const scrollBefore = await page.evaluate(() => scrollY);
     await session.send('Input.dispatchTouchEvent', { type:'touchStart', touchPoints:[moving, firing] });
+    await page.waitForFunction(()=>document.querySelectorAll('.touch .active').length === 2);
     assert.equal(await page.$$eval('.touch .active', els=>els.length), 2, `${game} multitouch at ${viewport.width}`);
-    if (soccer) {
-      const left = await point('up-left', 1);
-      await session.send('Input.dispatchTouchEvent', { type:'touchMove', touchPoints:[left, firing] });
-      assert(await page.$eval('[data-control="up-left"]', el=>el.classList.contains('active')), 'slide changes steering');
-      assert(!(await page.$eval('[data-control="up-right"]', el=>el.classList.contains('active'))));
+    assert.equal(await page.$eval('.joystick', el=>el.dataset.direction), soccer ? 'up-right' : 'right');
+    const left = await stickPoint(.2,.2);
+    await session.send('Input.dispatchTouchEvent', { type:'touchMove', touchPoints:[left, firing] });
+    await page.waitForFunction(expected=>document.querySelector('.joystick').dataset.direction === expected, {}, soccer ? 'up-left' : 'left');
+    assert.equal(await page.$eval('.joystick', el=>el.dataset.direction), soccer ? 'up-left' : 'left', 'slide changes steering');
+    if (!soccer) {
+      const drift = await stickPoint(.8, -1);
+      await session.send('Input.dispatchTouchEvent', { type:'touchMove', touchPoints:[drift, firing] });
+      await page.waitForFunction(()=>document.querySelector('.joystick').dataset.direction === 'right');
+      assert.equal(await page.$eval('.joystick', el=>el.style.getPropertyValue('--stick-y')), '0px', 'horizontal knob ignores vertical drift');
+      const vertical = await stickPoint(.5, .1);
+      await session.send('Input.dispatchTouchEvent', { type:'touchMove', touchPoints:[vertical, firing] });
+      await page.waitForFunction(()=>document.querySelector('.joystick').dataset.direction === '');
     }
-    await session.send('Input.dispatchTouchEvent', { type:'touchEnd', touchPoints:[soccer ? await point('up-left', 1) : moving] });
+    const center = await stickPoint(.5,.5);
+    await session.send('Input.dispatchTouchEvent', { type:'touchMove', touchPoints:[center, firing] });
+    await page.waitForFunction(()=>document.querySelector('.joystick').dataset.direction === '');
+    assert.equal(await page.$eval('.joystick', el=>el.dataset.direction), '', 'center stops movement');
+    await session.send('Input.dispatchTouchEvent', { type:'touchEnd', touchPoints:[center] });
     assert.equal(await page.$$eval('.touch .active', els=>els.length), 1, 'releasing steering keeps firing');
     assert(await page.$eval(`[data-control="${action}"]`, el=>el.classList.contains('active')));
     await session.send('Input.dispatchTouchEvent', { type:'touchCancel', touchPoints:[] });
@@ -62,17 +84,17 @@ export async function checkGameTouch(page, game) {
     assert(await page.$eval('#overlay', el=>el.hidden));
     await page.tap('#restart');
     assert.equal(await page.$$eval('.touch .active', els=>els.length), 0);
-    await page.$eval('.touch', el=>el.scrollIntoView({block:'nearest'}));
+    await page.$eval('.joystick', el=>el.scrollIntoView({block:'center'}));
     // A touch capture lost unexpectedly must release its input.
     await page.evaluate(() => {
-      document.querySelector('[data-control="right"]').addEventListener('pointerdown', e=>{window.testPointerId=e.pointerId;}, {once:true});
+      document.querySelector('.joystick').addEventListener('pointerdown', e=>{window.testPointerId=e.pointerId;}, {once:true});
     });
-    const held = await point('right', 3);
+    const held = await stickPoint(.8,.5,3);
     await session.send('Input.dispatchTouchEvent', { type:'touchStart', touchPoints:[held] });
     held.x += 2;
     await session.send('Input.dispatchTouchEvent', { type:'touchMove', touchPoints:[held] });
     await page.evaluate(()=>{
-      const button=document.querySelector('[data-control="right"]');
+      const button=document.querySelector('.joystick');
       button.releasePointerCapture(window.testPointerId);
     });
     held.x += 2;

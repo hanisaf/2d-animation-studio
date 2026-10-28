@@ -221,7 +221,8 @@ function measure(fn) {
 //   age    seconds since the line started (negative = not yet).
 //   o      { dx, dy: bubble centre offset from the mouth (px, default up-right) · size: font px (56) · maxW: wrap width (720)
 //            cps: typing speed in chars/s (18) · hold: seconds the full line stays up after typing (1.6) · dur: override total
-//            kind: 'talk' | 'shout' | 'think' · accent: colour for *words* }
+//            kind: 'talk' | 'shout' | 'think' | 'whisper' (small, dashed, soft grey text) | 'robot' (boxy panel, rivets,
+//            monospaced capitals) · accent: colour for *words* · fill: bubble colour }
 // While `talking` is true the words are still appearing: flap the speaker's mouth (see lipFlap).
 
 function callout(text, ax, ay, age, o = {}) {
@@ -243,9 +244,11 @@ function lipFlap(t, talking, rest = 'smile', shapes = ['grin', 'open', 'o', 'gri
 
 function drawBubble(text, ax, ay, typed, k, o) {
   if (k < .02) return;
-  const size = o.size ?? 56, maxW = o.maxW ?? 720, lh = size * 1.18, pad = size * .62, accent = o.accent ?? PAL.crimson;
+  const kind = o.kind || 'talk', size = o.size ?? (kind === 'whisper' ? 42 : 56), maxW = o.maxW ?? 720, lh = size * 1.18, pad = size * .62;
+  const accent = o.accent ?? (kind === 'robot' ? '#D7262E' : PAL.crimson), ink = kind === 'whisper' ? PAL.inkSoft : PAL.ink;
+  const font = kind === 'robot' ? `700 ${size}px "Courier New", "Menlo", monospace` : kind === 'whisper' ? `italic 600 ${size}px ${FONT_TALK}` : `600 ${size}px ${FONT_TALK}`;
   X.save();
-  X.font = `600 ${size}px ${FONT_TALK}`;
+  X.font = font;
   // tokens with emphasis flags, then greedy word wrap
   const words = []; let emph = false;
   for (const raw of text.split(' ')) {
@@ -261,34 +264,43 @@ function drawBubble(text, ax, ay, typed, k, o) {
   }
   const widths = lines.map(L => L.reduce((s, wd, i) => s + X.measureText(wd.w).width + (i ? sp : 0), 0));
   const bw = Math.max(...widths) + pad * 2, bh = lines.length * lh + pad * 1.3;
-  const kind = o.kind || 'talk', rx = bw / 2 * 1.1, ry = bh / 2 * 1.22, ext = kind === 'shout' ? 1.14 : 1.06, m = 24;
+  const box = kind === 'robot', rx = bw / 2 * (box ? 1.04 : 1.1), ry = bh / 2 * (box ? 1.08 : 1.22), ext = kind === 'shout' ? 1.14 : 1.06, m = 24;
   // keep the whole bubble inside the frame (the tail stretches to reach the speaker)
   const cx = clamp(ax + (o.dx ?? bw / 2 + 80), rx * ext + m, W - rx * ext - m), cy = clamp(ay + (o.dy ?? -bh / 2 - 110), ry * ext + m, H - ry * ext - m);
 
   X.translate(ax, ay); X.scale(k, k); X.translate(-ax, -ay);               // pop from the speaker's mouth
   // bubble outline points (stable bumps + a little boil)
   const n = kind === 'shout' ? 26 : 30, pts = [];
-  for (let i = 0; i < n; i++) {
-    const a = i / n * TAU, spike = kind === 'shout' ? (i % 2 ? .82 : 1.12) : kind === 'think' ? 1 + .06 * Math.sin(i * 3.3) : 1 + .025 * Math.sin(i * 2.1 + 1);
+  if (box) {                                                               // a rounded panel
+    const r = Math.min(rx, ry) * .28, C = [[cx + rx - r, cy - ry + r, -Math.PI / 2], [cx + rx - r, cy + ry - r, 0], [cx - rx + r, cy + ry - r, Math.PI / 2], [cx - rx + r, cy - ry + r, Math.PI]];
+    for (const [qx, qy, a0] of C) for (let i = 0; i <= 5; i++) { const a = a0 + i / 5 * Math.PI / 2; pts.push([qx + Math.cos(a) * r + jit(.8), qy + Math.sin(a) * r + jit(.8)]); }
+  } else for (let i = 0; i < n; i++) {
+    const a = i / n * TAU, spike = kind === 'shout' ? (i % 2 ? .82 : 1.12) : kind === 'think' ? 1 + .06 * Math.sin(i * 3.3) : kind === 'whisper' ? 1 + .04 * Math.sin(i * 4.1) : 1 + .025 * Math.sin(i * 2.1 + 1);
     pts.push([cx + Math.cos(a) * rx * spike + jit(1.4), cy + Math.sin(a) * ry * spike + jit(1.4)]);
   }
   // tail: a curved wedge from the bubble's rim toward the mouth, stopping short of it
   const ang = Math.atan2(ay - cy, ax - cx), dist = Math.hypot(ax - cx, ay - cy);
-  const rim = a => [cx + Math.cos(a) * rx * .9, cy + Math.sin(a) * ry * .9];
+  const rim = a => box ? [cx + clamp(Math.cos(a) * rx * 1.6, -rx * .8, rx * .8), cy + clamp(Math.sin(a) * ry * 1.6, -ry * .8, ry * .8)] : [cx + Math.cos(a) * rx * .9, cy + Math.sin(a) * ry * .9];
   const tip = [cx + Math.cos(ang) * (dist - 26), cy + Math.sin(ang) * (dist - 26)], b1 = rim(ang - .2), b2 = rim(ang + .2);
   const bend = [lerp(b1[0], tip[0], .55) + Math.cos(ang + Math.PI / 2) * 24, lerp(b1[1], tip[1], .55) + Math.sin(ang + Math.PI / 2) * 24];
-  const fill = o.fill ?? PAL.white, inkW = 7;
+  const fill = o.fill ?? (box ? '#EEF3F1' : PAL.white), inkW = kind === 'whisper' ? 5 : 7, smoothOut = kind !== 'shout' && !box;
   const tail = () => { if (kind === 'think') return false; tracePath([b1, bend, tip, b2], true, .6); return true; };
   // soft drop shadow
-  X.save(); X.translate(8, 10); tracePath(pts, true, true); X.fillStyle = 'rgba(40,20,30,.22)'; X.fill(); if (tail()) X.fill(); X.restore();
+  X.save(); X.translate(8, 10); tracePath(pts, true, smoothOut); X.fillStyle = 'rgba(40,20,30,.22)'; X.fill(); if (tail()) X.fill(); X.restore();
   // union outline: stroke everything thick, then fill everything (hides inner strokes)
-  X.lineJoin = 'round'; X.lineWidth = inkW * 2; X.strokeStyle = PAL.ink;
-  tracePath(pts, true, kind !== 'shout'); X.stroke(); if (tail()) X.stroke();
-  X.fillStyle = fill; tracePath(pts, true, kind !== 'shout'); X.fill(); if (tail()) X.fill();
+  X.lineJoin = 'round'; X.lineWidth = inkW * 2; X.strokeStyle = ink;
+  if (kind === 'whisper') X.setLineDash([22, 14]);
+  tracePath(pts, true, smoothOut); X.stroke(); if (tail()) X.stroke();
+  X.setLineDash([]);
+  X.fillStyle = fill; tracePath(pts, true, smoothOut); X.fill(); if (tail()) X.fill();
+  if (box) {                                                               // rivets and a scan line
+    for (const [sx, sy] of [[-1, -1], [1, -1], [1, 1], [-1, 1]]) circle(cx + sx * (rx - 16), cy + sy * (ry - 16), 5, { fill: '#9AA6AC', stroke: ink, lwPx: 2 });
+    X.save(); X.globalAlpha = .08; for (let yy = cy - ry + 10; yy < cy + ry - 6; yy += 8) { X.fillStyle = '#2A6B5A'; X.fillRect(cx - rx + 10, yy, rx * 2 - 20, 3); } X.restore();
+  }
   if (kind === 'think') [[.55, 22], [.78, 13]].forEach(([f, r]) => { const q = [lerp(cx, ax, f), lerp(cy, ay, f)]; circle(q[0], q[1], r, { fill, stroke: PAL.ink, lwPx: inkW }); });
 
   // text, typed out character by character; the newest letter pops
-  X.font = `600 ${size}px ${FONT_TALK}`; X.textBaseline = 'middle'; X.textAlign = 'left';
+  X.font = font; X.textBaseline = 'middle'; X.textAlign = 'left';
   let shown = 0;
   lines.forEach((L, li) => {
     let x = cx - widths[li] / 2; const y = cy - (lines.length - 1) * lh / 2 + li * lh + size * .04;
@@ -299,7 +311,7 @@ function drawBubble(text, ax, ay, typed, k, o) {
         if (age > 0) {
           const pop = 1 + .35 * Math.max(0, 1 - age / 2.5);
           X.save(); X.translate(x + cw / 2, y); X.scale(pop, pop);
-          X.fillStyle = wd.f[ci] ? accent : PAL.ink; X.fillText(ch, -cw / 2, 0); X.restore();
+          X.fillStyle = wd.f[ci] ? accent : ink; X.fillText(ch, -cw / 2, 0); X.restore();
         }
         x += cw;
       }
@@ -311,7 +323,7 @@ function drawBubble(text, ax, ay, typed, k, o) {
 // Source: ../../engine/timeline.js
 // engine/timeline.js: asset manifests, registries, and the per-frame dispatcher.
 //
-// Every asset is a self-contained folder: characters/<id>/, locations/<id>/ or scenes/<id>/. Each folder holds an
+// Every asset is a self-contained folder: characters/<id>/, locations/<id>/ or scenes/<series>/<id>/. Each folder holds an
 // asset.js manifest that calls asset({...}) (title, logline, code files, docs, reference art, …), its code, its
 // README.md and its reference art. registry.js only lists the folder names (and the movie order).
 //
@@ -330,13 +342,27 @@ function asset(meta) {
   ASSETS[a.kind][a.id] = a;
   return a;
 }
+// Recorded voice clips for a scene's dialogue (written by scripts/tts_gemini.mjs into the scene's voice.js).
+// voiceClips({ '<line text without *>': { dur, src: 'data:audio/mpeg;base64,…' } }). A line with a clip plays it
+// (from line.at + .2, when its bubble starts typing) instead of the synthesized cartoon syllables.
+const VOICE_CLIPS = {};
+function voiceClips(clips) { const a = CURRENT_ASSET; if (a) VOICE_CLIPS[a.id] = { ...VOICE_CLIPS[a.id], ...clips }; }
+const voiceClipFor = (sceneId, line) => VOICE_CLIPS[sceneId]?.[line.text.replace(/\*/g, '')];
 // Load every asset listed in REGISTRY (browser only): asset.js first, then the files it lists, in order.
+// Scenes come from the series files first (engine/series.js), so each scene's folder is scenes/<series>/<id>.
 async function loadAssets(load) {
-  for (const [kind, dir] of [['character', 'characters'], ['location', 'locations'], ['scene', 'scenes']]) {
-    for (const id of REGISTRY[dir]) {
-      CURRENT_ASSET = { kind, id, dir: `${dir}/${id}` };
-      try { await load(`${dir}/${id}/asset.js`); } catch { throw new Error(`${dir}/${id}/asset.js is missing (every asset folder needs one: see docs/HANDBOOK.md)`); }
-      for (const f of CURRENT_ASSET.files) await load(`${dir}/${id}/${f}`);
+  for (const sid of REGISTRY.series) {
+    CURRENT_SERIES = sid;
+    try { await load(`scenes/${sid}/series.js`); } catch { throw new Error(`scenes/${sid}/series.js is missing (every series folder needs one: see docs/HANDBOOK.md)`); }
+  }
+  CURRENT_SERIES = null;
+  expandSeries();
+  for (const [kind, key] of [['character', 'characters'], ['location', 'locations'], ['scene', 'scenes']]) {
+    for (const id of REGISTRY[key]) {
+      const dir = kind === 'scene' ? sceneDir(id) : `${key}/${id}`;
+      CURRENT_ASSET = { kind, id, dir };
+      try { await load(`${dir}/asset.js`); } catch { throw new Error(`${dir}/asset.js is missing (every asset folder needs one: see docs/HANDBOOK.md)`); }
+      for (const f of CURRENT_ASSET.files) await load(`${dir}/${f}`);
     }
   }
   CURRENT_ASSET = null;
@@ -346,7 +372,7 @@ const SCENES = {}, CHARACTERS = {}, LOCATIONS = {};
 let SCENE = null;
 function scene(def) {
   const a = CURRENT_ASSET?.kind === 'scene' ? CURRENT_ASSET : null;
-  def.id ??= a?.id; def.title ??= a?.title; def.audio ??= a?.audio; def.music ??= a?.music; def.dialogue ??= a?.dialogue; def.dir ??= a?.dir;
+  def.id ??= a?.id; def.title ??= a?.title; def.audio ??= a?.audio; def.music ??= a?.music; def.dialogue ??= a?.dialogue; def.tts ??= a?.tts; def.dir ??= a?.dir;
   def.shots.sort((x, y) => x[0] - y[0]); def.fps ??= 24; SCENES[def.id] = def; return def;
 }
 function useScene(id) { SCENE = SCENES[id] || null; if (SCENE) { BPM = SCENE.bpm ?? 100; BEAT_OFF = SCENE.beatOffset ?? 0; } return SCENE; }
@@ -413,6 +439,7 @@ function drawFrame(t, sc = SCENE) {
 // Powers   power (0..1): the explanatory aura: golden-cyan glow, rays, glowing hands and a ring of chalk formulas orbiting him
 //          bulb (0..1): an idea light bulb pops on above his head
 // Extras   emote: '?' | '!' | 'sweat' | 'music' | 'heart' with emoteK (0..1 pop) · boil (px)
+// Outfit   outfit: 'coat' (default) | 'greek' (an ancient-Greek chiton with a blue sash, sandals and a laurel wreath; drawn by Safadi's sfChiton)
 //
 // Returns anchors in screen px: { head, mouth, top, eyeL, eyeR, chest, belly, handL, handR, pointerTip, stethoscope, bulb }
 //
@@ -426,6 +453,7 @@ const SM = {
   suit: '#FDFDFD', suitDk: '#E8E8E8', suitLt: '#FFFFFF', shirt: '#4C86A8', shirtDk: '#3A6B88', tie: '#2C5268', tieDk: '#1E3B4D',
   shoe: '#F0F0F0', shoeDk: '#D0D0D0', shoeLt: '#FFFFFF', button: '#3A2A22', mouth: '#6E1F2E', tongue: '#EE7F8C',
   glow: '#8AE5B3', glowGold: '#3ED982', chalk: '#E8FFF1', board: '#1A4D33', boardDk: '#0D2B1B',
+  robe: '#FBF6EA', robeDk: '#E2D7C2', robeTrim: '#E3B03A', sash: '#4C86A8', sashDk: '#2C5268', leaf: '#7DB04F', leafDk: '#4F7F31', sandal: '#9A5E34', sandalDk: '#6E3B22',
 };
 const SAMI_UNIT = 6.0;    // world units per local unit
 const SM_HIP = -8.0;
@@ -444,7 +472,7 @@ function sami(x, y, s, o = {}) {
   if (pw > .01) { smAura(pw, t); smGlyphs(pw, t, false); }
 
   withBoil(o.boil ?? .7, () => {
-    const hipY = SM_HIP + (o.dy || 0), lean = o.lean || 0, cl = Math.cos(lean), sl = Math.sin(lean);
+    const hipY = SM_HIP + (o.dy || 0), lean = o.lean || 0, cl = Math.cos(lean), sl = Math.sin(lean), greek = o.outfit === 'greek';   // Greek outfit: Safadi's sfChiton etc.
     const tl = (px, py) => [px * cl - py * sl, hipY + px * sl + py * cl];   // torso-local → body-local
     const br = o.breathe === false ? 0 : wob(t, .22) * .06;
     const arms = [[-1, o.handL || [-4.4, -8.1], o.handPoseL || 'open'], [1, o.handR || [4.4, -8.1], o.handPoseR || 'open']].map(([sd, tg, pose]) => {
@@ -463,6 +491,7 @@ function sami(x, y, s, o = {}) {
     // ---- legs + shoes ----
     [[-1, o.footL || [-1.25, -.8]], [1, o.footR || [1.25, -.8]]].forEach(([sd, f]) => {
       const hp = tl(sd * 1.15, -.2), { joint, end } = ik2(hp, f, 3.75, 3.7, [sd * .15, .1]);
+      if (greek) { smLimb([hp, joint, end], 1.75, SM.skin, lw); sfSandal(end, sd, lw, SM); return; }
       smLimb([hp, joint, end], 2.05, SM.suit, lw);
       line([[lerp(hp[0], joint[0], .1) + sd * .15, lerp(hp[1], joint[1], .1)], [joint[0] + sd * .12, joint[1]], [end[0] + sd * .1, end[1] - .6]], { stroke: SM.suitDk, lw: lw * .8 });
       smShoe(end, sd, lw);
@@ -470,22 +499,25 @@ function sami(x, y, s, o = {}) {
 
     // ---- torso: jacket, shirt, tie, vest, lapels ----
     X.save(); X.translate(0, hipY); X.rotate(lean); X.scale(1 + br * .3, 1 + br);
-    smJacket(lw);
+    if (greek) sfChiton(lw, SM); else smJacket(lw);
     A.chest = toPx(0, -6.5); A.belly = toPx(0, -2.5);
     shape(rectPts(-.75, -9.4, 1.5, 1.2), { fill: SM.skin, stroke: SM.ink, lw });          // neck
 
     // ---- head ----
     X.save(); X.translate(0, -8.9); X.rotate(o.tilt || 0); X.scale(1.1, 1.1); X.translate(0, -5.55);
     smHead(o, t, lw, A);
+    if (greek) sfWreath(lw, o.turn || 0, SM);
     X.restore();
-    smStethoscope(lw, chestPiece, !!held);
-    A.stethoscope = toPx(...chestPiece);
+    if (!greek || held) { smStethoscope(lw, chestPiece, !!held); A.stethoscope = toPx(...chestPiece); }   // no stethoscope in ancient Athens
     X.restore();
 
     // ---- arms (in front of the body) ----
     arms.forEach(({ sd, pose, sh, joint, end, ang }) => {
-      smLimb([sh, joint, end], 1.55, SM.suit, lw);
-      line([[sh[0] - sd * .1, sh[1] + .5], [joint[0] - sd * .35, joint[1]]], { stroke: SM.suitDk, lw: lw * .8 });
+      if (greek) { smLimb([sh, joint, end], 1.3, SM.skin, lw); smLimb([sh, mixPt(sh, joint, .55)], 1.95, SM.robe, lw); }   // bare arm, short sleeve
+      else {
+        smLimb([sh, joint, end], 1.55, SM.suit, lw);
+        line([[sh[0] - sd * .1, sh[1] + .5], [joint[0] - sd * .35, joint[1]]], { stroke: SM.suitDk, lw: lw * .8 });
+      }
       if (pw > .01) circle(end[0] + Math.cos(ang) * .6, end[1] + Math.sin(ang) * .6, 2.2, { fill: radGrad(end[0] + Math.cos(ang) * .6, end[1] + Math.sin(ang) * .6, 0, 2.2, [[0, rgba(SM.glow, .55 * pw)], [1, rgba(SM.glow, 0)]]), stroke: null });
       const tip = smHand(end, ang, sd, pose, lw, o, pw);
       A[sd < 0 ? 'handL' : 'handR'] = toPx(end[0] + Math.cos(ang) * .6, end[1] + Math.sin(ang) * .6);
@@ -695,7 +727,7 @@ function smHand(p, ang, sd, pose, lw, o, pw) {
   let tip = null;
   X.save(); X.translate(p[0], p[1]); X.rotate(ang); if (sd < 0) X.scale(1, -1);
   const ink = { stroke: SM.ink, lw: .38 + lw * 2 }, skin = { stroke: SM.skin, lw: .38 };
-  shape(ellPts(-.05, 0, .3, .66, 12), { fill: SM.shirt, stroke: SM.ink, lw, smooth: true });            // shirt cuff
+  if (o.outfit !== 'greek') shape(ellPts(-.05, 0, .3, .66, 12), { fill: SM.shirt, stroke: SM.ink, lw, smooth: true });            // shirt cuff
   if (pose === 'open' || pose === 'palm' || pose === 'thumb' || pose === 'point') {
     const f = pose === 'open' ? [[-.25, .8], [-.05, .9], [.15, .86], [.35, .74], [-1.1, .55]]
       : pose === 'palm' ? [[-.6, .8], [-.22, .92], [.14, .88], [.5, .72], [-1.45, .62]]
@@ -894,6 +926,7 @@ CHARACTERS.sami = {
     'laugh': (x, y, s, t) => { const k = Math.abs(Math.sin(t * 13)); sami(x, y, s, { handL: [-2.2, -9.5], handR: [2.2, -9.5], handPoseL: 'fist', handPoseR: 'fist', eyes: 'squeeze', mouth: k > .5 ? 'grin' : 'open', dy: .4 * k, tilt: -.08 }); },
     'wink': (x, y, s, t) => sami(x, y, s, { eyes: 'wink', mouth: 'grin', handR: [5.2, -13.6], handPoseR: 'thumb', brows: 'up' }),
     'walk': (x, y, s, t) => sami(x, y, s, { ...samiWalk(t * 1.6), mouth: 'smile', turn: -.15 }),
+    'greek': (x, y, s, t) => sami(x, y, s, { outfit: 'greek', mouth: lipFlap(t, frac(t * .5) < .7, 'smile'), brows: 'quizzical', handL: [-5.3, -12.4], handR: [5.3, -12.4], handPoseL: 'palm', handPoseR: 'palm', tilt: .06 }),
     'shrug': (x, y, s, t) => sami(x, y, s, { handL: [-5.0, -13.4], handR: [5.0, -13.4], handPoseL: 'palm', handPoseR: 'palm', brows: 'worried', mouth: 'smirk', tilt: .12, emote: '?', emoteK: 1 }),
   },
 };
@@ -919,11 +952,12 @@ CHARACTERS.sami = {
 // Powers   power (0..1): the explanatory aura: golden-cyan glow, rays, glowing hands and a ring of chalk formulas orbiting him
 //          bulb (0..1): an idea light bulb pops on above his head
 // Extras   emote: '?' | '!' | 'sweat' | 'music' | 'heart' with emoteK (0..1 pop) · boil (px)
+// Outfit   outfit: 'suit' (default) | 'greek' (an ancient-Greek chiton with a gold hem, a red sash, bare arms, sandals and a laurel wreath)
 //
 // Returns anchors in screen px: { head, mouth, top, eyeL, eyeR, chest, belly, handL, handR, pointerTip, bulb }
 //
 // Also: safadiBoard(x, y, w, k, t, { kind, title }): his floating holographic chalkboard (screen px; k 0..1 = appear + draw).
-//   kind: 'graph' | 'steps' | 'atom' | 'bulb' | 'story' | 'plate' (healthy plate) | 'crash' (sugar spike vs steady veggies) | 'passing' | 'dribbling' | 'shooting' | 'teamwork' (soccer lessons).
+//   kind: 'graph' | 'steps' | 'atom' | 'bulb' | 'story' | 'plate' (healthy plate) | 'crash' (sugar spike vs steady veggies) | 'sugarbugs' (a tooth, candy and wiggling sugar bugs) | 'passing' | 'dribbling' | 'shooting' | 'teamwork' (soccer lessons) | 'offside'.
 //   safadiWalk(p, k): walk-cycle pose options (p = steps travelled, k = stride amount).
 
 const SF = {
@@ -932,6 +966,7 @@ const SF = {
   suit: '#D4B68C', suitDk: '#B7966B', suitLt: '#E4CDA7', shirt: '#F8F6F1', shirtDk: '#D9D4CB', tie: '#C3222F', tieDk: '#8E1621',
   shoe: '#6E3B22', shoeDk: '#4A2515', shoeLt: '#8C5436', button: '#3A2A22', mouth: '#6E1F2E', tongue: '#EE7F8C',
   glow: '#7FE3FF', glowGold: '#FFD66B', chalk: '#FFFDF4', board: '#23433A', boardDk: '#193029',
+  robe: '#FBF6EA', robeDk: '#E2D7C2', robeTrim: '#E3B03A', sash: '#B8323F', sashDk: '#8A1D2A', leaf: '#7DB04F', leafDk: '#4F7F31', sandal: '#9A5E34', sandalDk: '#6E3B22',
 };
 const SAFADI_UNIT = 6.0;    // world units per local unit
 const SF_HIP = -8.0;
@@ -950,13 +985,14 @@ function safadi(x, y, s, o = {}) {
   if (pw > .01) { sfAura(pw, t); sfGlyphs(pw, t, false); }
 
   withBoil(o.boil ?? .7, () => {
-    const hipY = SF_HIP + (o.dy || 0), lean = o.lean || 0, cl = Math.cos(lean), sl = Math.sin(lean);
+    const hipY = SF_HIP + (o.dy || 0), lean = o.lean || 0, cl = Math.cos(lean), sl = Math.sin(lean), greek = o.outfit === 'greek';
     const tl = (px, py) => [px * cl - py * sl, hipY + px * sl + py * cl];   // torso-local → body-local
     const br = o.breathe === false ? 0 : wob(t, .22) * .06;
 
     // ---- legs + shoes ----
     [[-1, o.footL || [-1.25, -.8]], [1, o.footR || [1.25, -.8]]].forEach(([sd, f]) => {
       const hp = tl(sd * 1.15, -.2), { joint, end } = ik2(hp, f, 3.75, 3.7, [sd * .15, .1]);
+      if (greek) { sfLimb([hp, joint, end], 1.75, SF.skin, lw); sfSandal(end, sd, lw, SF); return; }
       sfLimb([hp, joint, end], 2.05, SF.suit, lw);
       line([[lerp(hp[0], joint[0], .1) + sd * .15, lerp(hp[1], joint[1], .1)], [joint[0] + sd * .12, joint[1]], [end[0] + sd * .1, end[1] - .6]], { stroke: SF.suitDk, lw: lw * .8 });
       sfShoe(end, sd, lw);
@@ -964,21 +1000,25 @@ function safadi(x, y, s, o = {}) {
 
     // ---- torso: jacket, shirt, tie, vest, lapels ----
     X.save(); X.translate(0, hipY); X.rotate(lean); X.scale(1 + br * .3, 1 + br);
-    sfJacket(lw);
+    if (greek) sfChiton(lw, SF); else sfJacket(lw);
     A.chest = toPx(0, -6.5); A.belly = toPx(0, -2.5);
     shape(rectPts(-.75, -9.4, 1.5, 1.2), { fill: SF.skin, stroke: SF.ink, lw });          // neck
 
     // ---- head ----
     X.save(); X.translate(0, -8.9); X.rotate(o.tilt || 0); X.scale(1.1, 1.1); X.translate(0, -5.55);
     sfHead(o, t, lw, A);
+    if (greek) sfWreath(lw, o.turn || 0, SF);
     X.restore();
     X.restore();
 
     // ---- arms (in front of the body) ----
     [[-1, o.handL || [-4.4, -8.1], o.handPoseL || 'open'], [1, o.handR || [4.4, -8.1], o.handPoseR || 'open']].forEach(([sd, tg, pose]) => {
       const sh = tl(sd * 2.95, -7.2), { joint, end } = ik2(sh, tg, 3.75, 3.45, [sd * .25, 1]);
-      sfLimb([sh, joint, end], 1.55, SF.suit, lw);
-      line([[sh[0] - sd * .1, sh[1] + .5], [joint[0] - sd * .35, joint[1]]], { stroke: SF.suitDk, lw: lw * .8 });
+      if (greek) { sfLimb([sh, joint, end], 1.3, SF.skin, lw); sfLimb([sh, mixPt(sh, joint, .55)], 1.95, SF.robe, lw); }   // bare arm, short sleeve
+      else {
+        sfLimb([sh, joint, end], 1.55, SF.suit, lw);
+        line([[sh[0] - sd * .1, sh[1] + .5], [joint[0] - sd * .35, joint[1]]], { stroke: SF.suitDk, lw: lw * .8 });
+      }
       const ang = Math.atan2(end[1] - joint[1], end[0] - joint[0]);
       if (pw > .01) circle(end[0] + Math.cos(ang) * .6, end[1] + Math.sin(ang) * .6, 2.2, { fill: radGrad(end[0] + Math.cos(ang) * .6, end[1] + Math.sin(ang) * .6, 0, 2.2, [[0, rgba(SF.glow, .55 * pw)], [1, rgba(SF.glow, 0)]]), stroke: null });
       const tip = sfHand(end, ang, sd, pose, lw, o, pw);
@@ -1038,6 +1078,50 @@ function sfJacket(lw) {
   // pocket flaps + breast welt
   [-1, 1].forEach(sd => shape(rectPts(sd * 1.95 - .8, -1.95, 1.6, .5), { fill: SF.suit, stroke: SF.ink, lw: lw * .8 }));
   line([[1.55, -5.75], [2.45, -5.95]], { stroke: SF.ink, lw: lw * .9 });
+}
+
+// The Greek outfit (outfit: 'greek'), shared with Sami: C is the character's palette (ink, skin, robe, robeDk, robeTrim, sash,
+// sashDk, leaf, leafDk, sandal, sandalDk). A knee-length chiton with a gold hem and belt, and a sash over the left shoulder.
+function sfChiton(lw, C) {
+  const body = [[-3.0, -8.35], [-3.45, -6.7], [-3.05, -4.2], [-3.0, -1.6], [-3.35, 1.6], [-3.7, 3.35], [-1.8, 3.6], [0, 3.5], [1.8, 3.6], [3.7, 3.35], [3.35, 1.6], [3.0, -1.6], [3.05, -4.2], [3.45, -6.7], [3.0, -8.35], [1.25, -8.75], [-1.25, -8.75]];
+  shape(body, { fill: C.robe, stroke: C.ink, lw, smooth: .35 });
+  X.save(); tracePath(body, true, .35); X.clip();
+  withBoil(0, () => {
+    [-1, 1].forEach(sd => shape([[sd * 3.8, -8.6], [sd * 2.6, -8.6], [sd * 2.2, 3.8], [sd * 3.9, 3.8]], { fill: rgba(C.robeDk, .55), stroke: null }));
+    [-1.7, -.6, .6, 1.7].forEach((x, i) => line([[x * .9, -1.9], [x * 1.05 + (i % 2 ? .1 : -.1), 1.2], [x * 1.12, 3.3]], { stroke: C.robeDk, lw: lw * 1.1, smooth: true }));   // skirt folds
+    shape([[-3.9, 2.75], [3.9, 2.75], [3.9, 3.9], [-3.9, 3.9]], { fill: C.robeTrim, stroke: null });                                         // gold hem
+    for (let i = 0; i < 9; i++) { const x = -3.2 + i * .8; line([[x, 3.4], [x, 3.05], [x + .4, 3.05], [x + .4, 3.25]], { stroke: C.ink, lw: lw * .7 }); }   // a little meander
+  });
+  X.restore();
+  shape([[-1.15, -8.72], [0, -7.35], [1.15, -8.72]], { fill: C.skin, stroke: C.ink, lw: lw * .9, closed: false, smooth: .6 });   // the neckline
+  shape([[-3.05, -2.35], [3.05, -2.35], [3.0, -1.75], [-3.0, -1.75]], { fill: C.robeTrim, stroke: C.ink, lw: lw * .8 });            // the belt
+  const sash = [[-2.95, -8.4], [-1.55, -8.7], [3.05, -2.4], [3.15, -.9], [2.35, -.95]];
+  shape(sash, { fill: C.sash, stroke: C.ink, lw, smooth: .25 });
+  withBoil(0, () => { line([[-2.2, -8.1], [2.6, -1.7]], { stroke: C.sashDk, lw: lw * 1.1 }); line([[-1.9, -7.2], [1.0, -3.4]], { stroke: C.sashDk, lw: lw * .8 }); });
+  circle(-2.25, -8.05, .38, { fill: C.robeTrim, stroke: C.ink, lw: lw * .8 });                                                     // the brooch
+}
+// A laurel wreath round the head (head-local units, as in sfHead): two leafy branches from the temples meeting on top.
+function sfWreath(lw, turn, C) {
+  const pts = [[-4.0, -.4], [-4.15, -2.1], [-3.7, -3.8], [-2.6, -5.15], [-1.0, -5.9], [-.15, -6.05]];
+  const leaf = (x, y, ang, col) => { X.save(); X.translate(x, y); X.rotate(ang); shape(ellPts(.6, 0, .66, .3, 10), { fill: col, stroke: C.ink, lw: lw * .7, smooth: true }); X.restore(); };
+  for (const sd of [-1, 1]) {
+    const br = pts.map(([x, y]) => [sd * x - turn * .35, y]);
+    line(br, { stroke: C.leafDk, lw: lw * 1.2, smooth: true });
+    for (let i = 0; i < br.length - 1; i++) {
+      const [x0, y0] = br[i], [x1, y1] = br[i + 1], g = Math.atan2(y1 - y0, x1 - x0);         // the way the branch grows
+      leaf(x0, y0, g - sd * .75, C.leafDk); leaf(x0, y0, g + sd * .75, C.leaf);
+      leaf(lerp(x0, x1, .5), lerp(y0, y1, .5), g + sd * .6, C.leaf);
+    }
+  }
+}
+// A leather sandal: a bare foot on a sole, with straps over the toes and round the ankle.
+function sfSandal(a, sd, lw, C) {
+  X.save(); X.translate(a[0] + sd * .1, a[1]); X.scale(sd, 1);
+  shape([[-1.0, .55], [-.95, .95], [1.2, .95], [1.4, .6]], { fill: C.sandalDk, stroke: C.ink, lw, smooth: .5 });                  // the sole
+  shape([[-.85, .55], [-.8, -.3], [-.35, -.75], [.5, -.6], [1.15, -.1], [1.35, .55]], { fill: C.skin, stroke: C.ink, lw, smooth: .7 });
+  line([[-.5, -.35], [.9, .2]], { stroke: C.sandal, lw: lw * 2.4 }); line([[-.75, .05], [1.2, .45]], { stroke: C.sandal, lw: lw * 2.4 });
+  line([[-.65, -.95], [-.45, -.4]], { stroke: C.sandal, lw: lw * 2.2 });
+  X.restore();
 }
 
 function sfHead(o, t, lw, A) {
@@ -1163,7 +1247,7 @@ function sfHand(p, ang, sd, pose, lw, o, pw) {
   let tip = null;
   X.save(); X.translate(p[0], p[1]); X.rotate(ang); if (sd < 0) X.scale(1, -1);
   const ink = { stroke: SF.ink, lw: .38 + lw * 2 }, skin = { stroke: SF.skin, lw: .38 };
-  shape(ellPts(-.05, 0, .3, .66, 12), { fill: SF.shirt, stroke: SF.ink, lw, smooth: true });            // shirt cuff
+  if (o.outfit !== 'greek') shape(ellPts(-.05, 0, .3, .66, 12), { fill: SF.shirt, stroke: SF.ink, lw, smooth: true });            // shirt cuff
   if (pose === 'open' || pose === 'palm' || pose === 'thumb' || pose === 'point') {
     const f = pose === 'open' ? [[-.25, .8], [-.05, .9], [.15, .86], [.35, .74], [-1.1, .55]]
       : pose === 'palm' ? [[-.6, .8], [-.22, .92], [.14, .88], [.5, .72], [-1.45, .62]]
@@ -1316,6 +1400,35 @@ function safadiBoard(x, y, w, k, t, o = {}) {
     X.restore();
     if (f2 > 0) line(f2 < 1 ? polySlice(veg, 0, f2) : veg, { stroke: '#9FE08A', lwPx: Math.max(2, U * 1.1) });
     label('ZOOM!', 34, top + 1, 5.5, .3); label('CRASH', 62, 62 - 4, 5, .55); label('veggies: steady', 76, 34, 4.2, .9);
+  } else if (kind === 'sugarbugs') {                               // a molar, candy, and the sugar bugs that feast on it
+    const cx = 50 * U, cy = (top + 19) * U, R = 11 * U;
+    const tooth = [[cx - R, cy - R * .9], [cx - R * .45, cy - R * 1.2], [cx, cy - R * .95], [cx + R * .45, cy - R * 1.2], [cx + R, cy - R * .9],
+      [cx + R * 1.05, cy], [cx + R * .7, cy + R * .7], [cx + R * .55, cy + R * 1.6], [cx + R * .2, cy + R * 1.65], [cx, cy + R * .8],
+      [cx - R * .2, cy + R * 1.65], [cx - R * .55, cy + R * 1.6], [cx - R * .7, cy + R * .7], [cx - R * 1.05, cy], [cx - R, cy - R * .9]];
+    X.save(); X.lineJoin = 'round'; part(tooth, 0, .3); X.restore();
+    if (d > .3) { X.globalAlpha = .55 * seg(d, .3, .45); shape(tooth.slice(0, -1), { fill: SF.chalk, stroke: null, smooth: .5 }); X.globalAlpha = 1; }
+    // candy that feeds them: a wrapped sweet and a lollipop
+    const sweet = k => { if (k <= 0) return; X.save(); X.translate(19 * U, (top + 14) * U); X.scale(k, k); X.rotate(-.3);
+      ellipse(0, 0, 4.4 * U, 3 * U, { fill: '#FF9BC4', stroke: SF.chalk, lwPx: 1.5 });
+      for (const sd of [-1, 1]) shape([[sd * 4 * U, 0], [sd * 8 * U, -2.6 * U], [sd * 8 * U, 2.6 * U]], { fill: '#FFC7DD', stroke: SF.chalk, lwPx: 1.5 }); X.restore(); };
+    const pop = k => { if (k <= 0) return; X.save(); X.translate(82 * U, (top + 12) * U); X.scale(k, k);
+      line([[0, 0], [0, 13 * U]], { stroke: SF.chalk, lwPx: Math.max(2, U * .8) });
+      circle(0, 0, 5 * U, { fill: '#9FE0FF', stroke: SF.chalk, lwPx: 1.5 });
+      const sw = []; for (let i = 0; i <= 24; i++) { const a = i / 24 * TAU * 1.6, r = i / 24 * 4.2 * U; sw.push([Math.cos(a) * r, Math.sin(a) * r]); } line(sw, { stroke: '#FF9BC4', lwPx: 1.5 }); X.restore(); };
+    sweet(backOut(seg(d, .3, .42))); pop(backOut(seg(d, .36, .48)));
+    // the bugs: green, grinning, wiggling, each with a little fork
+    [[-7, -5], [6, -7], [-2, 3], [8, 3], [-9, 8]].forEach(([bx, by], i) => {
+      const k = backOut(seg(d, .45 + i * .08, .57 + i * .08)); if (k <= 0) return;
+      const wx = Math.sin(t * 7 + i * 1.7) * .8 * U, wy = Math.abs(Math.sin(t * 9 + i)) * -.8 * U;
+      X.save(); X.translate(cx + bx * U + wx, cy + by * U + wy); X.scale(k, k); X.rotate(Math.sin(t * 5 + i) * .15);
+      for (let j = -1; j <= 1; j++) for (const sd of [-1, 1]) line([[sd * 1.6 * U, j * U], [sd * 3.2 * U, j * 1.4 * U + Math.sin(t * 14 + j + i) * .5 * U]], { stroke: SF.chalk, lwPx: 1.4 });
+      line([[-1 * U, -2.2 * U], [-1.8 * U, -4 * U]], { stroke: SF.chalk, lwPx: 1.4 }); line([[1 * U, -2.2 * U], [1.8 * U, -4 * U]], { stroke: SF.chalk, lwPx: 1.4 });
+      ellipse(0, 0, 2.3 * U, 2.6 * U, { fill: '#8EE07A', stroke: SF.chalk, lwPx: 1.5 });
+      circle(-.8 * U, -.7 * U, .55 * U, { fill: SF.ink, stroke: null }); circle(.8 * U, -.7 * U, .55 * U, { fill: SF.ink, stroke: null });
+      line([[-1 * U, .6 * U], [0, 1.2 * U], [1 * U, .6 * U]], { stroke: SF.ink, lwPx: 1.4 });
+      X.restore();
+    });
+    label('sugar bugs!', 50, 59, 5, .9);
   } else if (kind === 'passing') {                                 // three players in a triangle, passes round it
     const P3 = [[50, top + 6], [20, top + 40], [80, top + 40]].map(([px, py]) => [px * U, py * U]);
     P3.forEach(([px, py], i) => { const k = backOut(seg(d, i * .1, i * .1 + .15)); if (k > 0) circle(px, py, 4.5 * U * k, { fill: null, stroke: SF.chalk, lwPx: Math.max(2, U * .9) }); });
@@ -1345,6 +1458,24 @@ function safadiBoard(x, y, w, k, t, o = {}) {
     const ang = []; for (let i = 0; i <= 10; i++) { const a = -i / 10 * .62; ang.push([sp[0] + Math.cos(a) * 10 * U, sp[1] + Math.sin(a) * 10 * U]); } part(ang, .82, .92);
     if (d > .3) circle(sp[0], sp[1], 2 * U, { fill: SF.glowGold, stroke: SF.chalk, lwPx: 1.5 });
     label('θ', 30, top + 36, 5.5, .9);
+  } else if (kind === 'offside') {                                 // top-down: the pass, YOU, (1) the keeper, (2)? the missing defender
+    const y0 = top + 3, y1 = 57, X0 = 8, X1 = 92, at = (x, y) => [x * U, y * U];
+    part([at(X0, y0), at(X1, y0), at(X1, y1), at(X0, y1), at(X0, y0)], 0, .08);
+    part([at(50, y0), at(50, y1)], .05, .1);
+    part([at(X1, 22 + top / 2), at(X1 - 9, 22 + top / 2), at(X1 - 9, 46), at(X1, 46)], .08, .14);
+    const ex = (x, y, r, a, b, dash) => { X.save(); if (dash) X.setLineDash([1.2 * U, 1 * U]); part([at(x - r, y - r), at(x + r, y + r)], a, (a + b) / 2); part([at(x + r, y - r), at(x - r, y + r)], (a + b) / 2, b); X.restore(); };
+    if (d > .02) circle(30 * U, 44 * U, 3 * U * backOut(seg(d, .02, .1)), { fill: null, stroke: SF.chalk, lwPx: Math.max(2, U * .9) });
+    if (d > .1) circle(34 * U, 46 * U, 1.3 * U, { fill: SF.glowGold, stroke: SF.chalk, lwPx: 1.2 });
+    X.save(); X.setLineDash([2 * U, 1.4 * U]); part([at(34, 45), at(68, 34)], .12, .3); X.restore();
+    part([at(65, 32), at(68, 34), at(65.5, 36.5)], .28, .32);
+    if (d > .22) circle(72 * U, 33 * U, 3 * U * backOut(seg(d, .22, .32)), { fill: null, stroke: SF.chalk, lwPx: Math.max(2, U * .9) });
+    label('YOU', 72, 26, 4.2, .3);
+    ex(86, 36, 2.6, .38, .5); label('1', 86, 30, 5, .48);
+    ex(78, 44, 2.6, .58, .7, true); label('2?', 78, 51, 5, .68);
+    ex(16, 30, 2.6, .78, .86);
+    X.save(); X.setLineDash([1.6 * U, 1.2 * U]); part([at(74, 46), at(22, 33)], .84, .94); X.restore();
+    label('way over there!', 26, 24, 3.8, .9);
+    label('OFFSIDE!', 50, 60, 4.6, .96);
   } else if (kind === 'teamwork') {                                // a ring of stick players joined by arrows, a heart in the middle
     const cx = 50 * U, cy = (top + 24) * U, R = 17 * U, n = 5;
     for (let i = 0; i < n; i++) {
@@ -1358,6 +1489,123 @@ function safadiBoard(x, y, w, k, t, o = {}) {
     }
     if (d > .88) { const k = backOut(seg(d, .88, 1)) * (1 + .08 * Math.sin(t * 6)); X.save(); X.translate(cx, cy); X.scale(4 * U * k, 4 * U * k);
       shape([[0, .9], [-1.1, -.1], [-1.05, -.75], [-.5, -1.05], [0, -.6], [.5, -1.05], [1.05, -.75], [1.1, -.1]], { fill: '#FF6F8E', stroke: SF.chalk, lwPx: 1.5, smooth: .5 }); X.restore(); }
+  } else if (kind === 'brain') {                                   // a brain whose wires light up one by one: focus
+    const cx = 50 * U, cy = (top + 21) * U, ring = [];
+    for (let i = 0; i <= 48; i++) { const a = i / 48 * TAU, r = 1 + .07 * Math.sin(a * 9); ring.push([cx + Math.cos(a) * 27 * U * r, cy + Math.sin(a) * 18 * U * r]); }
+    part(ring, 0, .3);
+    part([[cx, cy - 17 * U], [cx - 2 * U, cy - 8 * U], [cx + 2 * U, cy], [cx - 1 * U, cy + 9 * U]], .25, .35);
+    const N = [[-18, -4], [-9, -11], [-11, 5], [-3, 0], [8, -9], [10, 6], [19, -2], [4, 12]].map(([x, y]) => [cx + x * U, cy + y * U]);
+    const E = [[0, 1], [1, 3], [0, 2], [2, 3], [3, 4], [3, 5], [4, 6], [5, 6], [5, 7], [2, 7]];
+    E.forEach(([a, b], i) => { const f = seg(d, .35 + i * .05, .42 + i * .05); if (f > 0) line([N[a], mixPt(N[a], N[b], f)], { stroke: SF.glow, lwPx: Math.max(2, U * .8) }); });
+    N.forEach((n, i) => { const on = seg(d, .35 + i * .065, .4 + i * .065); circle(n[0], n[1], 1.5 * U * (.6 + .4 * on), { fill: on > 0 ? mixCol(SF.chalk, SF.glowGold, on) : null, stroke: SF.chalk, lwPx: 1.5 }); });
+    label('FOCUS', 50, top + 46, 6.5, .92);
+  } else if (kind === 'words') {                                   // big words float up out of an open book: vocabulary
+    const cx = 50 * U, by = (top + 37) * U;
+    part([[cx, by - 6 * U], [cx - 12 * U, by - 8 * U], [cx - 24 * U, by - 6 * U], [cx - 24 * U, by + 6 * U], [cx - 12 * U, by + 4 * U], [cx, by + 6 * U], [cx, by - 6 * U]], 0, .2);
+    part([[cx, by - 6 * U], [cx + 12 * U, by - 8 * U], [cx + 24 * U, by - 6 * U], [cx + 24 * U, by + 6 * U], [cx + 12 * U, by + 4 * U], [cx, by + 6 * U]], .1, .25);
+    [['MAGNIFICENT', 30, 8, .3], ['PERPLEXED', 72, 15, .5], ['CATASTROPHE', 40, 23, .7]].forEach(([w, lx, ly, a], i) => {
+      const rise = 4 * (1 - easeOut(seg(d, a, a + .2))); label(w, lx, top + ly + rise + .6 * Math.sin(t * 2 + i), 6.2, a);
+    });
+  } else if (kind === 'imagine') {                                 // a castle and a little dragon rise out of a book: imagination
+    const cx = 50 * U, by = (top + 39) * U;
+    part([[cx, by - 5 * U], [cx - 22 * U, by - 7 * U], [cx - 22 * U, by + 5 * U], [cx, by + 7 * U], [cx + 22 * U, by + 5 * U], [cx + 22 * U, by - 7 * U], [cx, by - 5 * U], [cx, by + 7 * U]], 0, .2);
+    const g = by - 7 * U, cs = [[-12, 0], [-12, -16], [-9, -16], [-9, -13], [-6, -13], [-6, -16], [-3, -16], [-3, -22], [0, -26], [3, -22], [3, -16], [6, -16], [6, -13], [9, -13], [9, -16], [12, -16], [12, 0]];
+    part(cs.map(([x, y]) => [cx + x * U, g + y * U]), .2, .55);
+    part([[cx - 2 * U, g], [cx - 2 * U, g - 5 * U], [cx + 2 * U, g - 5 * U], [cx + 2 * U, g]], .5, .6);
+    part([[cx, g - 26 * U], [cx, g - 31 * U], [cx + 4 * U, g - 30 * U], [cx, g - 29 * U]], .55, .62);
+    const fx = cx + 28 * U + 1.2 * U * Math.sin(t * 1.6), fy = g - 20 * U + 1.5 * U * Math.sin(t * 2.1);  // the dragon, flying
+    part([[fx - 8 * U, fy + 2 * U], [fx - 3 * U, fy], [fx + 2 * U, fy - 1 * U], [fx + 6 * U, fy - 4 * U], [fx + 8 * U, fy - 3 * U], [fx + 6 * U, fy - 1 * U], [fx + 2 * U, fy + 2 * U], [fx - 3 * U, fy + 3 * U], [fx - 8 * U, fy + 2 * U]], .62, .82);
+    const fl = 3 * U * Math.sin(t * 7); part([[fx - 2 * U, fy], [fx - 4 * U, fy - 7 * U - fl], [fx + 2 * U, fy - 1 * U]], .78, .88);
+    if (d > .9) [[-30, -18], [-24, -28], [34, -2]].forEach(([dx, dy], i) => shape(starPts(cx + dx * U, g + dy * U, 2.6 * U * backOut(seg(d, .9 + i * .03, 1)), .45, 5), { fill: SF.glowGold, stroke: SF.chalk, lwPx: 1.2 }));
+  } else if (kind === 'shoes') {                                   // footprints walk into a book; a heart pops out: empathy
+    const bx = 76 * U, by = (top + 28) * U;
+    part([[bx, by - 8 * U], [bx - 10 * U, by - 10 * U], [bx - 10 * U, by + 8 * U], [bx, by + 10 * U], [bx + 10 * U, by + 8 * U], [bx + 10 * U, by - 10 * U], [bx, by - 8 * U], [bx, by + 10 * U]], 0, .2);
+    for (let i = 0; i < 6; i++) {
+      const a0 = .2 + i * .1; if (d < a0) continue;
+      const fx = (12 + i * 8.5) * U, fy = (top + 34 + (i % 2 ? -3 : 3) - i * .8) * U, k2 = backOut(seg(d, a0, a0 + .08));
+      X.save(); X.translate(fx, fy); X.rotate(-.25); X.scale(k2, k2);
+      shape(ellPts(0, 0, 2.6 * U, 1.4 * U, 16), { fill: null, stroke: SF.chalk, lwPx: Math.max(2, U * .8) });
+      circle(3.6 * U, 0, .9 * U, { fill: null, stroke: SF.chalk, lwPx: Math.max(1.5, U * .6) });
+      X.restore();
+    }
+    if (d > .82) { const k3 = backOut(seg(d, .82, .95)) * (1 + .06 * Math.sin(t * 6)); X.save(); X.translate(bx, by - 16 * U); X.scale(4 * U * k3, 4 * U * k3);
+      shape([[0, .9], [-1.1, -.1], [-1.05, -.75], [-.5, -1.05], [0, -.6], [.5, -1.05], [1.05, -.75], [1.1, -.1]], { fill: '#FF6F8E', stroke: SF.chalk, lwPx: 1.5, smooth: .5 }); X.restore(); }
+    label('EMPATHY', 34, top + 46, 6.5, .9);
+  } else if (kind === 'history') {                                 // clay tablet → scroll → book → laptop
+    const cy = (top + 22) * U, xs = [14, 38, 62, 86].map(v => v * U), a = i => .05 + i * .23;
+    const tab = xs[0];                                             // the clay tablet, with wedge marks
+    part([[tab - 7 * U, cy - 10 * U], [tab + 7 * U, cy - 10 * U], [tab + 8 * U, cy + 10 * U], [tab - 8 * U, cy + 10 * U], [tab - 7 * U, cy - 10 * U]], a(0), a(0) + .12);
+    for (let r = 0; r < 4; r++) for (let c = 0; c < 3; c++) { const w0 = a(0) + .1 + (r * 3 + c) * .008; if (d > w0) shape([[tab + (-5 + c * 4.5) * U, cy + (-6 + r * 4.5) * U], [tab + (-3 + c * 4.5) * U, cy + (-7 + r * 4.5) * U], [tab + (-3 + c * 4.5) * U, cy + (-5 + r * 4.5) * U]], { fill: SF.chalk, stroke: null }); }
+    const sc = xs[1];                                              // the scroll
+    part([[sc - 7 * U, cy - 9 * U], [sc + 7 * U, cy - 9 * U], [sc + 7 * U, cy + 9 * U], [sc - 7 * U, cy + 9 * U], [sc - 7 * U, cy - 9 * U]], a(1), a(1) + .1);
+    part([[sc - 9 * U, cy - 11 * U], [sc + 9 * U, cy - 11 * U]], a(1) + .08, a(1) + .12); part([[sc - 9 * U, cy + 11 * U], [sc + 9 * U, cy + 11 * U]], a(1) + .1, a(1) + .14);
+    for (let i = 0; i < 4; i++) part([[sc - 5 * U, cy + (-5 + i * 3.4) * U], [sc + 5 * U, cy + (-5 + i * 3.4) * U]], a(1) + .12 + i * .02, a(1) + .15 + i * .02);
+    const bk = xs[2];                                              // the book
+    part([[bk, cy - 7 * U], [bk - 9 * U, cy - 9 * U], [bk - 9 * U, cy + 8 * U], [bk, cy + 10 * U], [bk + 9 * U, cy + 8 * U], [bk + 9 * U, cy - 9 * U], [bk, cy - 7 * U], [bk, cy + 10 * U]], a(2), a(2) + .15);
+    const lp = xs[3];                                              // the laptop
+    part([[lp - 8 * U, cy + 3 * U], [lp - 8 * U, cy - 9 * U], [lp + 8 * U, cy - 9 * U], [lp + 8 * U, cy + 3 * U]], a(3), a(3) + .1);
+    part([[lp - 11 * U, cy + 7 * U], [lp + 11 * U, cy + 7 * U], [lp + 8 * U, cy + 3 * U], [lp - 8 * U, cy + 3 * U], [lp - 11 * U, cy + 7 * U]], a(3) + .08, a(3) + .14);
+    if (d > a(3) + .12) { X.globalAlpha = .5 + .3 * Math.sin(t * 4); shape(rectPts(lp - 6.5 * U, cy - 7.5 * U, 13 * U, 9 * U), { fill: SF.glow, stroke: null }); X.globalAlpha = 1; }
+    for (let i = 0; i < 3; i++) { const mx = (xs[i] + xs[i + 1]) / 2; part([[mx - 2.5 * U, cy], [mx + 2.5 * U, cy], [mx + 1 * U, cy - 1.5 * U], [mx + 2.5 * U, cy], [mx + 1 * U, cy + 1.5 * U]], a(i) + .18, a(i) + .23); }
+    [['CLAY', 0], ['SCROLL', 1], ['BOOK', 2], ['LAPTOP', 3]].forEach(([w, i]) => label(w, xs[i] / U, top + 37, 4.4, a(i) + .1));
+    if (d > .97) label('5,000 YEARS OF IDEAS', 50, top + 45, 4.6, .97);
+  } else if (kind === 'clear') {                                   // a tangled scribble pulls straight: clear thinking
+    const cy = (top + 22) * U, f = easeOut(seg(d, .45, .9)), pts = [];
+    for (let i = 0; i <= 80; i++) { const u = i / 80, tang = 1 - f;
+      pts.push([(14 + 72 * u + tang * 9 * Math.sin(u * 47)) * U, cy + tang * (10 * Math.sin(u * 31) + 6 * Math.cos(u * 53)) * U]); }
+    const g = seg(d, 0, .45); if (g > 0) line(g < 1 ? polySlice(pts, 0, g) : pts, { stroke: f > .9 ? SF.glow : SF.chalk, lwPx: Math.max(2, U * .9) });
+    if (f > .9) part([[86 * U, cy], [82 * U, cy - 3 * U], [86 * U, cy], [82 * U, cy + 3 * U]], .9, 1);
+    if (d > .5) { X.globalAlpha = .9 * (1 - f); label('?', 22, top + 8, 8, .5); label('?!', 70, top + 34, 7, .5); X.globalAlpha = 1; }
+    label('CLEAR THINKING', 50, top + 42, 6.2, .9);
+  } else if (kind === 'remember') {                                // a pencil writes, a brain lights up
+    const cy = (top + 22) * U, w0 = seg(d, 0, .45), sq = [];
+    for (let i = 0; i <= 40; i++) { const u = i / 40; sq.push([(10 + 30 * u) * U, cy + (3 * Math.sin(u * 28)) * U + 6 * U]); }
+    if (w0 > 0) line(w0 < 1 ? polySlice(sq, 0, w0) : sq, ch);
+    const tip = w0 > 0 && w0 < 1 ? polyAt(sq, w0) : sq[sq.length - 1];
+    X.save(); X.translate(tip[0], tip[1]); X.rotate(-.6);           // the pencil
+    shape([[0, 0], [2 * U, -3 * U], [3 * U, -2 * U]], { fill: SF.chalk, stroke: null }); part([[2 * U, -3 * U], [9 * U, -14 * U]], 0, .05); part([[3 * U, -2 * U], [10 * U, -13 * U]], 0, .05);
+    X.restore();
+    part([[44 * U, cy], [52 * U, cy], [49 * U, cy - 2.5 * U], [52 * U, cy], [49 * U, cy + 2.5 * U]], .45, .55);
+    const bx = 72 * U, ring = []; for (let i = 0; i <= 40; i++) { const a = i / 40 * TAU, r = 1 + .07 * Math.sin(a * 8); ring.push([bx + Math.cos(a) * 15 * U * r, cy + Math.sin(a) * 11 * U * r]); }
+    const lit = seg(d, .6, .85);
+    if (lit > 0) { X.globalAlpha = .55 * lit * (.8 + .2 * Math.sin(t * 5)); shape(ring, { fill: SF.glowGold, stroke: null }); X.globalAlpha = 1; }
+    part(ring, .5, .7); part([[bx, cy - 10 * U], [bx - 1.5 * U, cy - 3 * U], [bx + 1.5 * U, cy + 3 * U], [bx, cy + 10 * U]], .65, .72);
+    label('REMEMBER', 50, top + 42, 6.2, .9);
+  } else if (kind === 'explicit') {                                // a book, and an atlas page: countries → capitals
+    const bx = 22 * U, by = (top + 15) * U;
+    part([[bx, by - 9 * U], [bx - 14 * U, by - 11 * U], [bx - 14 * U, by + 9 * U], [bx, by + 11 * U], [bx + 14 * U, by + 9 * U], [bx + 14 * U, by - 11 * U], [bx, by - 9 * U], [bx, by + 11 * U]], 0, .2);
+    for (let i = 0; i < 4; i++) for (const sd of [-1, 1]) part([[bx + sd * 3 * U, by + (-5 + i * 4) * U], [bx + sd * 11 * U, by + (-6 + i * 4) * U]], .18 + i * .03, .22 + i * .03);
+    const gx = 22 * U, gy = by - 1 * U, ring = [];                 // a little globe floats up off the pages
+    for (let i = 0; i <= 30; i++) { const a = i / 30 * TAU; ring.push([gx + Math.cos(a) * 4.5 * U, gy - 15 * U + Math.sin(a) * 4.5 * U]); }
+    if (d > .22) { part(ring, .22, .3); part([[gx - 4.5 * U, gy - 15 * U], [gx + 4.5 * U, gy - 15 * U]], .28, .31); part([[gx, gy - 19.5 * U], [gx - 2 * U, gy - 15 * U], [gx, gy - 10.5 * U]], .29, .33); }
+    [['FRANCE → PARIS', 0], ['JAPAN → TOKYO', 1], ['EGYPT → CAIRO', 2], ['PERU → LIMA', 3]].forEach(([s, i]) => label(s, 70, top + 3 + i * 8.5, 5.2, .35 + i * .13));
+    label('THE WHAT · IN BOOKS', 50, top + 38, 5.6, .9);
+  } else if (kind === 'tacit') {                                   // a cartwheel in four chalk figures, and a week of practice ticks
+    const cy = (top + 15) * U;
+    const fig = (cx, ang, a0) => {
+      const r = ([x, y]) => { const c = Math.cos(ang), s = Math.sin(ang); return [cx + (x * c - y * s) * U, cy + (x * s + y * c) * U]; };
+      const P2 = pts => pts.map(r);
+      if (d < a0) return;
+      const head = []; for (let i = 0; i <= 16; i++) { const a = i / 16 * TAU; head.push(r([Math.cos(a) * 2, -9 + Math.sin(a) * 2])); }
+      part(head, a0, a0 + .05); part(P2([[0, -7], [0, 1]]), a0 + .03, a0 + .07);
+      part(P2([[-5, -10], [0, -5], [5, -10]]), a0 + .05, a0 + .09); part(P2([[-4.5, 7], [0, 1], [4.5, 7]]), a0 + .07, a0 + .11);
+    };
+    [0, Math.PI / 2, Math.PI, Math.PI * 1.5].forEach((a, i) => fig((14 + i * 21) * U, a, .05 + i * .12));
+    for (let i = 0; i < 3; i++) { const x0 = (21 + i * 21) * U; part([[x0, cy - 13 * U], [x0 + 6 * U, cy - 15 * U], [x0 + 9 * U, cy - 13 * U], [x0 + 7 * U, cy - 14.5 * U]], .1 + i * .12, .16 + i * .12); }
+    ['M', 'T', 'W', 'T', 'F'].forEach((c, i) => { const x = 22 + i * 14; label(c, x, top + 29, 5, .55 + i * .06); if (d > .62 + i * .06) label('✓', x + 4.5, top + 28, 5.5, .62 + i * .06); });
+    label('THE HOW · BY PRACTICE', 50, top + 38, 5.6, .9);
+  } else if (kind === 'testing') {                                 // code → TEST → production, with a bug caught at the test
+    [['CODE', 0], ['TEST', 1], ['PRODUCTION', 2]].forEach(([txt, i]) => {
+      const bx = (5 + i * 32) * U, bw = (i === 2 ? 26 : 22) * U, a = i * .26;
+      part([[bx, (top + 6) * U], [bx + bw, (top + 6) * U], [bx + bw, (top + 22) * U], [bx, (top + 22) * U], [bx, (top + 6) * U]], a, a + .12);
+      label(txt, (bx + bw / 2) / U, top + 14, i === 2 ? 4.4 : 5.6, a + .1);
+      if (i < 2) part([[bx + bw + 1.5 * U, (top + 14) * U], [bx + bw + 7 * U, (top + 14) * U], [bx + bw + 4.5 * U, (top + 11.5) * U], [bx + bw + 7 * U, (top + 14) * U], [bx + bw + 4.5 * U, (top + 16.5) * U]], a + .12, a + .24);
+    });
+    const tx = 48 * U, ty = (top + 31) * U, bug = [];                // under TEST: a little bug, then a big cross through it
+    for (let i = 0; i <= 20; i++) { const a2 = i / 20 * TAU; bug.push([tx + Math.cos(a2) * 4 * U, ty + Math.sin(a2) * 3 * U]); }
+    part(bug, .62, .7); for (const sd of [-1, 1]) for (const dy of [-2, 0, 2]) part([[tx + sd * 3.5 * U, ty + dy * U], [tx + sd * 7 * U, ty + (dy - 1.5) * U]], .66, .7);
+    part([[tx - 8 * U, ty - 6 * U], [tx + 8 * U, ty + 6 * U]], .74, .8); part([[tx + 8 * U, ty - 6 * U], [tx - 8 * U, ty + 6 * U]], .78, .84);
+    label('TEST FIRST!', 50, top + 41, 6.2, .9);
   }
   X.restore();
   X.restore();
@@ -1394,6 +1642,7 @@ CHARACTERS.safadi = {
     'laugh': (x, y, s, t) => { const k = Math.abs(Math.sin(t * 13)); safadi(x, y, s, { handL: [-2.2, -9.5], handR: [2.2, -9.5], handPoseL: 'fist', handPoseR: 'fist', eyes: 'squeeze', mouth: k > .5 ? 'grin' : 'open', dy: .4 * k, tilt: -.08 }); },
     'wink': (x, y, s, t) => safadi(x, y, s, { eyes: 'wink', mouth: 'grin', handR: [5.2, -13.6], handPoseR: 'thumb', brows: 'up' }),
     'walk': (x, y, s, t) => safadi(x, y, s, { ...safadiWalk(t * 1.6), mouth: 'smile', turn: -.15 }),
+    'greek': (x, y, s, t) => safadi(x, y, s, { outfit: 'greek', mouth: sfTalk(t), brows: 'up', handR: [5.8, -21.4], handPoseR: 'point', handL: [-5.3, -12.4], handPoseL: 'palm' }),
     'shrug': (x, y, s, t) => safadi(x, y, s, { handL: [-5.0, -13.4], handR: [5.0, -13.4], handPoseL: 'palm', handPoseR: 'palm', brows: 'worried', mouth: 'smirk', tilt: .12, emote: '?', emoteK: 1 }),
   },
 };
@@ -2555,7 +2804,7 @@ const JENNA_SCALE = 1.06; // a small overall size increase, including the face
 const JE = {
   ink: '#29221F',
   skin: '#F4C09E', skinDk: '#CC8F76', cheek: '#DE9991', nose: '#BB806A',
-  hair: '#543722', hairDk: '#201C19', hairLt: '#51443A',
+  hair: '#543722', hairDk: '#331F12', hairLt: '#80583A',
   shirt: '#F5D6D9', shirtDk: '#DDB0BC',
   skirtBase: '#DFA4AE', skirtTulle: '#F1C1C8',
   shoe: '#F2B8C6', shoeTop: '#E6A5B5', shoeSole: '#FFFFFF', sock: '#FFFFFF',
@@ -3211,63 +3460,105 @@ class SoccerAudio {
 
 // Source: game.js
 (() => {
-const WIDTH = 960, HEIGHT = 540;
+const WIDTH = 960, HEIGHT = 496;
 const bound = (n,a,b) => Math.max(a,Math.min(b,n));
 const distance = (a,b) => Math.hypot(a.x-b.x,a.y-b.y);
 class Match {
-  constructor(hero='sami') { this.reset(hero); }
-  reset(hero=this.hero) {
-    this.events=[]; this.hero=hero; this.state='ready'; this.time=90; this.clock=0; this.score=[0,0]; this.cooldown=0; this.stamina=1; this.notice=''; this.celebration=0; this.kickoff();
+  constructor(hero='sami',team=0) { this.reset(hero,team); }
+  reset(hero=this.hero,team=this.team??0) {
+    this.events=[]; this.team=team; this.hero=hero; this.state='ready'; this.time=90; this.clock=0; this.score=[0,0]; this.cooldown=0; this.stamina=1; this.notice=''; this.celebration=0; this.kickoff();
   }
   kickoff() {
-    this.player={id:this.hero,x:235,y:320,face:1,moving:false};
-    this.kids=[{id:'housam',x:510,y:270},{id:'danny',x:615,y:390},{id:'jenna',x:700,y:225},{id:'alma',x:850,y:315}];
-    this.ball={x:260,y:320,z:0,vx:0,vy:0,vz:0,owner:'player',lock:0}; this.cooldown=.4;
+    this.grownups=[{id:this.hero,team:0,x:235,y:320,face:1,moving:false},
+      {id:this.hero==='sami'?'safadi':'sami',team:0,x:165,y:235,face:1,moving:false}];
+    this.kids=[{id:'housam',x:510,y:270},{id:'danny',x:615,y:390},{id:'jenna',x:700,y:225},{id:'alma',x:850,y:315}].map(k=>({...k,team:1,face:-1,moving:false}));
+    this.player=this.team===0?this.grownups[0]:this.kids[0];
+    this.ball={x:this.player.x+(this.team===0?20:-20),y:this.player.y,z:0,vx:0,vy:0,vz:0,owner:this.player.id,lock:0}; this.cooldown=.4;
     if(this.state==='playing') this.events.push('kickoff');
   }
   drainEvents() { return this.events.splice(0); }
   start() { this.state='playing'; this.events.push('kickoff'); }
   pause() { if(this.state==='playing') this.state='paused'; }
   resume() { if(this.state==='paused') this.state='playing'; }
-  goal(team) { this.events.push(team===0?'goal':'kids-goal'); this.score[team]++; this.celebration=1.8; this.notice=team===0?'GOOOAL!':'KIDS’ TEAM SCORES!'; this.ball.owner=null; this.ball.vx=0; this.ball.vy=0; }
+  goal(team) { this.events.push(team===0?'goal':'kids-goal'); this.score[team]++; this.celebration=1.8; this.notice=team===0?'GROWN-UPS SCORE!':'KIDS’ TEAM SCORES!'; this.ball.owner=null; this.ball.vx=0; this.ball.vy=0; }
   shoot(chip,aim=0) {
     const b=this.ball;
-    if(b.owner!=='player'||this.cooldown>0) return false;
-    b.owner=null; b.vx=chip?440:620; b.vy=(315-b.y)*.68+aim*105; b.vz=chip?260:0; b.z=chip?5:0; b.lock=.22; this.cooldown=.4;
+    if(b.owner!==this.player.id||this.cooldown>0) return false;
+    b.owner=null; b.vx=(this.player.team===0?1:-1)*(chip?440:620); b.vy=(315-b.y)*.68+aim*105; b.vz=chip?260:0; b.z=chip?5:0; b.lock=.22; this.cooldown=.4;
     this.events.push(chip?'chip':'shot'); this.notice=chip?'CHIP SHOT!':'SHOT!'; return true;
+  }
+  get actors() { return [...this.grownups,...this.kids]; }
+  pass() {
+    const b=this.ball,p=this.player;
+    if(b.owner!==p.id||this.cooldown>0) return false;
+    const target=this.actors.filter(a=>a.team===p.team&&a!==p).sort((a,c)=>distance(a,p)-distance(c,p))[0];
+    const dx=target.x-b.x,dy=target.y-b.y,length=Math.hypot(dx,dy)||1;
+    b.owner=null; b.vx=dx/length*360; b.vy=dy/length*360; b.z=0; b.vz=0; b.lock=.12;
+    this.cooldown=.35; this.events.push('shot'); this.notice='PASS!'; return true;
+  }
+  takeBall(actor) {
+    const old=this.player;
+    this.ball.owner=actor.id; if(actor.team===this.team) this.player=actor; this.ball.lock=.6; this.cooldown=.25;
+    this.notice=actor.team===this.team?'TEAMMATE ON THE BALL!':'POSSESSION CHANGES!';
   }
   update(dt,input={}) {
     if(this.state!=='playing') return;
     this.clock+=dt;
     if(this.celebration>0) { this.celebration-=dt; if(this.celebration<=0) { this.kickoff(); this.notice='KICK OFF!'; } return; }
     this.time=Math.max(0,this.time-dt);
-    if(this.time<=0) { this.events.push('fulltime'); this.state='finished'; this.notice=this.score[0]>this.score[1]?'WORLD CHAMPION!':this.score[0]===this.score[1]?'HONORS EVEN!':'KIDS’ TEAM WINS!'; return; }
+    if(this.time<=0) { this.events.push('fulltime'); this.state='finished'; this.notice=this.score[this.team]>this.score[1-this.team]?'WORLD CHAMPION!':this.score[0]===this.score[1]?'HONORS EVEN!':`${this.team===0?'KIDS':'GROWN-UPS'}’ TEAM WINS!`; return; }
     this.cooldown=Math.max(0,this.cooldown-dt);
-    const p=this.player,b=this.ball;
+    const b=this.ball;
+    const owner=this.actors.find(a=>a.id===b.owner);
+    if(owner?.team===this.team) this.player=owner;
+    else {
+      this.player=this.actors.filter(a=>a.team===this.team).sort((a,c)=>distance(a,b)-distance(c,b))[0];
+    }
+    const p=this.player;
     let dx=Number(!!input.right)-Number(!!input.left),dy=Number(!!input.down)-Number(!!input.up),mag=Math.hypot(dx,dy);
     const sprint=input.sprint&&this.stamina>.03&&mag>0;
     this.stamina=bound(this.stamina+(sprint?-.38:.23)*dt,0,1);
     p.moving=mag>0;
     if(mag) { const speed=sprint?240:163; p.x=bound(p.x+dx/mag*speed*dt,85,865); p.y=bound(p.y+dy/mag*speed*dt,174,462); if(dx) p.face=Math.sign(dx); }
     if(input.chip||input.shoot) this.shoot(!!input.chip,dy);
-    // Housam presses the ball; Danny and Jenna cover passing lanes. Alma guards the right goal.
-    const nearest=[...this.kids.slice(0,3)].sort((a,c)=>distance(a,b)-distance(c,b))[0];
-    for(const [i,k] of this.kids.entries()) {
-      let tx,ty,speed;
-      if(k.id==='alma') { tx=850; ty=bound(b.y,264,378); speed=125; }
-      else if(b.owner===k.id) { tx=105; ty=315; speed=114; }
-      else if(k===nearest) { tx=b.x; ty=b.y; speed=k.id==='housam'?130:115; }
-      else { tx=bound(b.x+95+i*60,350,770); ty=bound(b.y+(i===1?100:-95),190,445); speed=88; }
-      const ax=tx-k.x,ay=ty-k.y,l=Math.hypot(ax,ay); k.moving=l>4; k.face=ax<0?-1:1;
-      if(l>4) { k.x+=ax/l*speed*dt; k.y+=ay/l*speed*dt; }
+    if(input.pass) this.pass();
+    // Opposing carriers dribble toward their goal and shoot within range.
+    if(owner && owner.team!==this.team) {
+      const direction=owner.team===0?1:-1, target=owner.team===0?865:95;
+      const dx=target-owner.x,dy=315-owner.y,length=Math.hypot(dx,dy)||1;
+      owner.x+=dx/length*114*dt; owner.y+=dy/length*114*dt; owner.face=direction; owner.moving=true;
+      if((owner.team===0?owner.x>650:owner.x<310)&&b.lock===0) {
+        b.owner=null; b.vx=direction*440; b.vy=(315-owner.y)*1.4; b.vz=0; b.z=0; b.lock=.25;
+        this.events.push('shot'); this.notice='OPPONENT SHOOTS!';
+      }
+    }
+    // Every off-ball actor supports, marks, or chases a loose ball.
+    for(const team of [0,1]) {
+      const others=this.actors.filter(a=>a.team===team&&a!==p&&a!==owner);
+      const nearest=[...others].sort((a,c)=>distance(a,b)-distance(c,b))[0];
+      for(const [i,a] of others.entries()) {
+        const direction=team===0?1:-1;
+        let tx,ty,speed=112;
+        if(!b.owner || team!==(owner?.team??p.team)) {
+          if(a===nearest) { tx=b.x; ty=b.y; speed=138; }
+          else { tx=bound(b.x-direction*(100+i*45),105,850); ty=bound(b.y+(i%2?85:-85),190,445); }
+        } else {
+          tx=bound((owner??p).x+direction*(110+i*45),110,850); ty=bound((owner??p).y+(i%2?90:-90),190,445); speed=132;
+        }
+        if(a.id==='alma'&&a!==nearest) { tx=850; ty=bound(b.y,264,378); }
+        const dx=tx-a.x,dy=ty-a.y,length=Math.hypot(dx,dy);
+        a.moving=length>4; if(dx) a.face=Math.sign(dx);
+        if(length>4) { const move=Math.min(length,speed*dt); a.x+=dx/length*move; a.y+=dy/length*move; }
+      }
     }
     b.lock=Math.max(0,b.lock-dt);
-    if(b.owner==='player') { b.x=p.x+20; b.y=p.y; b.z=0;
-      if(this.cooldown===0) for(const k of this.kids) if(distance(k,b)<23) { b.owner=k.id; b.lock=.65; this.events.push('steal'); this.notice=`${k.id.toUpperCase()} STEALS!`; break; }
-    } else if(b.owner) {
-      const k=this.kids.find(k=>k.id===b.owner); b.x=k.x-18; b.y=k.y; b.z=0;
-      if(b.lock===0&&distance(p,b)<33) { b.owner='player'; this.cooldown=.3; this.events.push('tackle'); this.notice='GREAT TACKLE!'; }
-      else if(k.x<340||(k.id==='alma'&&b.lock===0)) { this.events.push('shot'); b.owner=null; b.vx=-390; b.vy=(315-b.y)*1.4; b.vz=0; b.lock=.25; }
+    if(b.owner) {
+      const carrier=this.actors.find(a=>a.id===b.owner);
+      b.x=carrier.x+(carrier.team===0?20:-20); b.y=carrier.y; b.z=0;
+      if(b.lock===0&&this.cooldown===0) {
+        const tackler=this.actors.find(a=>a.team!==carrier.team&&distance(a,b)<24);
+        if(tackler) { this.takeBall(tackler); this.events.push('steal'); }
+      }
     } else {
       b.x+=b.vx*dt; b.y+=b.vy*dt; b.z=Math.max(0,b.z+b.vz*dt); b.vz-=490*dt;
       if(b.z===0) { b.vz=0; b.vx*=Math.pow(.83,dt); b.vy*=Math.pow(.83,dt); }
@@ -3277,8 +3568,9 @@ class Match {
         b.x=bound(b.x,70,890); b.vx*=-.7; this.events.push('bounce'); this.notice=b.z>=65?'OVER THE BAR!':'OFF THE BOARDS!';
       }
       if(b.lock===0&&b.z<23) {
-        if(distance(p,b)<29) { b.owner='player'; this.cooldown=.2; }
-        else for(const k of this.kids) if(distance(k,b)<(k.id==='alma'?30:22)) { b.owner=k.id; b.lock=.65; this.events.push(k.id==='alma'?'save':'steal'); this.notice=k.id==='alma'?'ALMA SAVES!':''; break; }
+        const receiver=this.actors.filter(a=>distance(a,b)<(a.id==='alma'?30:26)).sort((a,c)=>distance(a,b)-distance(c,b))[0];
+        if(receiver) { this.takeBall(receiver); this.events.push(receiver.id==='alma'?'save':'tackle'); }
+
       }
     }
   }
@@ -3297,34 +3589,68 @@ for(const id of Object.keys(rigs)) {
     rigs[id](60,108,scales[id],{...walks[id](frame/2),t:T,boil:0,noShadow:true,giraffe:false,mouth:'smile',lookX:id==='sami'||id==='safadi'?.4:-.4});OVERLAYS=[];return c;
   });
 }
-for(const id of ['sami','safadi']) $('portrait-'+id).src=sprites[id][0].toDataURL();
+for(const id of ['sami','housam']) $('portrait-'+id).src=sprites[id][0].toDataURL();
 X=ctx;
-const keys=new Set(),pointers=new Map(); let last=0,accumulator=0,previousNotice='',hero='sami';
-const mapping={ArrowUp:'up',KeyW:'up',ArrowDown:'down',KeyS:'down',ArrowLeft:'left',KeyA:'left',ArrowRight:'right',KeyD:'right',Space:'shoot',KeyX:'chip',ShiftLeft:'sprint',ShiftRight:'sprint'};
-function release(){keys.clear();pointers.clear();document.querySelectorAll('[data-control]').forEach(b=>b.classList.remove('active'));}
+const keys=new Set(),pointers=new Map(); let last=0,accumulator=0,previousNotice='',hero='sami',team=0;
+const mapping={ArrowUp:'up',KeyW:'up',ArrowDown:'down',KeyS:'down',ArrowLeft:'left',KeyA:'left',ArrowRight:'right',KeyD:'right',KeyC:'pass',Space:'shoot',KeyX:'chip',ShiftLeft:'sprint',ShiftRight:'sprint'};
+function release(){resetJoystick();keys.clear();pointers.clear();document.querySelectorAll('[data-control]').forEach(b=>b.classList.remove('active'));}
 function controls(){const result={};for(const k of keys) result[mapping[k]]=true;for(const v of pointers.values())for(const direction of v.split('-'))result[direction]=true;return result;}
 function announce(message){$('announcement').textContent=message;}
-function choose(id){release();audio.stop();hero=id;match.reset(id);document.querySelectorAll('[data-hero]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.hero===id)));sync();}
-document.querySelectorAll('[data-hero]').forEach(b=>b.onclick=()=>choose(b.dataset.hero));
-function start(){audio.stop();audio.unlock();release();if(match.state==='paused')match.resume();else{match.reset(hero);match.start();}sync();canvas.focus({preventScroll:true});}
+function choose(value){release();audio.stop();team=Number(value);match.reset(hero,team);document.querySelectorAll('[data-team]').forEach(b=>b.setAttribute('aria-pressed',String(Number(b.dataset.team)===team)));sync();}
+document.querySelectorAll('[data-team]').forEach(b=>b.onclick=()=>choose(b.dataset.team));
+function start(){audio.stop();audio.unlock();release();if(match.state==='paused')match.resume();else{match.reset(hero,team);match.start();}sync();canvas.focus({preventScroll:true});}
 function pause(){audio.stop();release();if(match.state==='playing')match.pause();else if(match.state==='paused')match.resume();sync();}
 $('sound').onclick=()=>{audio.enabled=!audio.enabled;if(audio.enabled)audio.unlock();else audio.stop();$('sound').textContent=`Sound: ${audio.enabled?'on':'off'}`;$('sound').setAttribute('aria-pressed',String(audio.enabled));};
-$('start').onclick=start;$('pause').onclick=pause;$('restart').onclick=()=>{match.reset(hero);start();};
-$('choose').onclick=()=>{audio.stop();release();match.reset(hero);sync();document.querySelector(`[data-hero="${hero}"]`).focus();};
+$('start').onclick=start;$('pause').onclick=pause;$('restart').onclick=()=>{match.reset(hero,team);start();};
+$('choose').onclick=()=>{audio.stop();release();match.reset(hero,team);sync();document.querySelector(`[data-team="${team}"]`).focus();};
 window.addEventListener('keydown',e=>{
   const focused=/^(BUTTON|A|INPUT)$/.test(e.target.tagName);
   if(e.code==='KeyP'&&!focused){e.preventDefault();pause();return;}
   if(mapping[e.code]&&match.state==='playing'&&!focused){e.preventDefault();keys.add(e.code);}
 });
 window.addEventListener('keyup',e=>keys.delete(e.code));
+
+const joystick = document.querySelector('.joystick');
+let steeringPointer = null;
+function resetJoystick() {
+  steeringPointer = null;
+  joystick.classList.remove('active');
+  joystick.style.setProperty('--stick-x', '0px');
+  joystick.style.setProperty('--stick-y', '0px');
+  joystick.dataset.direction = '';
+}
+function steer(e) {
+  const r = joystick.getBoundingClientRect(), radius = r.width / 2;
+  const dx = e.clientX - r.x - radius, dy = e.clientY - r.y - radius;
+  const distance = Math.hypot(dx, dy), travel = radius * .5;
+  const scale = distance > travel ? travel / distance : 1;
+  joystick.style.setProperty('--stick-x', `${dx * scale}px`);
+  joystick.style.setProperty('--stick-y', `${dy * scale}px`);
+  const directions = [];
+  if (distance > radius * .18) {
+    if (Math.abs(dy) > distance * .38) directions.push(dy < 0 ? 'up' : 'down');
+    if (Math.abs(dx) > distance * .38) directions.push(dx < 0 ? 'left' : 'right');
+  }
+  const direction = directions.join('-');
+  pointers.set(e.pointerId, direction);
+  joystick.dataset.direction = direction;
+
+}
+joystick.addEventListener('pointerdown', e => {
+  if (match.state !== 'playing' || steeringPointer !== null || (e.pointerType === 'mouse' && e.button !== 0)) return;
+  audio.unlock();
+  e.preventDefault(); steeringPointer = e.pointerId;
+  joystick.setPointerCapture(e.pointerId); joystick.classList.add('active'); steer(e);
+});
+joystick.addEventListener('pointermove', e => { if (steeringPointer === e.pointerId) { e.preventDefault(); steer(e); } });
+function endSteering(e) {
+  if (steeringPointer !== e.pointerId) return;
+  pointers.delete(e.pointerId); resetJoystick();
+}
+for (const event of ['pointerup', 'pointercancel', 'lostpointercapture']) joystick.addEventListener(event, endSteering);
 for(const b of document.querySelectorAll('[data-control]')){
   b.addEventListener('pointerdown',e=>{if(match.state!=='playing'||(e.pointerType==='mouse'&&e.button!==0))return;audio.unlock();e.preventDefault();b.setPointerCapture(e.pointerId);pointers.set(e.pointerId,b.dataset.control);b.classList.add('active');});
   const feedback=()=>document.querySelectorAll('[data-control]').forEach(button=>button.classList.toggle('active',[...pointers.values()].includes(button.dataset.control)));
-  b.addEventListener('pointermove',e=>{
-    if(!pointers.has(e.pointerId)||!b.closest('.dpad'))return;
-    const target=document.elementFromPoint(e.clientX,e.clientY)?.closest('.dpad [data-control]');
-    if(target){pointers.set(e.pointerId,target.dataset.control);feedback();}
-  });
   const end=e=>{pointers.delete(e.pointerId);feedback();};
   b.addEventListener('pointerup',end);b.addEventListener('pointercancel',end);b.addEventListener('lostpointercapture',end);
 }
@@ -3334,18 +3660,18 @@ function sync(){
   document.body.classList.toggle('play-session',match.state!=='ready');
   const ready=match.state==='ready',paused=match.state==='paused',finished=match.state==='finished';
   $('overlay').hidden=match.state==='playing';$('selection').hidden=!ready;$('result-copy').hidden=!finished;
-  $('overlay-title').textContent=ready?'CHOOSE YOUR CHAMPION':paused?'HALF-TIME BREATHER':match.notice;
+  $('overlay-title').textContent=ready?'CHOOSE YOUR TEAM':paused?'HALF-TIME BREATHER':match.notice;
   $('overlay-label').textContent=paused?'TAKE YOUR TIME':'SCENE 32 · SCREEN TIME';
-  $('result-copy').textContent=`${names[hero]} ${match.score[0]} — ${match.score[1]} Kids’ Team. ${match.score[0]>match.score[1]?'A trophy for your “research.” Now go play outside!':'The kids demand a rematch. Will you answer? '}`;
+  $('result-copy').textContent=`Grown-ups ${match.score[0]} — ${match.score[1]} Kids’ Team. ${match.score[team]>match.score[1-team]?'Your team takes the trophy! Now go play outside!':'Time for a rematch?'}`;
   $('start').textContent=ready?'KICK OFF →':paused?'RESUME →':'PLAY AGAIN →';
   $('pause').disabled=ready||finished;$('pause').textContent=paused?'Resume':'Pause';
-  $('player-name').textContent=names[hero].toUpperCase();
+  $('player-name').textContent='GROWN-UPS';
   $('player-score').textContent=match.score[0];$('kids-score').textContent=match.score[1];
   const seconds=Math.ceil(match.time);$('timer').textContent=`${Math.floor(seconds/60)}:${String(seconds%60).padStart(2,'0')}`;
   $('stamina').value=match.stamina;
-  $('status').textContent=ready?'CHOOSE YOUR PLAYER':paused?'MATCH PAUSED':finished?'FULL TIME':match.ball.owner==='player'?'YOUR BALL · ATTACK RIGHT →':match.notice||'WIN THE BALL!';
+  $('status').textContent=ready?'CHOOSE YOUR TEAM':paused?'MATCH PAUSED':finished?'FULL TIME':match.ball.owner===match.player.id?`${names[match.player.id].toUpperCase()} · ${match.player.team===0?'GROWN-UPS · ATTACK →':'KIDS · ← ATTACK'}`:match.ball.owner?'DEFEND · WIN THE BALL!':match.notice||'CHASE THE BALL!';
   const notice=match.state==='playing'?match.notice:match.state;
-  if(notice!==previousNotice){previousNotice=notice;announce(ready?'Choose Dr. Sami or Professor Safadi.':paused?'Match paused.':finished?match.notice:notice);}
+  if(notice!==previousNotice){previousNotice=notice;announce(ready?'Choose team grown-ups or team kids.':paused?'Match paused.':finished?match.notice:notice);}
 }
 function rect(x,y,w,h,color){ctx.fillStyle=color;ctx.fillRect(x,y,w,h);}
 function line(x1,y1,x2,y2,color='#d7edc2',width=2){ctx.strokeStyle=color;ctx.lineWidth=width;ctx.beginPath();ctx.moveTo(x1,y1);ctx.lineTo(x2,y2);ctx.stroke();}
@@ -3358,11 +3684,12 @@ function goal(x){
   line(x,244,x+32,244,'#f7f4d9',4);line(x,244,x,392,'#f7f4d9',4);line(x+32,244,x+32,392,'#f7f4d9',4);
 }
 function render(){
-  ctx.setTransform(2,0,0,2,0,0);rect(0,0,960,540,'#102f38');
+  // Crop the 44 logical pixels vacated by the removed spectator rows.
+  ctx.setTransform(2,0,0,2,0,-88);rect(0,44,WIDTH,HEIGHT,'#102f38');
   // Stadium tiers, colored spectators and warm floodlights.
-  for(let row=0;row<4;row++){
-    rect(0,20+row*22,960,18,row%2?'#224550':'#193b46');
-    for(let i=0;i<70;i++){const h=hash(i+row*79);oval(8+i*14,29+row*22+Math.sin(match.clock*3+i)*1.3,3.5,4,['#dfb58c','#e0c565','#62bfa8','#a3baca','#c57583'][Math.floor(h*5)]);}
+  for(let row=0;row<2;row++){
+    rect(0,64+row*22,960,18,row%2?'#224550':'#193b46');
+    for(let i=0;i<70;i++){const h=hash(i+row*79);oval(8+i*14,73+row*22+Math.sin(match.clock*3+i)*1.3,3.5,4,['#dfb58c','#e0c565','#62bfa8','#a3baca','#c57583'][Math.floor(h*5)]);}
   }
   rect(0,108,960,34,'#09282d');label('WORLD CHAMPION',480,131,19,'#f6d57b');label('SAFADIS’ CUP',155,130,12,'#b6d7cb');label('KIDS’ TEAM · HOME END',795,130,11,'#b6d7cb');
   rect(38,148,884,340,'#1d7460');
@@ -3371,21 +3698,21 @@ function render(){
   ctx.beginPath();ctx.ellipse(480,315,75,64,0,0,Math.PI*2);ctx.stroke();oval(480,315,3,3,'#d7edc2');
   ctx.strokeRect(70,224,120,182);ctx.strokeRect(770,224,120,182);ctx.strokeRect(70,268,45,90);ctx.strokeRect(845,268,45,90);
   oval(160,315,3,3,'#d7edc2');oval(800,315,3,3,'#d7edc2');goal(38);goal(890);
-  label('← DEFEND',170,513,11,'#95c7b1');label('DRIBBLE. DODGE. CHIP. GLORY.',480,513,11,'#e0cc8c');label('ATTACK →',790,513,11,'#e7d57a');
-  const actors=[match.player,...match.kids].sort((a,b)=>a.y-b.y);
+  label('← KIDS ATTACK',170,513,11,'#95c7b1');label('DRIBBLE. DODGE. CHIP. GLORY.',480,513,11,'#e0cc8c');label('GROWN-UPS ATTACK →',790,513,11,'#e7d57a');
+  const actors=match.actors.sort((a,b)=>a.y-b.y);
   for(const actor of actors){
     const player=actor===match.player,frame=actor.moving?Math.floor(match.clock*9)%4:0;
     oval(actor.x,actor.y+2,20,6,'#092c3545');
     if(player){ctx.strokeStyle='#ffe58e';ctx.lineWidth=2;ctx.beginPath();ctx.ellipse(actor.x,actor.y,24,9,0,0,Math.PI*2);ctx.stroke();}
     ctx.save();ctx.translate(actor.x,actor.y);if(actor.face<0)ctx.scale(-1,1);ctx.drawImage(sprites[actor.id][frame],-60,-108,120,120);ctx.restore();
     const top=actor.y-(actor.id==='alma'?70:actor.id==='danny'?72:90);
-    label(player?'▼ YOU':names[actor.id].toUpperCase(),actor.x,top,9,player?'#ffe58e':'#fff2e1');
+    label(player?'▼ YOU':names[actor.id].toUpperCase(),actor.x,top,9,player?'#ffe58e':actor.team===0?'#9ee5ff':'#ffbbb8');
   }
   const b=match.ball;oval(b.x,b.y+4,9+b.z*.02,3,'#092c3566');
   ctx.save();ctx.translate(b.x,b.y-8-b.z);ctx.rotate(b.x*.08);oval(0,0,8,8,'#fff9e6');ctx.strokeStyle='#172c35';ctx.lineWidth=1;ctx.stroke();
   for(let i=0;i<5;i++){const a=i*Math.PI*2/5;oval(Math.cos(a)*5,Math.sin(a)*5,2,2,'#172c35');}oval(0,0,2.7,2.7,'#172c35');ctx.restore();
   if(match.celebration>0){rect(200,195,560,105,'#082b32ed');label(match.notice,480,258,34,'#ffe18a');}
-  if(match.state==='playing'&&match.clock<4)label('RUN INTO THE BALL TO DRIBBLE · ATTACK THE RIGHT GOAL →',480,185,11,'#fff0b1');
+  if(match.state==='playing'&&match.clock<4)label('CONTROL FOLLOWS THE BALL · C TO PASS · GROWN-UPS → / ← KIDS',480,185,11,'#fff0b1');
 }
 function frame(now){const elapsed=last?Math.min((now-last)/1000,.1):0;last=now;accumulator+=elapsed;while(accumulator>=1/60){match.update(1/60,controls());for(const event of match.drainEvents())audio.play(event);accumulator-=1/60;}sync();render();requestAnimationFrame(frame);}
 sync();requestAnimationFrame(frame);

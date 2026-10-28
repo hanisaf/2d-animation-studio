@@ -167,17 +167,17 @@ await page.click(await page.$eval('#fighter-select', e => e.hidden) ? '#restart'
 await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
 const beforeTouch = await playerCenter();
 const touchSession = await page.createCDPSession();
-const touchPoints = await page.$$eval('[data-control="right"], [data-control="fire"]', buttons => buttons.map((button,id) => {
-  const r=button.getBoundingClientRect(); return {x:r.x+r.width/2,y:r.y+r.height/2,id:id+1};
+const touchPoints = await page.$$eval('.joystick, [data-control="fire"]', buttons => buttons.map((button,id) => {
+  const r=button.getBoundingClientRect(); return {x:r.x+r.width*(button.classList.contains('joystick')?.8:.5),y:r.y+r.height/2,id:id+1};
 }));
 await touchSession.send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints});
-assert.equal(await page.$eval('[data-control="right"]', e=>e.classList.contains('active')),true);
+assert.equal(await page.$eval('.joystick', e=>e.classList.contains('active')),true);
 assert.equal(await page.$eval('[data-control="fire"]', e=>e.classList.contains('active')),true);
 await new Promise(r=>setTimeout(r,700));
 await touchSession.send('Input.dispatchTouchEvent',{type:'touchCancel',touchPoints:[]});
 const afterTouch = await playerCenter();
 assert.ok(afterTouch > beforeTouch + 150, `touch moves Neptune while firing: ${beforeTouch} → ${afterTouch}`);
-assert.equal(await page.$eval('[data-control="right"]',e=>e.classList.contains('active')),false);
+assert.equal(await page.$eval('.joystick',e=>e.classList.contains('active')),false);
 assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth <= innerWidth), true);
 await page.screenshot({path: '/tmp/robo-v2-mobile.png',fullPage:true});
 await checkGameTouch(page, 'robo-invaders');

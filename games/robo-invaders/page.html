@@ -27,11 +27,12 @@
       <canvas id="game" width="1920" height="1080" tabindex="0" aria-label="Move your hero with arrow keys or A and D. Hold Space to fire. P pauses."></canvas>
       <div class="overlay" id="overlay"><p class="eyebrow" id="overlay-label">PLAYER 1: PROF. SAFADI</p><h2 id="overlay-title">ROBO INVASION!</h2><p id="overlay-copy">Raise your trident. Clear the Robo-Safadis.<br>Three crowns. Endless waves. Rainbow power.</p><button id="start">Start game <span>↗</span></button></div>
       <div id="wave-notice" hidden>WAVE CLEARED</div>
+<div class="touch" aria-label="Touch controls"><div class="joystick joystick-horizontal" role="group" aria-label="Touch and slide left or right to steer"><span class="joystick-knob"></span></div><div class="actions"><button data-control="fire" class="fire">ZAP! ✦</button></div></div>
     </div>
     <div class="console"><span><i></i> <span id="state-label">READY WHEN YOU ARE</span></span><button id="sound" aria-pressed="true">Sound: on</button><button id="choose-hero">Choose hero</button><button id="pause" disabled>Pause</button><button id="restart">Restart</button></div>
   </section>
-  <div class="touch" aria-label="Touch controls"><button data-control="left" aria-label="Move left">←</button><button data-control="right" aria-label="Move right">→</button><button data-control="fire" class="fire">ZAP! ✦</button></div>
-  <footer><p class="touch-help">Hold ← or → and ZAP together to move while firing.</p><p><kbd>←</kbd> <kbd>→</kbd> move <span>·</span> <kbd>SPACE</kbd> fire <span>·</span> <kbd>P</kbd> pause</p><p>Inspired by Scene 32 · Screen Time. <span class="mint">Eight heroes. One robot invasion.</span></p></footer>
+
+  <footer><p class="touch-help">Slide the joystick left or right and hold ZAP together to move while firing.</p><p><kbd>←</kbd> <kbd>→</kbd> move <span>·</span> <kbd>SPACE</kbd> fire <span>·</span> <kbd>P</kbd> pause</p><p>Inspired by Scene 32 · Screen Time. <span class="mint">Eight heroes. One robot invasion.</span></p></footer>
   <p class="sr-only" id="announcement" aria-live="polite"></p>
 </main>
 <script src="../../engine/core.js"></script>

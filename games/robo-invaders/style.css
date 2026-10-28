@@ -81,3 +81,30 @@ button { min-height: 44px; min-width: 44px; }
   .play-session header, .play-session .title, .play-session .intro, .play-session footer { display: none; }
   .play-session main { padding-top: max(8px, env(safe-area-inset-top)); }
 }
+
+/* Gameplay controls sit inside the field, with settings in the console below. */
+.screen .touch { position: absolute; inset: 0; margin: 0; pointer-events: none; display: block; }
+.screen .joystick, .screen .actions { position: absolute; bottom: 10px; pointer-events: auto; }
+.screen .joystick { left: 10px; width: clamp(80px, 18vw, 112px); height: clamp(80px, 18vw, 112px); border: 2px solid #ffe29199; border-radius: 50%; background: #071b2466; touch-action: none; transform: none; }
+.joystick-knob { position: absolute; left: 25%; top: 25%; width: 50%; height: 50%; border-radius: 50%; border: 2px solid #ffe291; background: #ffe29177; transform: translate(var(--stick-x, 0px), var(--stick-y, 0px)); pointer-events: none; }
+.screen .actions { right: 10px; display: grid; grid-template-columns: repeat(2, minmax(44px, 1fr)); gap: 6px; width: auto; }
+.screen .actions button { min-width: 44px; min-height: 44px; width: auto; height: auto; margin: 0; padding: 8px; background: #123534cc; }
+.screen .actions .primary, .screen .actions .fire { grid-column: 1 / -1; min-width: 76px; color: #ffe291; border-color: #ffe291; }
+.screen.selecting .touch, .screen:has(.overlay:not([hidden])) .touch { display: none; }
+@media (any-pointer: coarse) and (orientation: landscape) and (max-height: 600px) {
+  .play-session main { display: block; max-width: calc((100dvh - 154px) * 16 / 9 + 32px); }
+}
+
+/* Show the single movement axis while retaining a circular thumb target. */
+.joystick-horizontal::before { content: ''; position: absolute; left: 12%; right: 12%; top: calc(50% - 2px); height: 4px; border-radius: 2px; background: #ffe29199; pointer-events: none; }
+
+/* Reclaim title space throughout a game session on every screen size. */
+.play-session .intro { display: none; }
+
+/* Prevent long-press selection and image dragging during touch play. */
+*, *::before, *::after {
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+}
+img, a { -webkit-user-drag: none; }
