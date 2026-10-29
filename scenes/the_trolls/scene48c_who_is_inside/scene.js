@@ -1,7 +1,7 @@
-// Scene 48c: "The Trolls · Who's Inside?", a third take on the finale of The Trolls series, about 3 minutes at 120 bpm (beats at
-// 0 + 0.5 n s, bars of 2 s). Seven of Alma's monsters take the stage one at a time. Every costume is drawn the same size and
+// Scene 48c: "The Trolls · Who's Inside?", a third take on the finale of The Trolls series, 3:34 at 120 bpm (beats at
+// 0 + 0.5 n s, bars of 2 s), cut to the Lyria song in audio.mp3. Seven of Alma's monsters take the stage one at a time. Every costume is drawn the same size and
 // nobody's legs, shoes or hands show, so nothing gives the wearer away. Each monster sings the audience a tongue-twister riddle
-// (told on screen in picture cards only: there are no speech bubbles or lyrics, so any recording of the song fits), the audience
+// (told on screen in picture cards only: there are no speech bubbles or lyrics, so the song can be re-recorded without touching the picture), the audience
 // gets two beats to guess, then the costume pops off and the follow-up twister says who it was while they show off. The cast is
 // the Safadi brothers and the kids only. Every section start is a constant below. Every shot is a pure function of t.
 (() => {
@@ -12,10 +12,10 @@
   const CRAY = ['#E5466E', '#FF8A3D', '#E0A800', '#4DA650', '#2E7D9A', '#6A3FB0'];
 
   // ---------- sections (seconds) ----------
-  const S_STAGE = 6, S_R = 12, RL = 20, S_RECAP = 152, S_DANCE = 160, S_END = 174, END = 180;
-  const R0 = i => S_R + RL * i;                                                 // riddle i starts here (7 riddles, 10 bars each)
+  const S_STAGE = 6, S_R = 12, RL = 24, S_RECAP = 180, S_DANCE = 190, S_END = 208, END = 214;
+  const R0 = i => S_R + RL * i;                                                 // riddle i starts here (7 riddles, 12 bars each)
   // inside a riddle: the monster drops in, the twister (twice: then faster, the cards twisting), two beats to guess, POP, the answer
-  const L_RID = 2, L_FAST = 6, L_GUESS = 10, L_POP = 12, L_CARDS_OFF = 15.5, L_OUT = 19.5;
+  const L_RID = 2, L_FAST = 9.5, L_GUESS = 17.5, L_POP = 18.5, L_CARDS_OFF = 22, L_OUT = 23.5;
   const FLOOR = H * .86, COSTUME_H = 560;
 
   // ---------- helpers ----------
@@ -238,7 +238,9 @@
   }
 
   // ---------- the riddles: the costume, its picture clues, its colour, and what the answer shows off ----------
-  // Each `act(x, y, s, t, a)` draws the person, a seconds after the POP (0 … 7.5).
+  // Each `act(x, y, s, t, a)` draws the person at show time a (0 … 7.5), from SHOW below: the song leaves 5 s between the POP and the
+  // wipe, so the first move (0.5–3.5) plays at double speed and the rest 1.5 s early, still on the beat.
+  const SHOW = a => a < .5 ? a : a < 2 ? .5 + 2 * (a - .5) : a + 1.5;
   const tada = (n, x, y, s, t, a) => RIG[n](x, y, s, { t, eyes: 'happy', mouth: 'grin', brows: 'up', handL: [-4.6, -19], handR: [4.6, -19], handPoseL: 'palm', handPoseR: 'palm', jump: .8 * Math.sin(Math.PI * clamp(a / .5)) });
   const RID = {
     danny: { clues: ['ball', 'block', 'tower'], col: '#4DA650', act(x, y, s, t, a) {
@@ -329,7 +331,7 @@
       stage(t, { theme: R.col, reveal: rv });
       const C = [0, 1, 2].map(j => cardAt(j, lt, t));
       C.forEach((c, j) => { if (!c.front) card(R.clues[j], c.x, c.y, c.sc, t, c); });
-      if (lt >= L_POP) R.act(W / 2, FLOOR, sOf(name), t, lt - L_POP);
+      if (lt >= L_POP) R.act(W / 2, FLOOR, sOf(name), t, SHOW(lt - L_POP));
       // the monster: drops in, sings on the beat, wobbles as the twister speeds up, trembles while you guess, then POP
       const drop = 1 - backOut(clamp(lt / .45)), sing = hop(t), wob2 = fast * Math.sin(t * 9);
       const A = costume(kind, W / 2, FLOOR - drop * 900 - (lt > .45 && lt < L_GUESS ? 26 * sing : 0), COSTUME_H, t, {
@@ -385,17 +387,18 @@
       if (mode === 'laugh') RIG[n](x, FLOOR, s, { t, eyes: 'happy', mouth: b > .5 ? 'grin' : 'open', brows: 'up', handL: [-2.6, -10.5], handR: [2.6, -10.5], dy: -.3 * b, tilt: .08 * Math.sin(t * 6 + i) });
       else tada(n, x, FLOOR, s, t, 1); });
   }
+  const P_POP = 8.25;                                                          // the sung "pop pop pop…", one face per half beat
   function recap(t) {
-    const lt = t - S_RECAP, offAt = i => 4 + i * .5;
+    const lt = t - S_RECAP, offAt = i => P_POP + i * .25;
     camBegin(W / 2, FLOOR - 330, 1.0, 0);
-    stage(t, { theme: '#E58AB8', reveal: ease(seg(lt, 3.8, 4.4)), noSign: lt > 4 });
+    stage(t, { theme: '#E58AB8', reveal: ease(seg(lt, P_POP - .2, P_POP + .4)), noSign: lt > P_POP });
     ORDER.forEach((n, i) => { const o = seg(lt, offAt(i), offAt(i) + .7); if (o > 0) { const s = sOf(n, 2.05), b = hop(t, 1, i * .3);
-        RIG[n](LX(i), FLOOR, s, lt > 7.2 ? { t, eyes: 'happy', mouth: b > .5 ? 'grin' : 'open', brows: 'up', handL: [-4.6, -19], handR: [4.6, -19], handPoseL: 'palm', handPoseR: 'palm', jump: .6 * b } : { t, eyes: 'happy', mouth: 'grin', brows: 'up', handL: [-4.6, -19], handR: [4.6, -19], handPoseL: 'palm', handPoseR: 'palm' }); } });
+        RIG[n](LX(i), FLOOR, s, lt > offAt(i) + .5 ? { t, eyes: 'happy', mouth: b > .5 ? 'grin' : 'open', brows: 'up', handL: [-4.6, -19], handR: [4.6, -19], handPoseL: 'palm', handPoseR: 'palm', jump: .6 * b } : { t, eyes: 'happy', mouth: 'grin', brows: 'up', handL: [-4.6, -19], handR: [4.6, -19], handPoseL: 'palm', handPoseR: 'palm' }); } });
     ORDER.forEach((n, i) => { const kk = backOut(clamp((lt - i * .5) / .3)); if (kk <= 0) return;
       costume(COST[n], LX(i), FLOOR - 20 * hop(t, 1, i * .25), 270 * kk, t, { sq: .05 * hop(t, 1, i * .25), off: seg(lt, offAt(i), offAt(i) + .7) }); });
     camEnd();
     ORDER.forEach((n, i) => { burst(LX(i), FLOOR - 200, t, S_RECAP + offAt(i), CRAY[i % 6], 10, 200); });
-    confetti(t, S_RECAP + 4, 50, 5);
+    confetti(t, S_RECAP + P_POP, 50, 5);
   }
   const DANCE = {                                                                // everyone's move, changing every two bars
     alma: (x, s, t, ph) => alma(x, FLOOR, s, { t, ...almaDance(t, ['disco', 'twirl', 'star jump', 'floss'][ph], { bpm: 120 }), power: 1, eyes: 'star' }),
