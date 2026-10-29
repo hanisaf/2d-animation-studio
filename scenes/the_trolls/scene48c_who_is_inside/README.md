@@ -13,20 +13,20 @@
 ## What's different from 48 and 48b
 
 - **No hints at all.** Every costume is drawn the same height, and there are no legs, shoes or hands under it. Nobody's size gives them away either.
-- **No words on screen.** There are no speech bubbles and no karaoke, so any recording fits. Each riddle is told with three picture cards. On the reveal the cards flip over and each gets a green tick. The only text in the whole video is the title, the riddle numbers 1–7, Housam's curve equation, Safadi's chalkboard and THE END.
-- **One riddle at a time,** each one 24 s (12 bars). The monster drops in. Its twister runs once, then again while the cards spin around it. The lights go down for two beats while the audience guesses. Then POP, and the answer shows off for 5 s.
+- **Pictures and the karaoke only.** There are no speech bubbles. Each riddle is told with three picture cards, and the song's words run along the bottom in a karaoke strip (`lyrics.js`, as in scene 48). On the reveal the cards flip over and each gets a green tick. Apart from the karaoke, the only text is the title, the riddle numbers 1–7, Housam's curve equation, Safadi's chalkboard and THE END.
+- **One riddle at a time,** each one 24 s (12 bars). The monster drops in. Its twister runs once, then again while the cards spin around it. The lights go down for a bar while the audience guesses. Then POP, and the answer shows off for 5.5 s.
 
 ## The riddle, beat by beat (every riddle, `L_…` in `scene.js`, measured on the song)
 
 | Local time | Bars | What you see | What the song should do |
 |---|---|---|---|
-| 0–2 | 1 | the costume drops into the spotlight, a ? beside it, the number badge | a hit and "Who's this?" |
-| 2–9.5 | ~4 | three picture cards pop in, one per bar | the riddle twister, first time |
-| 9.5–17.5 | 4 | the cards spin around the monster, faster and faster; the camera rocks | the same twister again |
-| 17.5–18.5 | ½ | lights down, the costume trembles, ? ? and three dots light up | the music drops out |
-| 18.5 | | POP: flash, starburst, the costume flies off spinning, the stage turns the answer's colour | the crash; "It's …!" |
-| 19.3–20.9 | | the three cards flip over and get a green tick, one per beat | the answer twister |
-| 18.5–23.5 | 2½ | the answer shows off (below), its first move at double speed (`SHOW` in `scene.js`) | the answer twister, twice |
+| 0–2 | 1 | the costume drops into the spotlight, a ? beside it, the number badge | a hit and "Who's this?" (~0.75) |
+| 2–10 | 4 | three picture cards pop in, one per bar | the riddle twister, first time |
+| 10–16 | 3 | the cards spin around the monster, faster and faster; the camera rocks | the same twister again |
+| 16–18 | 1 | lights down, the costume trembles, ? ? and three dots light up | "Who's inside? Who's inside?" |
+| 18 | | POP: flash, starburst, the costume flies off spinning, the stage turns the answer's colour | the crash; "It's …!" |
+| 18.8–20.4 | | the three cards flip over and get a green tick, one per beat | the answer twister |
+| 18–23.5 | 2¾ | the answer shows off (below), its first move at double speed (`SHOW` in `scene.js`) | the answer twister, twice (again at ~21.5) |
 | 23.5–24 | | a colour wipe | |
 
 ## Sections
@@ -42,13 +42,13 @@
 | 108–132 | `riddle(4)` | 5 · the cat → **Sarah** |
 | 132–156 | `riddle(5)` | 6 · the owl → **Doctor Sami** |
 | 156–180 | `riddle(6)` | 7 · the bat → **Professor Safadi**, and his twin slides in |
-| 180–190 | `recap` | the seven costumes drop into a line ("All seven monsters line up to dance!"), the encore begins at 184 ("Here they are! Let's give a cheer!"), then they pop off one per half beat to the sung "pop pop pop…" (188.25–189.75): all seven faces |
+| 180–190 | `recap` | the seven costumes drop into a line ("All seven monsters line up to dance!"), the encore begins at 184 ("Here they are! Let's give a cheer!"), then they pop off one per half beat to the sung "pop pop pop…" (188.5–190): all seven faces |
 | 190–208 | `dance` | the crash and the chorus: each one does their own moves, the empty costumes bounce over their heads like beach balls |
 | 208–214 | `theEnd` | the music drops out, everyone laughing, THE END, iris out |
 
 ## The seven riddles
 
-These are the lyrics Lyria was given (nothing is written on screen); it sings them close to this, with a few slips ("Super Sarah, sighing, spiking"). Each riddle twister is sung twice (2–9.5 s, then again at 9.5–17.5 s). The answer twister starts on the POP.
+These are the lyrics Lyria was given and the karaoke shows (`lyrics.js`). Housam is spelled "Hussam" in the prompt so that Lyria sings it the Arabic way (حُسام, HOO-sam), not "HOW-sam". Each riddle twister is sung twice (2–10 s, then again at 10–16 s). The answer twister starts on the POP.
 
 | # | Costume | Picture cards | Riddle twister | Answer twister | What they show off |
 |---|---|---|---|---|---|
@@ -66,7 +66,8 @@ Finale (184–214), the encore take: *Here they are! Let's give a cheer! / Pop p
 
 ## Notes for editing (`scene.js`)
 
-- **Timing:** the section constants (`S_…`, `R0(i)`, `RL`), the riddle's inner beats (`L_RID`, `L_FAST`, `L_GUESS`, `L_POP`, `L_CARDS_OFF`, `L_OUT`) and the recap's pops (`P_POP`), all measured on `audio.mp3`. With a new take of the song, measure it again (`lyria/README.md`) and move them.
+- **Timing:** the section constants (`S_…`, `R0(i)`, `RL`), the riddle's inner beats (`L_RID`, `L_FAST`, `L_GUESS`, `L_POP`, `L_CARDS_OFF`, `L_OUT`) and the recap's pops (`P_POP`), all measured on `audio.mp3`. With a new take of the song, measure it again (`lyria/README.md`), move them, and re-time `lyrics.js`.
+- **Karaoke:** `WI_LYRICS` in `lyrics.js`, one row per sung line: `[text, word start times, end]`. `wiKaraoke(t)` draws the strip; every shot calls it last (`withKaraoke`).
 - **Riddles:** `RID[name]` holds each riddle's three `clues` (pictures in `ICON`), its colour `col` and `act(x, y, s, t, a)`, which draws the answer at show time `a` (`SHOW(seconds after the POP)`, 0 … 7.5). The order is `ORDER`.
 - **Costumes:** `costume(kind, x, y, h, t, o)` draws a drawing standing on (x, y), always `h` px tall (wide ones are fitted to the same width), with `sq`, `rot`, `shake` and `off` (0–1: it flies off). Without the PNGs it draws `STAND[kind]`.
 - **Cards:** `cardAt(j, lt)` choreographs the three cards: home slots, the orbit, the row on top, the flip and tick, then away at `L_CARDS_OFF`. `card(icon, …)` draws one. Keep them as pictures only.

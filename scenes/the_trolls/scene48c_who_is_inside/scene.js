@@ -1,8 +1,8 @@
 // Scene 48c: "The Trolls · Who's Inside?", a third take on the finale of The Trolls series, 3:34 at 120 bpm (beats at
 // 0 + 0.5 n s, bars of 2 s), cut to the Lyria song in audio.mp3. Seven of Alma's monsters take the stage one at a time. Every costume is drawn the same size and
 // nobody's legs, shoes or hands show, so nothing gives the wearer away. Each monster sings the audience a tongue-twister riddle
-// (told on screen in picture cards only: there are no speech bubbles or lyrics, so the song can be re-recorded without touching the picture), the audience
-// gets two beats to guess, then the costume pops off and the follow-up twister says who it was while they show off. The cast is
+// (told on screen in picture cards; the words are only in the karaoke strip from lyrics.js), the audience
+// gets a bar to guess, then the costume pops off and the follow-up twister says who it was while they show off. The cast is
 // the Safadi brothers and the kids only. Every section start is a constant below. Every shot is a pure function of t.
 (() => {
   const ME = ASSETS.scene.scene48c_who_is_inside;
@@ -15,7 +15,7 @@
   const S_STAGE = 6, S_R = 12, RL = 24, S_RECAP = 180, S_DANCE = 190, S_END = 208, END = 214;
   const R0 = i => S_R + RL * i;                                                 // riddle i starts here (7 riddles, 12 bars each)
   // inside a riddle: the monster drops in, the twister (twice: then faster, the cards twisting), two beats to guess, POP, the answer
-  const L_RID = 2, L_FAST = 9.5, L_GUESS = 17.5, L_POP = 18.5, L_CARDS_OFF = 22, L_OUT = 23.5;
+  const L_RID = 2, L_FAST = 10, L_GUESS = 16, L_POP = 18, L_CARDS_OFF = 21.5, L_OUT = 23.5;
   const FLOOR = H * .86, COSTUME_H = 560;
 
   // ---------- helpers ----------
@@ -238,7 +238,7 @@
   }
 
   // ---------- the riddles: the costume, its picture clues, its colour, and what the answer shows off ----------
-  // Each `act(x, y, s, t, a)` draws the person at show time a (0 … 7.5), from SHOW below: the song leaves 5 s between the POP and the
+  // Each `act(x, y, s, t, a)` draws the person at show time a (0 … 7.5), from SHOW below: the song leaves 5.5 s between the POP and the
   // wipe, so the first move (0.5–3.5) plays at double speed and the rest 1.5 s early, still on the beat.
   const SHOW = a => a < .5 ? a : a < 2 ? .5 + 2 * (a - .5) : a + 1.5;
   const tada = (n, x, y, s, t, a) => RIG[n](x, y, s, { t, eyes: 'happy', mouth: 'grin', brows: 'up', handL: [-4.6, -19], handR: [4.6, -19], handPoseL: 'palm', handPoseR: 'palm', jump: .8 * Math.sin(Math.PI * clamp(a / .5)) });
@@ -387,7 +387,7 @@
       if (mode === 'laugh') RIG[n](x, FLOOR, s, { t, eyes: 'happy', mouth: b > .5 ? 'grin' : 'open', brows: 'up', handL: [-2.6, -10.5], handR: [2.6, -10.5], dy: -.3 * b, tilt: .08 * Math.sin(t * 6 + i) });
       else tada(n, x, FLOOR, s, t, 1); });
   }
-  const P_POP = 8.25;                                                          // the sung "pop pop pop…", one face per half beat
+  const P_POP = 8.5;                                                           // the sung "pop pop pop…", one face per half beat
   function recap(t) {
     const lt = t - S_RECAP, offAt = i => P_POP + i * .25;
     camBegin(W / 2, FLOOR - 330, 1.0, 0);
@@ -437,10 +437,12 @@
     iris(W / 2, H / 2, lerp(1500, 0, easeIn(seg(t, END - 1.8, END - .3))));
   }
 
+  // every shot ends with the karaoke strip on top
+  const withKaraoke = fn => (t, lt, dur) => { fn(t, lt, dur); wiKaraoke(t); };
   scene({ duration: END, fps: 24, bpm: 120,
     shots: [
       [0, title], [S_STAGE, onStage],
       ...ORDER.map((n, i) => [R0(i), riddle(i)]),
       [S_RECAP, recap], [S_DANCE, dance], [S_END, theEnd],
-    ] });
+    ].map(([t0, fn]) => [t0, withKaraoke(fn)]) });
 })();

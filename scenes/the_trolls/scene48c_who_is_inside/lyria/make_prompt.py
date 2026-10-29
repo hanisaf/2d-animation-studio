@@ -9,7 +9,7 @@ R = [
   ('pink ghost', "Pink ghost glides and twirls and swirls, a sparkly spinning sight! Who dances dizzy disco and drew these monsters late at night?",
    "It's Alma! Amazing Alma, the artist who drew us all!"),
   ('blue bird', "Blue bird flips the ball up high and figures how it flies! Who counts curves and kicks the goal with numbers in his eyes?",
-   "It's Housam! High-flying Housam, the hat-trick math whiz!"),
+   "It's Hussam! High-flying Hussam, the hat-trick math whiz!"),
   ('bee', "Busy bee bends backwards, bounces, buzzing bright! Who cartwheels quick, then sketches comic heroes left and right?",
    "It's Jenna! Jolly Jenna, jumping, drawing jokes!"),
   ('cat', "Stripy cat saws sixty sticks and sends a speedy text! Who spikes the ball and shakes her hair, the rebel coming next?",
@@ -20,7 +20,7 @@ R = [
    "It's Professor Safadi! ...and his twin brother too!"),
 ]
 ts = lambda s: f"{int(s)//60}:{int(s)%60:02d}" + (f".{int(round((s%1)*10))}" if s % 1 else "")
-out = [f"""An original, silly, high-energy kids' cartoon game-show pop song, "Who's Inside?", for an animated music video. Exactly {END} seconds ({ts(END)}), a strict steady 120 BPM in 4/4 the whole way through (one bar = 2 seconds), no tempo changes, so the video can be cut on the beat. Bright bouncy game-show pop: punchy drums, slap bass, brass stabs, glockenspiel, handclaps, a bubbly synth lead. Voices: two goofy grown-up men (twin brothers), bright kids, and a whole audience of children as a choir shouting the questions. Clean, clear English diction, kid-friendly, the singers really trip over the tongue twisters and giggle.
+out = [f"""An original, silly, high-energy kids' cartoon game show pop song, "Who's Inside?", for an animated music video. Exactly {END} seconds ({ts(END)}), a strict steady 120 BPM in 4/4 the whole way through (one bar = 2 seconds), no tempo changes, so the video can be cut on the beat. Bright bouncy game-show pop: punchy drums, slap bass, brass stabs, glockenspiel, handclaps, a bubbly synth lead. Voices: two goofy grown-up men (twin brothers), bright kids, and a whole audience of children as a choir shouting the questions. Clean, clear English diction, kid-friendly, the singers really trip over the tongue twisters and giggle.
 
 The song repeats the same {BARS[RL // 2]}-bar riddle structure seven times, one for each monster costume. Keep every section boundary exactly on the timestamps below.
 
