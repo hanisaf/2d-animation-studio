@@ -26,6 +26,9 @@ brag-output/
 !docs/**/*.png
 !docs/**/*.jpg
 !assets/*.jpg
+# source art a scene draws at render time
+!scenes/**/costumes/*.png
+!scenes/the_trolls/scene47_troll_analytics/alma_monsters.jpg
 
 # ---- dependencies (reinstall with: npm install; ffmpeg-static is OS-specific) ----
 node_modules/
