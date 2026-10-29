@@ -9,5 +9,6 @@ series({
     'scene47_troll_analytics',
     'scene48_the_trolls',
     'scene48b_guess_who',
+    'scene48c_who_is_inside',
   ],
 });
