@@ -152,7 +152,7 @@ try {
     window.testOfflineContexts = [];
     const NativeOffline = window.OfflineAudioContext;
     window.OfflineAudioContext = class extends NativeOffline { constructor(...args) { super(...args); testOfflineContexts.push(this); } };
-    studio.select('scene', 'scene40_access_recirculation');
+    return studio.select('scene', 'scene40_access_recirculation');
   });
   await studio.click('#exp-js-sound');
   try {
