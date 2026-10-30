@@ -1,7 +1,7 @@
 // Self-contained scene bundles. Source stays ordinary JavaScript: no eval or remote runtime.
 async function exportSceneJavaScript({ id, sound = false, signal, onProgress = () => {} }) {
-  const sc = SCENES[id];
-  if (!sc) throw new Error('Unknown scene ' + id);
+  if (!ASSETS.scene[id]) throw new Error('Unknown scene ' + id);
+  const sc = await requireScene(id);
   if (location.protocol === 'file:') throw new Error('Start the studio with npm run studio to export JavaScript');
   const stop = () => { if (signal?.aborted) throw new DOMException('Export cancelled', 'AbortError'); };
   const read = async path => {

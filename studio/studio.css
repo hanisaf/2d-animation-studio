@@ -17,6 +17,8 @@ html, body { margin: 0; height: 100%; background: var(--bg); }
 #side li { padding: 7px 10px; border-radius: 8px; cursor: pointer; display: flex; align-items: center; gap: 8px; }
 #side li:hover { background: var(--panel2); }
 #side li.on { background: var(--sel); }
+#side li.loading { cursor: progress; opacity: .6; }
+#side li.loading .sub::before { content: 'loading… '; }
 #side li .ico { width: 18px; text-align: center; opacity: .85; }
 #side li .sub { color: var(--muted); font-size: 11px; margin-left: auto; white-space: nowrap; }
 #side li.grp { cursor: default; padding: 8px 10px 3px; font-size: 12px; font-weight: 700; color: var(--muted); }
@@ -71,7 +73,7 @@ input[type=range] { accent-color: var(--accent); }
 .progress .track { flex: 1; height: 8px; background: var(--panel2); border-radius: 99px; overflow: hidden; }
 .progress .bar { height: 100%; width: 0; background: linear-gradient(90deg, var(--accent2), var(--accent)); }
 #status { font-size: 12.5px; color: var(--muted); }
-#status.ok { color: var(--ok); } #status.warn { color: var(--warn); }
+#status.ok { color: var(--ok); } #status.warn { color: var(--warn); } #panel > .warn { color: var(--warn); }
 
 /* movie composer */
 #panel:has(.movie-clips) { display: block; }

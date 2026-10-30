@@ -5,6 +5,6 @@ asset({
   files: ['scene.js'],                          // the shots
   docs: 'README.md',                            // synopsis, script, shot list, notes for editing
   audio: 'audio.mp3',                           // optional: drop the soundtrack here
-  cast: ['jester_fester'],                      // character ids (the studio links them)
-  locations: ['throne_room'],                   // location ids
+  cast: ['jester_fester'],                      // every character the scene draws (the studio loads them with it)
+  locations: ['throne_room'],                   // every location the scene draws
 });

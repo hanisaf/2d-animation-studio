@@ -485,8 +485,8 @@ asset({
   docs: 'README.md',                                // the description / script (default README.md)
   refs: ['reference.webp'],                         // reference art in this folder (characters, locations)
   audio: 'audio.mp3',                               // scenes: soundtrack (optional; silence if missing)
-  cast: ['princess_pearl', 'jester_fester'],        // scenes: character ids (the studio cross-links them)
-  locations: ['throne_room'],                       // scenes: location ids
+  cast: ['princess_pearl', 'jester_fester'],        // scenes: every character the scene draws (the studio loads them)
+  locations: ['throne_room'],                       // scenes: every location the scene draws
   uses: ['scene01_juggling'],                       // scenes: earlier scenes whose helper files this one borrows (optional)
 });
 ```
@@ -506,7 +506,7 @@ series({
 
 `registry.js` lists the series (`series`) and the ones whose scenes, in order, make the movie (`movieSeries`). Adding a scene only touches its own series' file, so people working on different series don't edit the same lines. Numbering is up to each series; scene ids (the folder names) must be unique across all series, and the studio stops with an error if two series use the same one.
 
-**Loading.** The studio first runs every `series.js`, then, for each folder (characters → locations → scenes), loads `asset.js` and the files it lists. So a scene can use any character or location.
+**Loading.** The studio first runs every `series.js` and every `asset.js` (small, so the sidebar and the cross-links are ready at once). An asset's code loads only when it is needed: a character or location when you open it, a scene when you open it, together with its `cast`, its `locations` and its `uses` scenes (followed all the way). So **list every character and location a scene draws in its `cast` and `locations`**; one that's missing works only by luck (when something else already loaded it). A scene without a `cast` list loads every character and location. The files of one folder still run in the order of `files`.
 
 A scene can also call helpers defined in an earlier scene's files (scene 20 draws scene 17's Halloween props). The studio loads every scene, so that just works there; list those scenes in `uses` so **Export JavaScript**, which bundles one scene on its own, includes their helper files (everything but their `scene.js`).
 

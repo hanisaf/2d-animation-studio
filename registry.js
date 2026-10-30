@@ -7,7 +7,7 @@
 //   scenes/<series>/<id>/       a scene (shots, script, storyboard, optional audio) · calls scene({...})
 // Scenes are grouped into series. scenes/<series>/series.js gives the series a title and a category and lists its
 // scene folders in order, so adding a scene only touches that series' file. Scene ids stay unique across all series.
-// Folders load in this order: characters → locations → scenes, so scenes may use any character or location.
+// The studio reads every asset.js up front but loads an asset's code on demand: a scene brings its cast, locations and uses.
 
 const REGISTRY = {
   characters: ['jester_fester', 'princess_pearl', 'safadi', 'alma', 'dragon', 'housam', 'danny', 'sami', 'jenna', 'robo_safadi', 'clawd', 'student', 'neptune', 'sarah', 'roudaynah', 'patrick', 'dr_g'],

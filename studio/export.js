@@ -11,6 +11,7 @@
 async function exportVideo({ scenes, fps, bitrate = 8e6, onProgress = () => {}, signal } = {}) {
   if (!('VideoEncoder' in window)) throw new Error('This browser has no WebCodecs video encoder. Use Chrome or Edge, or render with: node render.mjs --build');
   if (!window.Mp4Muxer) throw new Error('mp4-muxer is not loaded. Run: npm install');
+  await Promise.all(scenes.map(clip => ASSETS.scene[clip.id ?? clip] && requireScene(clip.id ?? clip)));
   const list = scenes.map(clip => {
     const id = typeof clip === 'string' ? clip : clip.id, scene = SCENES[id];
     if (!scene) throw new Error('unknown scene ' + id);
