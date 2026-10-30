@@ -20,7 +20,8 @@ try {
   await page.goto(`http://127.0.0.1:${server.address().port}/studio.html`);
   await page.waitForFunction(() => window.ready && window.studio);
   const results = await page.evaluate(async () => {
-    studio.select('character', REGISTRY.characters[0]);
+    await loadAll();                                   // the studio loads characters on demand; this test walks all of them
+    await studio.select('character', REGISTRY.characters[0]);
     if (!document.querySelector('#exp-svg')) throw Error('Missing SVG export button');
     const backdrop = document.querySelector('#bd');
     backdrop.value = 'transparent'; backdrop.dispatchEvent(new Event('change'));

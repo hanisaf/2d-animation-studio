@@ -1,6 +1,6 @@
 // studio/studio.js: Safadi Animation Studio.
 //
-// Loads every asset in registry.js, then offers three browsers:
+// Reads every asset manifest in registry.js, then offers three browsers (an asset's code loads when it is first shown):
 //   Scenes      play / scrub / step, shot timeline, audio preview, export the scene or the whole movie to MP4
 //   Docs        every asset's README (description, script, API) beside it, cross-linked; project docs in the sidebar
 //   Characters  any registered pose big (on paper or standing in a location at true scale), or the full model sheet
@@ -10,16 +10,17 @@
 
 (async () => {
   const $ = s => document.querySelector(s);
-  const load = src => new Promise((ok, bad) => { const s = document.createElement('script'); s.src = src; s.onload = ok; s.onerror = () => bad(new Error('failed to load ' + src)); document.body.appendChild(s); });
-  await loadAssets(load);                                            // every asset folder: asset.js, then its files
+  await loadManifests();                                             // every series.js and asset.js; code loads on demand
 
   const canvas = $('#out'); X = canvas.getContext('2d');
   await Promise.race([Promise.all([document.fonts.load('600 50px Fredoka'), document.fonts.load('50px "Luckiest Guy"')]), new Promise(r => setTimeout(r, 6000))]);
 
   // ---------- renderer API (used by render.mjs) ----------
   const q = new URLSearchParams(location.search);
-  useScene(q.get('scene') || REGISTRY.movie[0]);
-  window.setScene = id => { if (!useScene(id)) throw new Error('unknown scene ' + id); return sceneInfo(); };
+  const first = ASSETS.scene[q.get('scene')] ? q.get('scene') : REGISTRY.movie[0];
+  if (q.has('render')) { await requireScene(first); useScene(first); }
+  window.setScene = async id => { if (!ASSETS.scene[id]) throw new Error('unknown scene ' + id); await requireScene(id); useScene(id); return sceneInfo(); };
+  window.loadAsset = loadAsset; window.requireScene = requireScene; window.loadAll = loadAll;
   window.sceneInfo = () => ({ id: SCENE.id, title: SCENE.title, duration: SCENE.duration, fps: SCENE.fps, audio: SCENE.audio || null, synthesizedAudio: !!(SCENE.music || SCENE.dialogue?.length) });
   window.renderAt = async (t, type = 'image/png', qual = .92) => { drawFrame(t); return canvas.toDataURL(type, qual); };
   window.renderSheet = async (times, cols = 3, w = 640) => {
@@ -44,7 +45,7 @@
   const movieClips = (() => {
     try {
       const saved = JSON.parse(localStorage.getItem('studio.movie') || '[]');
-      return Array.isArray(saved) ? saved.filter(c => SCENES[c.id] && Number.isFinite(c.start) && Number.isFinite(c.end) && c.start >= 0 && c.end <= SCENES[c.id].duration && c.end > c.start) : [];
+      return Array.isArray(saved) ? saved.filter(c => ASSETS.scene[c.id] && Number.isFinite(c.start) && Number.isFinite(c.end) && c.start >= 0 && c.end > c.start) : [];
     } catch { return []; }
   })();
   const movieDuration = () => movieClips.reduce((n, c) => n + c.end - c.start, 0);
@@ -62,22 +63,45 @@
   // ---------- sidebar ----------
   const META = (kind, id) => ASSETS[kind][id] || { id, title: id, refs: [] };
   const PROJECT_DOCS = [['README.md', 'Project README'], ['SERIES.md', 'Series bible'], ['ANIMATION_GUIDE.md', 'Animation guide'], ['docs/HANDBOOK.md', 'Handbook']];
+  // The sidebar is built from the manifests; the counts in each item's subtitle fill in once that asset's code has loaded.
+  const sub = (mode, id) => {
+    if (mode === 'scene') { const n = REGISTRY.movie.indexOf(id); return [n >= 0 && '#' + (n + 1), SCENES[id] && SCENES[id].duration + 's'].filter(Boolean).join(' · '); }
+    if (mode === 'character') return CHARACTERS[id] ? `${Object.keys(CHARACTERS[id].poses || {}).length} poses` : '';
+    if (mode === 'location') return LOCATIONS[id] ? `${Object.keys(LOCATIONS[id].cameras || {}).length} cams` : '';
+    return id.split('/').pop();
+  };
+  const refreshSubs = () => document.querySelectorAll('#side li[data-mode]').forEach(el => { const s = el.querySelector('.sub'); if (s) s.textContent = sub(el.dataset.mode, el.dataset.id); });
   function buildSidebar() {
-    const movie = REGISTRY.movie, li = (mode, id, ico, title, sub, tip) => `<li data-mode="${mode}" data-id="${esc(id)}" title="${esc(tip || '')}"><span class="ico">${ico}</span>${esc(title)}<span class="sub">${sub}</span></li>`;
+    const li = (mode, id, ico, title, tip) => `<li data-mode="${mode}" data-id="${esc(id)}" title="${esc(tip || '')}"><span class="ico">${ico}</span>${esc(title)}<span class="sub">${esc(sub(mode, id))}</span></li>`;
     // Scenes grouped by category, then series (headings are plain items without data-mode, so they don't select anything).
-    const sceneLi = id => { const m = META('scene', id), n = movie.indexOf(id); return li('scene', id, '🎬', m.title, `${n >= 0 ? '#' + (n + 1) + ' · ' : ''}${SCENES[id].duration}s`, m.logline); };
+    const sceneLi = id => { const m = META('scene', id); return li('scene', id, '🎬', m.title, m.logline); };
     const categories = [...new Set(REGISTRY.series.map(sid => SERIES[sid].category))];
     $('#list-scenes').innerHTML = categories.map(cat => `<li class="grp cat">${esc(cat || 'Uncategorized')}</li>` +
       REGISTRY.series.filter(sid => SERIES[sid].category === cat).map(sid => `<li class="grp" title="${esc(SERIES[sid].logline || '')}">${esc(SERIES[sid].title)}</li>` +
-        SERIES[sid].scenes.filter(id => SCENES[id]).map(sceneLi).join('')).join('')).join('');
-    $('#list-characters').innerHTML = REGISTRY.characters.filter(id => CHARACTERS[id]).map(id => { const m = META('character', id); return li('character', id, '🎭', m.title, `${Object.keys(CHARACTERS[id].poses || {}).length} poses`, m.logline); }).join('');
-    $('#list-locations').innerHTML = REGISTRY.locations.filter(id => LOCATIONS[id]).map(id => { const m = META('location', id); return li('location', id, '🏰', m.title, `${Object.keys(LOCATIONS[id].cameras || {}).length} cams`, m.logline); }).join('');
-    $('#list-docs').innerHTML = PROJECT_DOCS.map(([f, t]) => li('doc', f, '📄', t, f.split('/').pop(), f)).join('');
+        SERIES[sid].scenes.filter(id => ASSETS.scene[id]).map(sceneLi).join('')).join('')).join('');
+    $('#list-characters').innerHTML = REGISTRY.characters.filter(id => ASSETS.character[id]).map(id => { const m = META('character', id); return li('character', id, '🎭', m.title, m.logline); }).join('');
+    $('#list-locations').innerHTML = REGISTRY.locations.filter(id => ASSETS.location[id]).map(id => { const m = META('location', id); return li('location', id, '🏰', m.title, m.logline); }).join('');
+    $('#list-docs').innerHTML = PROJECT_DOCS.map(([f, t]) => li('doc', f, '📄', t, f)).join('');
     document.querySelectorAll('#side li[data-mode]').forEach(el => el.onclick = () => select(el.dataset.mode, el.dataset.id));
   }
 
-  function select(mode, id, keepT = false) {
+  // Load what a view needs before showing it: a scene and everything it uses, a character, a location, or every scene
+  // in the movie composer. The previous view stays up (its sidebar item marked) until the new one is ready.
+  let selecting = 0;
+  const need = (mode, id) => mode === 'scene' ? requireScene(id)
+    : mode === 'character' ? Promise.all([loadAsset(mode, id), S.char.backdrop && ASSETS.location[S.char.backdrop] && loadAsset('location', S.char.backdrop)])
+    : mode === 'location' ? Promise.all([loadAsset(mode, id), S.loc.character && loadAsset('character', S.loc.character)])
+    : mode === 'movie' ? Promise.all(movieClips.map(c => requireScene(c.id)))
+    : Promise.resolve();
+  async function select(mode, id, keepT = false) {
     if (S.exporting) return;
+    const ticket = ++selecting, item = document.querySelector(`#side li[data-mode="${mode}"][data-id="${CSS.escape(id)}"]`);
+    item?.classList.add('loading');
+    try { await need(mode, id); }
+    catch (e) { console.error(e); if (ticket === selecting) $('#panel').innerHTML = `<p class="warn">⚠ ${esc(e.message)}</p>`; return; }
+    finally { item?.classList.remove('loading'); refreshSubs(); }
+    if (ticket !== selecting || S.exporting) return;
+    if (mode === 'movie') movieClips.splice(0, movieClips.length, ...movieClips.filter(c => c.end <= SCENES[c.id].duration));
     if (S.mode !== 'doc' && S.id) S.last = [S.mode, S.id];
     pause(); S.mode = mode; S.id = id; if (!keepT) S.t = 0;
     document.querySelectorAll('#side li').forEach(li => li.classList.toggle('on', li.dataset.mode === mode && li.dataset.id === id));
@@ -124,7 +148,7 @@
   $('#doc').addEventListener('click', e => {
     const a = e.target.closest('a[data-href]'); if (!a) return;
     const h = a.dataset.href.split('#')[0], m = /^(characters|locations|scenes)\/([\w-]+)\/README\.md$/.exec(h);
-    if (m) { e.preventDefault(); const kind = { characters: 'character', locations: 'location', scenes: 'scene' }[m[1]]; if ((kind === 'scene' ? SCENES : kind === 'character' ? CHARACTERS : LOCATIONS)[m[2]]) select(kind, m[2]); return; }
+    if (m) { e.preventDefault(); const kind = { characters: 'character', locations: 'location', scenes: 'scene' }[m[1]]; if (ASSETS[kind][m[2]]) select(kind, m[2]); return; }
     if (/\.md$/.test(h) && !/^[a-z]+:/i.test(h)) { e.preventDefault(); select('doc', h); return; }
     if (a.getAttribute('href').startsWith('#')) return;
     e.preventDefault(); window.open(a.href, '_blank');
@@ -305,12 +329,12 @@
     const duration = movieDuration();
     $('#panel').innerHTML = `
       <div class="head"><div class="txt"><h2>Movie composer</h2><div class="muted">Choose scenes, trim each clip, and arrange the movie in playback order. Changes are saved in this browser.</div></div></div>
-      <div class="row"><select id="add-scene" aria-label="Scene to add">${REGISTRY.scenes.filter(id => SCENES[id]).map(id => `<option value="${esc(id)}">${esc(META('scene', id).title)}</option>`).join('')}</select><button id="add-clip" class="accent">Add scene</button><button id="load-movie">Load registry order</button><button id="clear-movie" ${movieClips.length ? '' : 'disabled'}>Clear</button><span class="spacer"></span><span class="muted mono">${movieClips.length} clips · ${fmt(duration)} s</span></div>
+      <div class="row"><select id="add-scene" aria-label="Scene to add">${REGISTRY.scenes.filter(id => ASSETS.scene[id]).map(id => `<option value="${esc(id)}">${esc(META('scene', id).title)}</option>`).join('')}</select><button id="add-clip" class="accent">Add scene</button><button id="load-movie">Load registry order</button><button id="clear-movie" ${movieClips.length ? '' : 'disabled'}>Clear</button><span class="spacer"></span><span class="muted mono">${movieClips.length} clips · ${fmt(duration)} s</span></div>
       <ol class="movie-clips">${movieClips.map((c, i) => `<li data-clip="${i}"><button class="clip-preview" title="Preview from this clip">▶</button><span class="clip-title">${esc(META('scene', c.id).title)}<small>${esc(c.id)}</small></span><label>In <input class="clip-in" type="number" min="0" max="${SCENES[c.id].duration}" step="0.01" value="${fmt(c.start)}" aria-label="Clip ${i + 1} in point"></label><label>Out <input class="clip-out" type="number" min="0" max="${SCENES[c.id].duration}" step="0.01" value="${fmt(c.end)}" aria-label="Clip ${i + 1} out point"></label><span class="muted mono clip-length">${fmt(c.end - c.start)} s</span><button class="clip-up" title="Move up" ${i ? '' : 'disabled'}>↑</button><button class="clip-down" title="Move down" ${i < movieClips.length - 1 ? '' : 'disabled'}>↓</button><button class="clip-remove" title="Remove clip">✕</button></li>`).join('') || '<li class="muted">Add a scene to start your movie.</li>'}</ol>
       <div class="row"><button id="start" title="Start">⏮</button><button id="play" class="primary" ${movieClips.length ? '' : 'disabled'}>▶ Play</button><button id="audio-action" hidden>🔊 Enable sound</button><label class="ck"><input type="checkbox" id="loopck"> loop</label><input id="scrub" type="range" min="0" max="${duration}" step="0.01" value="${Math.min(S.t, duration)}" ${movieClips.length ? '' : 'disabled'}><span id="tt" class="mono"></span></div>
       <div class="row"><button id="exp-movie" class="accent" ${movieClips.length ? '' : 'disabled'}>⬇ Export movie MP4</button><select id="quality" title="video bitrate"><option value="16000000">High · 16 Mbps</option><option value="8000000" selected>Standard · 8 Mbps</option><option value="4000000">Small · 4 Mbps</option></select><div class="progress" id="progress" hidden><div class="track"><div class="bar"></div></div><button id="cancel">Cancel</button></div><span id="status"></span></div>`;
-    $('#add-clip').onclick = () => { const id = $('#add-scene').value; movieClips.push({ id, start: 0, end: SCENES[id].duration }); movieChanged(); };
-    $('#load-movie').onclick = () => { movieClips.splice(0, movieClips.length, ...REGISTRY.movie.filter(id => SCENES[id]).map(id => ({ id, start: 0, end: SCENES[id].duration }))); movieChanged(); };
+    $('#add-clip').onclick = async () => { const id = $('#add-scene').value; status('Loading…'); await requireScene(id); refreshSubs(); movieClips.push({ id, start: 0, end: SCENES[id].duration }); movieChanged(); };
+    $('#load-movie').onclick = async () => { status('Loading every movie scene…'); await Promise.all(REGISTRY.movie.map(requireScene)); refreshSubs(); movieClips.splice(0, movieClips.length, ...REGISTRY.movie.filter(id => SCENES[id]).map(id => ({ id, start: 0, end: SCENES[id].duration }))); movieChanged(); };
     $('#clear-movie').onclick = () => { movieClips.length = 0; movieChanged(); };
     document.querySelectorAll('[data-clip]').forEach(row => {
       const i = +row.dataset.clip;
@@ -337,14 +361,14 @@
   }
 
   function charPanel(e) {
-    const locs = Object.entries(LOCATIONS);
+    const locs = REGISTRY.locations.filter(id => ASSETS.location[id]);
     $('#panel').innerHTML = `
       <div class="head"><div class="txt"><h2>${esc(META('character', S.id).title)}</h2><div class="muted">${esc(META('character', S.id).logline || '')}</div>
         <div class="muted mono">characters/${S.id} · unit ${e.unit} world units · ${Object.keys(e.poses || {}).length} poses</div>
         <div class="row links">${linksHtml('character', S.id)}</div></div>${refsHtml(META('character', S.id).refs)}${docBtn()}</div>
       <div class="row">
         <div class="chips"><button class="chip" data-v="pose">Pose</button><button class="chip" data-v="sheet">Model sheet</button></div>
-        <label class="ck">Backdrop <select id="bd"><option value="">Paper</option><option value="transparent">Transparent</option>${locs.map(([id]) => `<option value="${id}">${esc(META('location', id).title)} (true scale)</option>`).join('')}</select></label>
+        <label class="ck">Backdrop <select id="bd"><option value="">Paper</option><option value="transparent">Transparent</option>${locs.map(id => `<option value="${id}">${esc(META('location', id).title)} (true scale)</option>`).join('')}</select></label>
         <label class="ck">Zoom <input type="range" id="zoom" min=".5" max="2.5" step=".05" value="${S.char.zoom}"></label>
         <label class="ck"><input type="checkbox" id="anim" checked> animate</label>
       </div>
@@ -357,7 +381,10 @@
     };
     document.querySelectorAll('[data-v]').forEach(b => b.onclick = () => { S.char.view = b.dataset.v; mark(); S.dirty = true; });
     document.querySelectorAll('[data-p]').forEach(b => b.onclick = () => { S.char.pose = b.dataset.p; mark(); S.dirty = true; });
-    $('#bd').value = S.char.backdrop; $('#bd').onchange = ev => { S.char.backdrop = ev.target.value; S.dirty = true; };
+    $('#bd').value = S.char.backdrop; $('#bd').onchange = async ev => {
+      const v = ev.target.value; if (ASSETS.location[v]) { status('Loading…'); await loadAsset('location', v); status(''); refreshSubs(); }
+      S.char.backdrop = v; S.dirty = true;
+    };
     $('#zoom').oninput = ev => { S.char.zoom = +ev.target.value; S.dirty = true; };
     $('#anim').onchange = ev => ev.target.checked ? play() : pause();
     const name = () => `${S.id}_${S.char.view === 'sheet' ? 'sheet' : (S.char.pose || 'pose').replace(/\W+/g, '-')}`;
@@ -375,7 +402,7 @@
   const CAM_RANGES = { x: [-900, 900, 1], y: [0, 1300, 1], z: [-800, 2380, 1], f: [300, 3000, 10], hy: [-1000, 3000, 1] };
   const CAM_LABELS = { x: 'x · pan', y: 'y · eye height', z: 'z · dolly', f: 'f · focal', hy: 'hy · tilt' };
   function locPanel(l) {
-    const chars = Object.entries(CHARACTERS);
+    const chars = REGISTRY.characters.filter(id => ASSETS.character[id]);
     $('#panel').innerHTML = `
       <div class="head"><div class="txt"><h2>${esc(META('location', S.id).title)}</h2><div class="muted">${esc(META('location', S.id).logline || '')}</div>
         <div class="muted mono">locations/${S.id} · spots: ${Object.entries(l.spots || { 'stage mark': { ...l.MARK, y: 0 } }).map(([n, p]) => `${esc(n)} (${p.x}, ${p.y ?? 0}, ${p.z})`).join(' · ')}</div>
@@ -385,7 +412,7 @@
       <div class="sliders">${Object.keys(CAM_RANGES).map(k => `<label>${CAM_LABELS[k]}<input type="range" data-k="${k}" min="${CAM_RANGES[k][0]}" max="${CAM_RANGES[k][1]}" step="${CAM_RANGES[k][2]}"><output data-o="${k}"></output></label>`).join('')}</div>
       <div class="row">
         <input type="text" id="camtxt" readonly size="46" class="mono" title="paste into a scene: persp(<this>)"><button id="copycam">Copy camera</button><button id="revcam" title="turn the camera around: look toward −Z (dir: -1) or +Z">⇄ Reverse</button>
-        <label class="ck">Stand-in <select id="who"><option value="">none</option>${chars.map(([id]) => `<option value="${id}">${esc(META('character', id).title)}</option>`).join('')}</select></label>
+        <label class="ck">Stand-in <select id="who"><option value="">none</option>${chars.map(id => `<option value="${id}">${esc(META('character', id).title)}</option>`).join('')}</select></label>
         <select id="whopose" hidden></select>
         <select id="spot" hidden title="where the stand-in goes">${Object.keys(l.spots || {}).map(p => `<option>${esc(p)}</option>`).join('')}</select>
         <label class="ck"><input type="checkbox" id="anim" checked> animate</label>
@@ -404,7 +431,10 @@
       if (e) { sel.innerHTML = Object.keys(e.poses || {}).map(p => `<option>${esc(p)}</option>`).join(''); if (!e.poses[S.loc.pose]) S.loc.pose = Object.keys(e.poses)[0]; sel.value = S.loc.pose; }
       S.dirty = true;
     };
-    $('#who').value = S.loc.character; $('#who').onchange = ev => { S.loc.character = ev.target.value; whoUI(); };
+    $('#who').value = S.loc.character; $('#who').onchange = async ev => {
+      const v = ev.target.value; if (v) { status('Loading…'); await loadAsset('character', v); status(''); refreshSubs(); }
+      S.loc.character = v; whoUI();
+    };
     $('#whopose').onchange = ev => { S.loc.pose = ev.target.value; S.dirty = true; };
     if (!l.spots?.[S.loc.spot]) S.loc.spot = Object.keys(l.spots || {})[0] || '';
     $('#spot').value = S.loc.spot; $('#spot').onchange = ev => { S.loc.spot = ev.target.value; S.dirty = true; };
@@ -546,17 +576,17 @@
   // ---------- start ----------
   buildSidebar();
   if (S.playMode) {
-    const id = q.get('scene'); select('scene', SCENES[id] ? id : REGISTRY.movie[0]);
     document.body.classList.add('play-mode');
+    await select('scene', first);
     if (q.has('t')) seek(+q.get('t'));
     play();
   }
-  else if (q.has('movie')) select('movie', 'composer');
-  else if (q.has('doc')) { select('scene', REGISTRY.movie[0]); select('doc', q.get('doc')); }
+  else if (q.has('movie')) await select('movie', 'composer');
+  else if (q.has('doc')) { await select('scene', REGISTRY.movie[0]); await select('doc', q.get('doc')); }
   else {
     const [mode, id] = q.has('character') ? ['character', q.get('character')] : q.has('location') ? ['location', q.get('location')] : ['scene', q.get('scene') || REGISTRY.movie[0]];
-    const ok = (mode === 'scene' ? SCENES : mode === 'character' ? CHARACTERS : LOCATIONS)[id];
-    select(ok ? mode : 'scene', ok ? id : REGISTRY.movie[0]);
+    const ok = ASSETS[mode][id];
+    await select(ok ? mode : 'scene', ok ? id : REGISTRY.movie[0]);
   }
   if (q.has('t') && !S.playMode) seek(+q.get('t'));
   window.studio = { S, select, seek, runExport };

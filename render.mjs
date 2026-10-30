@@ -141,6 +141,7 @@ if (args.location) {
   const id = String(args.location), out = args.out || `out/check/location_${id}.jpg`;
   if (!REGISTRY.locations.includes(id)) { console.error(`unknown location "${id}". Registered: ${REGISTRY.locations.join(', ')}`); process.exit(1); }
   const { page } = await openPage(REGISTRY.movie[0]); mkdirSync(dirname(out), { recursive: true });
+  await page.evaluate((id, who) => Promise.all([loadAsset('location', id), who && loadAsset('character', who)]), id, args.character || null);
   const url = await page.evaluate((id, o) => {
     const loc = LOCATIONS[id], cams = Object.entries(loc.cameras || {}).filter(([n]) => !o.only || o.only.some(q => n.toLowerCase().includes(q.toLowerCase()))), h = Math.round(o.w * 9 / 16), sc = document.createElement('canvas');
     sc.width = o.cols * o.w; sc.height = Math.ceil(cams.length / o.cols) * h; const c = sc.getContext('2d');
@@ -158,6 +159,7 @@ if (args.location) {
   const who = String(args.modelsheet), { page } = await openPage(REGISTRY.movie[0]), out = args.out || `out/check/modelsheet_${who}.png`;
   if (!REGISTRY.characters.includes(who)) { console.error(`unknown character "${who}". Registered: ${REGISTRY.characters.join(', ')}`); process.exit(1); }
   mkdirSync(dirname(out), { recursive: true });
+  await page.evaluate(who => loadAsset('character', who), who);
   const url = await page.evaluate((who, t) => { paintFrame(t, t => drawModelSheet(CHARACTERS[who], t)); return X.canvas.toDataURL('image/png'); }, who, +(args.t || 1.1));
   writeFileSync(out, Buffer.from(url.slice(url.indexOf(',') + 1), 'base64'));
   console.log(out);

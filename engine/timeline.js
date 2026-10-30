@@ -11,7 +11,7 @@
 
 // ASSETS.character / .location / .scene: the manifests, with paths resolved relative to the project root.
 const ASSETS = { character: {}, location: {}, scene: {} };
-let CURRENT_ASSET = null;             // set by the loader while an asset folder's files are loading
+let CURRENT_ASSET = null;             // set by the loader while an asset folder's files run
 function asset(meta) {
   const a = CURRENT_ASSET; if (!a) throw new Error('asset() must be called from an asset folder\'s asset.js');
   const at = f => f && (/^(https?:|data:|\/)/.test(f) ? f : `${a.dir}/${f}`);
@@ -25,25 +25,55 @@ function asset(meta) {
 const VOICE_CLIPS = {};
 function voiceClips(clips) { const a = CURRENT_ASSET; if (a) VOICE_CLIPS[a.id] = { ...VOICE_CLIPS[a.id], ...clips }; }
 const voiceClipFor = (sceneId, line) => VOICE_CLIPS[sceneId]?.[line.text.replace(/\*/g, '')];
-// Load every asset listed in REGISTRY (browser only): asset.js first, then the files it lists, in order.
-// Scenes come from the series files first (engine/series.js), so each scene's folder is scenes/<series>/<id>.
-async function loadAssets(load) {
-  for (const sid of REGISTRY.series) {
-    CURRENT_SERIES = sid;
-    try { await load(`scenes/${sid}/series.js`); } catch { throw new Error(`scenes/${sid}/series.js is missing (every series folder needs one: see docs/HANDBOOK.md)`); }
-  }
-  CURRENT_SERIES = null;
+// ---------- loading (browser only) ----------
+// The studio reads every manifest up front (series.js + asset.js: small) but only loads an asset's code when it is
+// needed: loadAsset('character', 'alma'), or requireScene(id) for a scene and everything it uses.
+// Scripts download in parallel but run in the order they were queued (async = false), so an asset's files still run one
+// after another; tiny data: scripts queued between them set CURRENT_ASSET / CURRENT_SERIES, as a sequential loader would.
+function runScripts(items) {
+  return Promise.all(items.map(it => new Promise((ok, bad) => {
+    const s = document.createElement('script'); s.async = false;
+    if (typeof it === 'string') { s.src = it; s.onerror = () => bad(new Error('failed to load ' + it)); }
+    else { s.vars = it; s.src = 'data:text/javascript,' + encodeURIComponent('({ CURRENT_ASSET, CURRENT_SERIES } = document.currentScript.vars)'); s.onerror = ok; }
+    s.onload = ok; document.body.appendChild(s);
+  })));
+}
+const unset = { CURRENT_ASSET: null, CURRENT_SERIES: null };
+// Every series file, then every asset.js. Scenes come from the series files (engine/series.js): scenes/<series>/<id>.
+async function loadManifests() {
+  await runScripts([...REGISTRY.series.flatMap(sid => [{ ...unset, CURRENT_SERIES: sid }, `scenes/${sid}/series.js`]), unset])
+    .catch(e => { throw new Error(`${e.message} (every series folder needs a series.js: see docs/HANDBOOK.md)`); });
   expandSeries();
+  const items = [];
   for (const [kind, key] of [['character', 'characters'], ['location', 'locations'], ['scene', 'scenes']]) {
     for (const id of REGISTRY[key]) {
       const dir = kind === 'scene' ? sceneDir(id) : `${key}/${id}`;
-      CURRENT_ASSET = { kind, id, dir };
-      try { await load(`${dir}/asset.js`); } catch { throw new Error(`${dir}/asset.js is missing (every asset folder needs one: see docs/HANDBOOK.md)`); }
-      for (const f of CURRENT_ASSET.files) await load(`${dir}/${f}`);
+      items.push({ ...unset, CURRENT_ASSET: { kind, id, dir } }, `${dir}/asset.js`);
     }
   }
-  CURRENT_ASSET = null;
+  await runScripts([...items, unset]).catch(e => { throw new Error(`${e.message} (every asset folder needs an asset.js: see docs/HANDBOOK.md)`); });
 }
+// One asset's code files, once. Resolves when they have run.
+const LOADING = {};
+function loadAsset(kind, id) {
+  const a = ASSETS[kind][id]; if (!a) return Promise.reject(new Error(`unknown ${kind} "${id}"`));
+  return LOADING[kind + ':' + id] ??= runScripts([{ ...unset, CURRENT_ASSET: a }, ...a.files.map(f => `${a.dir}/${f}`), unset]);
+}
+// What a scene needs: its cast and locations (from its asset.js; a scene without a cast list gets every character and
+// location), the scenes it borrows helpers from (`uses`, followed all the way, in studio load order), then itself.
+function sceneDeps(id) {
+  const m = ASSETS.scene[id]; if (!m) throw new Error('unknown scene ' + id);
+  const uses = new Set(), follow = sid => (ASSETS.scene[sid]?.uses || []).forEach(dep => { if (!uses.has(dep)) { uses.add(dep); follow(dep); } });
+  follow(id);
+  const scenes = REGISTRY.scenes.filter(sid => uses.has(sid) && sid !== id).concat(id), all = !m.cast;
+  const chars = new Set(), locs = new Set();
+  for (const sid of scenes) { (ASSETS.scene[sid].cast || []).forEach(c => chars.add(c)); (ASSETS.scene[sid].locations || []).forEach(l => locs.add(l)); }
+  return [...REGISTRY.characters.filter(c => all || chars.has(c)).map(c => ['character', c]),
+    ...REGISTRY.locations.filter(l => all || locs.has(l)).map(l => ['location', l]), ...scenes.map(s => ['scene', s])];
+}
+const requireScene = id => Promise.all(sceneDeps(id).map(([kind, aid]) => loadAsset(kind, aid))).then(() => SCENES[id]);
+// Everything, in the old load order (tests and tools that walk every CHARACTERS / LOCATIONS / SCENES entry).
+const loadAll = () => Promise.all([['character', 'characters'], ['location', 'locations'], ['scene', 'scenes']].flatMap(([kind, key]) => REGISTRY[key].map(id => loadAsset(kind, id))));
 
 const SCENES = {}, CHARACTERS = {}, LOCATIONS = {};
 let SCENE = null;
