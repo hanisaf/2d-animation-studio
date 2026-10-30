@@ -4,7 +4,8 @@
 // (HIDE below, measured so that no pixel of them shows), so nothing gives anyone away. On the POP the drawing flies off and the person
 // springs up out of it. The song and its karaoke are scene 48c's (audio.mp3, lyrics.js). Every shot is a pure function of t.
 (() => {
-  const ART = ASSETS.scene.scene48_the_trolls.dir;                              // Alma's drawing, cut out by scene48's costumes/cut.py
+  // Alma's drawing, cut out by scene48's costumes/cut.py. Scene 48's folder is our sibling: an exported bundle has no manifest for it.
+  const ART = ASSETS.scene.scene48d_alma_costumes.dir.replace(/[^/]+$/, 'scene48_the_trolls');
   const img = f => { const i = new Image(); i.src = `${ART}/${f}`; return i; };
   const ready = i => i && i.complete && i.naturalWidth > 0;
   const CRAY = ['#E5466E', '#FF8A3D', '#E0A800', '#4DA650', '#2E7D9A', '#6A3FB0'];
