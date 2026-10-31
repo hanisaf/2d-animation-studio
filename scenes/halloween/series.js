@@ -9,5 +9,6 @@ series({
     'scene18_some_assembly',
     'scene19_if_else_explain',
     'scene20_halloween_night',
+    'scene20b_broccoli_reboot',
   ],
 });

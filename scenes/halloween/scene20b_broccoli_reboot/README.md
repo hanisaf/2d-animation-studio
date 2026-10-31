@@ -1,49 +1,41 @@
 # Scene 20b: The Broccoli Directive 2.0
 
-> One year later, on Halloween night. The kids pull the sheet off Robo-Safadi and switch him on. While he was off, his firmware "updated" from the YouToon analytics ([scene 47](../../the_trolls/scene47_troll_analytics/README.md)): **silly sells**. He has a new directive. The kids come trick-or-treating in Alma's monster costumes ([The Trolls](../../the_trolls/scene48d_alma_costumes/README.md)), and his scanners can't tell who's inside. So every monster gets a tongue twister: **twist it or eat it.** Two kids nail theirs and get candy. Two flub and get broccoli. Then the kids turn the tables: *"Robo, your turn!"* … *"Wed wobot, wubber bwoccoli… BZZT."*
-
-**Status:** treatment. The song isn't generated yet ([`lyria/PROMPT.txt`](lyria/PROMPT.txt)), and there's no `scene.js` yet. The scene isn't listed in `../series.js` until it renders.
+> One year later, on Halloween night. The kids pull the sheet off Robo-Safadi and switch him on. While he was off, his firmware "updated" from the YouToon analytics ([scene 47](../../the_trolls/scene47_troll_analytics/README.md)): **SILLY SELLS**. He has a new directive. Four little monsters come knocking: the kids in Alma's costumes from [The Trolls](../../the_trolls/scene48d_alma_costumes/README.md). His scanners can't see who's inside, so every monster gets a tongue twister: **twist it or eat it.** Danny and Housam nail theirs (CANDY!), and Jenna and Alma flub (BROCCOLI!). Then the winners share their candy, everybody takes a bite of broccoli, and Robo blasts off over the moon: *"Game over, humans! Beep boop! See you next Halloween!"*
 
 | | |
 |---|---|
-| **Length** | ~120 s · 24 fps · 120 bpm (one bar = 2 s, beats at 0 + 0.5 n) |
-| **Cast** | [Robo-Safadi](../../../characters/robo_safadi/README.md) · [Housam](../../../characters/housam/README.md) (the blue bird) · [Alma](../../../characters/alma/README.md) (the pink ghost) · [Jenna](../../../characters/jenna/README.md) (the bee, with Fafy) · [Danny](../../../characters/danny/README.md) (the pumpkin). Kids and Robo only. |
-| **Look** | a music video like [scene 17](../scene17_broccoli_directive/README.md): reuse its `halloween.js` backdrops (night sky, moon, bats, pumpkins, tombstones, sunbursts, candy, buckets, broccoli, bowl, HUD, telescoping arm). Open and close on the [house](../../../locations/house/README.md) at night. |
-| **Costumes** | Alma's real drawings, `../../the_trolls/scene48_the_trolls/costumes/{bird,pink_ghost,bee,pumpkin}.png`, worn over each kid as in [48d](../../the_trolls/scene48d_alma_costumes/README.md). On the POP the drawing flies off. |
-| **Audio** | `audio.mp3`, **"Twist It or Eat It"**, to be made with Lyria from [`lyria/PROMPT.txt`](lyria/PROMPT.txt), using 48c's [`generate.py`](../../the_trolls/scene48c_who_is_inside/lyria/generate.py). |
+| **Length** | 120 s · 24 fps · 120 bpm (beats at 0.225 + 0.5 n s, bars of 2 s) |
+| **Cast** | [Robo-Safadi](../../../characters/robo_safadi/README.md) · [Danny](../../../characters/danny/README.md) (the pumpkin) · [Jenna](../../../characters/jenna/README.md) (the bee) · [Housam](../../../characters/housam/README.md) (the blue bird) · [Alma](../../../characters/alma/README.md) (the pink ghost). Kids and Robo only. |
+| **Look** | a music video like [scene 17](../scene17_broccoli_directive/README.md): its `halloween.js` backdrops and props (`uses: ['scene17_broccoli_directive']`), the karaoke along the bottom (Robo's words light up green, the kids' orange) |
+| **Costumes** | Alma's real drawings, `../../the_trolls/scene48_the_trolls/costumes/{pumpkin,bee,bird,pink_ghost}.png`, worn over each kid with scene 48d's `costume()`, `springUp()` and `HIDE`. On the POP the drawing flies off and the kid springs up. |
+| **Audio** | `audio.mp3`, **"The Broccoli Penalty"**, made with Gemini from [`lyria/PROMPT.txt`](lyria/PROMPT.txt). The karaoke is in `lyrics.js`. The song ends at about 118 s. |
 
-## Why it works as a sequel
+## What the song changed
 
-- **Same robot, same hook.** "Everybody eats broccoli" comes back, and the BEEP-BOOP power-on, the HUD lock-on and the telescoping arm all return from 17.
-- **The new idea comes from the channel.** The analytics said silly sells, so the robot's new directive is silly: tongue twisters, the format of [45](../../the_trolls/scene45_tongue_twisters/README.md), [46](../../the_trolls/scene46_super_tongue_twisters/README.md) and [48c](../../the_trolls/scene48c_who_is_inside/README.md).
-- **It ends the opposite way.** In 17, Robo steals a candy and glitches. Here he glitches from his own twister and lets the candy go, and in the final tag he steals one and nothing breaks.
+Gemini didn't follow the prompt everywhere, so the story follows the song:
+
+- **Battles 3 and 4 have new twisters.** *"Leo's lazy lizard leaps"* (sung by a boy, nailed) and *"Molly's messy monkey makes massive chocolate milkshakes"* (sung by a girl, flubbed). So the blue bird is Housam and he wins. The pink ghost is Alma and she gets the broccoli. A twister doesn't have to be about the person saying it. The picture cards show a lizard and a monkey.
+- **There's no "Robo, your turn!"** After the battles, the song repeats the chorus and ends with *"Game over, humans! Beep boop! See you next Halloween!"* The ending moved into the picture: in the second chorus the winners share their candy (Robo's eyes turn to hearts), and on *"or eat broccoli!"* all four take a bite. In the outro Robo eats a candy, and this time nothing glitches (the opposite of 17's ending). Then he blasts off across the moon.
 
 ## Song map and shot list
 
-Times are seconds into the song as planned. Move the constants to the measured take, as 48c did.
-
-| Time | Section | Lyric (who) | Shot |
+| Time | Section | Lyric | Shot |
 |---|---|---|---|
-| 0–8 | Intro, 4 bars | (spooky riff) | **dustOff**: *ONE YEAR LATER…* The house at night, a sheet-covered shape with cobwebs on the porch. The four kids, already in costume, tug the sheet off on the beat. Robo stands dark, eyes off |
-| 8–16 | Boot, 4 bars | *"Beep. Boop. Rebooting… Downloading update… Directive two-point-oh!"* (Robo) | **reboot**: an extreme close-up as in 17's powerOn. A progress bar fills; a YouToon logo and a gold arrow flash past with **SILLY SELLS ↑**. On *two-point-oh* the eyes light up, red to rainbow, and the antenna sparks |
-| 16–32 | Verse, 8 bars | *"Four little monsters knocking on my door, / my scanners can't see who you are anymore. / New directive, here's the deal: / twist your tongue, or broccoli's your meal!"* (Robo) | **unknownUnits**: Robo's HUD POV, as in 17's hud, on four monsters with buckets. Each reticle reads **UNKNOWN UNIT ?** On *deal* the gripper arm unfolds and offers a broccoli in one claw and a candy in the other |
-| 32–48 | Chorus, 8 bars | *"Twist it or eat it! (EAT IT!) / Say it five times fast! / Twist it or eat it! (EAT IT!) / Or broccoli at last! / Everybody, everybody, twist it… or eat broccoli!"* (Robo, kids shouting the answers) | **chorus**: an orange and violet sunburst, title slams on the beats: TWIST IT / OR / EAT IT. The monsters bounce in a row while Robo conducts with a broccoli baton |
-| 48–60 | Battle 1, 6 bars | Sting *"Who's inside?"* · Robo: *"Danny's dizzy cube drops, Danny's dizzy cube drops!"* · the pumpkin, twice as fast: *"Danny's dizzy cube drops, Danny's dizzy cube drops!"* · *"CANDY!"* | **danny**: a VS banner, pumpkin vs Robo. The pumpkin says it perfectly at double speed while solving a Rubik's cube a twist per beat (a callback to [25](../../talent_show/scene25_cube_drops/README.md)). POP: the costume flies off, Danny grins, and a candy drops into his bucket |
-| 60–72 | Battle 2, 6 bars | Sting · Robo: *"Jenna's giraffe giggles, jiggling jelly jars!"* · the bee: *"Jenna's jiraffe jiggles… giggly… jelly… JARS?"* · *"BROCCOLI!"* | **jenna**: the bee starts strong and dissolves into giggles. POP: Jenna, laughing. The arm hands a broccoli to her and a tiny one to Fafy |
-| 72–84 | Battle 3, 6 bars | Sting · Robo: *"Purple pumpkin, pink ghost, purple pumpkin, pink ghost!"* · the pink ghost, dancing: *"Purple pumpkin, pink ghost, purple pumpkin, pink ghost!"* · *"CANDY!"* | **alma**: her rainbow floor lights up under the pink ghost, one tile per word. She nails it, spins, POP: Alma takes a bow, and a lollipop drops into her bucket |
-| 84–96 | Battle 4, 6 bars | Sting · Robo: *"Hussam's hat trick hits the haunted headstone!"* · the blue bird: *"Hussam's hat thick… hits the hunted… hatstone?"* · *"BROCCOLI!"* | **housam**: a graveyard set from 17. He gets the first half right and tangles the second. POP: Housam, sheepish. The broccoli lands on his head like a ball. He juggles it knee, knee, head: no luck, it's still broccoli |
-| 96–108 | The turn, 6 bars | Kids: *"Robo… YOUR TURN!"* · kids: *"Red robot, rubber broccoli!"* · Robo, speeding up: *"Red robot, rubber broccoli, wed wobot, wubber bwoccoli, WED WOBOT—"* · *"BZZT!"* | **robosTurn**: the VS banner flips, kids vs Robo. Each repeat is faster, and his eyes spin. Steam vents, the speech module sparks, X eyes. His chest hatch pops open and the year's confiscated candy pours out (his chest hatch, from [29](../../cleaning_up/scene29_cleaning_up_2/README.md)) |
-| 108–120 | Final chorus and tag, 6 bars | *"Twist it or eat it! (EAT IT!) / Everybody… eats… broccoli… AND CANDY!"* (all) · laughter | **finale**: candy rain on the sunburst, the kids dance with full buckets, and Robo reboots with green eyes. Each kid takes one sporting bite of broccoli. **Tag:** alone in a spotlight, Robo finds one last candy, looks left and right, eats it… and nothing goes wrong. Thumbs up. The iris closes on THE END |
+| 0–8.1 | Intro | (spooky riff, whoosh at 6.1) | **dustOff**: *ONE YEAR LATER…* A cobwebbed sheet on the porch at night. The four monsters tiptoe in from both sides and yank it off at 6.12. Robo stands dark, and the camera pushes in |
+| 8.1–12.2 | Boot-up | *Beep. Boop. Rebooting… Downloading update… Directive two-point-oh!* | **reboot**: a close-up. BEEP turns the eyes on, BOOP lights the antenna, then a REBOOTING / DOWNLOADING UPDATE progress bar. A YouToon card slides in with a rising line: SILLY SELLS! On *Directive* he turns red |
+| 12.2–16.0 | | *(two-point-ohhh)* | **title**: THE / BROCCOLI / DIRECTIVE / **2.0** slam in on the beats. Robo hovers in and rushes the lens |
+| 16.0–23.8 | Verse | *Four little monsters knocking on my door, my scanners can't see who you are anymore.* | **unknownUnits**: Robo's red night-vision HUD. Reticles lock onto the four monsters (UNIT ?). On *can't* the HUD glitches: ERROR, ? ? ? |
+| 23.8–32.2 | | *New directive, here's the deal: twist your tongue, or broccoli's your meal!* | **deal**: a hero shot with a lollipop in one gripper and broccoli in the other. A pink spiral on TWIST YOUR TONGUE, then the broccoli thrusts at the lens: BROCCOLI! |
+| 32.2–48.2 | Chorus | *Twist it or eat it! (EAT IT!) Say it five times fast! …* | **chorus**: the sunburst. TWIST IT / OR / EAT IT!, ×5, FAST!, BROCCOLI!, EVERYBODY! The monsters bounce in a row and jump on each EAT IT!, while Robo conducts with a broccoli baton |
+| 48.2–60.2 | Battle 1 | *Danny's dizzy cube drops* ×2, then the pumpkin ×2 · CANDY! | **battle(0)**: WHO'S INSIDE? and a reticle on the pumpkin. Robo sings with a picture card (a dizzy Rubik's cube). The pumpkin nails it, bouncing and sparkling. POP at 58.33: Danny, with candy arcing into his bucket |
+| 60.2–72.2 | Battle 2 | *Jenna's giraffe giggles, jiggling jelly jars* · *Jenna's jiraffe jiggles… giggly… jelly… JARS?* · BROCCOLI! | **battle(1)**: a giggling giraffe and jelly jars on the card. The bee wobbles and sweats. POP: Jenna, laughing (*hee hee!*), takes the broccoli from the gripper |
+| 72.2–84.2 | Battle 3 | *Leo's lazy lizard leaps* ×2, then the bird ×2 · CANDY! | **battle(2)**: a sleepy lizard mid-leap. The blue bird nails it. POP: Housam cheers, and candy falls into his bucket |
+| 84.2–96.0 | Battle 4 | *Molly's messy monkey makes massive chocolate milkshakes* · *Molly's… monkey… milk… shake… messy… MONKEY?* · BROCCOLI! | **battle(3)**: a messy monkey and a dripping milkshake. The pink ghost sweats and tangles. POP: Alma, mouth open, gets the broccoli |
+| 96.0–112.2 | Chorus | (the chorus again) | **chorus2**: the kids in a row, Robo hovering. Danny tosses candy to Jenna, then Housam to Alma: SHARING! Robo's eyes turn to hearts: SWEET! Then everybody dances in candy confetti, and on *or eat broccoli!* all four take a sporting bite: …AND BROCCOLI! |
+| 112.2–120 | Outro | *Game over, humans! Beep boop! See you next Halloween!* | **outro**: night, a huge moon, the kids waving from the hill. A salute; on *Beep boop* he pops a candy in (heart eyes, no glitch). Then he blasts off across the moon. Iris, THE END |
 
-## Lines to watch for
+## Timing
 
-- **Tongue twisters are short on purpose.** 48c learned that a 50-syllable twister won't fit in two bars. Each one here is 10–14 syllables, so Robo can sing it once in two bars and the kid can repeat it in two.
-- **Who wins:** Danny and Alma (practice: the cube and the dance), Jenna and Housam (giggles and rushing). Two and two, so nobody is the punchline twice.
-- **The flubs have to be sung as flubs.** The prompt spells them out (*"jiraffe"*, *"hat thick"*, *"hatstone"*, *"wed wobot"*), since Lyria sings what is spelled.
-- **Names:** spell Housam as **Hussam** in the lyrics (see [48c's lyria notes](../../the_trolls/scene48c_who_is_inside/lyria/README.md)).
-
-## To do
-
-1. Generate a few takes from `lyria/PROMPT.txt` and keep the best. Measure the beat grid and the section times.
-2. Write `lyrics.js` (word times) and `asset.js`/`scene.js`, borrowing `halloween.js` from scene 17 and the costume `wearer()` from 48d.
-3. Add `'scene20b_broccoli_reboot'` to `../series.js` and a row to `SERIES.md`.
+- **Beat grid.** Onset strength folded at every tempo from 114 to 122 bpm peaks hard at exactly 120 bpm, with the beat phase at 0.225 s. Every section starts on a bar, `BAR(n) = 0.225 + 2n`.
+- **Words.** The vocals were separated from the mix with the Spleeter 2-stem model (sherpa-onnx). Whisper (base.en) was then run on overlapping 1.5–4.5 s windows of the vocal stem to find where each line falls. Inside a line, words sit on vocal onsets (librosa) where they line up, and are spread by syllable where they don't. The battles (*Who's inside?* → twister → try → verdict) and the verdicts at 58.38, 70.72, 82.62 and 94.70 s are what the picture is cut to (`BATTLES` in `scene.js`).
+- Fix a word or a time in `lyrics.js` and the karaoke and Robo's mouth follow.
