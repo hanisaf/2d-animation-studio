@@ -1,6 +1,6 @@
 # Scene 20b: The Broccoli Directive 2.0
 
-> One year later, on Halloween night. The kids pull the sheet off Robo-Safadi and switch him on. While he was off, his firmware "updated" from the YouToon analytics ([scene 47](../../the_trolls/scene47_troll_analytics/README.md)): **SILLY SELLS**. He has a new directive. Four little monsters come knocking: the kids in Alma's costumes from [The Trolls](../../the_trolls/scene48d_alma_costumes/README.md). His scanners can't see who's inside, so every monster gets a tongue twister: **twist it or eat it.** Danny and Housam nail theirs (CANDY!), and Jenna and Alma flub (BROCCOLI!). Then the winners share their candy, everybody takes a bite of broccoli, and Robo blasts off over the moon: *"Game over, humans! Beep boop! See you next Halloween!"*
+> Later on Halloween night. The kids pull the sheet off Robo-Safadi and switch him back on. While he was off, his firmware "updated" from the YouToon analytics ([scene 47](../../the_trolls/scene47_troll_analytics/README.md)): **SILLY SELLS**. He has a new directive. Four little monsters come knocking: the kids in Alma's costumes from [The Trolls](../../the_trolls/scene48d_alma_costumes/README.md). His scanners can't see who's inside, so every monster gets a tongue twister: **twist it or eat it.** Danny and Housam nail theirs (CANDY!), and Jenna and Alma flub (BROCCOLI!). Then the winners share their candy, everybody takes a bite of broccoli, and Robo blasts off over the moon: *"Game over, humans! Beep boop! See you next Halloween!"*
 
 | | |
 |---|---|
@@ -21,7 +21,7 @@ Gemini didn't follow the prompt everywhere, so the story follows the song:
 
 | Time | Section | Lyric | Shot |
 |---|---|---|---|
-| 0–8.1 | Intro | (spooky riff, whoosh at 6.1) | **dustOff**: *ONE YEAR LATER…* A cobwebbed sheet on the porch at night. The four monsters tiptoe in from both sides and yank it off at 6.12. Robo stands dark, and the camera pushes in |
+| 0–8.1 | Intro | (spooky riff, whoosh at 6.1) | **dustOff**: *LATER IN HALLOWEEN NIGHT…* A cobwebbed sheet on the porch at night. The four monsters tiptoe in from both sides and yank it off at 6.12. Robo stands dark, and the camera pushes in |
 | 8.1–12.2 | Boot-up | *Beep. Boop. Rebooting… Downloading update… Directive two-point-oh!* | **reboot**: a close-up. BEEP turns the eyes on, BOOP lights the antenna, then a REBOOTING / DOWNLOADING UPDATE progress bar. A YouToon card slides in with a rising line: SILLY SELLS! On *Directive* he turns red |
 | 12.2–16.0 | | *(two-point-ohhh)* | **title**: THE / BROCCOLI / DIRECTIVE / **2.0** slam in on the beats. Robo hovers in and rushes the lens |
 | 16.0–23.8 | Verse | *Four little monsters knocking on my door, my scanners can't see who you are anymore.* | **unknownUnits**: Robo's red night-vision HUD. Reticles lock onto the four monsters (UNIT ?). On *can't* the HUD glitches: ERROR, ? ? ? |

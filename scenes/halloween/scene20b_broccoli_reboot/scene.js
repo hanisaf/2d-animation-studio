@@ -200,7 +200,7 @@
 
   // ============================== the shots ==============================
 
-  // 0–8.1 · ONE YEAR LATER: a sheet-covered shape on the porch; four little monsters tiptoe in and pull the sheet off.
+  // 0–8.1 · LATER IN HALLOWEEN NIGHT: a sheet-covered shape on the porch; four little monsters tiptoe in and pull the sheet off.
   const PULL = 6.12;
   function dustOff(t, lt) {
     const push = ease(seg(t, 6.6, 8.1)), off = easeIn(seg(t, PULL, PULL + .6));
@@ -230,9 +230,9 @@
     [[150, 1050, 52], [1780, 1050, 58]].forEach(([x, y, r], i) => bdPumpkin(x, y, r, { glow: .45 + .55 * bp(t), sq: .08 * bp(t), face: i }));
     camEnd();
     sfx('WHOOSH!', W / 2 + 420, 260, 120, BD.bone, t - PULL, { rot: -.1 });
-    // ONE YEAR LATER…
+    // LATER IN HALLOWEEN NIGHT…
     if (t > .6 && t < 4.4) overlay(() => { const k = easeOut(seg(t, .6, 1.2)) * (1 - seg(t, 3.8, 4.4)); X.save(); X.globalAlpha = k; X.translate(W / 2, 200 + (1 - k) * 30);
-      X.font = `110px ${FONT_SFX}`; X.textAlign = 'center'; X.textBaseline = 'middle'; X.lineJoin = 'round'; X.lineWidth = 22; X.strokeStyle = '#140A1C'; X.strokeText('ONE YEAR LATER…', 0, 0); X.fillStyle = BD.orangeLt; X.fillText('ONE YEAR LATER…', 0, 0); X.restore(); });
+      X.font = `100px ${FONT_SFX}`; X.textAlign = 'center'; X.textBaseline = 'middle'; X.lineJoin = 'round'; X.lineWidth = 22; X.strokeStyle = '#140A1C'; X.strokeText('LATER IN HALLOWEEN NIGHT…', 0, 0); X.fillStyle = BD.orangeLt; X.fillText('LATER IN HALLOWEEN NIGHT…', 0, 0); X.restore(); });
   }
 
   // 8.1–12.2 · the reboot: BEEP (eyes on), BOOP (antenna), a progress bar, the YouToon update (SILLY SELLS), DIRECTIVE 2.0 (red).
