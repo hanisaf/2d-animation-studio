@@ -6,5 +6,13 @@ series({
   scenes: [
     'scene27_dynamics_of_mirroring',
     'scene49_py01_analytics_pipeline',
+    'scene50_py02_markdown',
+    'scene51_py03_variables',
+    'scene52_py04_operators',
+    'scene53_py05_types',
+    'scene54_py06_strings',
+    'scene55_py07_control_flow',
+    'scene56_py08_functions',
+    'scene57_py09_data_structures',
   ],
 });

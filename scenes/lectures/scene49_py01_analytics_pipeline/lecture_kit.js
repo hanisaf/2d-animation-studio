@@ -8,7 +8,7 @@
 //   lkTiming(narration, pace)   → the narration lines with `at` (start, s) and `dur` (s), from word counts.
 //                                 pace: { wps: words per second, gap: s between lines, panelGap: extra s before a new
 //                                 panel, lead: s before the first line, minDur }. A line's `pause` adds silence after it.
-//   lecture({ narration, pace, module, title, footer, panels })  registers the scene. panels[n - 1] = { title, draw(u, b) }:
+//   lecture({ footer, panels, focus, narration, pace })  registers the scene (narration and pace default to the scene's asset.js). panels[n - 1] = { title, draw(u, b) }:
 //                                 u = seconds since the panel began, b(i) = seconds since its i-th line began.
 //                                 Panel 1 is the title card (no header). Every panel is a pure function of time.
 //
@@ -98,20 +98,20 @@ function lkCell(x, y, w, o = {}) {
     const kc = clamp((o.kc ?? 1) * lines.length - i), cy = y + size * .45 + lh * (i + .5);
     if (Array.isArray(ln)) lkCodeParts(ln, x + 18, cy, size, kc);
     else if (o.md) lkText(ln, x + 18, cy, size, LK.chalk, kc, 'left', 600);
-    else lkCode(ln, x + 18, cy, size, LK.chalk, kc);
+    else lkPyLine(ln, x + 18, cy, size, kc);
   });
   let yy = y + h;
   (o.out ?? []).forEach((ln, i) => { lkCode(ln, x + 18, yy + lh * (i + .7), size, LK.red, clamp((o.ko ?? 1) * o.out.length - i)); });
   if (o.out?.length) yy += lh * (o.out.length + .4);
   return yy;
 }
-// A small table: cols = [{ label, w, align }], rows = [[cells]]; kRow(i) = reveal of row i (header uses kRow(-1)).
+// A small table: cols = [{ label, w, align, col, mono }], rows = [[cells]]; kRow(i) = reveal of row i (header uses kRow(-1)).
 function lkTable(x, y, cols, rows, o = {}) {
   const size = o.size ?? 24, rh = o.rh ?? size * 1.7, kRow = o.kRow ?? (() => 1), mono = o.mono ?? true;
   const W = cols.reduce((s, c) => s + c.w, 0);
-  const cell = (txt, cx, cw, cy, col, k, align, head) => {
+  const cell = (txt, cx, cw, cy, col, k, align, head, m = mono) => {
     const ax = align === 'right' ? cx + cw - 12 : align === 'center' ? cx + cw / 2 : cx + 12;
-    if (head || !mono) lkText(txt, ax, cy, size, col, k, align ?? 'left', head ? 700 : 600); else lkCode(txt, ax, cy, size, col, k, align ?? 'left');
+    if (head || !m) lkText(txt, ax, cy, size, col, k, align ?? 'left', head ? 700 : 600); else lkCode(txt, ax, cy, size, col, k, align ?? 'left');
   };
   let cx = x; const kh = kRow(-1);
   cols.forEach(c => { cell(c.label, cx, c.w, y + rh / 2, o.headCol ?? LK.red, kh, c.align, true); cx += c.w; });
@@ -119,15 +119,118 @@ function lkTable(x, y, cols, rows, o = {}) {
   rows.forEach((r, i) => {
     const k = kRow(i), cy = y + rh * (i + 1.5), hl = o.hl?.(i);
     if (hl && k > 0) lkRect(x - 6, y + rh * (i + 1) + 3, W + 12, rh - 6, k, LK.red, 3, LK.redFill);
-    let cx2 = x; r.forEach((v, j) => { cell(String(v), cx2, cols[j].w, cy, hl ? LK.chalk : cols[j].col ?? LK.chalk, k, cols[j].align); cx2 += cols[j].w; });
+    let cx2 = x; r.forEach((v, j) => { cell(String(v), cx2, cols[j].w, cy, hl ? LK.chalk : cols[j].col ?? LK.chalk, k, cols[j].align, false, cols[j].mono ?? mono); cx2 += cols[j].w; });
   });
   return y + rh * (rows.length + 1);
+}
+
+// ---------- Python code ----------
+// lkPy(src) → colour parts for one line of Python: keywords red, strings grey, comments faint, the rest chalk.
+const LK_KW = new Set('and as break class continue def del elif else except False finally for from if import in is lambda None not or pass raise return True try while with yield'.split(' '));
+LK.str = '#C4C4BC';
+function lkPy(src) {
+  const parts = [], re = /(#.*$)|([fr]?"[^"]*"?|[fr]?'[^']*'?)|([A-Za-z_]\w*)|(\s+|[^\sA-Za-z_#"']+)/g;
+  let m;
+  while ((m = re.exec(src))) {
+    const col = m[1] ? LK.faint : m[2] ? LK.str : m[3] && LK_KW.has(m[3]) ? LK.red : LK.chalk;
+    const prev = parts[parts.length - 1];
+    if (prev && prev[1] === col) prev[0] += m[0]; else parts.push([m[0], col]);
+  }
+  return parts;
+}
+const lkPyLine = (src, x, y, size, k = 1) => lkCodeParts(lkPy(src), x, y, size, k);
+// A framed block of code. lines: strings (Python), { out } (output, red), { err } (an error, red), { note } (chalk
+// text), or null (a blank line). o: { size, lh, k (the frame), kLine(i) → reveal of line i, pad, frame: false }.
+// Returns the y below the block.
+function lkCodeBlock(x, y, w, lines, o = {}) {
+  const size = o.size ?? 24, lh = o.lh ?? size * 1.5, pad = o.pad ?? 16, h = lines.length * lh + pad * 1.4, kLine = o.kLine ?? (() => 1);
+  if (o.frame !== false) lkRect(x, y, w, h, o.k ?? 1, LK.dim, 3, LK.chalkFill);
+  lines.forEach((ln, i) => {
+    const k = kLine(i), cy = y + pad * .7 + lh * (i + .5);
+    if (ln == null || k <= 0) return;
+    if (typeof ln === 'string') lkPyLine(ln, x + pad, cy, size, k);
+    else if (Array.isArray(ln)) lkCodeParts(ln, x + pad, cy, size, k);
+    else if (ln.out !== undefined) lkCode(ln.out, x + pad, cy, size, LK.red, k);
+    else if (ln.err !== undefined) lkCode(ln.err, x + pad, cy, size * .9, LK.red, k);
+    else if (ln.note !== undefined) lkText(ln.note, x + pad, cy, size, ln.col ?? LK.dim, k);
+  });
+  return y + h;
+}
+// A list of points. items: [{ text, sub, k, mark: 'check' | 'dot' | 'cross' | a number (badge), col }]. o: { size, gap }.
+function lkList(x, y, items, o = {}) {
+  const size = o.size ?? 27, gap = o.gap ?? size * 2.2;
+  items.forEach((it, i) => {
+    const k = it.k ?? 1, yy = y + i * gap, m = it.mark ?? 'dot';
+    if (k <= 0) return;
+    if (m === 'check') lkCheck(x, yy + 2, size * .9, k, LK.red);
+    else if (m === 'cross') lkCross(x, yy, size * .7, k, LK.red);
+    else if (typeof m === 'number') lkBadge(m, x, yy, size * .7, k);
+    else if (m === 'dot') circle(x, yy, size * .16, { fill: LK.red, stroke: null, alpha: k });
+    const tx = x + size * 1.1;
+    if (it.code) lkPyLine(it.text, tx, yy, size * .92, k); else lkText(it.text, tx, yy, size, it.col ?? LK.chalk, k, 'left', it.bold ? 700 : 600);
+    if (it.sub) (it.subCode ? lkPyLine : (s, a, b, c, kk) => lkText(s, a, b, c, LK.dim, kk))(it.sub, tx, yy + size * 1.25, size * .82, clamp(k * 1.4 - .4));
+  });
+  return y + items.length * gap;
+}
+// A key idea in a red box, centred at (cx, cy).
+function lkRule(txt, cx, cy, w, k, size = 30) {
+  if (k <= 0) return;
+  lkRect(cx - w / 2, cy - size * 1.25, w, size * 2.5, k, LK.red, 5, LK.redFill);
+  lkText(txt, cx, cy, size, LK.chalk, clamp(k * 1.6 - .5), 'center', 700);
+}
+
+// The title card every lecture opens with: MODULE n, the title, the course, and numbered goals.
+// goals: [[line 1, line 2, narration line index, delay]] (two to four of them).
+function lkTitle(u, b, num, title, goals) {
+  lkText('MODULE ' + num, 660, 175, 34, LK.red, lkK(u, .1, .8), 'center', 700);
+  const size = Math.min(92, 92 * 1220 / lkMeasure(title, 92, 700));
+  lkText(title, 660, 257, size, LK.chalk, lkK(u, .5, 1.6), 'center', 700);
+  lkText('BUSN 3030E · Python Programming Skills for Business Analytics I', 660, 337, 28, LK.dim, lkK(u, 1.8, 1.4), 'center', 600);
+  lkLine([[330, 377], [990, 377]], lkK(u, 2.6, .8), LK.redDk, 4);
+  goals.forEach(([a, c, line, delay], i) => {
+    const k = lkK(b(line), delay, .8), x = 660 + (i - (goals.length - 1) / 2) * 290;
+    lkBadge(i + 1, x, 465, 28, k);
+    lkText(a, x, 527, 27, LK.chalk, k, 'center', 600); lkText(c, x, 563, 27, LK.chalk, k, 'center', 600);
+  });
+}
+
+// ---------- chalk charts ----------
+// lkScale(x, y, w, h, [x0, x1], [y0, y1]) → (vx, vy) ⇒ board point. y is the top of the plot area.
+const lkScale = (x, y, w, h, [x0, x1], [y0, y1]) => (vx, vy) => [x + (vx - x0) / (x1 - x0) * w, y + h - (vy - y0) / (y1 - y0) * h];
+// Axes with optional labels and ticks: o = { xl, yl, xt: [[px, label]], yt: [[py, label]], size }.
+function lkAxes(x, y, w, h, k, o = {}) {
+  if (k <= 0) return;
+  const size = o.size ?? 20;
+  lkArrow([[x, y + h], [x + w + 14, y + h]], k, LK.chalk, 3, { head: 10 });
+  lkArrow([[x, y + h], [x, y - 14]], k, LK.chalk, 3, { head: 10 });
+  if (o.xl) lkText(o.xl, x + w / 2, y + h + size * 2.1, size, LK.dim, k, 'center');
+  if (o.yl) { X.save(); X.translate(x - size * 2.2, y + h / 2); X.rotate(-Math.PI / 2); lkText(o.yl, 0, 0, size, LK.dim, k, 'center'); X.restore(); }
+  (o.xt ?? []).forEach(([px, lab]) => { lkLine([[px, y + h], [px, y + h + 7]], k, LK.chalk, 2); lkText(String(lab), px, y + h + size * .95, size * .85, LK.dim, k, 'center'); });
+  (o.yt ?? []).forEach(([py, lab]) => { lkLine([[x - 7, py], [x, py]], k, LK.chalk, 2); lkText(String(lab), x - 12, py, size * .85, LK.dim, k, 'right'); });
+}
+// Dots: the first round(k · n) points appear; pts = [[x, y]] in board coords.
+function lkDots(pts, k, col = LK.chalk, r = 5, alpha = .85) {
+  const n = Math.round(clamp(k) * pts.length);
+  for (let i = 0; i < n; i++) circle(pts[i][0], pts[i][1], r, { fill: col, stroke: null, alpha });
+}
+// A deterministic cloud of points around a line, for scatter-plot sketches: n points, x in [x0, x1], y = f(x) + noise.
+function lkCloud(n, seed, x0, x1, f, noise) {
+  const pts = [];
+  for (let i = 0; i < n; i++) { const u = hash(seed + i * 1.37), g = (hash(seed + i * 2.71) + hash(seed + i * 5.13) + hash(seed + i * 7.9) - 1.5) * 1.15; const vx = x0 + (x1 - x0) * u; pts.push([vx, f(vx) + noise * g]); }
+  return pts;
+}
+// A bell-shaped curve (for KDE and violin sketches): returns [[x, y]] over [a, b] for a mix of normal bumps [[mu, sd, w]].
+function lkBell(a, b, bumps, n = 60) {
+  const pts = [];
+  for (let i = 0; i <= n; i++) { const x = a + (b - a) * i / n; pts.push([x, bumps.reduce((s, [mu, sd, w]) => s + w * Math.exp(-.5 * ((x - mu) / sd) ** 2), 0)]); }
+  return pts;
 }
 
 // ---------- the lecture ----------
 // Registers the scene: board painter, panel changes (an eraser sweep), cameras and shots, all from the narration timing.
 function lecture(def) {
-  const HALL = LOCATIONS.lecture_hall, BB = HALL.BIG_BOARD;
+  const HALL = LOCATIONS.lecture_hall, BB = HALL.BIG_BOARD, A = CURRENT_ASSET;
+  def.narration ??= A?.narration; def.pace ??= A?.pace;                       // default: the scene's own asset.js
   const LINES = lkTiming(def.narration, def.pace), COUNT = def.panels.length;
   const BEATS = {}; for (const l of LINES) (BEATS[l.panel] ??= []).push(l.at);
   const last = LINES[LINES.length - 1], END = last.at + last.dur + (def.tail ?? 4.5);
@@ -187,7 +290,7 @@ function lecture(def) {
   shots.push([inDur, (t, lt) => paint(t, drift(lt + inDur, -1))]);
   for (const fz of def.focus ?? []) {                                          // { panel, line, to: line, rect: [x, y, w, h] }
     const a = BEATS[fz.panel][fz.line] - .3, b = fz.to !== undefined ? BEATS[fz.panel][fz.to] - .3 : null;
-    const [rx, ry, rw, rh] = fz.rect, w = Math.min(2300, LK_W / rw * 1500, LK_W / rh * 900);   // the region fills most of the frame
+    const [rx, ry, rw, rh] = fz.rect, w = Math.max(1900, Math.min(2300, LK_W / rw * 1500, LK_W / rh * 900));   // the region fills most of the frame
     const k = w / LK_W, hx = W / 2 / k, hy = H / 2 / k;                       // keep the frame on the board (its black frame may show)
     const cx = clamp(rx + rw / 2, hx - 22, LK_W - hx + 22), cy = clamp(ry + rh / 2, hy - 20, LK_H - hy + 20);
     shots.push([a, (t, lt) => paint(t, frame(cx - .4 * clamp(lt, 0, 20), cy, w * (1 + .0012 * clamp(lt, 0, 20))))]);
