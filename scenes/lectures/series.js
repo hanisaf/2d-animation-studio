@@ -14,5 +14,11 @@ series({
     'scene55_py07_control_flow',
     'scene56_py08_functions',
     'scene57_py09_data_structures',
+    'scene58_py10_comprehensions',
+    'scene59_py11_data_analysis',
+    'scene60_py12_dataframe_series',
+    'scene61_py13_statistics_regression',
+    'scene62_py14_relationships_distributions',
+    'scene63_py15_categorical_plots',
   ],
 });

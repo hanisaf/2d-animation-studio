@@ -3,7 +3,7 @@
 // Board coords: 1320 × 680, y down; the header sits above y 100 and the footer at y 650.
 (() => {
   const C = LK;
-  const res = (code, out, x, y, k, size = 24, ox) => { lkPyLine(code, x, y, size, k); lkCode('→ ' + out, ox ?? x + lkMeasure(code, size, 500, LK_MONO) + 24, y, size, C.red, k); };
+  const res = (code, out, x, y, k, size = 24, ox) => { lkPyLine(code, x, y, size, k); if (out !== '') lkCode('→ ' + out, ox ?? x + lkMeasure(code, size, 500, LK_MONO) + 24, y, size, C.red, k); };
 
   const panels = [
     { title: 'Strings', draw(u, b) {
@@ -88,7 +88,7 @@
 
     { title: 'Workout: extracting text', draw(u, b) {
       lkCode('… my email address is james.bond@mi6.co.uk Do not …', 60, 140, 21, C.dim, lkK(b(0), .3, 1));
-      lkLoop(60 + 20.5 * lkMeasure('M', 21, 500, LK_MONO) + 10 * lkMeasure('M', 21, 500, LK_MONO), 140, 11 * lkMeasure('M', 21, 500, LK_MONO), 20, lkK(b(0), 2, .7));
+      lkLoop(60 + 32 * lkMeasure('M', 21, 500, LK_MONO), 140, 11 * lkMeasure('M', 21, 500, LK_MONO), 20, lkK(b(0), 2, .7));
       lkCodeBlock(40, 175, 620, ['at = text.find("@")', 'start = text.rfind(" ", 0, at) + 1', 'end = text.find(" ", at)', 'text[start:end]', { out: "'james.bond@mi6.co.uk'" }],
         { size: 20, lh: 31, k: lkK(b(1), .2, .6), kLine: i => lkK(b(1), .6 + i * 1.3, .6) });
       lkCodeBlock(680, 175, 600, ['before, after = msg.split("@")', 'before.split()[-1] + "@" + after.split()[0]', { out: "'james.bond@mi6.co.uk'" }],

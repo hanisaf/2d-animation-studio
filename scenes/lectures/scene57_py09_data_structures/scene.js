@@ -3,7 +3,7 @@
 // Board coords: 1320 × 680, y down; the header sits above y 100 and the footer at y 650.
 (() => {
   const C = LK;
-  const res = (code, out, x, y, k, size = 24, ox) => { lkPyLine(code, x, y, size, k); lkCode('→ ' + out, ox ?? x + lkMeasure(code, size, 500, LK_MONO) + 24, y, size, C.red, k); };
+  const res = (code, out, x, y, k, size = 24, ox) => { lkPyLine(code, x, y, size, k); if (out !== '') lkCode('→ ' + out, ox ?? x + lkMeasure(code, size, 500, LK_MONO) + 24, y, size, C.red, k); };
   const seq = (b, line, d0, step) => i => lkK(b(line), d0 + i * step, .6);
 
   const panels = [

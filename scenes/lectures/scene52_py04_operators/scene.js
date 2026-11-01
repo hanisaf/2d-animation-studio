@@ -3,7 +3,7 @@
 // Board coords: 1320 × 680, y down; the header sits above y 100 and the footer at y 650.
 (() => {
   const C = LK;
-  const res = (code, out, x, y, k, size = 26, ox) => { lkPyLine(code, x, y, size, k); lkCode('→ ' + out, ox ?? x + lkMeasure(code, size, 500, LK_MONO) + 24, y, size, C.red, k); };
+  const res = (code, out, x, y, k, size = 26, ox) => { lkPyLine(code, x, y, size, k); if (out !== '') lkCode('→ ' + out, ox ?? x + lkMeasure(code, size, 500, LK_MONO) + 24, y, size, C.red, k); };
 
   const panels = [
     { title: 'Operators', draw(u, b) {
@@ -80,7 +80,7 @@
       lkText('equal, but two objects', 705, 450, 22, C.red, lkK(b(1), 5, .7), 'center', 700);
       lkRule('use == for values · use is for None', 340, 580, 560, lkK(b(2), .3, .9), 24);
       [['2 in [1, 2, 3]', 'True'], ['"there" in "Hello there"', 'True']].forEach(([c, r], i) => res(c, r, 680, 500 + i * 56, lkK(b(3), .8 + i * 2, .7), 24, 1080));
-      lkText('lists and strings', 1210, 528, 22, C.dim, lkK(b(3), 3.6, .8), 'left');
+      lkText('lists and strings', 880, 610, 22, C.dim, lkK(b(3), 3.6, .8), 'center');
     } },
 
     { title: 'Operators on strings and lists', draw(u, b) {
