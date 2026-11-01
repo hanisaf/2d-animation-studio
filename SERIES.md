@@ -134,11 +134,12 @@ Cartwheels, the DCES talent show, Danny's cube act and Princess Pearl's concert.
 
 ### Lectures
 
-Professor Safadi alone at the chalkboard. ([`scenes/lectures/`](scenes/lectures/series.js))
+Lectures at the chalkboard: Professor Safadi's research talks, and the *Python Programming Skills for Business Analytics* course (BUSN 3030E) taught at a black board in UGA red and black, with no characters and a voice-over. ([`scenes/lectures/`](scenes/lectures/series.js))
 
 | # | Scene | Length | Logline |
 |---|---|---|---|
 | 27 | [Dynamics of Mirroring](scenes/lectures/scene27_dynamics_of_mirroring/README.md) | 319 s | A standalone lecture. Alone in the lecture hall, Professor Safadi explains his paper with Amrit Tiwana (JAIS 2026) at a big chalkboard, twelve panels that chalk themselves on: the mirror between team and code mists and refocuses, focusing drives evolution, and the payoff is a modular team on modular code. *"Not optimizing configurations… but orchestrating oscillations."* |
+| 49 | [Python 01 · The Analytics Pipeline](scenes/lectures/scene49_py01_analytics_pipeline/README.md) | 335 s | Module 1 of the Python course at a black board: why Python, the five stages of an analytics project, Jupyter notebooks, reproducible work, and a first look at the Cambridge salary data, where a \$3.5 million "salary" turns out to be a labor settlement. Voice-over script in the README. |
 
 ### Cleaning Up
 

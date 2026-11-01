@@ -13,6 +13,7 @@
 //                               lift (world units) raises a small character (Alma) so more than her head clears the desk.
 // o: { splitZ, screen: 0..1 (how far the projection screen is pulled down; default 1), projector: 0..1 (screen glow; default 1),
 //      bigBoard(t): one large chalkboard across the front wall (BIG_BOARD) in place of both boards and the screen,
+//      blackBoard: true paints the boards solid black (black frame, red pinstripe) instead of green,
 //      boardL(t), boardR(t), slide(t): draw your own chalk / slide content. Local coords: origin at the surface's top-left,
 //      world units, y down; the surface size is lectureHall.BOARD_L / BOARD_R / SCREEN / BIG_BOARD (w, h). Content is clipped to it. }
 //
@@ -148,14 +149,15 @@ const lectureHall = (() => {
       S(rectPts(-HW, -CEIL, 2 * HW, CEIL), { fill: C.wall, stroke: null });
       S(rectPts(-HW, -170, 2 * HW, 170), { fill: C.woodLt, stroke: null });
       line([[-HW, -170], [HW, -170]], { stroke: C.woodDk, lwPx: px(P, 2.5) });
-      if (o.bigBoard) board(BIG_BOARD, o.bigBoard, t, 2);
-      else { board(BOARD_L, o.boardL, t, 0); board(BOARD_R, o.boardR, t, 1); screen(o, t); }
+      if (o.bigBoard) board(BIG_BOARD, o.bigBoard, t, 2, o.blackBoard);
+      else { board(BOARD_L, o.boardL, t, 0, o.blackBoard); board(BOARD_R, o.boardR, t, 1, o.blackBoard); screen(o, t); }
       // speakers high in the corners
       for (const x of [-760, 760]) S(rectPts(x - 45, -1080, 90, 130), { fill: '#3A3F46', lwPx: 1.4 });
     });
   }
-  function board(b, draw, t, which) {
+  function board(b, draw, t, which, black) {
     const x = b.x, y = -b.y;
+    if (black) return blackBoard(b, draw, t);
     S(rectPts(x - 16, y - 16, b.w + 32, b.h + 32), { fill: C.alu, lwPx: 1.6 });
     S(rectPts(x, y, b.w, b.h), { fill: linGrad(x, y, x + b.w, y + b.h, [[0, C.board], [1, C.boardDk]]), stroke: C.aluDk, lwPx: 1.2 });
     X.save(); X.beginPath(); X.rect(x, y, b.w, b.h); X.clip();
@@ -167,6 +169,19 @@ const lectureHall = (() => {
     X.restore();
     S(rectPts(x - 20, y + b.h + 14, b.w + 40, 14), { fill: C.aluDk, lwPx: 1.2 });           // chalk tray
     S(rectPts(x + 40, y + b.h + 6, 34, 9), { fill: C.chalk, lwPx: .8 }); S(rectPts(x + b.w - 90, y + b.h + 4, 60, 12), { fill: '#6B5A4E', lwPx: .8 });
+  }
+  // The black variant (o.blackBoard): a solid black slate, no smudges, in a black frame with a thin red pinstripe.
+  function blackBoard(b, draw, t) {
+    const x = b.x, y = -b.y;
+    S(rectPts(x - 18, y - 18, b.w + 36, b.h + 36), { fill: '#161616', stroke: '#050505', lwPx: 1.6 });
+    S(rectPts(x - 8, y - 8, b.w + 16, b.h + 16), { fill: null, stroke: '#BA0C2F', lwPx: 2.4 });
+    S(rectPts(x, y, b.w, b.h), { fill: '#060606', stroke: '#000000', lwPx: 1 });
+    X.save(); X.beginPath(); X.rect(x, y, b.w, b.h); X.clip();
+    if (draw) { X.translate(x, y); draw(t); }
+    X.restore();
+    S(rectPts(x - 22, y + b.h + 16, b.w + 44, 14), { fill: '#161616', stroke: '#050505', lwPx: 1.2 });          // chalk tray
+    S(rectPts(x + 40, y + b.h + 8, 34, 9), { fill: C.chalk, lwPx: .8 }); S(rectPts(x + 86, y + b.h + 8, 26, 9), { fill: '#E4002B', lwPx: .8 });
+    S(rectPts(x + b.w - 90, y + b.h + 6, 60, 12), { fill: '#2A2A2A', lwPx: .8 });
   }
   function screen(o, t) {
     const d = clamp(o.screen ?? 1), glow = clamp(o.projector ?? 1) * d, s = SCREEN, h = s.h * d;

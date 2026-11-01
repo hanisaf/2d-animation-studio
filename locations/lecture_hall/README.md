@@ -71,7 +71,7 @@ In the studio's location browser (click one, then **Copy camera**; **⇄ Reverse
 ## API (`lecture_hall.js`)
 
 ```js
-lectureHall.back(P, t, { splitZ, screen: 1, projector: 1, boardL, boardR, slide, bigBoard })   // everything farther than splitZ
+lectureHall.back(P, t, { splitZ, screen: 1, projector: 1, boardL, boardR, slide, bigBoard, blackBoard })   // everything farther than splitZ
 lectureHall.front(P, t, { splitZ, toZ })          // pieces nearer than splitZ (and farther than toZ, if given)
 lectureHall.seat(n, x = 0, lift = 0)              // → { x, y, z }: a seat in row n (1 = front)
 lectureHall.rowY(n), lectureHall.rowFront(n)      // a row's step height and front edge Z
@@ -81,6 +81,7 @@ lectureHall.MARK, .spots, .cameras, .BOARD_L, .BOARD_R, .SCREEN, .BIG_BOARD, .LE
 - **Boards and slides:** `boardL(t)`, `boardR(t)` and `slide(t)` draw your own content. The origin is the surface's top-left, in world units, with y pointing down, and the content is clipped to the surface: boards are 460 × 550, and the slide area is 568 × 570. For example:
   `boardL: t => { X.font = '600 70px ' + FONT_TALK; X.fillStyle = '#F3F1E6'; X.fillText('ζ(s) = 0', 40, 120); }`
 - **Big board:** pass `bigBoard(t)` to swap both boards and the screen for one wide chalkboard (1320 × 680, `BIG_BOARD`) across the front wall. Scene 27 uses it for a full lecture.
+- **Black board:** pass `blackBoard: true` to paint the boards (or the big board) solid black, with no eraser smudges, in a black frame with a thin UGA-red pinstripe. The Python lectures (scenes 49–63) use it with `bigBoard`.
 - **Screen:** `screen` from 0 (rolled up) to 1 (fully down) animates the pull-down. `projector` from 0 to 1 sets how brightly it glows. The slide is drawn only when the screen is fully down.
 - **Several characters in different rows:** sort them far to near by `P.depth(z)` and interleave:
 

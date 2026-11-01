@@ -13,7 +13,7 @@
   await loadManifests();                                             // every series.js and asset.js; code loads on demand
 
   const canvas = $('#out'); X = canvas.getContext('2d');
-  await Promise.race([Promise.all([document.fonts.load('600 50px Fredoka'), document.fonts.load('50px "Luckiest Guy"')]), new Promise(r => setTimeout(r, 6000))]);
+  await Promise.race([Promise.all([document.fonts.load('600 50px Fredoka'), document.fonts.load('50px "Luckiest Guy"'), document.fonts.load('500 50px "Fira Mono"')]), new Promise(r => setTimeout(r, 6000))]);
 
   // ---------- renderer API (used by render.mjs) ----------
   const q = new URLSearchParams(location.search);
