@@ -4,7 +4,7 @@
 //   node scripts/lecture_script.mjs scene49_py01_analytics_pipeline [--print]
 //
 // Reads the scene's asset.js (narration + pace), times every line the same way the scene does (lkTiming in
-// scenes/lectures/scene49_py01_analytics_pipeline/lecture_kit.js), and replaces the block between
+// scenes/python_lectures/scene49_py01_analytics_pipeline/lecture_kit.js), and replaces the block between
 //   <!-- narration:start -->  and  <!-- narration:end -->
 // in the scene's README.md with the script: one table per board panel, each line with its cue time.
 // --print writes the block to stdout instead. Run it after you change the narration or the pace.
@@ -19,7 +19,7 @@ if (!dir) { console.error(`no scene folder for ${id}`); process.exit(1); }
 
 const ctx = { console, Math };
 vm.createContext(ctx);
-vm.runInContext(readFileSync('scenes/lectures/scene49_py01_analytics_pipeline/lecture_kit.js', 'utf8') + '\n;this.lkTiming = lkTiming; this.lkWords = lkWords;', ctx);
+vm.runInContext(readFileSync('scenes/python_lectures/scene49_py01_analytics_pipeline/lecture_kit.js', 'utf8') + '\n;this.lkTiming = lkTiming; this.lkWords = lkWords;', ctx);
 let meta; ctx.asset = m => { meta = m; };
 vm.runInContext(readFileSync(`${dir}/asset.js`, 'utf8'), ctx);
 const lines = ctx.lkTiming(meta.narration, meta.pace);

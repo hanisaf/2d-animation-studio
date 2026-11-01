@@ -1,4 +1,4 @@
-// scenes/lectures/scene49_py01_analytics_pipeline/lecture_kit.js: the shared kit for the Python lectures (scenes 49–63).
+// scenes/python_lectures/scene49_py01_analytics_pipeline/lecture_kit.js: the shared kit for the Python lectures (scenes 49–63).
 //
 // Each Python lecture is the lecture hall's big chalkboard, painted solid black (lectureHall `blackBoard`), with
 // white chalk and UGA red. There are no characters: the board is the whole show, and the narration is a voice-over

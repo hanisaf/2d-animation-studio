@@ -14,7 +14,7 @@ const REGISTRY = {
   locations: ['throne_room', 'dces', 'lecture_hall', 'soccer_field', 'umn', 'house', 'science_room', 'school_library', 'safadi_study', 'sami_clinic', 'school_gym', 'alma_bedroom', 'roman_bath', 'ancient_athens', 'living_room', 'housam_bedroom', 'meadow-ridge-elementary-school', 'home_clinic'],
   series: [
     // Professor Safadi Studio
-    'early_episodes', 'soccer_showdown', 'halloween', 'book_fair', 'talent_show', 'lectures', 'cleaning_up', 'screen_time', 'the_trolls',
+    'early_episodes', 'soccer_showdown', 'halloween', 'book_fair', 'talent_show', 'lectures', 'python_lectures', 'cleaning_up', 'screen_time', 'the_trolls',
     // Sami's studio
     'dr_sami_lessons', 'sami_shorts',
   ],
