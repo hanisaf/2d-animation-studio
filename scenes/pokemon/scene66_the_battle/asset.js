@@ -1,0 +1,116 @@
+// Scene 66: The Battle. Dialogue drives the bubbles, mouths and voices; music is synthesized from the score below.
+// A `group` on a line draws one bubble for everyone in it (the other speakers' entries are silentBubble, so they still voice).
+// Uses scene 65 (DK: the Energy, Trainer and person cards), which in turn uses scene 64 (PK: the creatures and their art).
+asset({
+  title: 'Pokemon 3 · The Battle',
+  logline: 'Battle day in the living room: Jenna against Alma, Danny against Housam. With no Energy, Jenna and Danny can only stand and watch as Tidal Splash, Flame Burst, Bubble Beam and Inferno Dive knock out their Pokemon. One prize card from losing, they play their last card: Professor Safadi. "Allow me to explain... you win!" "Not fair!" "Totally fair!" The brothers walk in: only a Doctor Sami card could cancel it, and somebody was too proud to take one. Then Housam checks his notebook: "These cards are not official! They are not in the Pokedex!" Busted. "Everybody wins this time!" "BUT HOW?!" "You shall see!" To be continued...',
+  files: ['props.js', 'scene.js'],              // the playmats, holograms and battle inserts, then the shots
+  docs: 'README.md',                            // synopsis, script, shot list, notes for editing
+  uses: ['scene65_deck_builders'],              // DK (cards) and, through it, PK (creatures)
+  cast: ['jenna', 'danny', 'housam', 'alma', 'safadi', 'sami'],
+  locations: ['living_room'],
+  dialogue: [
+    // part 1: ready to battle
+    { at: 1.8, speaker: 'alma', text: 'Jenna, are you ready to *battle*?', cps: 15, hold: 0.4 },
+    { at: 4.8, speaker: 'jenna', text: 'Ready! My Pokemon are the *cutest*!', cps: 15, hold: 0.4, energy: 1.15 },
+    { at: 7.9, speaker: 'housam', text: 'Danny, may the *best deck* win.', cps: 14, hold: 0.4 },
+    { at: 10.9, speaker: 'danny', text: 'Mine are the *fiercest*! RAWR!', cps: 14, hold: 0.6, kind: 'shout', energy: 1.3 },
+    { at: 14.1, speaker: 'housam', text: 'LET\'S BATTLE!', cps: 10, hold: 0.8, kind: 'shout', energy: 1.5, group: ['jenna', 'alma', 'danny', 'housam'] },
+    { at: 14.1, speaker: 'jenna', text: 'LET\'S BATTLE!', cps: 10, hold: 0.8, energy: 1.5, silentBubble: true },
+    { at: 14.1, speaker: 'alma', text: 'LET\'S BATTLE!', cps: 10, hold: 0.8, energy: 1.5, silentBubble: true },
+    { at: 14.1, speaker: 'danny', text: 'LET\'S BATTLE!', cps: 10, hold: 0.8, energy: 1.5, silentBubble: true },
+    // battle A: Tidal Splash
+    { at: 17.6, speaker: 'alma', text: 'Water Energy on Captain Fin... *Tidal Splash*!', cps: 15, hold: 0.5, energy: 1.2 },
+    { at: 25.0, speaker: 'jenna', text: 'Sproutbun, no! My turn... um... *attack*?', cps: 14, hold: 0.5 },
+    { at: 28.8, speaker: 'alma', text: 'You need *Energy* to attack, Jenna.', cps: 15, hold: 0.5 },
+    { at: 32.0, speaker: 'jenna', text: 'Oh... I *pass*.', cps: 10, hold: 0.6, energy: 0.8 },
+    // battle B: Flame Burst
+    { at: 34.9, speaker: 'housam', text: 'I play my Stadium, *Lava Arena*! Blazewyrm, *Flame Burst*!', cps: 16, hold: 0.5, energy: 1.2 },
+    { at: 42.8, speaker: 'danny', text: 'Fight back, Blazewyrm! Why isn\'t it *moving*?', cps: 15, hold: 0.5, energy: 1.1 },
+    { at: 46.7, speaker: 'housam', text: 'No Energy, *no attacks*.', cps: 13, hold: 0.5 },
+    { at: 49.4, speaker: 'danny', text: '...*Pass*.', cps: 7, hold: 0.6, energy: 0.8 },
+    // more attacks
+    { at: 52.1, speaker: 'alma', text: 'Captain Fin, *Bubble Beam*!', cps: 14, hold: 0.4, energy: 1.2 },
+    { at: 57.9, speaker: 'housam', text: 'Blazewyrm, *Inferno Dive*!', cps: 14, hold: 0.4, energy: 1.25 },
+    // the montage, then the last turn
+    { at: 68.0, speaker: 'jenna', text: 'We just stand here...', cps: 12, hold: 0.4, energy: 0.8 },
+    { at: 70.5, speaker: 'danny', text: '...and *watch*.', cps: 10, hold: 0.6, energy: 0.8 },
+    { at: 73.0, speaker: 'alma', text: 'One more prize card, and I *win*!', cps: 15, hold: 0.5, energy: 1.1 },
+    { at: 76.1, speaker: 'housam', text: 'Same here. *Last turn*, Danny.', cps: 14, hold: 0.6 },
+    // the twist
+    { at: 79.9, speaker: 'jenna', text: 'Wait! I still have *one card* left...', cps: 14, hold: 0.4 },
+    { at: 83.2, speaker: 'danny', text: 'Me too! We play...', cps: 13, hold: 0.3 },
+    { at: 85.2, speaker: 'jenna', text: 'PROFESSOR SAFADI!', cps: 11, hold: 0.8, kind: 'shout', energy: 1.5, group: ['jenna', 'danny'] },
+    { at: 85.2, speaker: 'danny', text: 'PROFESSOR SAFADI!', cps: 11, hold: 0.8, energy: 1.5, silentBubble: true },
+    { at: 88.9, speaker: 'safadi', text: 'Allow me to *explain*... *you win*!', cps: 13, hold: 0.8, energy: 1.2 },
+    { at: 95.1, speaker: 'danny', text: 'WE WIN!', cps: 8, hold: 0.9, kind: 'shout', energy: 1.6, group: ['jenna', 'danny'] },
+    { at: 95.1, speaker: 'jenna', text: 'WE WIN!', cps: 8, hold: 0.9, energy: 1.6, silentBubble: true },
+    // the argument
+    { at: 97.7, speaker: 'housam', text: 'What?! That\'s *not fair*!', cps: 13, hold: 0.4, kind: 'shout', energy: 1.3 },
+    { at: 100.3, speaker: 'alma', text: 'One card can\'t just win the game! It\'s *too powerful*!', cps: 17, hold: 0.4, energy: 1.2 },
+    { at: 104.2, speaker: 'jenna', text: 'Not fair? Battling your *super decks* wasn\'t fair!', cps: 16, hold: 0.4, energy: 1.2 },
+    { at: 107.9, speaker: 'danny', text: 'Yeah! You two are *experts*!', cps: 14, hold: 0.4, energy: 1.2 },
+    { at: 110.6, speaker: 'housam', text: 'Everybody had the *same chance* to build a deck!', cps: 16, hold: 0.4, energy: 1.2 },
+    { at: 114.2, speaker: 'alma', text: 'We *told* you to use Energy!', cps: 14, hold: 0.3, energy: 1.25 },
+    { at: 116.7, speaker: 'jenna', text: 'And we told you we like *cute*!', cps: 14, hold: 0.3, energy: 1.25 },
+    { at: 119.3, speaker: 'danny', text: 'And *fierce*!', cps: 10, hold: 0.3, energy: 1.3 },
+    { at: 121.0, speaker: 'housam', text: 'NOT FAIR!', cps: 9, hold: 0.4, kind: 'shout', energy: 1.5, group: ['housam', 'alma'] },
+    { at: 121.0, speaker: 'alma', text: 'NOT FAIR!', cps: 9, hold: 0.4, energy: 1.5, silentBubble: true },
+    { at: 122.6, speaker: 'jenna', text: 'TOTALLY FAIR!', cps: 10, hold: 0.6, kind: 'shout', energy: 1.5, group: ['jenna', 'danny'] },
+    { at: 122.6, speaker: 'danny', text: 'TOTALLY FAIR!', cps: 10, hold: 0.6, energy: 1.5, silentBubble: true },
+    // the brothers
+    { at: 126.3, speaker: 'safadi', text: 'Children! What is going on here?', cps: 14, hold: 0.4, energy: 1.1 },
+    { at: 129.4, speaker: 'sami', text: 'Why all the *shouting*?', cps: 13, hold: 0.4 },
+    { at: 131.9, speaker: 'housam', text: 'They played the *Professor Safadi* card!', cps: 15, hold: 0.4, energy: 1.15 },
+    { at: 135.2, speaker: 'alma', text: 'And now we lose, even though our decks are *way better*!', cps: 17, hold: 0.5, energy: 1.1 },
+    { at: 139.6, speaker: 'sami', text: 'Ah. The only way to cancel a *Professor Safadi* card...', cps: 16, hold: 0.3 },
+    { at: 143.5, speaker: 'sami', text: '...is to play a *Doctor Sami* card!', cps: 14, hold: 0.5, energy: 1.1 },
+    { at: 147.0, speaker: 'sami', text: 'But *someone* was too proud to take it.', cps: 14, hold: 0.7 },
+    { at: 150.8, speaker: 'alma', text: '...Oops.', cps: 8, hold: 0.7, energy: 0.8 },
+    // the notebook
+    { at: 153.7, speaker: 'housam', text: 'Hmm... wait a minute.', cps: 11, hold: 0.6 },
+    { at: 158.6, speaker: 'housam', text: 'These cards are *not official*! They are *not in the Pokedex*!', cps: 16, hold: 0.6, energy: 1.3 },
+    { at: 163.4, speaker: 'safadi', text: 'Well... *technically*... ahem...', cps: 12, hold: 0.5, energy: 0.9 },
+    { at: 166.7, speaker: 'sami', text: 'They are... *limited edition*!', cps: 13, hold: 0.4 },
+    { at: 169.6, speaker: 'safadi', text: 'Very, *very* limited.', cps: 11, hold: 0.6 },
+    { at: 172.5, speaker: 'housam', text: 'Unofficial cards! WE WIN!', cps: 13, hold: 0.6, kind: 'shout', energy: 1.5, group: ['housam', 'alma'] },
+    { at: 172.5, speaker: 'alma', text: 'Unofficial cards! WE WIN!', cps: 13, hold: 0.6, energy: 1.5, silentBubble: true },
+    { at: 175.3, speaker: 'jenna', text: 'No! *WE* win!', cps: 10, hold: 0.6, kind: 'shout', energy: 1.5, group: ['jenna', 'danny'] },
+    { at: 175.3, speaker: 'danny', text: 'No! *WE* win!', cps: 10, hold: 0.6, energy: 1.5, silentBubble: true },
+    // everybody wins
+    { at: 177.8, speaker: 'safadi', text: 'Everybody wins *this time*!', cps: 13, hold: 0.6, energy: 1.3, group: ['safadi', 'sami'] },
+    { at: 177.8, speaker: 'sami', text: 'Everybody wins *this time*!', cps: 13, hold: 0.6, energy: 1.3, silentBubble: true },
+    { at: 180.7, speaker: 'housam', text: 'BUT HOW?!', cps: 8, hold: 0.7, kind: 'shout', energy: 1.6, group: ['jenna', 'alma', 'danny', 'housam'] },
+    { at: 180.7, speaker: 'jenna', text: 'BUT HOW?!', cps: 8, hold: 0.7, energy: 1.6, silentBubble: true },
+    { at: 180.7, speaker: 'alma', text: 'BUT HOW?!', cps: 8, hold: 0.7, energy: 1.6, silentBubble: true },
+    { at: 180.7, speaker: 'danny', text: 'BUT HOW?!', cps: 8, hold: 0.7, energy: 1.6, silentBubble: true },
+    { at: 183.1, speaker: 'safadi', text: 'You shall see!', cps: 11, hold: 0.9, energy: 1.3, group: ['safadi', 'sami'] },
+    { at: 183.1, speaker: 'sami', text: 'You shall see!', cps: 11, hold: 0.9, energy: 1.3, silentBubble: true },
+  ],
+  music: {
+    prompt: 'A battle-day score: a bright, punchy video-game battle theme with driving drums for "LET\'S BATTLE!", a whoosh and splash for Tidal Splash, a roaring fire whoosh for Flame Burst, bubbly pops for Bubble Beam, a falling whistle and a huge boom for Inferno Dive, a sad tuba for every "pass", a fast ticking montage, a suspense drumroll before the last card, a heavenly choir swell and chime for Professor Safadi, a victory fanfare, a squabbling staccato argument, a hush when the brothers walk in, a detective sting for "not in the Pokedex", a sheepish slide for the busted brothers, and a building, cheeky to-be-continued sting.',
+    bpm: 128, tonic: 57, motif: [0, 3, 5, 7, 10, 7, 5, 3], chords: [0, 5, 3, 4],
+    sections: [
+      { at: 0, energy: .4 }, { at: 14.0, energy: .85 }, { at: 16.6, energy: .55 }, { at: 20.6, energy: .9 }, { at: 24.8, energy: .4 },
+      { at: 34.6, energy: .6 }, { at: 38.6, energy: .95 }, { at: 42.6, energy: .4 }, { at: 51.8, energy: .7 }, { at: 54.0, energy: .9 },
+      { at: 59.6, energy: 1 }, { at: 63.6, energy: .8 }, { at: 67.8, energy: .3 }, { at: 79.6, energy: .45 }, { at: 85.0, energy: .75 },
+      { at: 88.6, energy: .9 }, { at: 94.8, energy: 1 }, { at: 97.5, energy: .6 }, { at: 120.8, energy: .9 }, { at: 124.6, energy: .25 },
+      { at: 139.4, energy: .35 }, { at: 150.6, energy: .2 }, { at: 153.5, energy: .35 }, { at: 156.4, energy: .55 }, { at: 160.4, energy: .7 },
+      { at: 163.2, energy: .3 }, { at: 172.3, energy: .8 }, { at: 177.6, energy: .7 }, { at: 180.5, energy: .9 }, { at: 182.9, energy: .7 },
+      { at: 185.6, energy: .5 }, { at: 188.0, energy: .2 }, { at: 190.0, energy: 0 },
+    ],
+    cues: [
+      { at: .3, type: 'plip' }, { at: 14.1, type: 'drumroll', dur: .5 }, { at: 14.6, type: 'ding' }, { at: 14.7, type: 'harp' }, { at: 18.4, type: 'pop' },
+      { at: 21.7, type: 'whoosh' }, { at: 22.6, type: 'splash' }, { at: 23.4, type: 'bonk' }, { at: 25.0, type: 'gulp' }, { at: 32.6, type: 'gulp' },
+      { at: 35.6, type: 'ding' }, { at: 39.7, type: 'whoosh' }, { at: 40.6, type: 'bonk' }, { at: 41.4, type: 'scratch' }, { at: 49.6, type: 'gulp' },
+      { at: 55.1, type: 'pop' }, { at: 55.4, type: 'pop' }, { at: 55.7, type: 'pop' }, { at: 56.0, type: 'splash' }, { at: 60.6, type: 'whistle' }, { at: 61.6, type: 'bonk' }, { at: 61.7, type: 'scratch' },
+      { at: 64.4, type: 'bonk' }, { at: 64.9, type: 'bonk' }, { at: 65.3, type: 'bonk' }, { at: 65.7, type: 'bonk' }, { at: 66.1, type: 'bonk' }, { at: 66.5, type: 'bonk' },
+      { at: 70.6, type: 'cricket' }, { at: 83.0, type: 'drumroll', dur: 2.0 }, { at: 85.2, type: 'ding' }, { at: 89.2, type: 'harp' }, { at: 89.6, type: 'ding' },
+      { at: 92.3, type: 'pop' }, { at: 92.5, type: 'pop' }, { at: 95.1, type: 'applause', dur: 1.6 }, { at: 97.7, type: 'scratch' },
+      { at: 121.0, type: 'bonk' }, { at: 122.6, type: 'bonk' }, { at: 124.8, type: 'whoosh' }, { at: 126.3, type: 'whistle' }, { at: 143.6, type: 'ding' }, { at: 147.2, type: 'gulp' },
+      { at: 150.9, type: 'gulp' }, { at: 154.0, type: 'plip' }, { at: 156.5, type: 'whoosh' }, { at: 157.6, type: 'ding' }, { at: 158.6, type: 'drumroll', dur: .8 }, { at: 159.3, type: 'bonk' },
+      { at: 163.5, type: 'gulp' }, { at: 169.7, type: 'gulp' }, { at: 172.5, type: 'ding' }, { at: 175.3, type: 'bonk' }, { at: 177.9, type: 'harp' },
+      { at: 180.7, type: 'scratch' }, { at: 183.1, type: 'drumroll', dur: 1.0 }, { at: 185.6, type: 'ding' },
+    ],
+  },
+});

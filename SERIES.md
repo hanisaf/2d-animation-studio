@@ -185,6 +185,14 @@ Tablets, a 30-minute limit, Clawd in the games, family game night, and the dream
 | 35 | [Game Night](scenes/screen_time/scene35_game_night/README.md) | 152 s | Family game night: the professor plays *Oligarchy* with Housam and Danny, the doctor *Crazy Dolphins* with Jenna and Alma. *"Allow me to explain the rules—"* *"No, Professor. This time, allow ME to explain!"* Danny's towers bankrupt the professor; the doctor slaps the wrong dolphins. As evening falls the twins doze off head to head (*"Doctors recommend eight hours of sleep… I will just do eight minutes…"*); the kids giggle and play on, Danny taking the professor's turn. *"What do you think they are dreaming about?"* Two dream bubbles swell. *To be continued…* |
 | 36 | [Dream Mode](scenes/screen_time/scene36_dream_mode/README.md) | 180 s | A music video, the Screen Time arc's finale (picture cut; the song comes next). The sleeping brothers dream they're inside their video games with the kids: PRESS START, character select, then *Robo Invasion* (mission: research… space), *World Champion* (a bicycle kick off Fester's head: GOAL), *Craft Blocks* (a Broccreeper, a giant Rubik's cube) and *Fight Planet* (DOUBLE K.O.… FAMILY-TY!). Final boss: THE ALARM CLOCK. *CONTINUE?* They wake up to the kids, a ringing clock and the board games. **The End.** |
 
+### Pokemon
+
+Housam and Alma teach Jenna and Danny why Pokemon cards are a 34-billion-dollar hit, and the four kids head for a Pokemon TCG tournament. ([`scenes/pokemon/`](scenes/pokemon/series.js))
+
+| # | Scene | Length | Logline |
+|---|---|---|---|
+| 64 | [Pokemon 1 · The Card Collectors](scenes/pokemon/scene64_card_collectors/README.md) | 138 s | In Housam's bedroom, Housam and Alma sort their cards (a shiny dragon, a superhero dolphin) when Jenna and Danny drop by: *"Are those… stickers?"* *"They are Pokemon cards! They have made 34 billion dollars!"* *"Allow me to explain!"* Five reasons: cute and cool creatures, amazing art, a real game, promo cards, and a huge market. *"So cards are like treasure!"* Jenna and Danny want in: *"Let's all enter a Pokemon TCG tournament!"* *"LET'S DO IT!"* *To be continued…* |
+
 ## Category: Sami's studio
 
 Standalone scenes from Sami's studio. They are registered (open them in the studio) but left out of the movie.
