@@ -26,6 +26,27 @@
   window.setFx = setFx; window.loadAsset = loadAsset; window.requireScene = requireScene; window.loadAll = loadAll;
   window.sceneInfo = () => ({ id: SCENE.id, title: SCENE.title, duration: SCENE.duration, fps: SCENE.fps, audio: SCENE.audio || null, synthesizedAudio: !!(SCENE.music || SCENE.dialogue?.length) });
   window.renderAt = async (t, type = 'image/png', qual = .92) => { drawFrame(t); return canvas.toDataURL(type, qual); };
+  window.probeVideoCodec = probeVideoCodec;
+  window.exportVideoRange = exportVideoRange;
+  window.uploadVideoRange = async (opts, url) => {
+    const buf = await exportVideoRange(opts);
+    const res = await fetch(url, { method: 'POST', body: buf });
+    if (!res.ok) throw new Error('upload failed: HTTP ' + res.status);
+    return buf.byteLength;
+  };
+  window.renderBlobTo = async (t, url, type = 'image/jpeg', qual = .95) => {
+    drawFrame(t);
+    const blob = await new Promise((resolve, reject) => canvas.toBlob(b => b ? resolve(b) : reject(new Error('toBlob failed')), type, qual));
+    const res = await fetch(url, { method: 'POST', body: blob });
+    if (!res.ok) throw new Error('upload failed: HTTP ' + res.status);
+  };
+  window.uploadAudioWav = async (id, url) => {
+    const buf = await synthesizeSceneAudio(SCENES[id]);
+    if (!buf) return false;
+    const res = await fetch(url, { method: 'POST', body: sceneWavBlob(buf) });
+    if (!res.ok) throw new Error('audio upload failed: HTTP ' + res.status);
+    return true;
+  };
   window.renderSheet = async (times, cols = 3, w = 640) => {
     const h = Math.round(w * 9 / 16), rows = Math.ceil(times.length / cols), sc = document.createElement('canvas');
     sc.width = cols * w; sc.height = rows * h; const c = sc.getContext('2d'), ms = [];
@@ -199,9 +220,12 @@
     paintedFrame = frameKey();
     hud();
   }
+  const PREVIEW_FPS = 24;
   function frameKey() {
     if (S.mode === 'scene') return `scene:${S.id}:${Math.floor(S.t * SCENES[S.id].fps)}`;
     if (S.mode === 'movie') { const at = movieAt(S.t); return at ? `movie:${at.index}:${Math.floor(at.local * SCENES[at.clip.id].fps)}` : 'movie:empty'; }
+    if (S.mode === 'character') return `char:${S.id}:${Math.floor(S.t * PREVIEW_FPS)}`;
+    if (S.mode === 'location') return `loc:${S.id}:${Math.floor(S.t * PREVIEW_FPS)}`;
     return null;
   }
   let last = performance.now(), paintedFrame = null;
@@ -227,7 +251,7 @@
           const d = movieDuration();
           if (S.t >= d) { if (S.loop && d) { S.t = 0; S.movieActive = -1; } else { S.t = d; pause(); } }
         } else S.t += dt;
-        S.dirty ||= (S.mode === 'scene' || S.mode === 'movie') ? frameKey() !== paintedFrame : true;
+        S.dirty ||= frameKey() !== paintedFrame;
       }
       if (S.dirty) { render(); S.dirty = false; }
     }
@@ -505,9 +529,12 @@
     try {
       const blob = await exportSceneJavaScript({ id, sound, signal: ctrl.signal,
         onProgress: (p, msg) => { bar.style.width = (p * 100).toFixed(1) + '%'; status(msg); } });
-      const name = id + (sound ? '.with-sound.js' : '.silent.js');
+      const base = id + (sound ? '.with-sound' : '.silent');
+      const name = base + '.js', htmlName = base + '.html';
+      const htmlBlob = sceneJavaScriptHtmlBlob({ id, scriptName: name, title: META('scene', id).title || id });
       downloadBlob(blob, name);
-      status('Saved ' + name + ' · ' + (blob.size / 1e6).toFixed(1) + ' MB · Embed with <script src="' + name + '" data-mount="#animation"></script>', 'ok');
+      setTimeout(() => downloadBlob(htmlBlob, htmlName), 150);
+      status('Saved ' + name + ' + ' + htmlName + ' · ' + (blob.size / 1e6).toFixed(1) + ' MB · Open ' + htmlName + ' in a browser to test', 'ok');
     } catch (e) {
       status(e.name === 'AbortError' ? 'Export cancelled' : '⚠ ' + e.message, 'warn');
       if (e.name !== 'AbortError') console.error(e);

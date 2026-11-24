@@ -237,6 +237,46 @@ function sceneWavBlob(buffer) {
   return new Blob([bytes], { type: 'audio/wav' });
 }
 
+// Encode a synthesized AudioBuffer as compressed AAC-in-M4A (or Opus-in-MP4) via WebCodecs + mp4-muxer (~12-16x smaller
+// than raw PCM WAV for standalone JavaScript exports). Falls back transparently to sceneWavBlob() if unsupported.
+async function sceneCompressedAudioBlob(buffer, bitrate = 128000) {
+  if (!('AudioEncoder' in window) || !window.Mp4Muxer) return sceneWavBlob(buffer);
+  const SR = buffer.sampleRate, ch = Math.min(2, buffer.numberOfChannels);
+  let aCfg = null;
+  for (const c of [{ codec: 'mp4a.40.2', mux: 'aac', br: bitrate }, { codec: 'opus', mux: 'opus', br: Math.min(bitrate, 96000) }]) {
+    const cfg = { codec: c.codec, sampleRate: SR, numberOfChannels: ch, bitrate: c.br };
+    try {
+      if ((await AudioEncoder.isConfigSupported(cfg)).supported) { aCfg = { ...c, cfg }; break; }
+    } catch {}
+  }
+  if (!aCfg) return sceneWavBlob(buffer);
+  try {
+    const muxer = new Mp4Muxer.Muxer({
+      target: new Mp4Muxer.ArrayBufferTarget(), fastStart: 'in-memory', firstTimestampBehavior: 'offset',
+      audio: { codec: aCfg.mux, numberOfChannels: ch, sampleRate: SR },
+    });
+    let encErr = null;
+    const aenc = new AudioEncoder({ output: (chunk, meta) => muxer.addAudioChunk(chunk, meta), error: e => { encErr = e; } });
+    aenc.configure(aCfg.cfg);
+    const L = buffer.getChannelData(0), R = ch > 1 ? buffer.getChannelData(1) : L, len = buffer.length;
+    for (let i = 0; i < len; i += 1024) {
+      if (encErr) throw encErr;
+      const m = Math.min(1024, len - i), data = new Float32Array(m * ch);
+      data.set(L.subarray(i, i + m), 0);
+      if (ch > 1) data.set(R.subarray(i, i + m), m);
+      const ad = new AudioData({ format: 'f32-planar', sampleRate: SR, numberOfFrames: m, numberOfChannels: ch, timestamp: Math.round(i / SR * 1e6), data });
+      aenc.encode(ad); ad.close();
+      if (aenc.encodeQueueSize > 32) await new Promise(r => setTimeout(r, 0));
+    }
+    await aenc.flush(); aenc.close(); if (encErr) throw encErr;
+    muxer.finalize();
+    return new Blob([muxer.target.buffer], { type: 'audio/mp4' });
+  } catch (e) {
+    console.warn('Compressed audio export failed, falling back to WAV:', e);
+    return sceneWavBlob(buffer);
+  }
+}
+
 async function sceneWavBase64(id) {
   const buffer = await synthesizeSceneAudio(SCENES[id]);
   if (!buffer) return null;

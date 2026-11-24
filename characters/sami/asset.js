@@ -3,6 +3,7 @@ asset({
   title: 'Doctor Sami',
   logline: 'A smart and humble doctor (and Professor Safadi\'s twin brother!) who educates kids about health in a funny way.',
   files: ['sami.js', '../fighting-poses.js'],                           // code, in load order
+  uses: ['character:safadi'],                   // shares sfChiton / sfWreath / sfSandal for greek outfit
   docs: 'README.md',                            // description, look, personality, rig API
   refs: ['reference.jpeg'],                      // reference art in this folder
   voice: {

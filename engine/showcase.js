@@ -32,7 +32,8 @@ function drawCharacterView(entry, pose, t, o = {}) {
   if (loc) {
     const m = loc.MARK || { x: 0, z: 1200 }, hgt = uh * entry.unit, z = m.z - hgt * 2.1 / zoom, y = hgt * .55, k = 1000 / (m.z - z);
     const P = persp({ x: m.x, y, z, f: 1000, hy: H * .9 - y * k });
-    layer(() => loc.back(P, t, { splitZ: m.z }), { blur: 2.4 });
+    const bgKey = `charview:${o.location}:${m.x},${y.toFixed(1)},${z.toFixed(1)},${m.z}:${zoom}`;
+    staticLayer(bgKey, () => loc.back(P, 0, { splitZ: m.z }), { blur: 2.4 });
     const [sx, sy] = P.p(m.x, 0, m.z);
     if (loc.light) withLight(loc.light, () => lit(() => drawPose(entry, pose, sx, sy, entry.unit * k, t)));
     else drawPose(entry, pose, sx, sy, entry.unit * k, t);

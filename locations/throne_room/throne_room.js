@@ -26,33 +26,63 @@ const throneRoom = (() => {
   const S = (pts, o) => shape(pts, { stroke: C.line, lwPx: 1.6, ...o });
   const px = (P, w) => clamp(w * P.cam.f / 1000, .8, 6);                       // line widths scale a little with the lens
 
+  // Precomputed static geometry & colours (avoid per-frame trig, hash, array & mixCol churn)
+  const CEIL_X = Array.from({ length: 17 }, (_, i) => -HW + i * 100);
+  const CEIL_Y = CEIL_X.map(vY);
+  const CEIL_COLS = Array.from({ length: 16 }, (_, i) => mixCol(C.ceilDk, C.ceil, .35 + .65 * (1 - Math.abs((CEIL_X[i] + 50) / HW))));
+  const BAYS = [450, 900, 1350, 1800, 2250];
+  const ARCH_LINES = BAYS.map(z => Array.from({ length: 25 }, (_, i) => { const x = -HW + i * HW / 12; return [x, vY(x), z]; }));
+  const DIAG_LINES = BAYS.flatMap(zb => [1, -1].map(dir => Array.from({ length: 21 }, (_, i) => { const x = dir * (-HW + i * HW / 10); return [x, vY(x), lerp(zb - 450, zb, i / 20)]; })));
+  const BACK_WALL_POLY = [[-HW, 0], [HW, 0], ...Array.from({ length: 33 }, (_, i) => { const x = -HW + i * HW / 16; return [x, -vY(x)]; }).reverse()];
+  const GLASS_SKY = ['#BFE0EC', '#F4C6D2', '#F8E7C8', '#D8CBEA', '#CDE9D9', '#F9D6E0'];
+  const GLASS_GRASS = ['#9CC49A', '#B8D6A8', '#86B386', '#A9CFA0'];
+  const GLASS_TILES = [];
+  for (let x = -250, i = 0; x < 250; x += 50, i++) for (let y = -1100, j = 0; y < -150; y += 50, j++) {
+    const pal = y > -430 ? GLASS_GRASS : GLASS_SKY;
+    GLASS_TILES.push([x, y, pal[Math.floor(hash(i * 31 + j * 7) * pal.length)]]);
+  }
+  const FLOOR_SWIRLS = [];
+  for (let xi = -4; xi < 4; xi++) for (let zi = 0; zi < 12; zi++) {
+    const cx = xi * 200 + 100, cz = zi * 200 + 100; if (Math.abs(cx) < 200) continue;
+    const sp = [], ph = hash(xi * 13 + zi) * TAU;
+    for (let i = 0; i <= 16; i++) { const a = ph + i * .5, r = 70 - i * 3.6; sp.push([cx + Math.cos(a) * r, 0, cz + Math.sin(a) * r]); }
+    FLOOR_SWIRLS.push({ cz, sp });
+  }
+  const FLOOR_PETALS = Array.from({ length: 46 }, (_, i) => ({
+    pz: 350 + hash(i * 3.1) * 1700, pxx: (hash(i * 7.7) - .5) * 250, rot: hash(i) * TAU,
+  }));
+  const DAIS_STEPS = Array.from({ length: 3 }, (_, i) => {
+    const R = 560 - 90 * i, y1 = 36 * (i + 1), y0 = y1 - 36;
+    const arc = y => Array.from({ length: 25 }, (_, j) => { const an = Math.PI * j / 24; return [R * Math.cos(an), y, BACK - R * .55 * Math.sin(an)]; });
+    return { riser: [...arc(y1), ...arc(y0).reverse()], top: [...arc(y1), [-R, y1, BACK], [R, y1, BACK]] };
+  });
+  const DAIS_RUG = Array.from({ length: 21 }, (_, j) => { const a = Math.PI * j / 20; return [300 * Math.cos(a), 109, BACK - 20 - 300 * .5 * Math.sin(a)]; });
+  const CHAND_CANDS = CHAND.map(c => Array.from({ length: 7 }, (_, i) => { const an = Math.PI * (i + .5) / 7; return [c.x - Math.cos(an) * c.r, -c.y - 30 + Math.sin(an) * 14]; }));
+
   // ---------- big surfaces ----------
   function ceiling(P, t) {
     const z0 = P.cam.z - 200, zs = []; for (let z = z0; z < BACK; z += 180) zs.push(z); zs.push(BACK);
-    for (let j = 0; j < zs.length - 1; j++) for (let i = 0; i < 16; i++) {
-      const xa = -HW + i * 100, xb = xa + 100, sh = 1 - Math.abs((xa + 50) / HW);
-      const q = P.poly([[xa, vY(xa), zs[j]], [xb, vY(xb), zs[j]], [xb, vY(xb), zs[j + 1]], [xa, vY(xa), zs[j + 1]]]);
-      const c = mixCol(C.ceilDk, C.ceil, .35 + .65 * sh);
-      if (q) shape(q, { fill: c, stroke: c, lwPx: 1.2 });
-    }
-    // ribs: transverse arches at the bays, diagonals across each bay, and the ridge
-    const arch = z => { const a = []; for (let i = 0; i <= 24; i++) { const x = -HW + i * HW / 12; a.push([x, vY(x), z]); } return a; };
-    const bays = [450, 900, 1350, 1800, 2250];
-    for (let b = 0; b < bays.length; b++) {
-      const r = P.line(arch(bays[b])); if (r) { line(r, { stroke: C.ceilDk, lwPx: px(P, 7) }); line(r, { stroke: C.rib, lwPx: px(P, 3.5) }); }
-      const za = bays[b] - 450, zb = bays[b];
-      for (const dir of [1, -1]) {
-        const d = []; for (let i = 0; i <= 20; i++) { const x = dir * (-HW + i * HW / 10); d.push([x, vY(x), lerp(za, zb, i / 20)]); }
-        const q = P.line(d); if (q) line(q, { stroke: C.ceilDk, lwPx: px(P, 3) });
+    for (let j = 0; j < zs.length - 1; j++) {
+      const za = zs[j], zb = zs[j + 1];
+      for (let i = 0; i < 16; i++) {
+        const q = P.poly([[CEIL_X[i], CEIL_Y[i], za], [CEIL_X[i + 1], CEIL_Y[i + 1], za], [CEIL_X[i + 1], CEIL_Y[i + 1], zb], [CEIL_X[i], CEIL_Y[i], zb]]);
+        if (q) shape(q, { fill: CEIL_COLS[i], stroke: CEIL_COLS[i], lwPx: 1.2 });
       }
     }
-    const ridge = P.line([[0, vY(0), z0], [0, vY(0), BACK]]); if (ridge) line(ridge, { stroke: C.ceilDk, lwPx: px(P, 3) });
+    // ribs: transverse arches at the bays, diagonals across each bay, and the ridge
+    const wArch1 = px(P, 7), wArch2 = px(P, 3.5), wDiag = px(P, 3);
+    for (let b = 0; b < ARCH_LINES.length; b++) {
+      const r = P.line(ARCH_LINES[b]); if (r) { line(r, { stroke: C.ceilDk, lwPx: wArch1 }); line(r, { stroke: C.rib, lwPx: wArch2 }); }
+    }
+    for (let d = 0; d < DIAG_LINES.length; d++) {
+      const q = P.line(DIAG_LINES[d]); if (q) line(q, { stroke: C.ceilDk, lwPx: wDiag });
+    }
+    const ridge = P.line([[0, CEIL_Y[8], z0], [0, CEIL_Y[8], BACK]]); if (ridge) line(ridge, { stroke: C.ceilDk, lwPx: wDiag });
   }
 
   function backWall(P, t) {
     P.plane(BACK, k => {
-      const top = []; for (let i = 0; i <= 32; i++) { const x = -HW + i * HW / 16; top.push([x, -vY(x)]); }
-      S([[-HW, 0], [HW, 0], ...top.reverse()], { fill: linGrad(0, -1200, 0, 0, [[0, C.wallDk], [.25, C.wall], [1, C.wall]]), stroke: null });
+      S(BACK_WALL_POLY, { fill: linGrad(0, -1200, 0, 0, [[0, C.wallDk], [.25, C.wall], [1, C.wall]]), stroke: null });
       // window glow on the wall
       ellipse(0, -560, 520, 560, { fill: radGrad(0, -560, 50, 560, [[0, 'rgba(255,246,225,.55)'], [1, 'rgba(255,246,225,0)']]), stroke: null });
       // slim columns framing the window, banners, window, sill
@@ -66,15 +96,27 @@ const throneRoom = (() => {
     });
   }
 
+  let _glassTilesCv = null;
+  function _getGlassTiles() {
+    if (_glassTilesCv) return _glassTilesCv;
+    const cv = document.createElement('canvas'); cv.width = 500; cv.height = 950;
+    const c = cv.getContext('2d');
+    for (let k = 0; k < GLASS_TILES.length; k++) {
+      const [x, y, col] = GLASS_TILES[k];
+      c.fillStyle = col; c.fillRect(x + 250, y + 1100, 50, 50);
+    }
+    return (_glassTilesCv = cv);
+  }
   function stainedGlass(t) {
     const path = () => { X.beginPath(); X.moveTo(-250, -150); X.lineTo(-250, -820); X.bezierCurveTo(-250, -960, -120, -1040, 0, -1085); X.bezierCurveTo(120, -1040, 250, -960, 250, -820); X.lineTo(250, -150); X.closePath(); };
     X.save(); path(); X.clip();
-    const sky = ['#BFE0EC', '#F4C6D2', '#F8E7C8', '#D8CBEA', '#CDE9D9', '#F9D6E0'], grass = ['#9CC49A', '#B8D6A8', '#86B386', '#A9CFA0'];
-    for (let x = -250, i = 0; x < 250; x += 50, i++) for (let y = -1100, j = 0; y < -150; y += 50, j++) {
-      const g = y > -430, pal = g ? grass : sky, c = pal[Math.floor(hash(i * 31 + j * 7) * pal.length)];
-      X.fillStyle = c; X.fillRect(x, y, 50, 50);
+    const isVec = typeof _isVectorCtx === 'function' && _isVectorCtx();
+    if (isVec) {
+      for (let k = 0; k < GLASS_TILES.length; k++) { const [x, y, c] = GLASS_TILES[k]; X.fillStyle = c; X.fillRect(x, y, 50, 50); }
+    } else {
+      X.drawImage(_getGlassTiles(), -250, -1100, 500, 950);
     }
-    // shimmer: a slow band of light sweeping across the glass
+    // shimmer: a slow band of light sweeping across the glass (under castle & lead lines, matching original layering)
     const sx = -400 + ((t * 90) % 900);
     X.fillStyle = linGrad(sx - 120, 0, sx + 120, 0, [[0, 'rgba(255,255,255,0)'], [.5, 'rgba(255,255,255,.35)'], [1, 'rgba(255,255,255,0)']]); X.fillRect(-260, -1100, 520, 960);
     // castle
@@ -188,11 +230,9 @@ const throneRoom = (() => {
     X.restore();
     // marble swirls (skip the carpet)
     X.save(); X.globalAlpha = .6;
-    for (let xi = -4; xi < 4; xi++) for (let zi = 0; zi < 12; zi++) {
-      const cx = xi * 200 + 100, cz = zi * 200 + 100; if (Math.abs(cx) < 200 || cz < P.cam.z + 60) continue;
-      const sp = [], ph = hash(xi * 13 + zi) * TAU;
-      for (let i = 0; i <= 16; i++) { const a = ph + i * .5, r = 70 - i * 3.6; sp.push([cx + Math.cos(a) * r, 0, cz + Math.sin(a) * r]); }
-      const l = P.line(sp); if (l) line(l, { stroke: C.swirl, lwPx: 1.3, smooth: true });
+    for (let k = 0; k < FLOOR_SWIRLS.length; k++) {
+      const sw = FLOOR_SWIRLS[k]; if (sw.cz < P.cam.z + 60) continue;
+      const l = P.line(sw.sp); if (l) line(l, { stroke: C.swirl, lwPx: 1.3, smooth: true });
     }
     X.restore();
     for (const gx of [-560, -360, 360, 560]) { const l = P.line([[gx, 0, z0], [gx, 0, BACK]]); if (l) line(l, { stroke: C.gold, lwPx: px(P, 2.2) }); }
@@ -201,11 +241,11 @@ const throneRoom = (() => {
     if (cp) S(cp, { fill: linGrad(0, yh, 0, H + 200, [[0, C.carpet], [1, C.carpetDk]]), stroke: null });
     for (const cx of [-160, -138, 138, 160]) { const l = P.line([[cx, .6, z0], [cx, .6, cz1]]); if (l) line(l, { stroke: Math.abs(cx) > 150 ? C.gold : 'rgba(250,240,200,.6)', lwPx: px(P, Math.abs(cx) > 150 ? 3 : 1.5) }); }
     // petals: a few rings of flowers and loose petals on the runner
-    for (let i = 0; i < 46; i++) {
-      const pz = 350 + hash(i * 3.1) * 1700, pxx = (hash(i * 7.7) - .5) * 250;
+    for (let i = 0; i < FLOOR_PETALS.length; i++) {
+      const { pz, pxx, rot } = FLOOR_PETALS[i];
       if (pz - P.cam.z < 80) continue;
       const [sx, sy, k] = P.p(pxx, .7, pz), r = 9 * k, squash = clamp(P.cam.y / (pz - P.cam.z) * 1.4, .12, .8);
-      X.save(); X.translate(sx, sy); X.scale(1, squash); X.rotate(hash(i) * TAU);
+      X.save(); X.translate(sx, sy); X.scale(1, squash); X.rotate(rot);
       for (let j = 0; j < 5; j++) { const a = j / 5 * TAU; ellipse(Math.cos(a) * r * .9, Math.sin(a) * r * .9, r * .75, r * .5, { fill: C.petal, stroke: null, rot: a }); }
       circle(0, 0, r * .35, { fill: '#F7E2A0', stroke: null });
       X.restore();
@@ -213,13 +253,11 @@ const throneRoom = (() => {
   }
 
   function dais(P, t) {
-    for (let i = 0; i < 3; i++) {
-      const R = 560 - 90 * i, y1 = 36 * (i + 1), y0 = y1 - 36, arc = y => { const a = []; for (let j = 0; j <= 24; j++) { const an = Math.PI * j / 24; a.push([R * Math.cos(an), y, BACK - R * .55 * Math.sin(an)]); } return a; };
-      const riser = P.poly([...arc(y1), ...arc(y0).reverse()]); if (riser) S(riser, { fill: '#EADCCB' });
-      const top = P.poly([...arc(y1), [-R, y1, BACK], [R, y1, BACK]]); if (top) S(top, { fill: '#FBF4EA' });
+    for (let i = 0; i < DAIS_STEPS.length; i++) {
+      const riser = P.poly(DAIS_STEPS[i].riser); if (riser) S(riser, { fill: '#EADCCB' });
+      const top = P.poly(DAIS_STEPS[i].top); if (top) S(top, { fill: '#FBF4EA' });
     }
-    const rug = []; for (let j = 0; j <= 20; j++) { const a = Math.PI * j / 20; rug.push([300 * Math.cos(a), 109, BACK - 20 - 300 * .5 * Math.sin(a)]); }
-    const rq = P.poly(rug); if (rq) S(rq, { fill: C.carpet, stroke: C.gold, lwPx: 2 });
+    const rq = P.poly(DAIS_RUG); if (rq) S(rq, { fill: C.carpet, stroke: C.gold, lwPx: 2 });
     P.plane(BACK - 110, () => { X.translate(0, -108); throne(t); });
   }
 
@@ -312,7 +350,7 @@ const throneRoom = (() => {
       for (let y = -topY; y < -ry - 60; y += 22) ellipse(c.x, y + 11, 5, 11, { stroke: C.goldDk, lwPx: 1.4 });
       ellipse(c.x, -ry - 55, 22, 14, { fill: C.gold, stroke: C.line, lwPx: 1.2 });
       // arms up to the candles
-      const cand = []; for (let i = 0; i < 7; i++) { const an = Math.PI * (i + .5) / 7; cand.push([c.x - Math.cos(an) * r, -ry - 30 + Math.sin(an) * 14]); }
+      const cand = CHAND_CANDS[which];
       cand.forEach(([cx, cy]) => line([[c.x, -ry + 12], [lerp(c.x, cx, .7), -ry + 22], [cx, cy + 6]], { stroke: C.goldDk, lwPx: 4, smooth: true }));
       ellipse(c.x, -ry, r, 20, { fill: null, stroke: C.line, lwPx: 8 }); ellipse(c.x, -ry, r, 20, { fill: null, stroke: C.gold, lwPx: 5 });
       // crystal drops

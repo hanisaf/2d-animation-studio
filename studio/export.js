@@ -8,6 +8,50 @@
 //
 //   const blob = await exportVideo({ scenes: ['scene01_juggling'], bitrate: 8e6, onProgress: (p, msg) => …, signal })
 
+// Probe the best WebCodecs H.264 profile supported at 1920x1080 (returns codec string or null).
+async function probeVideoCodec({ fps = 24, bitrate = 14e6 } = {}) {
+  if (!('VideoEncoder' in window) || !window.Mp4Muxer) return null;
+  for (const codec of ['avc1.640028', 'avc1.4d0028', 'avc1.42002a']) {
+    const cfg = { codec, width: W, height: H, bitrate, framerate: fps, avc: { format: 'avc' } };
+    try {
+      if ((await VideoEncoder.isConfigSupported(cfg)).supported) return codec;
+    } catch {}
+  }
+  return null;
+}
+
+// Encode a contiguous video-only frame range [startFrame, endFrame) directly via WebCodecs H.264 → ArrayBuffer MP4.
+// Used by render.mjs to parallelize H.264 encoding across headless Chrome workers with zero disk JPEGs or Base64.
+async function exportVideoRange({ id, startFrame, endFrame, fps, bitrate = 14e6, codec } = {}) {
+  const sc = await requireScene(id);
+  useScene(id);
+  fps = fps ?? sc.fps ?? 24;
+  codec = codec || await probeVideoCodec({ fps, bitrate });
+  if (!codec) throw new Error('WebCodecs H.264 encoder unavailable');
+  const muxer = new Mp4Muxer.Muxer({
+    target: new Mp4Muxer.ArrayBufferTarget(), fastStart: 'in-memory', firstTimestampBehavior: 'offset',
+    video: { codec: 'avc', width: W, height: H, frameRate: fps },
+  });
+  let encErr = null;
+  const venc = new VideoEncoder({ output: (chunk, meta) => muxer.addVideoChunk(chunk, meta), error: e => { encErr = e; } });
+  venc.configure({ codec, width: W, height: H, bitrate, framerate: fps, avc: { format: 'avc' } });
+  const canvas = X.canvas, us = 1e6 / fps, total = endFrame - startFrame;
+  try {
+    for (let i = 0; i < total; i++) {
+      if (encErr) throw encErr;
+      drawFrame((startFrame + i) / fps, sc);
+      const ts = Math.round(i * us), dur = Math.round((i + 1) * us) - ts;
+      const frame = new VideoFrame(canvas, { timestamp: ts, duration: dur });
+      venc.encode(frame, { keyFrame: i % (fps * 2) === 0 });
+      frame.close();
+      while (venc.encodeQueueSize > 8) await new Promise(r => setTimeout(r, 1));
+    }
+    await venc.flush(); if (encErr) throw encErr;
+  } finally { if (venc.state !== 'closed') venc.close(); }
+  muxer.finalize();
+  return muxer.target.buffer;
+}
+
 async function exportVideo({ scenes, fps, bitrate = 8e6, onProgress = () => {}, signal } = {}) {
   if (!('VideoEncoder' in window)) throw new Error('This browser has no WebCodecs video encoder. Use Chrome or Edge, or render with: node render.mjs --build');
   if (!window.Mp4Muxer) throw new Error('mp4-muxer is not loaded. Run: npm install');

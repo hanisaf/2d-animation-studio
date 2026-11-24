@@ -3,6 +3,7 @@ asset({
   title: 'Princess Pearl',
   logline: 'A plush rainbow dolphin who rules from the throne. Regal, easily bored, zero patience for chicken jokes.',
   files: ['princess_pearl.js', '../fighting-poses.js'],
+  uses: ['character:jester_fester'],            // shares jfEmote()
   docs: 'README.md',
   refs: ['reference.webp'],
   voice: {
