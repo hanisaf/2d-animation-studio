@@ -6,7 +6,7 @@ asset({
   locations: [],
   files: ['comic.js'],
   docs: 'README.md',
-  refs: ['Original Drawing.jpg'],
+  refs: ['Original Drawing.jpg', 'Original Drawing 2.jpg'],
   illustrated: 'illustrated/manifest.js',
   illustration: {
     model: 'gemini-nano-banana-2.1',

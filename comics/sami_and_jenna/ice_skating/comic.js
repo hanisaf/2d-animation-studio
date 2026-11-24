@@ -692,6 +692,220 @@
     }
   }
 
+  // Draw a plump storybook heart for warm emotional beats
+  function drawHeart(x, y, r, fill = '#FF7EA5', rot = 0) {
+    X.save();
+    X.translate(x, y);
+    X.rotate(rot);
+    X.beginPath();
+    X.moveTo(0, r * 0.82);
+    X.bezierCurveTo(-r * 1.18, r * 0.18, -r * 1.12, -r * 0.78, -r * 0.48, -r * 0.78);
+    X.bezierCurveTo(-r * 0.14, -r * 0.78, 0, -r * 0.42, 0, -r * 0.32);
+    X.bezierCurveTo(0, -r * 0.42, r * 0.14, -r * 0.78, r * 0.48, -r * 0.78);
+    X.bezierCurveTo(r * 1.12, -r * 0.78, r * 1.18, r * 0.18, 0, r * 0.82);
+    X.closePath();
+    X.fillStyle = fill;
+    X.fill();
+    X.strokeStyle = INK;
+    X.lineWidth = Math.max(2.4, r * 0.13);
+    X.lineJoin = 'round';
+    X.stroke();
+    circle(-r * 0.36, -r * 0.34, r * 0.14, { fill: 'rgba(255,255,255,0.72)', stroke: null });
+    X.restore();
+  }
+
+  // Draw a cozy living room background with a glowing brick fireplace on the right and snowy evening window on the left
+  function drawCozyFireplaceBg(pw, ph) {
+    const floorY = ph * 0.73;
+
+    // Warm cream-to-apricot evening wall
+    const wall = linGrad(0, 0, 0, floorY, [[0, '#FFF1D6'], [0.6, '#FBE2BE'], [1, '#F3CFA0']]);
+    X.fillStyle = wall;
+    X.fillRect(0, 0, pw, floorY);
+
+    // Wainscoting band
+    X.fillStyle = '#F0CFA2';
+    X.fillRect(0, ph * 0.56, pw, floorY - ph * 0.56);
+    line([[0, ph * 0.56], [pw, ph * 0.56]], { stroke: '#CFA677', lwPx: 4.5 });
+
+    // Snowy dusk window on the left
+    const wx = pw * 0.055, wy = ph * 0.16, ww = 240, wh = 210;
+    const sky = linGrad(wx, wy, wx, wy + wh, [[0, '#5E84B8'], [0.55, '#8FB5DA'], [1, '#CBE1F2']]);
+    X.fillStyle = sky;
+    X.fillRect(wx, wy, ww, wh);
+    // Crescent moon & winter stars
+    circle(wx + ww * 0.76, wy + 46, 18, { fill: '#FFF2B2', stroke: null });
+    circle(wx + ww * 0.80, wy + 42, 15, { fill: '#6D92C2', stroke: null });
+    [[0.22, 0.22], [0.46, 0.16], [0.60, 0.32], [0.28, 0.42]].forEach(([fx, fy]) => {
+      circle(wx + ww * fx, wy + wh * fy, 3.2, { fill: '#FFFDF5', stroke: null });
+    });
+    // Snowy hills & evergreen outside
+    shape([
+      [wx, wy + wh], [wx, wy + wh - 46], [wx + ww * 0.48, wy + wh - 62],
+      [wx + ww, wy + wh - 38], [wx + ww, wy + wh],
+    ], { fill: '#F4FAFF', stroke: null, smooth: true });
+    shape([[wx + ww * 0.26, wy + wh - 118], [wx + ww * 0.13, wy + wh - 46], [wx + ww * 0.39, wy + wh - 46]], {
+      fill: '#3F7358', stroke: INK, lwPx: 2.5,
+    });
+    shape([[wx + ww * 0.26, wy + wh - 118], [wx + ww * 0.20, wy + wh - 92], [wx + ww * 0.32, wy + wh - 92]], {
+      fill: '#FFFFFF', stroke: null,
+    });
+    // Falling snowflakes
+    [[0.18, 0.34], [0.40, 0.48], [0.65, 0.56], [0.84, 0.44], [0.52, 0.28], [0.76, 0.70]].forEach(([fx, fy]) => {
+      circle(wx + ww * fx, wy + wh * fy, 4, { fill: 'rgba(255,255,255,0.88)', stroke: null });
+    });
+    // Window muntins & frame
+    line([[wx + ww / 2, wy], [wx + ww / 2, wy + wh]], { stroke: '#FFFDF8', lwPx: 9 });
+    line([[wx, wy + wh / 2], [wx + ww, wy + wh / 2]], { stroke: '#FFFDF8', lwPx: 9 });
+    shape(rectPts(wx, wy, ww, wh), { fill: null, stroke: INK, lwPx: 5 });
+    // Cozy pastel curtains
+    shape([[wx - 28, wy - 10], [wx + 32, wy - 10], [wx + 16, wy + wh + 22], [wx - 34, wy + wh + 22]], {
+      fill: '#F0A4B8', stroke: INK, lwPx: 3.5,
+    });
+    shape([[wx + ww - 32, wy - 10], [wx + ww + 28, wy - 10], [wx + ww + 34, wy + wh + 22], [wx + ww - 16, wy + wh + 22]], {
+      fill: '#F0A4B8', stroke: INK, lwPx: 3.5,
+    });
+    line([[wx - 36, wy - 12], [wx + ww + 36, wy - 12]], { stroke: '#8E6245', lwPx: 7 });
+
+    // Wooden floor + baseboard
+    X.fillStyle = '#D59E68';
+    X.fillRect(0, floorY, pw, ph - floorY);
+    X.fillStyle = '#FFFDF8';
+    X.fillRect(0, floorY - 14, pw, 16);
+    line([[0, floorY - 14], [pw, floorY - 14]], { stroke: INK, lwPx: 3.5 });
+    line([[0, floorY + 2], [pw, floorY + 2]], { stroke: INK, lwPx: 3 });
+    for (let i = 1; i <= 5; i++) {
+      const fy = floorY + i * 48;
+      line([[0, fy], [pw, fy]], { stroke: 'rgba(110, 64, 30, 0.22)', lwPx: 2.5 });
+    }
+
+    // Familiar pastel oval living room rug
+    ellipse(pw * 0.46, ph * 0.88, pw * 0.34, 72, { fill: '#F5CAD6', stroke: '#DF9BB0', lwPx: 5 });
+    ellipse(pw * 0.46, ph * 0.88, pw * 0.29, 54, { fill: '#FBE0E8', stroke: null });
+
+    // Brick Fireplace on the right
+    const fx = pw * 0.675, fw = pw * 0.285;
+    const mantelY = ph * 0.40;
+    const hearthY = floorY + 14;
+
+    // Upper chimney breast
+    shape(rectPts(fx + 22, 0, fw - 44, mantelY), { fill: '#CA7A60', stroke: INK, lwPx: 4.5 });
+    // Lower fireplace surround
+    shape(rectPts(fx, mantelY, fw, hearthY - mantelY), { fill: '#C87258', stroke: INK, lwPx: 4.5 });
+
+    // Subtle hand-drawn brick accents
+    X.save();
+    X.strokeStyle = 'rgba(72, 36, 28, 0.28)';
+    X.lineWidth = 2.5;
+    for (let row = 0; row < 14; row++) {
+      const by = 28 + row * 48;
+      if (by > hearthY - 18) break;
+      const leftEdge = by < mantelY ? fx + 24 : fx + 2;
+      const rightEdge = by < mantelY ? fx + fw - 24 : fx + fw - 2;
+      line([[leftEdge, by], [rightEdge, by]], { stroke: 'rgba(72, 36, 28, 0.22)', lwPx: 2.2 });
+      const offset = (row % 2) * 34;
+      for (let bx = leftEdge + 28 + offset; bx < rightEdge - 14; bx += 68) {
+        line([[bx, by], [bx, Math.min(by + 48, hearthY - 12)]], { stroke: 'rgba(72, 36, 28, 0.20)', lwPx: 2.2 });
+      }
+    }
+    X.restore();
+
+    // Framed sunny family mountain picture hanging on chimney
+    const px = fx + fw * 0.24, py = ph * 0.13, pwPic = fw * 0.52, phPic = 148;
+    shape(rectPts(px, py, pwPic, phPic), { fill: '#E8C58E', stroke: INK, lwPx: 4 });
+    shape(rectPts(px + 12, py + 12, pwPic - 24, phPic - 24), { fill: '#C8E6F5', stroke: INK, lwPx: 2.5 });
+    circle(px + pwPic - 48, py + 44, 15, { fill: '#FFE26A', stroke: null });
+    shape([
+      [px + 12, py + phPic - 12], [px + pwPic * 0.36, py + 62],
+      [px + pwPic * 0.68, py + 94], [px + pwPic - 12, py + phPic - 12],
+    ], { fill: '#7CB87C', stroke: null });
+
+    // Wooden mantel shelf
+    shape(rectPts(fx - 22, mantelY - 18, fw + 44, 34), { fill: '#A86E44', stroke: INK, lwPx: 4.5 });
+    shape(rectPts(fx - 12, mantelY + 16, fw + 24, 14), { fill: '#8B5734', stroke: INK, lwPx: 3.5 });
+
+    // Mantel decor: cozy candles & winter greenery
+    // Left candle pair
+    shape(rectPts(fx + 22, mantelY - 68, 28, 50), { fill: '#FFF5DC', stroke: INK, lwPx: 3 });
+    shape(rectPts(fx + 58, mantelY - 52, 24, 34), { fill: '#F7C6DF', stroke: INK, lwPx: 3 });
+    ellipse(fx + 36, mantelY - 79, 7, 12, { fill: '#FFB833', stroke: INK, lwPx: 2 });
+    ellipse(fx + 70, mantelY - 62, 6, 10, { fill: '#FFB833', stroke: INK, lwPx: 2 });
+    // Right little potted evergreen
+    shape([[fx + fw - 72, mantelY - 48], [fx + fw - 28, mantelY - 48], [fx + fw - 36, mantelY - 18], [fx + fw - 64, mantelY - 18]], {
+      fill: '#D97B59', stroke: INK, lwPx: 3,
+    });
+    shape([[fx + fw - 50, mantelY - 98], [fx + fw - 76, mantelY - 48], [fx + fw - 24, mantelY - 48]], {
+      fill: '#569E6B', stroke: INK, lwPx: 3, smooth: 0.2,
+    });
+    circle(fx + fw - 56, mantelY - 64, 4.5, { fill: '#FF6B7A', stroke: null });
+    circle(fx + fw - 42, mantelY - 74, 4.5, { fill: '#FFE26A', stroke: null });
+
+    // Hearth slab
+    shape(rectPts(fx - 34, hearthY - 14, fw + 68, 38), { fill: '#B6634B', stroke: INK, lwPx: 4.5 });
+    shape(rectPts(fx - 26, hearthY + 24, fw + 52, 18), { fill: '#9A4E39', stroke: INK, lwPx: 4 });
+
+    // Dark firebox opening
+    const boxX = fx + 54, boxY = mantelY + 62, boxW = fw - 108, boxH = hearthY - 14 - boxY;
+    shape(rectPts(boxX, boxY, boxW, boxH), { fill: '#2E1C21', stroke: INK, lwPx: 5 });
+
+    // Warm interior firebox glow
+    X.save();
+    const fireCx = boxX + boxW * 0.5, fireCy = boxY + boxH * 0.68;
+    const boxGlow = X.createRadialGradient(fireCx, fireCy, 10, fireCx, fireCy, boxW * 0.68);
+    boxGlow.addColorStop(0, 'rgba(255, 195, 80, 0.65)');
+    boxGlow.addColorStop(0.6, 'rgba(255, 106, 40, 0.28)');
+    boxGlow.addColorStop(1, 'rgba(46, 28, 33, 0)');
+    X.fillStyle = boxGlow;
+    X.fillRect(boxX + 3, boxY + 3, boxW - 6, boxH - 6);
+    X.restore();
+
+    // Firewood logs & glowing embers
+    ellipse(fireCx, boxY + boxH - 22, boxW * 0.34, 16, { fill: '#FF6B35', stroke: null });
+    shape([
+      [boxX + 46, boxY + boxH - 18], [boxX + boxW - 58, boxY + boxH - 44],
+      [boxX + boxW - 48, boxY + boxH - 22], [boxX + 56, boxY + boxH - 4],
+    ], { fill: '#7B4A2D', stroke: INK, lwPx: 3.5, smooth: 0.2 });
+    shape([
+      [boxX + 56, boxY + boxH - 42], [boxX + boxW - 46, boxY + boxH - 16],
+      [boxX + boxW - 56, boxY + boxH - 4], [boxX + 46, boxY + boxH - 22],
+    ], { fill: '#653A22', stroke: INK, lwPx: 3.5, smooth: 0.2 });
+
+    // Layered flickering flames
+    shape([
+      [fireCx - 66, boxY + boxH - 22], [fireCx - 82, fireCy - 20], [fireCx - 38, fireCy - 66],
+      [fireCx - 24, fireCy - 30], [fireCx, fireCy - 112], [fireCx + 28, fireCy - 36],
+      [fireCx + 52, fireCy - 72], [fireCx + 80, fireCy - 16], [fireCx + 64, boxY + boxH - 22],
+    ], { fill: '#FF6B35', stroke: INK, lwPx: 3.5, smooth: 0.45 });
+    shape([
+      [fireCx - 44, boxY + boxH - 24], [fireCx - 48, fireCy - 18], [fireCx - 18, fireCy - 48],
+      [fireCx + 2, fireCy - 80], [fireCx + 24, fireCy - 34], [fireCx + 46, fireCy - 14],
+      [fireCx + 42, boxY + boxH - 24],
+    ], { fill: '#FFBA33', stroke: null, smooth: 0.45 });
+    shape([
+      [fireCx - 22, boxY + boxH - 26], [fireCx - 16, fireCy - 12], [fireCx, fireCy - 42],
+      [fireCx + 18, fireCy - 10], [fireCx + 22, boxY + boxH - 26],
+    ], { fill: '#FFF3A8', stroke: null, smooth: 0.45 });
+
+    // Iron fireplace grate bars (nod to the sketch's vertical fireplace bars)
+    const grateY = boxY + boxH - 58;
+    line([[boxX + 24, grateY], [boxX + boxW - 24, grateY]], { stroke: '#2A2326', lwPx: 6 });
+    line([[boxX + 20, boxY + boxH - 8], [boxX + boxW - 20, boxY + boxH - 8]], { stroke: '#2A2326', lwPx: 6 });
+    for (let i = 0; i < 6; i++) {
+      const gx = boxX + 34 + i * ((boxW - 68) / 5);
+      line([[gx, grateY - 10], [gx, boxY + boxH - 4]], { stroke: '#2A2326', lwPx: 5.5 });
+    }
+
+    // Soft ambient warm firelight spill across the room and rug
+    X.save();
+    const roomGlow = X.createRadialGradient(fireCx, fireCy + 20, 40, fireCx - 120, fireCy + 40, pw * 0.52);
+    roomGlow.addColorStop(0, 'rgba(255, 184, 77, 0.28)');
+    roomGlow.addColorStop(0.55, 'rgba(255, 160, 70, 0.10)');
+    roomGlow.addColorStop(1, 'rgba(255, 150, 60, 0)');
+    X.fillStyle = roomGlow;
+    X.fillRect(0, 0, pw, ph);
+    X.restore();
+  }
+
   // ---------- Declarative Comic Definition ----------
 
   comic({
@@ -1078,6 +1292,163 @@
                   bubbles: [
                     { speaker: 'sami', text: 'Good job Jenna, you rock! As for me, I am too old for these tricks...', cx: 0.43, cy: 0.27, tx: 0.154, ty: 0.410, size: 25, maxW: 480 },
                     { speaker: 'jenna', text: "You're not old! Try your best and you will get it!", cx: 0.83, cy: 0.20, tx: 0.843, ty: 0.400, size: 22, maxW: 320 },
+                  ],
+                },
+              },
+            ],
+          },
+        ],
+      },
+
+      // ==================== PAGE 2 ====================
+      {
+        id: 'page-02',
+        rows: [
+          // ROW 1 — PANEL 10: WARM HUG ON THE ICE
+          {
+            weight: 1,
+            panels: [
+              {
+                id: 'p10_ice_hug',
+                weight: 1,
+                cast: ['sami', 'jenna'],
+                prompt: 'Heartwarming close-up on the Minnesota ice rink: Dr. Sami in his navy puffer winter jacket, blue helmet, and black skates leans down to share a big loving hug with Jenna in her teal-and-pink winter jacket, pink helmet, and white figure skates; Fafy the plush giraffe watches happily nearby on the ice, surrounded by warm floating pink hearts and golden sparkles.',
+                draw(pw, ph) {
+                  drawIceArenaBg(pw, ph, { detailed: false, horizonFrac: 0.42 });
+
+                  // Gentle curved skate tracks converging where they meet to hug
+                  line([[pw * 0.24, ph * 0.91], [pw * 0.36, ph * 0.93], [pw * 0.46, ph * 0.90]], {
+                    stroke: '#FFFFFF', lwPx: 7, smooth: true,
+                  });
+                  line([[pw * 0.78, ph * 0.90], [pw * 0.67, ph * 0.93], [pw * 0.58, ph * 0.89]], {
+                    stroke: '#FFFFFF', lwPx: 7, smooth: true,
+                  });
+
+                  // Fafy watching warmly from the left side of the ice
+                  drawFafyStandalone(pw * 0.20, ph * 0.86, 28.0);
+                  drawHeart(pw * 0.20, ph * 0.58, 16, '#FF9EBB', -0.14);
+
+                  // Dr. Sami leaning in for a warm hug
+                  drawSamiWithSkates(pw * 0.455, ph * 0.905, 20.0, {
+                    winterGear: true,
+                    helmet: true,
+                    skates: true,
+                    eyes: 'happy',
+                    mouth: 'grin',
+                    brows: 'up',
+                    blush: 0.65,
+                    lookX: 0.75,
+                    lean: 0.12,
+                    tilt: 0.08,
+                    footL: [-1.8, -0.8],
+                    footR: [1.6, -0.7],
+                    handL: [-2.2, -10.8],
+                    handR: [7.6, -11.4],
+                    handPoseL: 'open',
+                    handPoseR: 'palm',
+                  });
+
+                  // Jenna leaning warmly into Dad's hug
+                  drawJennaWithGear(pw * 0.585, ph * 0.895, 16.6, {
+                    jacket: true,
+                    helmet: true,
+                    skates: true,
+                    giraffe: false,
+                    eyes: 'happy',
+                    mouth: 'grin',
+                    brows: 'up',
+                    blush: 0.7,
+                    lookX: -0.75,
+                    lean: -0.13,
+                    tilt: -0.07,
+                    footL: [-1.6, -0.6],
+                    footR: [1.8, -0.6],
+                    handL: [-6.0, -12.0],
+                    handR: [2.8, -11.4],
+                    handPoseL: 'palm',
+                    handPoseR: 'hip',
+                  });
+
+                  // Foreground loving hand of Dr. Sami resting warmly on Jenna's far shoulder to complete the embrace
+                  X.save();
+                  const hx = pw * 0.606, hy = ph * 0.635;
+                  X.translate(hx, hy);
+                  X.rotate(0.45);
+                  shape([
+                    [-16, -12], [12, -12], [16, 12], [-14, 12],
+                  ], { fill: '#375E8C', stroke: INK, lwPx: 4.5, smooth: 0.35 });
+                  circle(10, 0, 14, { fill: '#2A3F59', stroke: INK, lwPx: 4 });
+                  ellipse(22, 3, 15, 11, { fill: '#F3C6A8', stroke: INK, lwPx: 4, rot: 0.2 });
+                  X.restore();
+
+                  // Warm floating hearts & celebratory sparkles around the hug
+                  drawHeart(pw * 0.535, ph * 0.24, 30, '#FF6E94', 0.10);
+                  drawHeart(pw * 0.68, ph * 0.31, 22, '#FF9AB6', 0.18);
+                  drawHeart(pw * 0.38, ph * 0.22, 18, '#FFB0C6', -0.16);
+                  [
+                    [pw * 0.61, ph * 0.18, 18, '#FFE26A'],
+                    [pw * 0.74, ph * 0.43, 15, '#FFE26A'],
+                    [pw * 0.32, ph * 0.42, 14, '#A8DCEB'],
+                    [pw * 0.81, ph * 0.25, 13, '#FF9EBB'],
+                  ].forEach(([sx, sy, r, c]) => shape(starPts(sx, sy, r, 0.45, 5), { fill: c, stroke: INK, lwPx: 2.8 }));
+                },
+                lettering: {
+                  bubbles: [
+                    { speaker: 'sami', text: 'I love you, Jenna!', cx: 0.24, cy: 0.27, tx: 0.412, ty: 0.475, size: 32, maxW: 340, tailCurve: 14 },
+                  ],
+                },
+              },
+            ],
+          },
+
+          // ROW 2 — PANEL 11: COZY AT HOME BY THE FIREPLACE
+          {
+            weight: 1,
+            panels: [
+              {
+                id: 'p11_cozy_fireplace',
+                weight: 1,
+                cast: ['sami', 'jenna'],
+                prompt: 'Cozy warm family living room at dusk: snowy twilight window and pet goldfish bowl on the left, glowing red-brick fireplace with crackling fire and iron grate on the right; back in their comfortable indoor clothes on the pastel oval rug, Dr. Sami smiles warmly and Jenna cuddles Fafy the giraffe while enjoying the warmth of home.',
+                draw(pw, ph) {
+                  drawCozyFireplaceBg(pw, ph);
+
+                  // Pet goldfish bowl welcoming them home on the left
+                  drawFishbowl(pw * 0.125, ph * 0.73, 1.95);
+
+                  // Dr. Sami back in his cozy indoor outfit
+                  drawSamiWithSkates(pw * 0.35, ph * 0.90, 19.2, {
+                    eyes: 'happy',
+                    mouth: 'smile',
+                    brows: 'up',
+                    blush: 0.45,
+                    lookX: 0.55,
+                    handL: [-4.6, -10.4],
+                    handR: [5.4, -12.4],
+                    handPoseL: 'open',
+                    handPoseR: 'palm',
+                  });
+
+                  // Jenna back in her cozy indoor outfit cuddling Fafy
+                  drawJennaWithGear(pw * 0.535, ph * 0.895, 15.8, {
+                    giraffe: true,
+                    eyes: 'happy',
+                    mouth: 'grin',
+                    brows: 'up',
+                    blush: 0.55,
+                    lookX: -0.45,
+                    handL: [-2.1, -13.1],
+                    handR: [3.2, -12.4],
+                    handPoseR: 'palm',
+                  });
+                },
+                lettering: {
+                  captions: [
+                    { text: 'AT HOME', x: 18, y: 18, size: 26 },
+                    { text: 'THE END', x: -22, y: -64, size: 24, align: 'right' },
+                  ],
+                  bubbles: [
+                    { speaker: 'sami', text: 'Always good to be home.', cx: 0.44, cy: 0.21, tx: 0.385, ty: 0.385, size: 30, maxW: 360, tailCurve: -14 },
                   ],
                 },
               },

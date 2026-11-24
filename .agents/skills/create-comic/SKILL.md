@@ -104,8 +104,8 @@ Only run Stage 2 once the user approves the Studio Edition (or explicitly asks t
    - Re-roll individual pages/panels or promote a better take with `--approve=<take_id>` if needed.
    - Rebuild PDFs (`npm run comic:build -- <comic_id> --pdf`) so `out/illustrated.pdf` stays current.
 5. **Respect Git tracking rules**:
-   - Keep `comics/<book_id>/style_refs/*`, top-level `Original Drawing*` files, active/approved `illustrated/*.png`, and `illustrated/manifest.js` ready to commit.
-   - Never force-add gitignored regenerable directories (`studio/`, `out/`, `illustrated/takes/`, `illustrated/index.json`).
+   - Keep `comics/<book_id>/style_refs/*`, top-level `Original Drawing*` files, `studio/*.png` picture outputs, active/approved `illustrated/*.png`, and `illustrated/manifest.js` ready to commit.
+   - Never force-add gitignored regenerable directories (`out/`, `illustrated/takes/`, `illustrated/index.json`).
 
 ---
 

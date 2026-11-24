@@ -33,7 +33,7 @@ comics/
         ├── README.md               # Story & panel script
         ├── comic.js                # Calls comic({ pages: [...] })
         ├── Original Drawing.jpg    # Optional reference art (git-tracked)
-        ├── studio/                 # Regenerable Studio PNGs (gitignored)
+        ├── studio/                 # Studio PNGs: page-01.png + panel PNGs (git-tracked)
         ├── illustrated/
         │   ├── manifest.js         # Active/approved manifest loaded by Studio (git-tracked)
         │   ├── page-01.png         # Active/approved illustrated PNG(s) (git-tracked)
@@ -42,7 +42,7 @@ comics/
         └── out/                    # Regenerable print PDFs: studio.pdf, illustrated.pdf (gitignored)
 ```
 
-Only active/approved `illustrated/*.png`, `illustrated/manifest.js`, `style_refs/`, and top-level comic reference images are tracked in git.
+Studio PNG outputs (`studio/`), active/approved `illustrated/*.png`, `illustrated/manifest.js`, `style_refs/`, and top-level comic reference images are tracked in git; `out/`, `illustrated/takes/`, and `illustrated/index.json` remain gitignored.
 
 ---
 

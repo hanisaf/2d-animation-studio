@@ -161,17 +161,17 @@ try {
 
 // 5. Headless buildComic (--panels --pdf)
 const built = await buildComic('ice_skating', { panels: true, pdf: true, quiet: true });
-assert.equal(built.rendered.pages.length, 1);
-assert.equal(built.rendered.panels.length, 9);
+assert.equal(built.rendered.pages.length, 2);
+assert.equal(built.rendered.panels.length, 11);
 assert.equal(built.rendered.pdfs.length, 2);
 for (const item of [...built.rendered.pages, ...built.rendered.panels, ...built.rendered.pdfs]) {
   assert.ok(statSync(item.path).size > 4000, `non-empty output: ${item.path}`);
 }
-console.log('✔ build_comic.mjs (--panels --pdf) passed (1 page PNG, 9 clean panel PNGs, 2 PDFs)');
+console.log('✔ build_comic.mjs (--panels --pdf) passed (2 page PNGs, 11 clean panel PNGs, 2 PDFs)');
 
 // 6. illustrateComic --dry-run (page + panel modes)
 const dryPage = await illustrateComic('ice_skating', { dryRun: true, mode: 'page', quiet: true });
-assert.equal(dryPage.targets.length, 1);
+assert.equal(dryPage.targets.length, 2);
 assert.equal(dryPage.targets[0].aspectRatio, '3:4');
 assert.ok(dryPage.targets[0].refs.length <= 14);
 assert.ok(dryPage.targets[0].refs.filter(r => r.kind === 'character').length <= 4);
