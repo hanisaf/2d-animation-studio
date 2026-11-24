@@ -148,7 +148,8 @@
       return anchors;
     } finally { X.restore(); }
   }
-  // Allow room for airborne poses, extended attacks and a horizontal knockdown.
+  // Keep original bounds for non-fight model sheets; expand preview bounds for airborne/knockdown moves.
+  entry.baseSize ??= entry.size;
   entry.size = [Math.max(entry.size[0], p.h * 1.2), Math.max(entry.size[1], p.h * 1.45)];
   entry.fighting = { durations, attacks, special: p.special, sample, draw };
   for (const move of Object.keys(durations)) {

@@ -8,7 +8,7 @@
 //   node render.mjs --scene=scene01_juggling --encode                                                      frames (+ audio) → out/<scene>/<scene>.mp4
 //   node render.mjs --scene=scene01_juggling --build [--workers=6] [--bitrate=14000000] [--encoder=webcodecs|ffmpeg]  parallel render → MP4
 //   node render.mjs --movie [--skip-build]                                                                 build every scene in REGISTRY.movie, join → out/movie.mp4
-//   node render.mjs --modelsheet=jester_fester [--t=1.1]                                                   a character's model sheet (all poses) → out/check/
+//   node render.mjs --modelsheet=jester_fester [--t=1.1]                                                   a character's model sheet (excluding fight poses) → out/check/
 //   node render.mjs --location=dces [--character=jester_fester] [--spot=…] [--cols=3] [--w=640] [--t=1] [--only=Aerial,Keeper] [--variant=Messy]   every camera preset of a set (or those whose name contains one of --only) on one sheet → out/check/
 //   node render.mjs --doctor                                                                               check this machine: Node, Chrome, ffmpeg, fonts, a test render
 //

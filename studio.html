@@ -1,7 +1,8 @@
 <!doctype html>
-<html>
+<html lang="en">
 <head>
 <meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Safadi Animation Studio</title>
 <link rel="icon" href="data:,">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@600&family=Luckiest+Guy&family=Fira+Mono:wght@500&display=block">
@@ -10,19 +11,38 @@
 <body>
 <div id="app">
   <aside id="side">
-    <header>Safadi Animation Studio<small>movie · scenes · characters · locations · docs</small></header>
-    <h3>Movie</h3><ul id="list-movie"><li data-mode="movie" data-id="composer"><span class="ico">🎞</span>Movie composer</li></ul>
-    <h3>Scenes</h3><ul id="list-scenes"></ul>
-    <h3>Characters</h3><ul id="list-characters"></ul>
-    <h3>Locations</h3><ul id="list-locations"></ul>
-    <h3>Safadis' Arcade</h3>
-    <ul>
-      <li><a href="games/index.html" style="display:block;color:inherit;text-decoration:none"><span class="ico">🕹</span>Browse games</a></li>
-      <li><a href="games/robo-invaders/index.html" style="display:block;color:inherit;text-decoration:none"><span class="ico">🎮</span>Robo Invader · The Ultimate Edition</a></li>
-      <li><a href="games/family-fighter/index.html" style="display:block;color:inherit;text-decoration:none"><span class="ico">🥊</span>Family Fighter</a></li>
-      <li><a href="games/world-champion/index.html" style="display:block;color:inherit;text-decoration:none"><span class="ico">⚽</span>World Champion</a></li>
-    </ul>
-    <h3>Project</h3><ul id="list-docs"></ul>
+    <header>Safadi Animation Studio<small>characters · locations · scenes · movie · docs</small></header>
+    <nav class="side-nav" aria-label="Studio navigation">
+      <details class="nav-group" id="group-characters">
+        <summary><span class="lbl">Characters</span><span class="cnt" id="cnt-characters"></span></summary>
+        <ul id="list-characters"></ul>
+      </details>
+      <details class="nav-group" id="group-locations">
+        <summary><span class="lbl">Locations</span><span class="cnt" id="cnt-locations"></span></summary>
+        <ul id="list-locations"></ul>
+      </details>
+      <section class="nav-section" aria-labelledby="heading-scenes">
+        <h2 id="heading-scenes">Scenes</h2>
+        <div id="list-scenes"></div>
+      </section>
+      <section class="nav-section" aria-labelledby="heading-movie">
+        <h2 id="heading-movie">Movie</h2>
+        <ul id="list-movie"><li data-mode="movie" data-id="composer"><span class="ico" aria-hidden="true">🎞</span>Movie composer</li></ul>
+      </section>
+      <details class="nav-group" id="group-arcade">
+        <summary><span class="lbl">Safadis' Arcade</span><span class="cnt">4</span></summary>
+        <ul class="nav-links">
+          <li><a href="games/index.html"><span class="ico" aria-hidden="true">🕹</span>Browse games</a></li>
+          <li><a href="games/robo-invaders/index.html"><span class="ico" aria-hidden="true">🎮</span>Robo Invader · The Ultimate Edition</a></li>
+          <li><a href="games/family-fighter/index.html"><span class="ico" aria-hidden="true">🥊</span>Family Fighter</a></li>
+          <li><a href="games/world-champion/index.html"><span class="ico" aria-hidden="true">⚽</span>World Champion</a></li>
+        </ul>
+      </details>
+      <details class="nav-group" id="group-docs">
+        <summary><span class="lbl">Project</span><span class="cnt" id="cnt-docs"></span></summary>
+        <ul id="list-docs"></ul>
+      </details>
+    </nav>
     <footer>
       <kbd>Space</kbd> play/pause · <kbd>←</kbd><kbd>→</kbd> frame · <kbd>⇧</kbd>+arrows 1 s · <kbd>Home</kbd>/<kbd>End</kbd><br>
       Locations: drag to pan/tilt, wheel to dolly, <kbd>⇧</kbd>+wheel to zoom, <kbd>W A S D Q E</kbd> to fly

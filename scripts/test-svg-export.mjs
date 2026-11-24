@@ -53,8 +53,11 @@ try {
         if (doc.querySelector('parsererror') || !doc.querySelector('path') || doc.querySelector('image') || /NaN|Infinity/.test(text)) throw Error(`Invalid vector SVG: ${id}/${pose}`);
         results.push(`${id}/${pose}`);
       }
+      const sheetPoses = modelSheetPoseNames(entry);
+      if (sheetPoses.some(p => /^fight:/i.test(p))) throw Error(`Model sheet for ${id} should exclude fight poses`);
       const sheet = await exportCharacterSvg({ entry, view: 'sheet' }).text();
       if (!sheet.includes('viewBox="0 0 1920 1080"')) throw Error('Missing viewBox');
+      if (/NaN|Infinity/.test(sheet)) throw Error(`Invalid sheet SVG: ${id}`);
     }
     return results;
   });

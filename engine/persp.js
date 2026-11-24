@@ -117,7 +117,7 @@ function persp(cam) {
     billboard(x, y, z, fn) {
       if (depth([x, y, z]) < NEAR) return;
       const [sx, sy, k] = p(x, y, z);
-      X.save(); X.translate(sx, sy); X.scale(k, k); fn(k, sx, sy); X.restore();
+      X.save(); X.translate(sx, sy); if (rl) X.rotate(rl); X.scale(k, k); fn(k, sx, sy); X.restore();
     },
     floorCircle(x, z, r, y = 0, n = 32) { const q = []; for (let i = 0; i < n; i++) { const a = i / n * TAU; q.push([x + Math.cos(a) * r, y, z + Math.sin(a) * r]); } return this.poly(q); },
   };
@@ -135,7 +135,13 @@ function depthStage(P) {
     add,
     char(zOrPt, fn, o = {}) {
       add(zOrPt, () => {
-        if (o.shadow && o.foot) return castShadow(fn, o.foot[0], o.foot[1], o.shadow === true ? {} : o.shadow);
+        if (o.shadow) {
+          const foot = o.foot || (Array.isArray(zOrPt) ? P.p(zOrPt[0], zOrPt[1], zOrPt[2]) : null);
+          if (foot) {
+            const sh = o.shadow === true ? {} : (o.light != null && o.shadow.light == null ? { ...o.shadow, light: o.light } : o.shadow);
+            return castShadow(fn, foot[0], foot[1], sh);
+          }
+        }
         if (o.light) return lit(fn, o.light === true ? undefined : o.light);
         return fn();
       }, o.bias || 0);

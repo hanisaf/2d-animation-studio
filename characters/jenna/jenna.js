@@ -11,8 +11,11 @@ const JE = {
   skin: '#F4C09E', skinDk: '#CC8F76', cheek: '#DE9991', nose: '#BB806A',
   hair: '#543722', hairDk: '#331F12', hairLt: '#80583A',
   shirt: '#F5D6D9', shirtDk: '#DDB0BC',
-  skirtBase: '#DFA4AE', skirtTulle: '#F1C1C8',
-  shoe: '#F2B8C6', shoeTop: '#E6A5B5', shoeSole: '#FFFFFF', sock: '#FFFFFF',
+  skirtBase: '#DFA4AE', skirtTulle: '#F1C1C8', skirtShade: '#C98A97',
+  pants: '#6E5B85', pantsDk: '#524166', pantsLt: '#907CA8',
+  winterPants: '#5F507A', winterPantsDk: '#473A5E', winterPantsLt: '#8674A2',
+  shoe: '#F2B8C6', shoeDk: '#D48C9F', shoeLt: '#FAD4DF', shoeIn: '#8F5868',
+  shoeSole: '#FFFFFF', shoeSoleShade: '#E2DCD9', sock: '#FFFFFF', sockShade: '#DFD9D4',
   clip: '#DFA0C4',
   eyeW: '#FFFFFF', iris: '#201C19', lash: '#140A05', brow: '#302924', mouth: '#9C3D49', lip: '#D68A92', tongue: '#E88494', teeth: '#FFFFFF',
   graphic: { butterfly: '#D66D9F', flowerY: '#F0E675', flowerG: '#9BD687', flowerB: '#688AB5', flowerP: '#F2A2CA' }
@@ -39,38 +42,27 @@ function jenna(x, y, s, o = {}) {
     const headT = () => { X.translate(0, hipY); X.rotate(lean); X.translate(0, -6.0); X.rotate(o.tilt || 0); X.translate(0, -6.35); };
     const swing = o.hairSwing || 0;
 
-    // Legs
+    // Legs (fitted pants under the skirt, ribbed socks tucked cleanly into slip-on shoes)
     [[-1, o.footL || [-1.25, -.65]], [1, o.footR || [1.25, -.65]]].forEach(([sd, f]) => {
       const hp = tl(sd * 1.1, 0), { joint, end } = ik2(hp, f, 4.75, 4.75, [sd * .15, 1]);
-      jeLimb([hp, joint, end], winter ? 2.05 : 1.6, winter ? '#665780' : JE.skin, lw);
-      if (winter) line([mixPt(hp, joint, .25), joint, mixPt(joint, end, .85)], { stroke: '#8875A0', lw: .16 });
-      jeSockAndShoe(end, sd, lw, back);
+      jeLegAndShoe(hp, joint, end, sd, lw, back, winter);
       A[sd < 0 ? 'footL' : 'footR'] = toPx(end[0], end[1]);
     });
 
-    // Torso & Skirt
+    // Torso, Pants Waist & Skirt
     X.save(); X.translate(0, hipY); X.rotate(lean);
     // Neck
     const neckTop = back ? -9.4 : -8.3;
     shape([[-.95, neckTop], [.95, neckTop], [1.15, -6.7], [0, -6.3], [-1.15, -6.7]], { fill: JE.skin, stroke: JE.ink, lw, smooth: .4 });
     shape([[-.95, neckTop], [.95, neckTop], [.9, back ? -8.0 : -7.5], [0, back ? -7.75 : -7.15]], { fill: JE.skinDk, stroke: null, smooth: .4 });
+    // Fitted pants pelvis/hip section under the skirt (or winter snow pants)
+    const hipCol = winter ? JE.winterPants : JE.pants;
+    const hipDk = winter ? JE.winterPantsDk : JE.pantsDk;
+    shape([[-2.2, -1.05], [2.2, -1.05], [2.25, .95], [.9, 1.3], [0, .9], [-.9, 1.3], [-2.25, .95]],
+      { fill: hipCol, stroke: JE.ink, lw, smooth: .28 });
+    line([[0, -.45], [0, .85]], { stroke: hipDk, lw: lw * .7 });
     if (!winter) {
-      // Skirt back/underskirt
-      const flare = o.spin ? .4 * Math.abs(Math.sin(o.spin)) : 0;
-      const skirtW = (o.seated ? 4.1 : 3.65) + flare;
-      const skirtL = o.seated ? 2.5 : 5.5;
-      shape([[-2.5, -0.5], [2.5, -0.5], [skirtW, skirtL], [-skirtW, skirtL]], { fill: JE.skirtBase, stroke: JE.ink, lw, smooth: .2 });
-      // Tulle skirt layers
-      shape([[-2.5, -0.5], [2.5, -0.5], [skirtW + 0.3, skirtL + 0.3], [-(skirtW + 0.3), skirtL + 0.3]], { fill: rgba(JE.skirtTulle, .85), stroke: JE.ink, lw, smooth: .2 });
-      X.save();
-      tracePath([[-2.5, -.5], [2.5, -.5], [skirtW + .3, skirtL + .3], [-skirtW - .3, skirtL + .3]], true, .2); X.clip();
-      for (let i = -4; i <= 4; i++) {
-        line([[i * .53, 0], [i * .85, skirtL + .4]], { stroke: rgba(JE.skirtBase, .6), lw: .22 });
-        line([[i * .53 + .12, 0], [i * .85 + .17, skirtL + .4]], { stroke: rgba('#FFF3EF', .45), lw: .14 });
-      }
-      X.restore();
-    } else {
-      shape([[-2.2, -1], [2.2, -1], [2.15, 1], [0, 1.4], [-2.15, 1]], { fill: '#665780', stroke: JE.ink, lw, smooth: .25 });
+      jeSkirt(lw, o.seated, o.spin || 0);
     }
     // Clothing is drawn inside the torso transform, so it follows every pose.
     if (winter) jeWinterJacket(lw, back, o.zip ?? 1);
@@ -130,26 +122,204 @@ function jeWinterJacket(lw, back, zip) {
   for (const sd of [-1,1]) line([[sd*.9,-2.9],[sd*1.9,-1.6]],{stroke:'#935575',lw:.18});
 }
 
+// Layered knee-length pleated tulle skirt worn over her pants.
+function jeSkirt(lw, seated = false, spin = 0) {
+  const flare = spin ? .45 * Math.abs(Math.sin(spin)) : 0;
+  const skirtW = (seated ? 4.15 : 3.65) + flare;
+  const skirtL = seated ? 2.55 : 4.85;
+  const tulleW = skirtW + .32, tulleL = skirtL + .32;
+  // Softly waved hem builder so the pleats feel light and gathered rather than rigid.
+  const wavedHem = (w, y, amp, count) => {
+    const pts = [];
+    for (let i = 0; i <= count; i++) {
+      const u = i / count, x = lerp(w, -w, u);
+      const dy = Math.sin(u * count * Math.PI) * amp - .08 * Math.cos((u - .5) * Math.PI);
+      pts.push([x, y + dy]);
+    }
+    return pts;
+  };
+  // Opaque pink underskirt (slightly shorter so the sheer tulle hem shows past it)
+  const underPts = [[-2.4, -.55], [2.4, -.55], [skirtW * .95, skirtL - .28], ...wavedHem(skirtW * .95, skirtL - .22, .08, 10), [-skirtW * .95, skirtL - .28]];
+  shape(underPts, { fill: JE.skirtBase, stroke: rgba(JE.ink, .45), lw: lw * .75, smooth: .25 });
+  // Translucent pleated tulle outer layer
+  const tullePts = [[-2.48, -.55], [2.48, -.55], [tulleW * .88, tulleL * .52], ...wavedHem(tulleW, tulleL, .13, 12), [-tulleW * .88, tulleL * .52]];
+  shape(tullePts, { fill: rgba(JE.skirtTulle, .84), stroke: JE.ink, lw, smooth: .25 });
+  X.save();
+  tracePath(tullePts, true, .25); X.clip();
+  withBoil(0, () => {
+    // Gathered waist shadow
+    shape(rectPts(-3, -.65, 6, .75), { fill: rgba(JE.skirtShade, .28), stroke: null });
+    // Soft vertical pleat shadows and airy highlights
+    for (let i = -5; i <= 5; i++) {
+      const topX = i * .45, botX = i * (tulleW / 5.2);
+      line([[topX, -.4], [lerp(topX, botX, .55), tulleL * .55], [botX, tulleL + .25]], { stroke: rgba(JE.skirtShade, .5), lw: .18, smooth: true });
+      line([[topX + .11, -.35], [lerp(topX, botX, .55) + .14, tulleL * .55], [botX + .18, tulleL + .25]], { stroke: rgba('#FFF6F3', .55), lw: .12, smooth: true });
+    }
+    // Delicate sheer hem trim band
+    line(wavedHem(tulleW + .1, tulleL - .24, .1, 12), { stroke: rgba('#FFF8F6', .5), lw: .16, smooth: true });
+  });
+  X.restore();
+  // Elastic gathered waistband tucked under the shirt hem
+  shape([[-2.48, -.68], [2.48, -.68], [2.52, -.22], [0, -.12], [-2.52, -.22]], { fill: JE.skirtBase, stroke: JE.ink, lw: lw * .8, smooth: .25 });
+}
+
 function jeLimb(pts, w, col, lw) {
   if (JIT) { const a = JIT / pxScale(); pts = pts.map(p => [p[0] + jit(a), p[1] + jit(a)]); }
   line(pts, { stroke: JE.ink, lw: w + lw * 2, lineJoin: 'round', lineCap: 'round' });
   line(pts, { stroke: col, lw: w, lineJoin: 'round', lineCap: 'round' });
 }
 
-function jeSockAndShoe(a, sd, lw, back = false) {
-  X.save(); X.translate(a[0], a[1]); X.scale(sd * 1.15, 1);
-  // Sock
-  shape(rectPts(-.7, -1.8, 1.4, 1.8), { fill: JE.sock, stroke: JE.ink, lw });
-  line([[-.7, -1.8], [.7, -1.8]], { stroke: '#DAD6D1', lw: .2 });
-  for (let i = -2; i <= 2; i++) line([[i * .22, -1.75], [i * .22, -1.4]], { stroke: '#DAD6D1', lw: .06 });
-  // Shoe (slip-on)
-  shape([[-.9, -.2], [-.75, -1.0], [-.2, -1.2], [.5, -1.1], [1.1, -.4], [1.2, .4], [.9, .6], [-.2, .6], [-.9, .4]], { fill: JE.shoe, stroke: JE.ink, lw, smooth: .6 });
-  // Sole
-  line([[-1.0, .3], [1.2, .3]], { stroke: JE.ink, lw: lw });
-  shape([[-1.0, .3], [1.2, .3], [.9, .6], [-.2, .6], [-.9, .4]], { fill: JE.shoeSole, stroke: null, smooth: .4 });
-  // Elastic detail (front) or heel seam (back)
-  if (back) line([[-.4, -1.0], [-.4, .28]], { stroke: '#E6A8B8', lw: lw * .7 });
-  else shape([[0, -1.1], [.2, -.8], [.4, -1.1]], { fill: '#E6A8B8', stroke: null });
+// Sculpted pant leg + ribbed white sock + enclosed pink slip-on sneaker.
+// The pant leg stops at the ankle hem and the sock terminates inside the shoe collar,
+// so neither the leg nor the foot can ever poke through the shoe.
+function jeLegAndShoe(hp, joint, end, sd, lw, back = false, winter = false) {
+  const unitVec = (a, b) => {
+    const dx = b[0] - a[0], dy = b[1] - a[1], d = Math.hypot(dx, dy) || 1;
+    return [dx / d, dy / d, d];
+  };
+  const [u1x, u1y] = unitVec(hp, joint);
+  const [u2x, u2y, d2] = unitVec(joint, end);
+  // Perpendiculars oriented so +n points screen-right when the leg hangs downward (u = [0, 1]).
+  const n1 = [u1y, -u1x], n2 = [u2y, -u2x];
+  let nmx = n1[0] + n2[0], nmy = n1[1] + n2[1];
+  const nml = Math.hypot(nmx, nmy);
+  const nm = nml > .2 ? [nmx / nml, nmy / nml] : n2;
+
+  const shinAng = Math.atan2(u2y, u2x) - Math.PI / 2;
+  // Stop pant hem cleanly above the shoe collar (winter snow pants sit slightly lower over the ankle).
+  const cuffUp = Math.min(winter ? .62 : .98, d2 * .42);
+  const ankle = [end[0] - u2x * cuffUp, end[1] - u2y * cuffUp];
+  // Keep shoe flat when planted on the floor; tilt smoothly with the shin when lifted (skip/jump/kick).
+  const liftK = clamp((-end[1] - .95) / 1.4);
+  const shoeRot = clamp(shinAng, -1.2, 1.2) * liftK * .85;
+
+  // 1. Back rim & shaded interior opening of the shoe (drawn behind the sock so the sock enters the shoe).
+  X.save(); X.translate(end[0], end[1]); X.rotate(shoeRot); X.scale(sd, 1);
+  if (!back) {
+    shape([[-.92, -.48], [-.78, -.82], [-.15, -.88], [.48, -.78], [.62, -.42], [-.72, -.32]],
+      { fill: JE.shoeDk, stroke: JE.ink, lw: lw * .9, smooth: .55 });
+    ellipse(-.1, -.54, .62, .24, { fill: JE.shoeIn, stroke: null });
+  }
+  X.restore();
+
+  // 2. Ribbed white sock: starts just under the pant cuff and stops INSIDE the shoe collar (never reaches the sole).
+  const sockLen = Math.max(.35, cuffUp + .08);
+  const sockHalfW = .54;
+  X.save();
+  X.translate(ankle[0], ankle[1]);
+  X.rotate(shinAng);
+  const sockPts = [[-sockHalfW, -.15], [sockHalfW, -.15], [sockHalfW * .95, sockLen], [-sockHalfW * .95, sockLen]];
+  shape(sockPts, { fill: JE.sock, stroke: JE.ink, lw: lw * .9, smooth: .15 });
+  X.save(); tracePath(sockPts, true, .15); X.clip();
+  withBoil(0, () => {
+    // Soft cylindrical shade on the inner edge of the sock
+    shape(rectPts(sd < 0 ? sockHalfW * .25 : -sockHalfW, -.2, sockHalfW * .75, sockLen + .3),
+      { fill: rgba(JE.sockShade, .65), stroke: null });
+    // Ribbed knit texture lines
+    for (let i = -2; i <= 2; i++) {
+      line([[i * .19, -.05], [i * .19, sockLen * .85]], { stroke: rgba('#C7C0BA', .7), lw: .055 });
+    }
+  });
+  X.restore();
+  X.restore();
+
+  // 3. Articulated tapered pant leg (covers hip → knee → ankle cuff).
+  const pFill = winter ? JE.winterPants : JE.pants;
+  const pDk = winter ? JE.winterPantsDk : JE.pantsDk;
+  const pLt = winter ? JE.winterPantsLt : JE.pantsLt;
+  const wHip = winter ? 1.15 : .98, wKnee = winter ? 1.02 : .78, wAnkle = winter ? .92 : .64;
+  const midUp = mixPt(hp, joint, .5), midDn = mixPt(joint, ankle, .5);
+  const wMidUp = lerp(wHip, wKnee, .48), wMidDn = lerp(wKnee, wAnkle, .52);
+  const ptOff = (p, n, d) => [p[0] + n[0] * d, p[1] + n[1] * d];
+  const pantPts = [
+    ptOff(hp, n1, wHip), ptOff(midUp, n1, wMidUp), ptOff(joint, nm, wKnee), ptOff(midDn, n2, wMidDn), ptOff(ankle, n2, wAnkle),
+    ptOff(ankle, n2, -wAnkle), ptOff(midDn, n2, -wMidDn), ptOff(joint, nm, -wKnee), ptOff(midUp, n1, -wMidUp), ptOff(hp, n1, -wHip),
+  ];
+  shape(pantPts, { fill: pFill, stroke: JE.ink, lw, smooth: .22 });
+  X.save(); tracePath(pantPts, true, .22); X.clip();
+  withBoil(0, () => {
+    // Inner-side cylindrical shading along the leg
+    const shadeSide = -sd;
+    const shPts = [
+      ptOff(hp, n1, shadeSide * wHip * 1.15), ptOff(joint, nm, shadeSide * wKnee * 1.15), ptOff(ankle, n2, shadeSide * wAnkle * 1.15),
+      ptOff(ankle, n2, shadeSide * wAnkle * .25), ptOff(joint, nm, shadeSide * wKnee * .2), ptOff(hp, n1, shadeSide * wHip * .2),
+    ];
+    shape(shPts, { fill: rgba(pDk, .65), stroke: null, smooth: .25 });
+    // Soft outer fabric highlight seam
+    line([ptOff(hp, n1, sd * wHip * .42), ptOff(joint, nm, sd * wKnee * .42), ptOff(ankle, n2, sd * wAnkle * .38)],
+      { stroke: rgba(pLt, .55), lw: winter ? .22 : .16, smooth: true });
+    // Subtle knee fabric crease
+    line([ptOff(joint, nm, -.45), ptOff(joint, nm, .45)], { stroke: rgba(pDk, .45), lw: .09 });
+  });
+  X.restore();
+  // Neat hemmed pant cuff overlapping the top of the sock
+  X.save(); X.translate(ankle[0], ankle[1]); X.rotate(shinAng);
+  const cw = wAnkle + (winter ? .12 : .07), ch = winter ? .44 : .32;
+  shape([[-cw, -ch], [cw, -ch], [cw * .98, .08], [0, .14], [-cw * .98, .08]],
+    { fill: pFill, stroke: JE.ink, lw: lw * .9, smooth: .2 });
+  line([[-cw * .82, -.05], [0, 0], [cw * .82, -.05]], { stroke: rgba(pDk, .7), lw: .07, smooth: true });
+  X.restore();
+
+  // 4. Detailed pink slip-on sneaker with crisp enclosed white rubber cupsole.
+  jeShoe(end, sd, lw, back, shoeRot);
+}
+
+// Slip-on sneaker seen at a natural 3/4 stance (front) or heel counter view (back).
+// Sole bottom sits at y = +0.65 so planted feet at end[1] = -0.65 rest flush on y = 0.
+function jeShoe(a, sd, lw, back = false, rot = 0) {
+  X.save(); X.translate(a[0], a[1]); X.rotate(rot); X.scale(sd, 1);
+  if (back) {
+    // Back/heel view when twirling away from camera
+    const upper = [[-.86, -.52], [-.35, -.72], [.35, -.72], [.86, -.52], [.96, .26], [.88, .58], [0, .66], [-.88, .58], [-.96, .26]];
+    shape(upper, { fill: JE.shoe, stroke: JE.ink, lw, smooth: .45 });
+    // Padded collar rim
+    line([[-.84, -.5], [0, -.68], [.84, -.5]], { stroke: JE.shoeDk, lw: .18, smooth: true });
+    // Center heel counter seam & reinforced patch
+    shape([[-.42, -.62], [.42, -.62], [.5, .28], [-.5, .28]], { fill: rgba(JE.shoeDk, .32), stroke: null, smooth: .25 });
+    line([[0, -.68], [0, .28]], { stroke: JE.shoeDk, lw: lw * .75 });
+    // Crisp white rubber sole wrap
+    const sole = [[-.96, .24], [0, .3], [.96, .24], [.9, .58], [0, .66], [-.9, .58]];
+    shape(sole, { fill: JE.shoeSole, stroke: JE.ink, lw, smooth: .3 });
+    line([[-.88, .52], [0, .58], [.88, .52]], { stroke: JE.shoeSoleShade, lw: .11, smooth: true });
+    X.restore();
+    return;
+  }
+
+  // Front/3/4 pink canvas slip-on sneaker: outer silhouette completely encloses the foot.
+  const upper = [
+    [-.94, -.44], [-.66, -.44], [-.18, -.52], [.38, -.68], [.78, -.42],
+    [1.24, -.1], [1.46, .18], [1.44, .46], [1.14, .62], [-.15, .65], [-.92, .56], [-1.04, .26],
+  ];
+  shape(upper, { fill: JE.shoe, stroke: JE.ink, lw, smooth: .48 });
+
+  // Soft shading, highlight sheen, elastic gusset & vamp stitch clipped cleanly to the shoe upper
+  X.save(); tracePath(upper, true, .48); X.clip();
+  withBoil(0, () => {
+    // Lower quarter shadow for 3D roundness
+    shape([[-1.1, .02], [1.55, .12], [1.55, .42], [-1.1, .42]], { fill: rgba(JE.shoeDk, .35), stroke: null });
+    // Soft glossy toe-box highlight
+    ellipse(.68, -.12, .48, .17, { fill: rgba(JE.shoeLt, .75), stroke: null, rot: .22 });
+    // Heel collar padding seam
+    line([[-.92, -.42], [-.52, -.24], [-.02, -.3]], { stroke: JE.shoeDk, lw: .12, smooth: true });
+    // Classic slip-on V-shaped elastic side gore near the tongue
+    shape([[.12, -.64], [.44, -.64], [.28, -.26]], { fill: JE.shoeDk, stroke: JE.ink, lw: lw * .45, smooth: .15 });
+    // Curved canvas vamp topstitching across the instep
+    line([[.36, -.52], [.62, -.16], [.64, .28]], { stroke: rgba(JE.shoeDk, .85), lw: lw * .65, smooth: true });
+    line([[.25, -.48], [.48, -.14], [.5, .28]], { stroke: rgba('#FFF4F7', .65), lw: lw * .45, smooth: true });
+  });
+  X.restore();
+
+  // Crisp white rubber cupsole / foxing band (full ink outline so the bottom never breaks)
+  const sole = [
+    [-1.04, .22], [-.2, .29], [.72, .29], [1.44, .19],
+    [1.46, .46], [1.14, .63], [-.15, .66], [-.92, .57], [-1.04, .4],
+  ];
+  shape(sole, { fill: JE.shoeSole, stroke: JE.ink, lw, smooth: .28 });
+  // Subtle foxing pinstripe and bottom tread rim
+  line([[-.98, .32], [-.18, .39], [.72, .39], [1.4, .3]], { stroke: rgba(JE.shoeDk, .45), lw: .06, smooth: true });
+  line([[-.94, .52], [-.12, .59], [1.08, .56], [1.38, .43]], { stroke: JE.shoeSoleShade, lw: .11, smooth: true });
+  // Subtle toe bumper vertical sheen
+  line([[1.12, .25], [1.14, .56]], { stroke: rgba('#D4CECA', .55), lw: .07 });
   X.restore();
 }
 

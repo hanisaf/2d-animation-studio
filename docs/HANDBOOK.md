@@ -449,10 +449,10 @@ jester(..., { mouth: lipFlap(t, said.talking, 'grin') });
 
 | Name | Notes |
 |---|---|
-| `drawModelSheet(entry, t)` | every pose of `CHARACTERS.<name>` on one labelled page |
+| `drawModelSheet(entry, t)` | every non-fight pose of `CHARACTERS.<name>` on one labelled page |
 | `drawCharacterView(entry, pose, t, { location, zoom })` | one pose, big, on paper or on a location's stage mark |
 | `drawLocationView(loc, cam, t, { character, pose, spot })` | a set through a free camera, with an optional stand-in |
-| `drawPose(entry, name, x, y, s, t)`, `poseNames(entry)`, `paperBackdrop()` | helpers |
+| `drawPose(entry, name, x, y, s, t)`, `poseNames(entry)`, `modelSheetPoseNames(entry)`, `modelSheetLayout(entry)`, `paperBackdrop()` | helpers |
 | `exportVideo({ scenes: [ids], fps, bitrate, onProgress(p, msg), signal })` | → MP4 `Blob` (with `.warnings`, `.frames`, `.seconds`). Paints each frame, encodes with WebCodecs, muxes with mp4-muxer |
 | `downloadBlob(blob, name)` | saves a Blob as a download |
 

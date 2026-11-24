@@ -113,17 +113,24 @@
   };
   const refreshSubs = () => document.querySelectorAll('#side li[data-mode]').forEach(el => { const s = el.querySelector('.sub'); if (s) s.textContent = sub(el.dataset.mode, el.dataset.id); });
   function buildSidebar() {
-    const li = (mode, id, ico, title, tip) => `<li data-mode="${mode}" data-id="${esc(id)}" title="${esc(tip || '')}"><span class="ico">${ico}</span>${esc(title)}<span class="sub">${esc(sub(mode, id))}</span></li>`;
-    // Scenes grouped by category, then series (headings are plain items without data-mode, so they don't select anything).
+    const li = (mode, id, ico, title, tip) => `<li data-mode="${mode}" data-id="${esc(id)}" title="${esc(tip || '')}"><span class="ico" aria-hidden="true">${ico}</span>${esc(title)}<span class="sub">${esc(sub(mode, id))}</span></li>`;
+    const chars = REGISTRY.characters.filter(id => ASSETS.character[id]);
+    const locs = REGISTRY.locations.filter(id => ASSETS.location[id]);
+    $('#list-characters').innerHTML = chars.map(id => { const m = META('character', id); return li('character', id, '🎭', m.title, m.logline); }).join('');
+    $('#cnt-characters').textContent = chars.length;
+    $('#list-locations').innerHTML = locs.map(id => { const m = META('location', id); return li('location', id, '🏰', m.title, m.logline); }).join('');
+    $('#cnt-locations').textContent = locs.length;
+    // Scenes grouped by category, with each series as a collapsible <details> dropdown.
     const sceneLi = id => { const m = META('scene', id); return li('scene', id, '🎬', m.title, m.logline); };
     const categories = [...new Set(REGISTRY.series.map(sid => SERIES[sid].category))];
-    $('#list-scenes').innerHTML = categories.map(cat => `<li class="grp cat">${esc(cat || 'Uncategorized')}</li>` +
-      REGISTRY.series.filter(sid => SERIES[sid].category === cat).map(sid => `<li class="grp" title="${esc(SERIES[sid].logline || '')}">${esc(SERIES[sid].title)}</li>` +
-        SERIES[sid].scenes.filter(id => ASSETS.scene[id]).map(sceneLi).join('')).join('')).join('');
-    $('#list-characters').innerHTML = REGISTRY.characters.filter(id => ASSETS.character[id]).map(id => { const m = META('character', id); return li('character', id, '🎭', m.title, m.logline); }).join('');
-    $('#list-locations').innerHTML = REGISTRY.locations.filter(id => ASSETS.location[id]).map(id => { const m = META('location', id); return li('location', id, '🏰', m.title, m.logline); }).join('');
+    $('#list-scenes').innerHTML = categories.map(cat => `<div class="scene-cat">${esc(cat || 'Uncategorized')}</div>` +
+      REGISTRY.series.filter(sid => SERIES[sid].category === cat).map(sid => {
+        const scenes = SERIES[sid].scenes.filter(id => ASSETS.scene[id]);
+        return `<details class="nav-sub" data-series="${esc(sid)}"><summary><span class="lbl">${esc(SERIES[sid].title)}</span><span class="cnt">${scenes.length}</span></summary><ul>${scenes.map(sceneLi).join('')}</ul></details>`;
+      }).join('')).join('');
     $('#list-docs').innerHTML = PROJECT_DOCS.map(([f, t]) => li('doc', f, '📄', t, f)).join('');
-    document.querySelectorAll('#side li[data-mode]').forEach(el => el.onclick = () => select(el.dataset.mode, el.dataset.id));
+    $('#cnt-docs').textContent = PROJECT_DOCS.length;
+    document.querySelectorAll('#side li[data-mode]').forEach(el => el.addEventListener('click', () => select(el.dataset.mode, el.dataset.id)));
   }
 
   // Load what a view needs before showing it: a scene and everything it uses, a character, a location, or every scene
@@ -134,7 +141,7 @@
     : mode === 'location' ? Promise.all([loadAsset(mode, id), S.loc.character && loadAsset('character', S.loc.character)])
     : mode === 'movie' ? Promise.all(movieClips.map(c => requireScene(c.id)))
     : Promise.resolve();
-  async function select(mode, id, keepT = false) {
+  async function select(mode, id, keepT = false, { reveal = true } = {}) {
     if (S.exporting) return;
     const ticket = ++selecting, item = document.querySelector(`#side li[data-mode="${mode}"][data-id="${CSS.escape(id)}"]`);
     item?.classList.add('loading');
@@ -146,6 +153,10 @@
     if (S.mode !== 'doc' && S.id) S.last = [S.mode, S.id];
     pause(); S.mode = mode; S.id = id; if (!keepT) S.t = 0;
     document.querySelectorAll('#side li').forEach(li => li.classList.toggle('on', li.dataset.mode === mode && li.dataset.id === id));
+    if (reveal && item) {
+      for (let d = item.closest('details'); d; d = d.parentElement?.closest('details')) d.open = true;
+      item.scrollIntoView({ block: 'nearest' });
+    }
     canvas.classList.toggle('grab', mode === 'location');
     $('#work').hidden = mode === 'doc'; $('#docs').classList.toggle('full', mode === 'doc');
     if (mode === 'doc') { showDoc(id, (PROJECT_DOCS.find(d => d[0] === id) || [])[1] || id, true); history.replaceState(null, '', `?doc=${id}`); return; }
@@ -637,9 +648,10 @@
   else if (q.has('movie')) await select('movie', 'composer');
   else if (q.has('doc')) { await select('scene', REGISTRY.movie[0]); await select('doc', q.get('doc')); }
   else {
+    const hasQuery = q.has('character') || q.has('location') || q.has('scene');
     const [mode, id] = q.has('character') ? ['character', q.get('character')] : q.has('location') ? ['location', q.get('location')] : ['scene', q.get('scene') || REGISTRY.movie[0]];
     const ok = ASSETS[mode][id];
-    await select(ok ? mode : 'scene', ok ? id : REGISTRY.movie[0]);
+    await select(ok ? mode : 'scene', ok ? id : REGISTRY.movie[0], false, { reveal: hasQuery });
   }
   if (q.has('t') && !S.playMode) seek(+q.get('t'));
   window.studio = { S, select, seek, runExport };

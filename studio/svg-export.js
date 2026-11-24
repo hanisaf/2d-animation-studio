@@ -61,12 +61,10 @@ function exportCharacterSvg({ entry, pose, view = 'pose', time = 0, zoom = 1 }) 
   try {
     X = ctx; T = time; boilSeed(time); OVERLAYS = []; CAM = null; JIT = 0;
     if (view === 'sheet') {
-      const names = poseNames(entry), cols = Math.max(1, Math.min(names.length, Math.ceil(Math.sqrt(names.length * 2.2))));
-      const rows = Math.max(1, Math.ceil(names.length / cols)), cw = W / cols, ch = H / rows;
-      const [uw, uh] = entry.size || [12, 28], scale = Math.min(cw * .78 / uw, (ch - 70) * .88 / uh);
+      const { names, cols, cw, ch, s } = modelSheetLayout(entry);
       names.forEach((name, i) => {
         ctx.save();
-        drawPose(entry, name, cw * (i % cols + .5), ch * (Math.floor(i / cols) + 1) - 58, scale, time);
+        drawPose(entry, name, cw * (i % cols + .5), ch * (Math.floor(i / cols) + 1) - 58, s, time);
         ctx.restore();
       });
     } else {
