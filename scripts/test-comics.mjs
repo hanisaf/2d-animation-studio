@@ -121,6 +121,53 @@ try {
   assert.equal(splitCheck.ch, 2200);
   assert.equal(splitCheck.fitWidth, true);
 
+  // Swap through individual panels on Page 1 (Full page -> Panel 1 -> Panel 5 -> Full page)
+  await page.click('#comic-panel-next');
+  await new Promise(r => setTimeout(r, 120));
+  const panel1State = await page.evaluate(() => ({
+    panel: studio.S.comic.panel,
+    w: document.querySelector('#out').width,
+    h: document.querySelector('#out').height,
+    cw: document.querySelector('#out-compare').width,
+    ch: document.querySelector('#out-compare').height,
+    ar: document.querySelector('.stage').style.getPropertyValue('--stage-ar'),
+    panelChipCount: document.querySelectorAll('#comic-panels [data-cpanel]').length,
+  }));
+  assert.equal(panel1State.panel, 0);
+  assert.equal(panel1State.w, 1596);
+  assert.equal(panel1State.h, 378);
+  assert.equal(panel1State.cw, 1596);
+  assert.equal(panel1State.ch, 378);
+  assert.equal(panel1State.ar, '1596 / 378');
+  assert.equal(panel1State.panelChipCount, 10); // Full page + 9 panels
+
+  await page.click('[data-cpanel="4"]');
+  await new Promise(r => setTimeout(r, 120));
+  const panel5State = await page.evaluate(() => ({
+    panel: studio.S.comic.panel,
+    w: document.querySelector('#out').width,
+    h: document.querySelector('#out').height,
+  }));
+  assert.equal(panel5State.panel, 4);
+  assert.equal(panel5State.w, 1596);
+  assert.equal(panel5State.h, 458);
+
+  // Switch to Page 2 and confirm panel resets to Full page + has 2 panels
+  await page.click('[data-pg="1"]');
+  await new Promise(r => setTimeout(r, 150));
+  const page2State = await page.evaluate(() => ({
+    page: studio.S.comic.page,
+    panel: studio.S.comic.panel,
+    w: document.querySelector('#out').width,
+    h: document.querySelector('#out').height,
+    panelChipCount: document.querySelectorAll('#comic-panels [data-cpanel]').length,
+  }));
+  assert.equal(page2State.page, 1);
+  assert.equal(page2State.panel, null);
+  assert.equal(page2State.w, 1700);
+  assert.equal(page2State.h, 2200);
+  assert.equal(page2State.panelChipCount, 3); // Full page + 2 panels
+
   // Verify character cross-link mentions Ice Skating Adventure
   await page.evaluate(() => studio.select('character', 'jenna'));
   await new Promise(r => setTimeout(r, 150));

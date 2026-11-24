@@ -482,7 +482,7 @@ function renderComicPage(canvas, comicDef, pageIndex = 0, opts = {}) {
     X.globalAlpha = 1;
     X.globalCompositeOperation = 'source-over';
 
-    // Single-panel borderless export mode (used by scripts/build_comic.mjs --panels and per-panel Gemini mode)
+    // Single-panel borderless view / export mode (used by Studio panel switcher, build_comic.mjs --panels, and per-panel Gemini mode)
     if (target) {
       X.fillStyle = paper;
       X.fillRect(0, 0, cw, ch);
@@ -492,11 +492,28 @@ function renderComicPage(canvas, comicDef, pageIndex = 0, opts = {}) {
         const panelImg = edition === 'illustrated' ? images.panels?.[target.id] : null;
         if (panelImg) {
           drawImageCover(X, panelImg, 0, 0, cw, ch);
-        } else if (typeof target.panel.draw === 'function') {
-          target.panel.draw(cw, ch);
-        }
-        if (lettering) {
-          drawPanelLettering(target.panel, cw, ch, { ink });
+          if (lettering) drawPanelLettering(target.panel, cw, ch, { ink });
+        } else if (edition === 'illustrated' && images.page) {
+          // Crop the matching panel rectangle from the full-page illustrated image (already contains illustrated lettering)
+          const iw = images.page.naturalWidth || images.page.width;
+          const ih = images.page.naturalHeight || images.page.height;
+          if (iw && ih) {
+            const scale = Math.min(width / iw, height / ih);
+            const dx = (width - iw * scale) / 2;
+            const dy = (height - ih * scale) / 2;
+            const sx = (target.x - dx) / scale;
+            const sy = (target.y - dy) / scale;
+            const sw = target.w / scale;
+            const sh = target.h / scale;
+            X.drawImage(images.page, sx, sy, sw, sh, 0, 0, cw, ch);
+          }
+        } else {
+          if (typeof target.panel.draw === 'function') {
+            target.panel.draw(cw, ch);
+          }
+          if (lettering) {
+            drawPanelLettering(target.panel, cw, ch, { ink });
+          }
         }
       } finally {
         _panelOx = prevOx; _panelOy = prevOy;

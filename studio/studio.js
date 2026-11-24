@@ -181,7 +181,7 @@
   const S = { mode: 'scene', id: null, t: 0, playing: false, speed: 1, loop: false, dirty: true, exporting: false, playMode: q.get('play') === 'true', movieActive: -1,
     char: { pose: null, view: 'pose', backdrop: '', zoom: 1 },
     loc: { cam: null, character: '', pose: '', spot: '', variant: '' },
-    comic: { page: 0, view: 'studio', lettering: true, fit: 'page', take: 'approved', images: null, refining: false } };
+    comic: { page: 0, panel: null, view: 'studio', lettering: true, fit: 'page', take: 'approved', images: null, refining: false } };
   let localCaps = { local: false, geminiConfigured: false };
   if (location.protocol === 'http:' || location.protocol === 'https:') {
     fetch('/api/capabilities', { cache: 'no-store' })
@@ -269,14 +269,19 @@
     if (S.mode === 'comic' && COMICS[S.id]) {
       const c = COMICS[S.id];
       const layout = computePageLayout(c, S.comic.page);
-      stageEl.style.setProperty('--stage-ar', `${layout.width} / ${layout.height}`);
+      const slot = S.comic.panel != null ? layout.panels[S.comic.panel] : null;
+      const arW = slot ? slot.w : layout.width;
+      const arH = slot ? slot.h : layout.height;
+      stageEl.style.setProperty('--stage-ar', `${arW} / ${arH}`);
       stageEl.classList.toggle('comic-fit-width', S.comic.fit === 'width');
       stageEl.classList.toggle('comic-split', S.comic.view === 'split');
+      canvas.classList.toggle('comic-pick', S.comic.panel == null);
       compareCanvas.hidden = S.comic.view !== 'split';
       return;
     }
     stageEl.style.setProperty('--stage-ar', '16 / 9');
     stageEl.classList.remove('comic-fit-width', 'comic-split');
+    canvas.classList.remove('comic-pick');
     compareCanvas.hidden = true;
     if (canvas.width !== W || canvas.height !== H) {
       canvas.width = W; canvas.height = H;
@@ -288,6 +293,7 @@
     if (S.mode !== 'comic' || !S.id) return;
     const params = new URLSearchParams({ comic: S.id });
     if (S.comic.page > 0) params.set('page', String(S.comic.page + 1));
+    if (S.comic.panel != null) params.set('panel', String(S.comic.panel + 1));
     if (S.comic.view !== 'studio') params.set('view', S.comic.view);
     history.replaceState(null, '', `?${params.toString()}`);
   }
@@ -326,6 +332,10 @@
       const c = COMICS[id];
       ACTIVE_COMIC = c;
       S.comic.page = clamp(S.comic.page, 0, Math.max(0, c.pages.length - 1));
+      const pagePanels = computePageLayout(c, S.comic.page).panels;
+      if (S.comic.panel != null && (S.comic.panel < 0 || S.comic.panel >= pagePanels.length)) {
+        S.comic.panel = null;
+      }
       S.comic.take = 'approved';
       S.comic.images = await resolveComicPageImages(c, S.comic.page, S.comic.take);
       if (ticket !== selecting) return;
@@ -399,25 +409,32 @@
   function bindLinks() { document.querySelectorAll('[data-go]').forEach(b => b.onclick = () => { const [k, i] = b.dataset.go.split(':'); select(k, i); }); document.querySelectorAll('.docbtn').forEach(b => b.onclick = toggleDocs); }
   const docBtn = () => `<button class="docbtn${S.docsOpen ? ' on' : ''}" title="show / hide this asset's README">📄 Docs</button>`;
 
-  function drawComicPlaceholder(cv, c, pageIndex, message) {
+  function drawComicPlaceholder(cv, c, pageIndex, panelIndex = null, message) {
     const layout = computePageLayout(c, pageIndex);
-    if (cv.width !== layout.width) cv.width = layout.width;
-    if (cv.height !== layout.height) cv.height = layout.height;
+    const slot = panelIndex != null ? layout.panels[panelIndex] : null;
+    const cw = slot ? slot.w : layout.width;
+    const ch = slot ? slot.h : layout.height;
+    if (cv.width !== cw) cv.width = cw;
+    if (cv.height !== ch) cv.height = ch;
     const ctx = cv.getContext('2d');
     ctx.setTransform(1, 0, 0, 1, 0, 0);
     ctx.fillStyle = '#231a27';
     ctx.fillRect(0, 0, cv.width, cv.height);
+    const pad = Math.min(36, Math.floor(Math.min(cw, ch) * 0.08));
     ctx.strokeStyle = '#3d2f44';
-    ctx.lineWidth = 6;
-    ctx.strokeRect(36, 36, cv.width - 72, cv.height - 72);
+    ctx.lineWidth = Math.max(3, Math.min(6, Math.floor(Math.min(cw, ch) * 0.012)));
+    ctx.strokeRect(pad, pad, cv.width - pad * 2, cv.height - pad * 2);
+    const hSize = clamp(Math.round(Math.min(cw, ch) * 0.07), 22, 44);
+    const sSize = clamp(Math.round(hSize * 0.6), 14, 28);
     ctx.fillStyle = '#e8aa38';
-    ctx.font = '700 44px "Fredoka", system-ui, sans-serif';
+    ctx.font = `700 ${hSize}px "Fredoka", system-ui, sans-serif`;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    ctx.fillText('No Illustrated Edition Yet', cv.width / 2, cv.height / 2 - 48);
+    ctx.fillText('No Illustrated Edition Yet', cv.width / 2, cv.height / 2 - hSize * 0.7);
     ctx.fillStyle = '#d8cad6';
-    ctx.font = '500 28px "Fredoka", system-ui, sans-serif';
-    ctx.fillText(message || `Page ${pageIndex + 1} · Click "Refine with Gemini" or run npm run comic:illustrate ${c.id}`, cv.width / 2, cv.height / 2 + 24);
+    ctx.font = `500 ${sSize}px "Fredoka", system-ui, sans-serif`;
+    const locLabel = slot ? `Page ${pageIndex + 1} · Panel ${panelIndex + 1}` : `Page ${pageIndex + 1}`;
+    ctx.fillText(message || `${locLabel} · Click "Refine with Gemini" or run npm run comic:illustrate ${c.id}`, cv.width / 2, cv.height / 2 + sSize * 0.9);
   }
 
   // ---------- rendering ----------
@@ -428,21 +445,22 @@
       if (!c) return;
       syncStageCanvas();
       const imgs = S.comic.images || { page: null, panels: {}, mode: 'page', hasIllustrated: false };
+      const pIdx = S.comic.panel;
       if (S.comic.view === 'split') {
-        renderComicPage(canvas, c, S.comic.page, { edition: 'studio', lettering: S.comic.lettering });
+        renderComicPage(canvas, c, S.comic.page, { edition: 'studio', lettering: S.comic.lettering, panelIndex: pIdx });
         if (imgs.hasIllustrated) {
-          renderComicPage(compareCanvas, c, S.comic.page, { edition: 'illustrated', lettering: S.comic.lettering, images: imgs, mode: imgs.mode });
+          renderComicPage(compareCanvas, c, S.comic.page, { edition: 'illustrated', lettering: S.comic.lettering, panelIndex: pIdx, images: imgs, mode: imgs.mode });
         } else {
-          drawComicPlaceholder(compareCanvas, c, S.comic.page);
+          drawComicPlaceholder(compareCanvas, c, S.comic.page, pIdx);
         }
       } else if (S.comic.view === 'illustrated') {
         if (imgs.hasIllustrated) {
-          renderComicPage(canvas, c, S.comic.page, { edition: 'illustrated', lettering: S.comic.lettering, images: imgs, mode: imgs.mode });
+          renderComicPage(canvas, c, S.comic.page, { edition: 'illustrated', lettering: S.comic.lettering, panelIndex: pIdx, images: imgs, mode: imgs.mode });
         } else {
-          drawComicPlaceholder(canvas, c, S.comic.page);
+          drawComicPlaceholder(canvas, c, S.comic.page, pIdx);
         }
       } else {
-        renderComicPage(canvas, c, S.comic.page, { edition: 'studio', lettering: S.comic.lettering });
+        renderComicPage(canvas, c, S.comic.page, { edition: 'studio', lettering: S.comic.lettering, panelIndex: pIdx });
       }
       X = canvas.getContext('2d');
       if (typeof _trackCtx === 'function') _trackCtx(X);
@@ -462,7 +480,7 @@
   const PREVIEW_FPS = 24;
   function frameKey() {
     if (S.mode === 'scene') return `scene:${S.id}:${Math.floor(S.t * SCENES[S.id].fps)}`;
-    if (S.mode === 'comic') return `comic:${S.id}:${S.comic.page}:${S.comic.view}:${S.comic.lettering}:${S.comic.take}`;
+    if (S.mode === 'comic') return `comic:${S.id}:${S.comic.page}:${S.comic.panel ?? 'all'}:${S.comic.view}:${S.comic.lettering}:${S.comic.take}`;
     if (S.mode === 'movie') { const at = movieAt(S.t); return at ? `movie:${at.index}:${Math.floor(at.local * SCENES[at.clip.id].fps)}` : 'movie:empty'; }
     if (S.mode === 'character') return `char:${S.id}:${Math.floor(S.t * PREVIEW_FPS)}`;
     if (S.mode === 'location') return `loc:${S.id}:${Math.floor(S.t * PREVIEW_FPS)}`;
@@ -791,10 +809,12 @@
       const m = META('comic', c.id);
       const b = BOOKS[c.book];
       const mode = m.illustration?.mode || b?.defaults?.illustration?.mode || 'page';
+      const payload = { comicId: c.id, page: S.comic.page + 1, mode };
+      if (mode === 'panel' && S.comic.panel != null) payload.panel = S.comic.panel + 1;
       const res = await fetch('/api/illustrate-comic', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ comicId: c.id, page: S.comic.page + 1, mode }),
+        body: JSON.stringify(payload),
       });
       const data = await res.json().catch(() => ({ ok: false, error: `HTTP ${res.status}` }));
       if (!res.ok || !data.ok) throw new Error(data.error || `HTTP ${res.status}`);
@@ -816,9 +836,29 @@
       updateComicRefineBtn();
     }
   }
+  function comicPanelLabel(slot) {
+    const clean = String(slot.id || '')
+      .replace(/^p\d+[_-]?/i, '')
+      .replace(/^panel[_-]?\d+[_-]?/i, '')
+      .replace(/[_-]+/g, ' ')
+      .trim();
+    const titled = clean ? clean.replace(/\b\w/g, ch => ch.toUpperCase()) : '';
+    return titled ? `${slot.index + 1} · ${titled}` : `Panel ${slot.index + 1}`;
+  }
+  function setComicPanel(c, nextPanel) {
+    const panels = computePageLayout(c, S.comic.page).panels;
+    const normalized = nextPanel == null ? null : clamp(nextPanel, 0, Math.max(0, panels.length - 1));
+    if (normalized === S.comic.panel) return;
+    S.comic.panel = normalized;
+    comicPanel(c);
+    syncComicUrl();
+    S.dirty = true;
+  }
   function comicPanel(c) {
     const m = META('comic', c.id), b = BOOKS[c.book];
     const layout = computePageLayout(c, S.comic.page);
+    const pagePanels = layout.panels;
+    const activeSlot = S.comic.panel != null ? pagePanels[S.comic.panel] : null;
     const totalPages = c.pages.length;
     const totalPanels = c.pages.reduce((n, _, i) => n + computePageLayout(c, i).panels.length, 0);
     const modeLabel = m.illustration?.mode || b?.defaults?.illustration?.mode || 'page';
@@ -826,14 +866,17 @@
     const imgs = S.comic.images || { hasIllustrated: false, takes: [] };
     const takes = imgs.takes || [];
     const hasTakes = takes.length > 0;
+    const dimLabel = activeSlot
+      ? `panel ${activeSlot.index + 1}/${pagePanels.length} (${activeSlot.w}×${activeSlot.h})`
+      : `${layout.width}×${layout.height}${trim}`;
     $('#panel').innerHTML = `
       <div class="head"><div class="txt"><h2>${esc(m.title)}</h2><div class="muted">${esc(m.logline || '')}</div>
-        <div class="muted mono">${esc(c.dir || c.id)} · ${esc(b?.title || c.book || 'Book')} · ${layout.width}×${layout.height}${esc(trim)} · ${totalPages} page${totalPages === 1 ? '' : 's'} · ${totalPanels} panels · mode: ${esc(modeLabel)}</div>
+        <div class="muted mono">${esc(c.dir || c.id)} · ${esc(b?.title || c.book || 'Book')} · ${esc(dimLabel)} · ${totalPages} page${totalPages === 1 ? '' : 's'} · ${totalPanels} panels · mode: ${esc(modeLabel)}</div>
         <div class="row links">${linksHtml('comic', c.id)}</div></div>${refsHtml(m.refs)}${docBtn()}</div>
       <div class="row">
-        <button id="comic-prev" title="Previous page (←)" ${S.comic.page <= 0 ? 'disabled' : ''}>◀︎ Prev</button>
+        <button id="comic-prev" title="Previous page (← or ⇧+← in panel view)" ${S.comic.page <= 0 ? 'disabled' : ''}>◀︎ Prev</button>
         <div class="chips" id="comic-pages">${c.pages.map((p, i) => `<button class="chip${i === S.comic.page ? ' on' : ''}" data-pg="${i}">Page ${i + 1}</button>`).join('')}</div>
-        <button id="comic-next" title="Next page (→)" ${S.comic.page >= totalPages - 1 ? 'disabled' : ''}>Next ▶︎</button>
+        <button id="comic-next" title="Next page (→ or ⇧+→ in panel view)" ${S.comic.page >= totalPages - 1 ? 'disabled' : ''}>Next ▶︎</button>
         <span class="spacer"></span>
         <div class="chips">
           <button class="chip${S.comic.view === 'studio' ? ' on' : ''}" data-cview="studio">Studio (Code)</button>
@@ -841,12 +884,21 @@
           <button class="chip${S.comic.view === 'split' ? ' on' : ''}" data-cview="split">Side by Side</button>
         </div>
         <div class="chips">
-          <button class="chip${S.comic.fit === 'page' ? ' on' : ''}" data-cfit="page" title="Fit full page in viewport">Fit page</button>
+          <button class="chip${S.comic.fit === 'page' ? ' on' : ''}" data-cfit="page" title="Fit full view in viewport">Fit page</button>
           <button class="chip${S.comic.fit === 'width' ? ' on' : ''}" data-cfit="width" title="Scrollable full-width reading mode">Fit width</button>
         </div>
         <label class="ck" title="Show speech bubbles, captions, and SFX"><input type="checkbox" id="comic-lettering"${S.comic.lettering ? ' checked' : ''}> lettering</label>
         ${hasTakes ? `<label class="ck">Take <select id="comic-take"><option value="approved"${S.comic.take === 'approved' ? ' selected' : ''}>approved</option>${takes.filter(t => t.id !== 'approved').map(t => `<option value="${esc(t.id)}"${S.comic.take === t.id ? ' selected' : ''}>${esc(t.id)}</option>`).join('')}</select></label>` : ''}
       </div>
+      ${pagePanels.length ? `<div class="row">
+        <span class="muted">Panels</span>
+        <button id="comic-panel-prev" title="Previous panel (← in panel view)" ${S.comic.panel == null ? 'disabled' : ''}>◀︎</button>
+        <div class="chips" id="comic-panels">
+          <button class="chip${S.comic.panel == null ? ' on' : ''}" data-cpanel="all" title="Show the full page (Esc)">Full page</button>
+          ${pagePanels.map(slot => `<button class="chip${S.comic.panel === slot.index ? ' on' : ''}" data-cpanel="${slot.index}" title="${esc(`${slot.id} · ${slot.w}×${slot.h}`)}">${esc(comicPanelLabel(slot))}</button>`).join('')}
+        </div>
+        <button id="comic-panel-next" title="Next panel (→ in panel view)" ${S.comic.panel != null && S.comic.panel >= pagePanels.length - 1 ? 'disabled' : ''}>▶︎</button>
+      </div>` : ''}
       <div class="row">
         <button id="snap">📷 Snapshot PNG</button>
         <button id="comic-print-btn">🖨 Print / Save PDF</button>
@@ -858,6 +910,7 @@
       const next = clamp(idx, 0, Math.max(0, totalPages - 1));
       if (next === S.comic.page) return;
       S.comic.page = next;
+      S.comic.panel = null;
       S.comic.take = 'approved';
       await loadActiveComicImages();
       comicPanel(c);
@@ -866,6 +919,12 @@
     $('#comic-prev').onclick = () => goPage(S.comic.page - 1);
     $('#comic-next').onclick = () => goPage(S.comic.page + 1);
     document.querySelectorAll('[data-pg]').forEach(btn => btn.onclick = () => goPage(+btn.dataset.pg));
+    const pPrev = $('#comic-panel-prev'), pNext = $('#comic-panel-next');
+    if (pPrev) pPrev.onclick = () => setComicPanel(c, S.comic.panel <= 0 ? null : S.comic.panel - 1);
+    if (pNext) pNext.onclick = () => setComicPanel(c, S.comic.panel == null ? 0 : S.comic.panel + 1);
+    document.querySelectorAll('[data-cpanel]').forEach(btn => btn.onclick = () => {
+      setComicPanel(c, btn.dataset.cpanel === 'all' ? null : +btn.dataset.cpanel);
+    });
     document.querySelectorAll('[data-cview]').forEach(btn => btn.onclick = () => {
       S.comic.view = btn.dataset.cview;
       document.querySelectorAll('[data-cview]').forEach(x => x.classList.toggle('on', x.dataset.cview === S.comic.view));
@@ -881,7 +940,8 @@
     const takeSel = $('#comic-take');
     if (takeSel) takeSel.onchange = async e => { S.comic.take = e.target.value; await loadActiveComicImages(); };
     $('#snap').onclick = () => {
-      const base = `${c.id}_p${String(S.comic.page + 1).padStart(2, '0')}_${S.comic.view}`;
+      const part = activeSlot ? `_${activeSlot.id}` : '';
+      const base = `${c.id}_p${String(S.comic.page + 1).padStart(2, '0')}${part}_${S.comic.view}`;
       if (S.comic.view === 'split') {
         const gap = 24, out = document.createElement('canvas');
         out.width = canvas.width + compareCanvas.width + gap;
@@ -1005,22 +1065,40 @@
     if (e.shiftKey || e.altKey) c.f = clamp(c.f * Math.exp(-(e.deltaY || e.deltaX) * .0015), 300, 3000); else c.z = clamp(c.z - e.deltaY * 1.2 * (c.dir < 0 ? -1 : 1), -800, 2380);
     camUI();
   }, { passive: false });
+  canvas.addEventListener('click', e => {
+    if (S.mode !== 'comic' || S.comic.panel != null || !COMICS[S.id]) return;
+    const c = COMICS[S.id], rect = canvas.getBoundingClientRect();
+    if (!rect.width || !rect.height) return;
+    const px = (e.clientX - rect.left) * (canvas.width / rect.width);
+    const py = (e.clientY - rect.top) * (canvas.height / rect.height);
+    const hit = computePageLayout(c, S.comic.page).panels.find(p => px >= p.x && px <= p.x + p.w && py >= p.y && py <= p.y + p.h);
+    if (hit) setComicPanel(c, hit.index);
+  });
   addEventListener('keydown', e => {
     if (S.exporting) return;
     if (e.target.matches('input, select') || S.mode === 'doc') return;
     if (S.mode === 'comic') {
       const c = COMICS[S.id];
       if (!c) return;
-      const go = async idx => {
+      const goPage = async idx => {
         const next = clamp(idx, 0, Math.max(0, c.pages.length - 1));
         if (next === S.comic.page) return;
-        S.comic.page = next; S.comic.take = 'approved';
+        S.comic.page = next; S.comic.panel = null; S.comic.take = 'approved';
         await loadActiveComicImages(); comicPanel(c); syncComicUrl();
       };
-      if (e.code === 'ArrowLeft') { e.preventDefault(); go(S.comic.page - 1); }
-      if (e.code === 'ArrowRight') { e.preventDefault(); go(S.comic.page + 1); }
-      if (e.code === 'Home') { e.preventDefault(); go(0); }
-      if (e.code === 'End') { e.preventDefault(); go(c.pages.length - 1); }
+      if (e.code === 'Escape' && S.comic.panel != null) { e.preventDefault(); setComicPanel(c, null); return; }
+      if (S.comic.panel != null && !e.shiftKey) {
+        const count = computePageLayout(c, S.comic.page).panels.length;
+        if (e.code === 'ArrowLeft') { e.preventDefault(); setComicPanel(c, S.comic.panel <= 0 ? null : S.comic.panel - 1); return; }
+        if (e.code === 'ArrowRight') { e.preventDefault(); if (S.comic.panel < count - 1) setComicPanel(c, S.comic.panel + 1); return; }
+        if (e.code === 'Home') { e.preventDefault(); setComicPanel(c, 0); return; }
+        if (e.code === 'End') { e.preventDefault(); setComicPanel(c, count - 1); return; }
+        return;
+      }
+      if (e.code === 'ArrowLeft') { e.preventDefault(); goPage(S.comic.page - 1); }
+      if (e.code === 'ArrowRight') { e.preventDefault(); goPage(S.comic.page + 1); }
+      if (e.code === 'Home') { e.preventDefault(); goPage(0); }
+      if (e.code === 'End') { e.preventDefault(); goPage(c.pages.length - 1); }
       return;
     }
     if (e.code === 'Space') { e.preventDefault(); toggle(); return; }
@@ -1056,6 +1134,10 @@
   else if (q.has('comic')) {
     const cid = q.get('comic');
     if (q.has('page')) S.comic.page = Math.max(0, (+q.get('page') || 1) - 1);
+    if (q.has('panel')) {
+      const pn = +q.get('panel');
+      if (Number.isInteger(pn) && pn >= 1) S.comic.panel = pn - 1;
+    }
     const v = q.get('view');
     if (v === 'studio' || v === 'illustrated' || v === 'split') S.comic.view = v;
     const ok = ASSETS.comic[cid];

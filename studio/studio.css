@@ -59,6 +59,7 @@ main { display: flex; min-width: 0; min-height: 0; }
 .stage { flex: 1 1 auto; min-height: 0; display: flex; align-items: center; justify-content: center; gap: 14px; padding: 12px; background: #0f0b10; container-type: size; --stage-ar: 16 / 9; }
 #out, #out-compare { width: min(100cqw, calc(100cqh * var(--stage-ar))); height: auto; aspect-ratio: var(--stage-ar); max-width: 100%; max-height: 100%; border-radius: 6px; background: repeating-conic-gradient(#ddd 0% 25%, #aaa 0% 50%) 0 0 / 20px 20px; box-shadow: 0 10px 40px rgba(0,0,0,.5); touch-action: none; }
 #out.grab { cursor: grab; } #out.grab:active { cursor: grabbing; }
+#out.comic-pick { cursor: zoom-in; }
 .stage.comic-split #out, .stage.comic-split #out-compare { width: min(calc(50cqw - 18px), calc(100cqh * var(--stage-ar))); }
 .stage.comic-fit-width { container-type: inline-size; overflow: auto; align-items: flex-start; justify-content: center; }
 .stage.comic-fit-width #out, .stage.comic-fit-width #out-compare { width: min(100%, 960px); max-height: none; flex: 0 0 auto; }
