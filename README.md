@@ -21,7 +21,7 @@ A 2D cartoon animated entirely in code. Every frame is a pure function of time, 
 
 ## Project versioning
 
-The version in [`package.json`](package.json) is the release version for the whole project, including the engine. The current version is `0.1.0`.
+The version in [`package.json`](package.json) is the release version for the whole project, including the engine. The current version is `0.2.0`. See the [0.2.0 change summary](docs/0.2.0_CHANGES.md) for the engine, Studio, export, and scene updates.
 
 To prepare a release, update the package version and lockfile together without automatically committing or tagging:
 
