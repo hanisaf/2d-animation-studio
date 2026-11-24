@@ -12,18 +12,117 @@
   const $ = s => document.querySelector(s);
   await loadManifests();                                             // every series.js and asset.js; code loads on demand
 
-  const canvas = $('#out'); X = canvas.getContext('2d');
-  await Promise.race([Promise.all([document.fonts.load('600 50px Fredoka'), document.fonts.load('50px "Luckiest Guy"'), document.fonts.load('500 50px "Fira Mono"')]), new Promise(r => setTimeout(r, 6000))]);
+  const canvas = $('#out'), compareCanvas = $('#out-compare'), stageEl = $('.stage');
+  X = canvas.getContext('2d');
+  await Promise.race([Promise.all([
+    document.fonts.load('500 50px Fredoka'), document.fonts.load('600 50px Fredoka'), document.fonts.load('700 50px Fredoka'),
+    document.fonts.load('50px "Luckiest Guy"'), document.fonts.load('500 50px "Fira Mono"'),
+  ]), new Promise(r => setTimeout(r, 6000))]);
 
-  // ---------- renderer API (used by render.mjs) ----------
+  // ---------- comic image cache & resolver (shared by interactive studio and ?render) ----------
+  const _comicImgCache = new Map();
+  function loadComicImg(src, { bust = false } = {}) {
+    if (!src) return Promise.resolve(null);
+    const key = bust ? `${src}${src.includes('?') ? '&' : '?'}t=${Date.now()}` : src;
+    if (!bust && _comicImgCache.has(src)) return _comicImgCache.get(src);
+    const p = new Promise(resolve => {
+      const img = new Image();
+      img.onload = () => resolve(img);
+      img.onerror = () => resolve(null);
+      img.src = key;
+    });
+    _comicImgCache.set(src, p);
+    return p;
+  }
+  async function resolveComicPageImages(comicDef, pageIndex, takeId = 'approved') {
+    const layout = computePageLayout(comicDef, pageIndex);
+    const manifest = COMIC_ILLUSTRATIONS[comicDef.id];
+    const pageData = manifest?.pages?.[layout.pageId] || null;
+    const takes = pageData?.takes || [];
+    let pageSrc = null;
+    if (pageData) {
+      if (takeId && takeId !== 'approved') {
+        pageSrc = takes.find(t => t.id === takeId)?.image || pageData.image || null;
+      } else {
+        pageSrc = pageData.image || null;
+      }
+    }
+    const pageImg = pageSrc ? await loadComicImg(pageSrc) : null;
+    const panels = {};
+    let panelCount = 0;
+    for (const [pid, pdata] of Object.entries(pageData?.panels || {})) {
+      const psrc = (takeId && takeId !== 'approved' ? pdata.takes?.find(t => t.id === takeId)?.image : null) || pdata.image;
+      const pimg = psrc ? await loadComicImg(psrc) : null;
+      if (pimg) { panels[pid] = pimg; panelCount++; }
+    }
+    const mode = manifest?.mode || (panelCount > 0 ? 'panel' : 'page');
+    return { page: pageImg, panels, mode, hasIllustrated: Boolean(pageImg || panelCount > 0), takes, pageData };
+  }
+
+  // ---------- renderer API (used by render.mjs & scripts/build_comic.mjs) ----------
   const q = new URLSearchParams(location.search);
   const parseBool = v => !(v === '0' || v === 'false' || v === 'off');
   if (q.has('m2')) FX.m2 = parseBool(q.get('m2'));
   if (q.has('m3')) FX.m3 = parseBool(q.get('m3'));
   const first = ASSETS.scene[q.get('scene')] ? q.get('scene') : REGISTRY.movie[0];
-  if (q.has('render')) { await requireScene(first); useScene(first); }
-  window.setScene = async id => { if (!ASSETS.scene[id]) throw new Error('unknown scene ' + id); await requireScene(id); useScene(id); return sceneInfo(); };
-  window.setFx = setFx; window.loadAsset = loadAsset; window.requireScene = requireScene; window.loadAll = loadAll;
+  let ACTIVE_COMIC = null;
+  if (q.has('render')) {
+    if (q.has('comic') && ASSETS.comic[q.get('comic')]) {
+      ACTIVE_COMIC = await requireComic(q.get('comic'));
+    } else {
+      await requireScene(first); useScene(first);
+    }
+  }
+  window.setScene = async id => {
+    if (!ASSETS.scene[id]) throw new Error('unknown scene ' + id);
+    if (canvas.width !== W || canvas.height !== H) { canvas.width = W; canvas.height = H; X = canvas.getContext('2d'); if (typeof _trackCtx === 'function') _trackCtx(X); }
+    await requireScene(id); useScene(id); return sceneInfo();
+  };
+  window.setComic = async id => {
+    if (!ASSETS.comic[id]) throw new Error('unknown comic ' + id);
+    ACTIVE_COMIC = await requireComic(id);
+    return window.comicInfo(id);
+  };
+  window.comicInfo = (id = ACTIVE_COMIC?.id) => {
+    const c = COMICS[id], m = ASSETS.comic[id], b = BOOKS[REGISTRY.comicBook?.[id]];
+    if (!c) throw new Error('comic not loaded: ' + id);
+    return {
+      id: c.id, book: c.book, title: c.title, dir: c.dir,
+      width: c.width, height: c.height,
+      size: b?.size || { width: c.width, height: c.height, trim: 'Letter', dpi: 200 },
+      style: b?.style || { prompt: '', refs: [] },
+      illustration: { ...(b?.defaults?.illustration || {}), ...(m?.illustration || {}) },
+      cast: m?.cast ?? b?.defaults?.cast ?? [],
+      locations: m?.locations ?? b?.defaults?.locations ?? [],
+      refs: m?.refs || [],
+      illustrated: COMIC_ILLUSTRATIONS[id] || null,
+      pages: c.pages.map((_, i) => ({
+        layout: (() => {
+          const l = computePageLayout(c, i);
+          return { pageId: l.pageId, width: l.width, height: l.height, margin: l.margin, gutter: l.gutter,
+            panels: l.panels.map(({ id: pid, index, rowIndex, colIndex, x, y, w, h }) => ({ id: pid, index, rowIndex, colIndex, x, y, w, h })) };
+        })(),
+        script: extractPageScript(c, i),
+      })),
+    };
+  };
+  window.renderComicPageDataUrl = async (pageIndex = 0, opts = {}) => {
+    const c = opts.comicId ? COMICS[opts.comicId] : ACTIVE_COMIC;
+    if (!c) throw new Error('no active comic loaded');
+    const images = opts.edition === 'illustrated' ? await resolveComicPageImages(c, pageIndex, opts.take || 'approved') : {};
+    renderComicPage(canvas, c, pageIndex, { ...opts, images });
+    return canvas.toDataURL(opts.type || 'image/png', opts.qual ?? 0.95);
+  };
+  window.renderComicPageTo = async (pageIndex, url, opts = {}) => {
+    const c = opts.comicId ? COMICS[opts.comicId] : ACTIVE_COMIC;
+    if (!c) throw new Error('no active comic loaded');
+    const images = opts.edition === 'illustrated' ? await resolveComicPageImages(c, pageIndex, opts.take || 'approved') : {};
+    renderComicPage(canvas, c, pageIndex, { ...opts, images });
+    const blob = await new Promise((resolve, reject) => canvas.toBlob(b => b ? resolve(b) : reject(new Error('toBlob failed')), opts.type || 'image/png', opts.qual ?? 0.95));
+    const res = await fetch(url, { method: 'POST', body: blob });
+    if (!res.ok) throw new Error('upload failed: HTTP ' + res.status);
+  };
+  window.setFx = setFx; window.loadAsset = loadAsset; window.requireScene = requireScene; window.requireComic = requireComic; window.loadAll = loadAll;
   window.sceneInfo = () => ({ id: SCENE.id, title: SCENE.title, duration: SCENE.duration, fps: SCENE.fps, audio: SCENE.audio || null, synthesizedAudio: !!(SCENE.music || SCENE.dialogue?.length) });
   window.renderAt = async (t, type = 'image/png', qual = .92) => { drawFrame(t); return canvas.toDataURL(type, qual); };
   window.probeVideoCodec = probeVideoCodec;
@@ -80,7 +179,20 @@
     }
   }
   const S = { mode: 'scene', id: null, t: 0, playing: false, speed: 1, loop: false, dirty: true, exporting: false, playMode: q.get('play') === 'true', movieActive: -1,
-    char: { pose: null, view: 'pose', backdrop: '', zoom: 1 }, loc: { cam: null, character: '', pose: '', spot: '', variant: '' } };
+    char: { pose: null, view: 'pose', backdrop: '', zoom: 1 },
+    loc: { cam: null, character: '', pose: '', spot: '', variant: '' },
+    comic: { page: 0, view: 'studio', lettering: true, fit: 'page', take: 'approved', images: null, refining: false } };
+  let localCaps = { local: false, geminiConfigured: false };
+  if (location.protocol === 'http:' || location.protocol === 'https:') {
+    fetch('/api/capabilities', { cache: 'no-store' })
+      .then(r => r.ok ? r.json() : null)
+      .then(caps => {
+        if (!caps || typeof caps !== 'object') return;
+        localCaps = { local: !!caps.local, geminiConfigured: !!caps.geminiConfigured };
+        if (S.mode === 'comic' && COMICS[S.id]) updateComicRefineBtn();
+      })
+      .catch(() => {});
+  }
   const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
   const fmt = n => (Math.round(n * 100) / 100).toString();
   const movieClips = (() => {
@@ -107,6 +219,7 @@
   // The sidebar is built from the manifests; the counts in each item's subtitle fill in once that asset's code has loaded.
   const sub = (mode, id) => {
     if (mode === 'scene') { const n = REGISTRY.movie.indexOf(id); return [n >= 0 && '#' + (n + 1), SCENES[id] && SCENES[id].duration + 's'].filter(Boolean).join(' · '); }
+    if (mode === 'comic') { const c = COMICS[id], ill = ASSETS.comic[id]?.illustrated; return [c && `${c.pages.length}p`, ill && '✨'].filter(Boolean).join(' '); }
     if (mode === 'character') return CHARACTERS[id] ? `${Object.keys(CHARACTERS[id].poses || {}).length} poses` : '';
     if (mode === 'location') return LOCATIONS[id] ? `${Object.keys(LOCATIONS[id].cameras || {}).length} cams` : '';
     return id.split('/').pop();
@@ -128,19 +241,66 @@
         const scenes = SERIES[sid].scenes.filter(id => ASSETS.scene[id]);
         return `<details class="nav-sub" data-series="${esc(sid)}"><summary><span class="lbl">${esc(SERIES[sid].title)}</span><span class="cnt">${scenes.length}</span></summary><ul>${scenes.map(sceneLi).join('')}</ul></details>`;
       }).join('')).join('');
+    // Comics grouped by Book as collapsible <details> dropdowns (mirroring Scenes).
+    const comicLi = id => { const m = META('comic', id); return li('comic', id, '📖', m.title, m.logline); };
+    const bookIds = (REGISTRY.books || []).filter(bid => BOOKS[bid]);
+    const comicsEl = $('#list-comics');
+    if (comicsEl) {
+      comicsEl.innerHTML = bookIds.map(bid => {
+        const comics = BOOKS[bid].comics.filter(id => ASSETS.comic[id]);
+        return `<details class="nav-sub" data-book="${esc(bid)}"><summary><span class="lbl">${esc(BOOKS[bid].title)}</span><span class="cnt">${comics.length}</span></summary><ul>${comics.map(comicLi).join('')}</ul></details>`;
+      }).join('');
+    }
     $('#list-docs').innerHTML = PROJECT_DOCS.map(([f, t]) => li('doc', f, '📄', t, f)).join('');
     $('#cnt-docs').textContent = PROJECT_DOCS.length;
     document.querySelectorAll('#side li[data-mode]').forEach(el => el.addEventListener('click', () => select(el.dataset.mode, el.dataset.id)));
   }
 
-  // Load what a view needs before showing it: a scene and everything it uses, a character, a location, or every scene
+  // Load what a view needs before showing it: a scene and everything it uses, a comic, a character, a location, or every scene
   // in the movie composer. The previous view stays up (its sidebar item marked) until the new one is ready.
   let selecting = 0;
   const need = (mode, id) => mode === 'scene' ? requireScene(id)
+    : mode === 'comic' ? requireComic(id)
     : mode === 'character' ? Promise.all([loadAsset(mode, id), S.char.backdrop && ASSETS.location[S.char.backdrop] && loadAsset('location', S.char.backdrop)])
     : mode === 'location' ? Promise.all([loadAsset(mode, id), S.loc.character && loadAsset('character', S.loc.character)])
     : mode === 'movie' ? Promise.all(movieClips.map(c => requireScene(c.id)))
     : Promise.resolve();
+  function syncStageCanvas() {
+    if (S.mode === 'comic' && COMICS[S.id]) {
+      const c = COMICS[S.id];
+      const layout = computePageLayout(c, S.comic.page);
+      stageEl.style.setProperty('--stage-ar', `${layout.width} / ${layout.height}`);
+      stageEl.classList.toggle('comic-fit-width', S.comic.fit === 'width');
+      stageEl.classList.toggle('comic-split', S.comic.view === 'split');
+      compareCanvas.hidden = S.comic.view !== 'split';
+      return;
+    }
+    stageEl.style.setProperty('--stage-ar', '16 / 9');
+    stageEl.classList.remove('comic-fit-width', 'comic-split');
+    compareCanvas.hidden = true;
+    if (canvas.width !== W || canvas.height !== H) {
+      canvas.width = W; canvas.height = H;
+      X = canvas.getContext('2d');
+      if (typeof _trackCtx === 'function') _trackCtx(X);
+    }
+  }
+  function syncComicUrl() {
+    if (S.mode !== 'comic' || !S.id) return;
+    const params = new URLSearchParams({ comic: S.id });
+    if (S.comic.page > 0) params.set('page', String(S.comic.page + 1));
+    if (S.comic.view !== 'studio') params.set('view', S.comic.view);
+    history.replaceState(null, '', `?${params.toString()}`);
+  }
+  async function loadActiveComicImages() {
+    const c = COMICS[S.id];
+    if (!c) return;
+    const imgs = await resolveComicPageImages(c, S.comic.page, S.comic.take);
+    if (S.mode === 'comic' && COMICS[S.id] === c) {
+      S.comic.images = imgs;
+      S.dirty = true;
+    }
+    return imgs;
+  }
   async function select(mode, id, keepT = false, { reveal = true } = {}) {
     if (S.exporting) return;
     const ticket = ++selecting, item = document.querySelector(`#side li[data-mode="${mode}"][data-id="${CSS.escape(id)}"]`);
@@ -160,7 +320,21 @@
     canvas.classList.toggle('grab', mode === 'location');
     $('#work').hidden = mode === 'doc'; $('#docs').classList.toggle('full', mode === 'doc');
     if (mode === 'doc') { showDoc(id, (PROJECT_DOCS.find(d => d[0] === id) || [])[1] || id, true); history.replaceState(null, '', `?doc=${id}`); return; }
+    syncStageCanvas();
     if (mode === 'scene') { useScene(id); scenePanel(SCENES[id]); }
+    if (mode === 'comic') {
+      const c = COMICS[id];
+      ACTIVE_COMIC = c;
+      S.comic.page = clamp(S.comic.page, 0, Math.max(0, c.pages.length - 1));
+      S.comic.take = 'approved';
+      S.comic.images = await resolveComicPageImages(c, S.comic.page, S.comic.take);
+      if (ticket !== selecting) return;
+      comicPanel(c);
+      const m = META('comic', id); showDoc(m.docs, m.title, S.docsOpen);
+      syncComicUrl();
+      S.dirty = true;
+      return;
+    }
     if (mode === 'movie') { S.movieActive = -1; moviePanel(); $('#docs').hidden = true; history.replaceState(null, '', '?movie=1'); S.dirty = true; return; }
     if (mode === 'character') { const e = CHARACTERS[id]; S.char.pose = Object.keys(e.poses || {})[0] || null; charPanel(e); play(); }
     if (mode === 'location') { const l = LOCATIONS[id]; S.loc.cam = { ...(Object.values(l.cameras || {})[0] || { x: 0, y: 150, z: 0, f: 1000, hy: 540 }) }; locPanel(l); play(); }
@@ -199,26 +373,80 @@
   // links inside docs: an asset's README opens that asset, a project doc opens in the reader, anything else a new tab
   $('#doc').addEventListener('click', e => {
     const a = e.target.closest('a[data-href]'); if (!a) return;
-    const h = a.dataset.href.split('#')[0], m = /^(characters|locations|scenes)\/([\w-]+)\/README\.md$/.exec(h);
-    if (m) { e.preventDefault(); const kind = { characters: 'character', locations: 'location', scenes: 'scene' }[m[1]]; if (ASSETS[kind][m[2]]) select(kind, m[2]); return; }
+    const h = a.dataset.href.split('#')[0];
+    const m = /^(characters|locations)\/([\w-]+)\/README\.md$/.exec(h)
+      || /^(scenes|comics)\/(?:[\w-]+\/)?([\w-]+)\/README\.md$/.exec(h);
+    if (m) { e.preventDefault(); const kind = { characters: 'character', locations: 'location', scenes: 'scene', comics: 'comic' }[m[1]]; if (ASSETS[kind]?.[m[2]]) select(kind, m[2]); return; }
     if (/\.md$/.test(h) && !/^[a-z]+:/i.test(h)) { e.preventDefault(); select('doc', h); return; }
     if (a.getAttribute('href').startsWith('#')) return;
     e.preventDefault(); window.open(a.href, '_blank');
   });
-  // cross-links between assets: a scene's cast + locations, and where a character / location appears
+  // cross-links between assets: a scene's / comic's cast + locations, and where a character / location appears
   function linksHtml(kind, id) {
-    const chip = (k, i) => `<button class="chip link" data-go="${k}:${i}">${k === 'character' ? '🎭' : k === 'location' ? '🏰' : '🎬'} ${esc(META(k, i).title)}</button>`;
-    const scenesWith = key => REGISTRY.scenes.filter(sid => (META('scene', sid)[key] || []).includes(id));
-    if (kind === 'scene') { const m = META('scene', id); return [['Cast', (m.cast || []).map(c => chip('character', c))], ['Location', (m.locations || []).map(l => chip('location', l))]].filter(([, v]) => v.length).map(([k, v]) => `<span class="muted">${k}</span> ${v.join('')}`).join(' '); }
-    const list = scenesWith(kind === 'character' ? 'cast' : 'locations');
-    return list.length ? `<span class="muted">Appears in</span> ${list.map(sid => chip('scene', sid)).join('')}` : '<span class="muted">Not in any scene yet</span>';
+    const icon = k => k === 'character' ? '🎭' : k === 'location' ? '🏰' : k === 'comic' ? '📖' : '🎬';
+    const chip = (k, i) => `<button class="chip link" data-go="${k}:${i}">${icon(k)} ${esc(META(k, i).title)}</button>`;
+    if (kind === 'scene' || kind === 'comic') {
+      const m = META(kind, id);
+      return [['Cast', (m.cast || []).map(c => chip('character', c))], ['Location', (m.locations || []).map(l => chip('location', l))]]
+        .filter(([, v]) => v.length).map(([k, v]) => `<span class="muted">${k}</span> ${v.join('')}`).join(' ');
+    }
+    const key = kind === 'character' ? 'cast' : 'locations';
+    const sceneList = REGISTRY.scenes.filter(sid => (META('scene', sid)[key] || []).includes(id));
+    const comicList = (REGISTRY.comics || []).filter(cid => (META('comic', cid)[key] || []).includes(id));
+    const chips = [...sceneList.map(sid => chip('scene', sid)), ...comicList.map(cid => chip('comic', cid))];
+    return chips.length ? `<span class="muted">Appears in</span> ${chips.join('')}` : '<span class="muted">Not in any scene or comic yet</span>';
   }
   function bindLinks() { document.querySelectorAll('[data-go]').forEach(b => b.onclick = () => { const [k, i] = b.dataset.go.split(':'); select(k, i); }); document.querySelectorAll('.docbtn').forEach(b => b.onclick = toggleDocs); }
   const docBtn = () => `<button class="docbtn${S.docsOpen ? ' on' : ''}" title="show / hide this asset's README">📄 Docs</button>`;
 
+  function drawComicPlaceholder(cv, c, pageIndex, message) {
+    const layout = computePageLayout(c, pageIndex);
+    if (cv.width !== layout.width) cv.width = layout.width;
+    if (cv.height !== layout.height) cv.height = layout.height;
+    const ctx = cv.getContext('2d');
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.fillStyle = '#231a27';
+    ctx.fillRect(0, 0, cv.width, cv.height);
+    ctx.strokeStyle = '#3d2f44';
+    ctx.lineWidth = 6;
+    ctx.strokeRect(36, 36, cv.width - 72, cv.height - 72);
+    ctx.fillStyle = '#e8aa38';
+    ctx.font = '700 44px "Fredoka", system-ui, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('No Illustrated Edition Yet', cv.width / 2, cv.height / 2 - 48);
+    ctx.fillStyle = '#d8cad6';
+    ctx.font = '500 28px "Fredoka", system-ui, sans-serif';
+    ctx.fillText(message || `Page ${pageIndex + 1} · Click "Refine with Gemini" or run npm run comic:illustrate ${c.id}`, cv.width / 2, cv.height / 2 + 24);
+  }
+
   // ---------- rendering ----------
   function render() {
     if (S.mode === 'scene') drawFrame(S.t, SCENES[S.id]);
+    else if (S.mode === 'comic') {
+      const c = COMICS[S.id];
+      if (!c) return;
+      syncStageCanvas();
+      const imgs = S.comic.images || { page: null, panels: {}, mode: 'page', hasIllustrated: false };
+      if (S.comic.view === 'split') {
+        renderComicPage(canvas, c, S.comic.page, { edition: 'studio', lettering: S.comic.lettering });
+        if (imgs.hasIllustrated) {
+          renderComicPage(compareCanvas, c, S.comic.page, { edition: 'illustrated', lettering: S.comic.lettering, images: imgs, mode: imgs.mode });
+        } else {
+          drawComicPlaceholder(compareCanvas, c, S.comic.page);
+        }
+      } else if (S.comic.view === 'illustrated') {
+        if (imgs.hasIllustrated) {
+          renderComicPage(canvas, c, S.comic.page, { edition: 'illustrated', lettering: S.comic.lettering, images: imgs, mode: imgs.mode });
+        } else {
+          drawComicPlaceholder(canvas, c, S.comic.page);
+        }
+      } else {
+        renderComicPage(canvas, c, S.comic.page, { edition: 'studio', lettering: S.comic.lettering });
+      }
+      X = canvas.getContext('2d');
+      if (typeof _trackCtx === 'function') _trackCtx(X);
+    }
     else if (S.mode === 'movie') {
       const at = movieAt(S.t);
       if (at) {
@@ -234,6 +462,7 @@
   const PREVIEW_FPS = 24;
   function frameKey() {
     if (S.mode === 'scene') return `scene:${S.id}:${Math.floor(S.t * SCENES[S.id].fps)}`;
+    if (S.mode === 'comic') return `comic:${S.id}:${S.comic.page}:${S.comic.view}:${S.comic.lettering}:${S.comic.take}`;
     if (S.mode === 'movie') { const at = movieAt(S.t); return at ? `movie:${at.index}:${Math.floor(at.local * SCENES[at.clip.id].fps)}` : 'movie:empty'; }
     if (S.mode === 'character') return `char:${S.id}:${Math.floor(S.t * PREVIEW_FPS)}`;
     if (S.mode === 'location') return `loc:${S.id}:${Math.floor(S.t * PREVIEW_FPS)}`;
@@ -511,6 +740,168 @@
     S.dirty = true;
   }
 
+  function updateComicRefineBtn() {
+    const btn = $('#comic-refine');
+    if (!btn) return;
+    const ready = localCaps.local && localCaps.geminiConfigured;
+    btn.disabled = !ready || S.comic.refining;
+    btn.textContent = S.comic.refining ? '⏳ Refining…' : '✨ Refine with Gemini';
+    btn.title = ready
+      ? 'Run scripts/illustrate_comic.mjs locally via Gemini Nano Banana 2.1'
+      : (localCaps.local
+        ? 'Set GEMINI_API_KEY in your environment or .env and restart npm run studio'
+        : 'Run npm run studio with GEMINI_API_KEY to refine locally');
+  }
+  async function printComic(c) {
+    const container = $('#comic-print');
+    if (!container) return;
+    status('Preparing print pages…');
+    container.innerHTML = '';
+    const off = document.createElement('canvas');
+    const wantIll = S.comic.view === 'illustrated';
+    const imgPromises = [];
+    for (let i = 0; i < c.pages.length; i++) {
+      const imgs = wantIll ? await resolveComicPageImages(c, i, S.comic.take) : { hasIllustrated: false };
+      const useIll = wantIll && imgs.hasIllustrated;
+      renderComicPage(off, c, i, {
+        edition: useIll ? 'illustrated' : 'studio',
+        lettering: S.comic.lettering,
+        images: imgs,
+        mode: imgs.mode,
+      });
+      const div = document.createElement('div');
+      div.className = 'print-page';
+      const img = document.createElement('img');
+      img.alt = `${c.title || c.id} — Page ${i + 1}`;
+      img.src = off.toDataURL('image/png');
+      div.appendChild(img);
+      container.appendChild(div);
+      imgPromises.push(img.decode().catch(() => {}));
+    }
+    await Promise.all(imgPromises);
+    status(`Printing ${c.pages.length} page${c.pages.length === 1 ? '' : 's'}…`, 'ok');
+    window.print();
+  }
+  async function refineComicWithGemini(c) {
+    if (S.comic.refining || !localCaps.local || !localCaps.geminiConfigured) return;
+    S.comic.refining = true;
+    updateComicRefineBtn();
+    status(`Refining ${c.id} page ${S.comic.page + 1} with Gemini…`);
+    try {
+      const m = META('comic', c.id);
+      const b = BOOKS[c.book];
+      const mode = m.illustration?.mode || b?.defaults?.illustration?.mode || 'page';
+      const res = await fetch('/api/illustrate-comic', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ comicId: c.id, page: S.comic.page + 1, mode }),
+      });
+      const data = await res.json().catch(() => ({ ok: false, error: `HTTP ${res.status}` }));
+      if (!res.ok || !data.ok) throw new Error(data.error || `HTTP ${res.status}`);
+      _comicImgCache.clear();
+      await reloadComicIllustrations(c.id);
+      S.comic.take = 'approved';
+      S.comic.images = await resolveComicPageImages(c, S.comic.page, S.comic.take);
+      if (S.comic.view === 'studio') S.comic.view = 'illustrated';
+      comicPanel(c);
+      syncComicUrl();
+      refreshSubs();
+      S.dirty = true;
+      status(`Refined page ${S.comic.page + 1} (${data.cached ? 'cached' : 'generated'})`, 'ok');
+    } catch (e) {
+      status('⚠ ' + e.message, 'warn');
+      console.error(e);
+    } finally {
+      S.comic.refining = false;
+      updateComicRefineBtn();
+    }
+  }
+  function comicPanel(c) {
+    const m = META('comic', c.id), b = BOOKS[c.book];
+    const layout = computePageLayout(c, S.comic.page);
+    const totalPages = c.pages.length;
+    const totalPanels = c.pages.reduce((n, _, i) => n + computePageLayout(c, i).panels.length, 0);
+    const modeLabel = m.illustration?.mode || b?.defaults?.illustration?.mode || 'page';
+    const trim = b?.size?.trim ? ` (${b.size.trim})` : '';
+    const imgs = S.comic.images || { hasIllustrated: false, takes: [] };
+    const takes = imgs.takes || [];
+    const hasTakes = takes.length > 0;
+    $('#panel').innerHTML = `
+      <div class="head"><div class="txt"><h2>${esc(m.title)}</h2><div class="muted">${esc(m.logline || '')}</div>
+        <div class="muted mono">${esc(c.dir || c.id)} · ${esc(b?.title || c.book || 'Book')} · ${layout.width}×${layout.height}${esc(trim)} · ${totalPages} page${totalPages === 1 ? '' : 's'} · ${totalPanels} panels · mode: ${esc(modeLabel)}</div>
+        <div class="row links">${linksHtml('comic', c.id)}</div></div>${refsHtml(m.refs)}${docBtn()}</div>
+      <div class="row">
+        <button id="comic-prev" title="Previous page (←)" ${S.comic.page <= 0 ? 'disabled' : ''}>◀︎ Prev</button>
+        <div class="chips" id="comic-pages">${c.pages.map((p, i) => `<button class="chip${i === S.comic.page ? ' on' : ''}" data-pg="${i}">Page ${i + 1}</button>`).join('')}</div>
+        <button id="comic-next" title="Next page (→)" ${S.comic.page >= totalPages - 1 ? 'disabled' : ''}>Next ▶︎</button>
+        <span class="spacer"></span>
+        <div class="chips">
+          <button class="chip${S.comic.view === 'studio' ? ' on' : ''}" data-cview="studio">Studio (Code)</button>
+          <button class="chip${S.comic.view === 'illustrated' ? ' on' : ''}" data-cview="illustrated">Illustrated (Gemini)</button>
+          <button class="chip${S.comic.view === 'split' ? ' on' : ''}" data-cview="split">Side by Side</button>
+        </div>
+        <div class="chips">
+          <button class="chip${S.comic.fit === 'page' ? ' on' : ''}" data-cfit="page" title="Fit full page in viewport">Fit page</button>
+          <button class="chip${S.comic.fit === 'width' ? ' on' : ''}" data-cfit="width" title="Scrollable full-width reading mode">Fit width</button>
+        </div>
+        <label class="ck" title="Show speech bubbles, captions, and SFX"><input type="checkbox" id="comic-lettering"${S.comic.lettering ? ' checked' : ''}> lettering</label>
+        ${hasTakes ? `<label class="ck">Take <select id="comic-take"><option value="approved"${S.comic.take === 'approved' ? ' selected' : ''}>approved</option>${takes.filter(t => t.id !== 'approved').map(t => `<option value="${esc(t.id)}"${S.comic.take === t.id ? ' selected' : ''}>${esc(t.id)}</option>`).join('')}</select></label>` : ''}
+      </div>
+      <div class="row">
+        <button id="snap">📷 Snapshot PNG</button>
+        <button id="comic-print-btn">🖨 Print / Save PDF</button>
+        <button id="comic-refine" class="accent">✨ Refine with Gemini</button>
+        <span id="status"></span>
+      </div>`;
+
+    const goPage = async idx => {
+      const next = clamp(idx, 0, Math.max(0, totalPages - 1));
+      if (next === S.comic.page) return;
+      S.comic.page = next;
+      S.comic.take = 'approved';
+      await loadActiveComicImages();
+      comicPanel(c);
+      syncComicUrl();
+    };
+    $('#comic-prev').onclick = () => goPage(S.comic.page - 1);
+    $('#comic-next').onclick = () => goPage(S.comic.page + 1);
+    document.querySelectorAll('[data-pg]').forEach(btn => btn.onclick = () => goPage(+btn.dataset.pg));
+    document.querySelectorAll('[data-cview]').forEach(btn => btn.onclick = () => {
+      S.comic.view = btn.dataset.cview;
+      document.querySelectorAll('[data-cview]').forEach(x => x.classList.toggle('on', x.dataset.cview === S.comic.view));
+      syncComicUrl();
+      S.dirty = true;
+    });
+    document.querySelectorAll('[data-cfit]').forEach(btn => btn.onclick = () => {
+      S.comic.fit = btn.dataset.cfit;
+      document.querySelectorAll('[data-cfit]').forEach(x => x.classList.toggle('on', x.dataset.cfit === S.comic.fit));
+      syncStageCanvas();
+    });
+    $('#comic-lettering').onchange = e => { S.comic.lettering = e.target.checked; S.dirty = true; };
+    const takeSel = $('#comic-take');
+    if (takeSel) takeSel.onchange = async e => { S.comic.take = e.target.value; await loadActiveComicImages(); };
+    $('#snap').onclick = () => {
+      const base = `${c.id}_p${String(S.comic.page + 1).padStart(2, '0')}_${S.comic.view}`;
+      if (S.comic.view === 'split') {
+        const gap = 24, out = document.createElement('canvas');
+        out.width = canvas.width + compareCanvas.width + gap;
+        out.height = Math.max(canvas.height, compareCanvas.height);
+        const ctx = out.getContext('2d');
+        ctx.fillStyle = '#0f0b10'; ctx.fillRect(0, 0, out.width, out.height);
+        ctx.drawImage(canvas, 0, 0);
+        ctx.drawImage(compareCanvas, canvas.width + gap, 0);
+        out.toBlob(b => { downloadBlob(b, `${base}.png`); status(`Saved ${base}.png`, 'ok'); }, 'image/png');
+      } else {
+        canvas.toBlob(b => { downloadBlob(b, `${base}.png`); status(`Saved ${base}.png`, 'ok'); }, 'image/png');
+      }
+    };
+    $('#comic-print-btn').onclick = () => printComic(c);
+    $('#comic-refine').onclick = () => refineComicWithGemini(c);
+    updateComicRefineBtn();
+    bindRefs();
+    bindLinks();
+  }
+
   // ---------- HUD ----------
   function hud() {
     if (S.mode === 'movie') {
@@ -617,6 +1008,21 @@
   addEventListener('keydown', e => {
     if (S.exporting) return;
     if (e.target.matches('input, select') || S.mode === 'doc') return;
+    if (S.mode === 'comic') {
+      const c = COMICS[S.id];
+      if (!c) return;
+      const go = async idx => {
+        const next = clamp(idx, 0, Math.max(0, c.pages.length - 1));
+        if (next === S.comic.page) return;
+        S.comic.page = next; S.comic.take = 'approved';
+        await loadActiveComicImages(); comicPanel(c); syncComicUrl();
+      };
+      if (e.code === 'ArrowLeft') { e.preventDefault(); go(S.comic.page - 1); }
+      if (e.code === 'ArrowRight') { e.preventDefault(); go(S.comic.page + 1); }
+      if (e.code === 'Home') { e.preventDefault(); go(0); }
+      if (e.code === 'End') { e.preventDefault(); go(c.pages.length - 1); }
+      return;
+    }
     if (e.code === 'Space') { e.preventDefault(); toggle(); return; }
     if (S.mode === 'location') {
       const c = S.loc.cam, m = e.shiftKey ? 4 : 1, keys = { KeyW: ['z', 30], KeyS: ['z', -30], KeyA: ['x', -20], KeyD: ['x', 20], KeyQ: ['y', 15], KeyE: ['y', -15], KeyR: ['hy', 20], KeyF: ['hy', -20] };
@@ -647,13 +1053,21 @@
   }
   else if (q.has('movie')) await select('movie', 'composer');
   else if (q.has('doc')) { await select('scene', REGISTRY.movie[0]); await select('doc', q.get('doc')); }
+  else if (q.has('comic')) {
+    const cid = q.get('comic');
+    if (q.has('page')) S.comic.page = Math.max(0, (+q.get('page') || 1) - 1);
+    const v = q.get('view');
+    if (v === 'studio' || v === 'illustrated' || v === 'split') S.comic.view = v;
+    const ok = ASSETS.comic[cid];
+    await select(ok ? 'comic' : 'scene', ok ? cid : REGISTRY.movie[0], false, { reveal: true });
+  }
   else {
     const hasQuery = q.has('character') || q.has('location') || q.has('scene');
     const [mode, id] = q.has('character') ? ['character', q.get('character')] : q.has('location') ? ['location', q.get('location')] : ['scene', q.get('scene') || REGISTRY.movie[0]];
     const ok = ASSETS[mode][id];
     await select(ok ? mode : 'scene', ok ? id : REGISTRY.movie[0], false, { reveal: hasQuery });
   }
-  if (q.has('t') && !S.playMode) seek(+q.get('t'));
+  if (q.has('t') && !S.playMode && S.mode !== 'comic') seek(+q.get('t'));
   window.studio = { S, select, seek, runExport };
   requestAnimationFrame(loop);
 })().catch(e => { document.body.insertAdjacentHTML('afterbegin', `<pre id="err">${e.stack || e}</pre>`); console.error(e); });

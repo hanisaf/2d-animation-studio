@@ -5,13 +5,13 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Safadi Animation Studio</title>
 <link rel="icon" href="data:,">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@600&family=Luckiest+Guy&family=Fira+Mono:wght@500&display=block">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Luckiest+Guy&family=Fira+Mono:wght@500&display=block">
 <link rel="stylesheet" href="studio/studio.css">
 </head>
 <body>
 <div id="app">
   <aside id="side">
-    <header>Safadi Animation Studio<small>characters · locations · scenes · movie · docs</small></header>
+    <header>Safadi Animation Studio<small>characters · locations · scenes · comics · movie · docs</small></header>
     <nav class="side-nav" aria-label="Studio navigation">
       <details class="nav-group" id="group-characters">
         <summary><span class="lbl">Characters</span><span class="cnt" id="cnt-characters"></span></summary>
@@ -24,6 +24,10 @@
       <section class="nav-section" aria-labelledby="heading-scenes">
         <h2 id="heading-scenes">Scenes</h2>
         <div id="list-scenes"></div>
+      </section>
+      <section class="nav-section" aria-labelledby="heading-comics">
+        <h2 id="heading-comics">Comics</h2>
+        <div id="list-comics"></div>
       </section>
       <section class="nav-section" aria-labelledby="heading-movie">
         <h2 id="heading-movie">Movie</h2>
@@ -50,7 +54,7 @@
   </aside>
   <main>
     <div id="work">
-      <div class="stage"><canvas id="out" width="1920" height="1080"></canvas></div>
+      <div class="stage"><canvas id="out" width="1920" height="1080"></canvas><canvas id="out-compare" width="1700" height="2200" hidden></canvas></div>
       <section id="panel"></section>
     </div>
     <aside id="docs" hidden>
@@ -59,6 +63,7 @@
     </aside>
   </main>
 </div>
+<div id="comic-print" aria-hidden="true"></div>
 <div id="lightbox"><img alt=""></div>
 <button id="sound-unlock" hidden>🔊 Tap for sound</button>
 
@@ -69,6 +74,8 @@
 <script src="engine/timeline.js"></script>
 <script src="engine/showcase.js"></script>
 <script src="engine/series.js"></script>
+<script src="engine/books.js"></script>
+<script src="engine/comic.js"></script>
 <script src="registry.js"></script>
 <script src="studio/music.js"></script>
 <!-- in-browser MP4 export -->
