@@ -12,7 +12,7 @@
 //   node render.mjs --location=dces [--character=jester_fester] [--spot=…] [--cols=3] [--w=640] [--t=1] [--only=Aerial,Keeper] [--variant=Messy]   every camera preset of a set (or those whose name contains one of --only) on one sheet → out/check/
 //   node render.mjs --doctor                                                                               check this machine: Node, Chrome, ffmpeg, fonts, a test render
 //
-// Options: --chrome=<path> (or $CHROME) · --fps=<n> overrides the scene fps · FFMPEG=<path> to use a specific ffmpeg.
+// Options: --chrome=<path> (or $CHROME) · --fps=<n> overrides the scene fps · --no-m2 / --no-m3 disables M2/M3 visual FX · FFMPEG=<path> to use a specific ffmpeg.
 import puppeteer from 'puppeteer-core';
 import { spawn, spawnSync } from 'node:child_process';
 import { mkdirSync, writeFileSync, existsSync, statSync, renameSync, readdirSync, rmSync } from 'node:fs';
@@ -49,7 +49,11 @@ async function openPage(sceneId, tag = '') {
   const page = await browser.newPage();
   page.on('console', m => { if (['error', 'warn'].includes(m.type())) console.log(`[page${tag}]`, m.text()); });
   page.on('pageerror', e => console.log(`[page error${tag}]`, e.message));
-  await page.goto(pathToFileURL(resolve('studio.html')).href + `?render&scene=${sceneId}`, { waitUntil: 'networkidle0', timeout: 60000 });
+  const fxQ = [
+    (args['no-m2'] || args.m2 === '0' || args.m2 === 'false') ? '&m2=0' : '',
+    (args['no-m3'] || args.m3 === '0' || args.m3 === 'false') ? '&m3=0' : '',
+  ].join('');
+  await page.goto(pathToFileURL(resolve('studio.html')).href + `?render&scene=${sceneId}${fxQ}`, { waitUntil: 'networkidle0', timeout: 60000 });
   await page.waitForFunction('window.ready === true', { timeout: 60000 });
   const info = await page.evaluate(id => window.setScene(id), sceneId);
   return { page, info };

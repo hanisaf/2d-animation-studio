@@ -10,20 +10,100 @@
 //            monospaced capitals) · accent: colour for *words* · fill: bubble colour }
 // While `talking` is true the words are still appearing: flap the speaker's mouth (see lipFlap).
 
+// Shared deterministic syllable timeline for cartoon voices and audio-driven lip sync.
+const _SYL_CACHE = new Map();
+function dialogueSyllables(line, voice = {}) {
+  const text = line.text || '', plain = text.replace(/\*/g, ''), cps = line.cps ?? 18, style = voice.style || 'bouncy';
+  const key = `${plain}|${line.at ?? 0}|${cps}|${style}`;
+  let list = _SYL_CACHE.get(key);
+  if (list) return list;
+  const length = { measured: 1.08, sporty: .67, melodic: 1, bouncy: .85, regal: .76, rumble: 1.14 }[style] ?? .85;
+  const wordPattern = /[A-Za-z]+(?:'[A-Za-z]+)?/g;
+  list = [];
+  let word;
+  while ((word = wordPattern.exec(plain))) {
+    const vowels = word[0].match(/[aeiouy]+/gi) || [];
+    const count = Math.min(3, Math.max(1, vowels.length));
+    const spacing = word[0].length / cps / count;
+    for (let i = 0; i < count; i++) {
+      const at = (line.at ?? 0) + .2 + (word.index + (i + .18) * word[0].length / count) / cps;
+      const dur = Math.min(.28, Math.max(.07, spacing * length));
+      list.push({ at, dur, vowel: (vowels[i]?.[0] || 'a').toLowerCase() });
+    }
+  }
+  _SYL_CACHE.set(key, list);
+  return list;
+}
+
+const _VISEME_PREF = {
+  wide: ['O', 'open', 'grin', 'o'],
+  round: ['o', 'O', 'open', 'grin'],
+  spread: ['grin', 'teeth', 'open', 'smile', 'o'],
+};
+function _pickViseme(bucket, rest, shapes) {
+  if (!bucket || bucket === 'rest') return rest;
+  const pref = _VISEME_PREF[bucket] || _VISEME_PREF.wide;
+  for (const s of pref) if (shapes.includes(s)) return s;
+  return shapes[0] ?? rest;
+}
+function _visemeForLine(t, line, sceneId) {
+  if (!line || line.kind === 'think' || line.silent) return null;
+  const clip = sceneId && typeof voiceClipFor === 'function' ? voiceClipFor(sceneId, line) : null;
+  if (clip?.env) {
+    const age = t - ((line.at ?? 0) + .2), idx = Math.floor(age * (clip.envFps || 24));
+    if (idx < 0 || idx >= clip.env.length) return 'rest';
+    const ch = clip.env[idx];
+    return ch === 'a' ? 'wide' : ch === 'o' ? 'round' : ch === 's' ? 'spread' : 'rest';
+  }
+  const voice = typeof ASSETS !== 'undefined' && line.speaker ? (ASSETS.character[line.speaker]?.voice || {}) : {};
+  const syls = dialogueSyllables(line, voice);
+  for (let i = 0; i < syls.length; i++) {
+    const s = syls[i];
+    if (t >= s.at && t <= s.at + s.dur) {
+      if (s.vowel === 'o' || s.vowel === 'u') return 'round';
+      if (s.vowel === 'e' || s.vowel === 'i' || s.vowel === 'y') return 'spread';
+      return 'wide';
+    }
+  }
+  return 'rest';
+}
+
 function callout(text, ax, ay, age, o = {}) {
   const cps = o.cps ?? 18, plain = text.replace(/\*/g, ''), typeDur = plain.length / cps;
   const dur = o.dur ?? (.25 + typeDur + (o.hold ?? 1.6));
-  if (age < 0 || age > dur) return { talking: false, visible: false };
+  if (age < 0 || age > dur) return { talking: false, visible: false, viseme: 'rest', mouth: 'smile' };
   [ax, ay] = toScreen(ax, ay);
   const typed = (age - .2) * cps, talking = typed > 0 && typed < plain.length;
   const k = backOut(age / .28) * (1 - easeIn(seg(age, dur - .22, dur)));
   overlay(() => drawBubble(text, ax, ay, typed, k, o));
-  return { talking, visible: true };
+  const viseme = talking && o.kind !== 'think'
+    ? _visemeForLine(T, { text, at: T - age, cps, speaker: o.speaker, kind: o.kind }, typeof SCENE !== 'undefined' ? SCENE?.id : null)
+    : 'rest';
+  const mouth = _pickViseme(viseme, 'smile', ['grin', 'open', 'o', 'grin', 'smile', 'open']);
+  return { talking, visible: true, viseme, mouth };
 }
 
-// Lip flap while talking: cycles mouth shapes ~9x/s (stable per frame); otherwise returns `rest`.
+// Lip flap while talking: syncs to active dialogue syllables / TTS envelopes when available, otherwise cycles ~9x/s.
+// `talking` may be a boolean, the object returned by callout(), or { line, speaker }.
 function lipFlap(t, talking, rest = 'smile', shapes = ['grin', 'open', 'o', 'grin', 'smile', 'open']) {
   if (!talking) return rest;
+  if (typeof talking === 'object') {
+    if (talking.viseme !== undefined) return talking.talking ? _pickViseme(talking.viseme, rest, shapes) : rest;
+    if (talking.line) return _pickViseme(_visemeForLine(t, talking.line, typeof SCENE !== 'undefined' ? SCENE?.id : null), rest, shapes);
+    if (!talking.talking) return rest;
+  }
+  if (typeof SCENE !== 'undefined' && SCENE?.dialogue?.length) {
+    const spk = typeof talking === 'object' ? talking.speaker : null;
+    for (const l of SCENE.dialogue) {
+      if (l.kind === 'think' || l.silent) continue;
+      if (spk && l.speaker !== spk) continue;
+      const clip = typeof voiceClipFor === 'function' ? voiceClipFor(SCENE.id, l) : null;
+      const dur = clip ? clip.dur : l.text.replace(/\*/g, '').length / (l.cps ?? 18);
+      if (t >= l.at + .2 && t <= l.at + .2 + dur) {
+        return _pickViseme(_visemeForLine(t, l, SCENE.id), rest, shapes);
+      }
+    }
+  }
   return shapes[Math.floor(hash(Math.floor(t * 9)) * shapes.length)];
 }
 

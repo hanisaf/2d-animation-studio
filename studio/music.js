@@ -161,21 +161,11 @@ async function buildSceneAudioChunk(sc, sampleRate, musicOffset = 0) {
       src.connect(gain).connect(voiceBus); if (at < sc.duration) src.start(at);
       continue;
     }
-    const plain = line.text.replace(/\*/g, ''), cps = line.cps ?? 18;
     const voice = ASSETS.character[line.speaker]?.voice || {};
-    const wordPattern = /[A-Za-z]+(?:'[A-Za-z]+)?/g;
-    let word, syllableIndex = 0;
-    while ((word = wordPattern.exec(plain))) {
-      const vowels = word[0].match(/[aeiouy]+/gi) || [];
-      const count = Math.min(3, Math.max(1, vowels.length));
-      const spacing = word[0].length / cps / count;
-      for (let i = 0; i < count; i++) {
-        const at = line.at + .2 + (word.index + (i + .18) * word[0].length / count) / cps;
-        const style = voice.style || 'bouncy';
-        const length = { measured: 1.08, sporty: .67, melodic: 1, bouncy: .85, regal: .76, rumble: 1.14 }[style] ?? .85;
-        const dur = Math.min(.28, Math.max(.07, spacing * length));
-        cartoonSyllable(ctx, voiceBus, at, dur, { ...voice, level: (voice.level ?? .13) * (line.energy ?? 1) }, (line.audioIndex ?? lineIndex) * 97 + syllableIndex++, vowels[i]?.[0] || 'a');
-      }
+    const syls = dialogueSyllables(line, voice);
+    for (let syllableIndex = 0; syllableIndex < syls.length; syllableIndex++) {
+      const s = syls[syllableIndex];
+      cartoonSyllable(ctx, voiceBus, s.at, s.dur, { ...voice, level: (voice.level ?? .13) * (line.energy ?? 1) }, (line.audioIndex ?? lineIndex) * 97 + syllableIndex, s.vowel);
     }
   }
   if (sc.music && lines.length) {

@@ -75,7 +75,7 @@ async function exportSceneJavaScript({ id, sound = false, signal, onProgress = (
   }
   if (!fonts.length) throw new Error('Scene fonts were not found; reload the studio before exporting');
   stop(); onProgress(1, 'JavaScript ready');
-  const config = { id, sound: sound && !!audio, audio, fonts };
+  const config = { id, sound: sound && !!audio, audio, fonts, fx: { m2: FX.m2, m3: FX.m3 } };
   const source = '// Safadi Animation Studio — ' + id + (sound ? ' (with sound)' : ' (without sound)') + '\n' +
     '// Embed: <script src="' + id + (sound ? '.with-sound.js' : '.silent.js') + '" data-mount="#animation" data-loop="true"></script>\n' +
     '(function () {\n"use strict";\nconst config = ' + JSON.stringify(config) + ';\n' +
@@ -97,6 +97,7 @@ async function sceneJavaScriptPlayer(config, target, options, loadFonts) {
   const canvas = root.querySelector('canvas'), button = root.querySelector('.play'), status = root.querySelector('.status');
   const slider = root.querySelector('.seek'), muteButton = root.querySelector('.mute'), speed = root.querySelector('.speed'), time = root.querySelector('.time');
   canvas.width = W; canvas.height = H; canvas.setAttribute('aria-label', SCENES[config.id].title || config.id);
+  if (typeof setFx === 'function') setFx({ m2: options.m2 ?? config.fx?.m2 ?? true, m3: options.m3 ?? config.fx?.m3 ?? true });
   X = canvas.getContext('2d'); useScene(config.id);
   const sc = SCENE;
   let t = 0, playing = false, destroyed = false, raf = 0, origin = 0, generation = 0;
@@ -225,7 +226,9 @@ function sceneJavaScriptAutoMount(script, entry) {
       loop: script.dataset.loop === 'true',
       controls: script.dataset.controls !== 'false',
       muted: script.dataset.muted !== 'false',
-      playbackRate: script.dataset.speed === undefined ? 1 : Number(script.dataset.speed)
+      playbackRate: script.dataset.speed === undefined ? 1 : Number(script.dataset.speed),
+      m2: script.dataset.m2 === undefined ? undefined : script.dataset.m2 !== 'false',
+      m3: script.dataset.m3 === undefined ? undefined : script.dataset.m3 !== 'false'
     });
     script.scenePlayer.catch(error => console.error('Could not embed scene ' + entry.id + ':', error));
   };

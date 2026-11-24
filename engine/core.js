@@ -14,6 +14,16 @@ const PAL = {
   blue: '#4166B8', green: '#4DA650', orange: '#EE8A2C', sky: '#A9D8E8', rose: '#E27A92', pink: '#F2B8C6',
 };
 
+// Feature toggles (default on). Overridable via setFx(), SCENE.fx, Studio UI, URL (?m2=0&m3=0), or render.mjs (--no-m2 / --no-m3).
+//   m2: tapered brush strokes, motion trails, smears and spring overshoot
+//   m3: unified directional lighting, cel-shading, cast floor shadows and reflections
+const FX = { m2: true, m3: true };
+function setFx(o = {}) { if (o.m2 != null) FX.m2 = !!o.m2; if (o.m3 != null) FX.m3 = !!o.m3; return { ...FX }; }
+function fxEnabled(key) {
+  if (typeof SCENE !== 'undefined' && SCENE?.fx && SCENE.fx[key] != null) return !!SCENE.fx[key];
+  return FX[key] !== false;
+}
+
 // ---------- math ----------
 const clamp = (x, a = 0, b = 1) => Math.max(a, Math.min(b, x));
 const lerp = (a, b, x) => a + (b - a) * x;
@@ -30,6 +40,14 @@ const mixPt = (a, b, k) => [lerp(a[0], b[0], k), lerp(a[1], b[1], k)];
 // damped "boing" after an impulse at t0: 0 before, 1 at t0, oscillates and dies away
 const boing = (t, t0, freq = 3, decay = 5) => t < t0 ? 0 : Math.exp(-(t - t0) * decay) * Math.cos((t - t0) * freq * TAU);
 const kick = (t, t0, decay = 6) => t < t0 ? 0 : Math.exp(-(t - t0) * decay);   // 1 at t0, decays
+// Damped spring transition 0 → 1 starting at t0 (overshoots when damp < 1; falls back to smooth ease when M2 is off).
+function spring(t, t0, { freq = 2.6, damp = .45 } = {}) {
+  const dt = t - t0;
+  if (dt <= 0) return 0;
+  if (!fxEnabled('m2')) return ease(clamp(dt / .35));
+  const w = freq * TAU, z = clamp(damp, .05, .99), wd = w * Math.sqrt(1 - z * z);
+  return 1 - Math.exp(-z * w * dt) * (Math.cos(wd * dt) + (z * w / wd) * Math.sin(wd * dt));
+}
 // keyframes: kf(t, [[t0, v0], [t1, v1], ...], easeFn). Values may be numbers or arrays of numbers.
 function kf(t, keys, e = ease) {
   if (t <= keys[0][0]) return keys[0][1];
@@ -55,10 +73,22 @@ const pulse = (t, k = 6) => Math.exp(-frac(beatPos(t)) * k);      // 1 on each b
 // ---------- seeded jitter ("boil") ----------
 function mulberry(a) { return () => { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
 let _rnd = mulberry(1);
+function _seedHash(s) {
+  if (typeof s === 'number') return Math.imul(s | 0, 2654435761) | 0;
+  let h = 2166136261;
+  for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); }
+  return h | 0;
+}
 function boilSeed(t) { _rnd = mulberry(1000 + Math.floor(t * BOIL + 1e-6)); }
 const jit = a => (_rnd() * 2 - 1) * a;
 let JIT = 0;                                                      // current boil amplitude in SCREEN px (0 = rock steady)
-function withBoil(px, fn) { const o = JIT; JIT = px; try { return fn(); } finally { JIT = o; } }
+// Optional `seed` isolates this block's boil stream so objects appearing earlier cannot shift its jitter.
+function withBoil(px, fn, seed) {
+  const o = JIT, scoped = seed != null, r = scoped ? _rnd : null;
+  JIT = px;
+  if (scoped) _rnd = mulberry((1000 + Math.floor(T * BOIL + 1e-6)) ^ _seedHash(seed));
+  try { return fn(); } finally { JIT = o; if (scoped) _rnd = r; }
+}
 function pxScale() { const m = X.getTransform(); return Math.hypot(m.a, m.b) || 1; }
 
 // ---------- paths ----------
@@ -96,6 +126,91 @@ function paintPath(o) {
 }
 function shape(pts, o = {}) { if (!pts || pts.length < 2) return; tracePath(pts, o.closed !== false, o.smooth ?? false); paintPath(o); }
 function line(pts, o = {}) { if (!pts || pts.length < 2) return; tracePath(pts, false, o.smooth ?? false); paintPath({ ...o, fill: null, stroke: o.stroke ?? o.col ?? PAL.ink }); }
+// Sample a Catmull-Rom curve into a polyline (for variable-width strokes and motion smears).
+function sampleCurve(pts, smooth = true, segs = 7) {
+  const n = pts.length;
+  if (!smooth || n < 3) return pts;
+  const k = smooth === true ? 1 : smooth, P = i => pts[clamp(i, 0, n - 1)], out = [pts[0]];
+  for (let i = 0; i < n - 1; i++) {
+    const p0 = P(i - 1), p1 = P(i), p2 = P(i + 1), p3 = P(i + 2);
+    const c1x = p1[0] + (p2[0] - p0[0]) / 6 * k, c1y = p1[1] + (p2[1] - p0[1]) / 6 * k;
+    const c2x = p2[0] - (p3[0] - p1[0]) / 6 * k, c2y = p2[1] - (p3[1] - p1[1]) / 6 * k;
+    for (let s = 1; s <= segs; s++) {
+      const u = s / segs, v = 1 - u;
+      out.push([
+        v * v * v * p1[0] + 3 * v * v * u * c1x + 3 * v * u * u * c2x + u * u * u * p2[0],
+        v * v * v * p1[1] + 3 * v * v * u * c1y + 3 * v * u * u * c2y + u * u * u * p2[1],
+      ]);
+    }
+  }
+  return out;
+}
+// Variable-width tapered brush stroke (emits a pure vector polygon; SVG-export safe).
+// Falls back to a uniform stroke via line() when M2 is disabled.
+// o: { w0, w1, wMid, lwPx, profile, fill, col, stroke, lw, outlinePx, smooth, segs, alpha }
+function taperStroke(pts, o = {}) {
+  if (!pts || pts.length < 2) return;
+  if (!fxEnabled('m2')) {
+    return line(pts, {
+      stroke: o.fill ?? o.col ?? PAL.ink,
+      lwPx: o.lwPx,
+      lw: o.lwPx != null ? undefined : ((o.wMid ?? Math.max(o.w0 ?? 0, o.w1 ?? 0)) || 2.5),
+      smooth: o.smooth, alpha: o.alpha,
+    });
+  }
+  const sc = pxScale();
+  if (JIT) { const a = JIT / sc; pts = pts.map(p => [p[0] + jit(a), p[1] + jit(a)]); }
+  const raw = o.smooth ? sampleCurve(pts, o.smooth, o.segs ?? 7) : pts;
+  const ps = [raw[0]];
+  for (let i = 1; i < raw.length; i++) {
+    if (Math.hypot(raw[i][0] - ps[ps.length - 1][0], raw[i][1] - ps[ps.length - 1][1]) > 1e-4) ps.push(raw[i]);
+  }
+  if (ps.length < 2) return;
+  const lens = [0];
+  for (let i = 1; i < ps.length; i++) lens.push(lens[i - 1] + Math.hypot(ps[i][0] - ps[i - 1][0], ps[i][1] - ps[i - 1][1]));
+  const total = lens[lens.length - 1] || 1, unit = o.lwPx != null ? 1 / sc : 1;
+  const w0 = (o.w0 ?? (o.lwPx != null ? o.lwPx * .2 : .12)) * unit;
+  const w1 = (o.w1 ?? (o.lwPx != null ? o.lwPx * .2 : .12)) * unit;
+  const wMid = o.wMid != null ? o.wMid * unit : (o.lwPx != null ? o.lwPx * unit : Math.max(w0, w1));
+  const widthAt = o.profile
+    ? u => Math.max(0, o.profile(u) * unit)
+    : u => (o.wMid != null || (o.w0 == null && o.w1 == null))
+      ? (u < .5 ? lerp(w0, wMid, ease(u * 2)) : lerp(wMid, w1, ease((u - .5) * 2)))
+      : lerp(w0, w1, u);
+  const L = [], R = [];
+  for (let i = 0; i < ps.length; i++) {
+    const a = ps[Math.max(0, i - 1)], b = ps[Math.min(ps.length - 1, i + 1)];
+    let tx = b[0] - a[0], ty = b[1] - a[1], d = Math.hypot(tx, ty) || 1;
+    tx /= d; ty /= d;
+    const nx = -ty, ny = tx, r = widthAt(lens[i] / total) * .5;
+    L.push([ps[i][0] + nx * r, ps[i][1] + ny * r]);
+    R.push([ps[i][0] - nx * r, ps[i][1] - ny * r]);
+  }
+  withBoil(0, () => shape([...L, ...R.reverse()], {
+    fill: o.fill ?? o.col ?? PAL.ink, stroke: o.stroke ?? null,
+    lw: o.lw, lwPx: o.outlinePx, alpha: o.alpha, closed: true, smooth: false,
+  }));
+}
+// Motion trail: replays fn(t - i*dt, frac) at previous sub-frame times with decaying alpha, then paints fn(t, 0).
+function trail(t, fn, o = {}) {
+  if (!fxEnabled('m2')) return o.drawCurrent === false ? undefined : fn(t, 0);
+  const steps = o.steps ?? 4, dt = o.dt ?? .022, maxA = o.alpha ?? .32, fade = o.fade ?? 1.4;
+  const savedT = T;
+  for (let i = steps; i >= 1; i--) {
+    const f = 1 - (i - 1) / steps, a = maxA * Math.pow(f, fade);
+    if (a <= .01) continue;
+    const ov = OVERLAYS.length;
+    T = t - i * dt;
+    X.save(); X.globalAlpha *= a;
+    try { fn(T, i / steps); } finally { X.restore(); OVERLAYS.length = ov; T = savedT; }
+  }
+  return o.drawCurrent === false ? undefined : fn(t, 0);
+}
+// Swept motion-blur smear connecting two polylines (current and previous positions).
+function smear(ptsNow, ptsPrev, o = {}) {
+  if (!fxEnabled('m2') || !ptsNow?.length || !ptsPrev?.length) return;
+  shape([...ptsNow, ...[...ptsPrev].reverse()], { fill: o.fill ?? 'rgba(255,255,255,.35)', stroke: o.stroke ?? null, smooth: o.smooth ?? .35, alpha: o.alpha });
+}
 function ellipse(cx, cy, rx, ry, o = {}) {
   if (rx <= 0 || ry <= 0) return;
   const j = JIT ? JIT / pxScale() : 0;
@@ -184,25 +299,174 @@ function iris(cx, cy, r, col = '#140C12') {
   });
 }
 
-// ---------- layers (depth of field, colour grading) ----------
-// Paint fn() into an offscreen layer, then composite it with a CSS filter, e.g. layer(() => room(), { blur: 3 }) for a
-// soft background that makes characters pop. filter: any extra CSS filter string ('saturate(.9) brightness(1.03)').
+// ---------- layers (depth of field, bloom, lighting, cast shadows, colour grading) ----------
+// Paint fn() into an offscreen layer, then composite it with a CSS filter, blend mode, or downscaled blur.
+// o: { blur, filter, composite, alpha, scale (auto 0.5 when blur >= 2) }
 const _layers = [];
 let _layerDepth = 0;
+let _probe = null;
+const _isVectorCtx = () => !X || typeof X.getSvg === 'function' || X === _probe;
+function _getLayer(depth, w = W, h = H) {
+  let cv = _layers[depth];
+  if (!cv) cv = _layers[depth] = Object.assign(document.createElement('canvas'), { width: w, height: h });
+  else if (cv.width !== w || cv.height !== h) { cv.width = w; cv.height = h; }
+  return cv;
+}
 function layer(fn, o = {}) {
-  const f = [o.blur > .05 ? `blur(${o.blur.toFixed(2)}px)` : '', o.filter || ''].join(' ').trim();
-  if (!f) return fn();
-  const cv = _layers[_layerDepth] ??= Object.assign(document.createElement('canvas'), { width: W, height: H });
-  const c = cv.getContext('2d'), outer = X;
-  c.setTransform(1, 0, 0, 1, 0, 0); c.clearRect(0, 0, W, H); c.setTransform(outer.getTransform());
+  const blur = o.blur || 0, comp = o.composite || 'source-over', alpha = o.alpha ?? 1;
+  const scale = o.scale ?? (blur >= 2 ? .5 : 1);
+  const f = [blur > .05 ? `blur(${(blur * scale).toFixed(2)}px)` : '', o.filter || ''].join(' ').trim();
+  const needBuf = !!(f || comp !== 'source-over' || alpha < .999 || scale !== 1);
+  if (!needBuf || _isVectorCtx()) return fn();
+  const lw = Math.max(1, Math.round(W * scale)), lh = Math.max(1, Math.round(H * scale));
+  const cv = _getLayer(_layerDepth, lw, lh), c = cv.getContext('2d'), outer = X;
+  c.setTransform(1, 0, 0, 1, 0, 0); c.clearRect(0, 0, lw, lh);
+  const m = outer.getTransform();
+  c.setTransform(m.a * scale, m.b * scale, m.c * scale, m.d * scale, m.e * scale, m.f * scale);
   X = c; _layerDepth++;
-  try { fn(); } finally { _layerDepth--; X = outer; }
-  X.save(); X.setTransform(1, 0, 0, 1, 0, 0); X.filter = f; X.drawImage(cv, 0, 0); X.restore();
+  let res;
+  try { res = fn(); } finally { _layerDepth--; X = outer; }
+  X.save(); X.setTransform(1, 0, 0, 1, 0, 0);
+  if (f) X.filter = f;
+  X.globalCompositeOperation = comp;
+  X.globalAlpha *= alpha;
+  X.drawImage(cv, 0, 0, lw, lh, 0, 0, W, H);
+  X.restore();
+  return res;
+}
+// Downscaled bloom pass: paints fn() once, blits it sharp (unless glowOnly), then overlays a 1/4-res blurred glow.
+function bloom(fn, o = {}) {
+  if (_isVectorCtx()) return fn();
+  const scale = o.scale ?? .25, rad = o.radius ?? 18, strength = o.strength ?? .55, comp = o.composite || 'screen';
+  const d0 = _layerDepth, cv1 = _getLayer(d0, W, H), c1 = cv1.getContext('2d'), outer = X;
+  c1.setTransform(1, 0, 0, 1, 0, 0); c1.clearRect(0, 0, W, H); c1.setTransform(outer.getTransform());
+  X = c1; _layerDepth = d0 + 1;
+  let res;
+  try { res = fn(); } finally { _layerDepth = d0; X = outer; }
+  if (!o.glowOnly) { X.save(); X.setTransform(1, 0, 0, 1, 0, 0); X.drawImage(cv1, 0, 0); X.restore(); }
+  const lw = Math.max(1, Math.round(W * scale)), lh = Math.max(1, Math.round(H * scale));
+  const cv2 = _getLayer(d0 + 1, lw, lh), c2 = cv2.getContext('2d');
+  c2.setTransform(1, 0, 0, 1, 0, 0); c2.clearRect(0, 0, lw, lh); c2.drawImage(cv1, 0, 0, W, H, 0, 0, lw, lh);
+  X.save(); X.setTransform(1, 0, 0, 1, 0, 0);
+  X.filter = `blur(${(rad * scale).toFixed(2)}px)`;
+  X.globalCompositeOperation = comp;
+  X.globalAlpha *= strength;
+  X.drawImage(cv2, 0, 0, lw, lh, 0, 0, W, H);
+  X.restore();
+  return res;
+}
+
+// ---------- unified lighting, cel shading & projected cast shadows ----------
+let LIGHT = null;
+function withLight(cfg, fn) { const prev = LIGHT; LIGHT = cfg; try { return fn(); } finally { LIGHT = prev; } }
+function _applyLight(cvA, cA, d0, cfg) {
+  const dir = cfg.dir || [-.7, -.7], dl = Math.hypot(dir[0], dir[1]) || 1, lx = dir[0] / dl, ly = dir[1] / dl;
+  if (cfg.tint) {
+    cA.save(); cA.setTransform(1, 0, 0, 1, 0, 0);
+    cA.globalCompositeOperation = 'source-atop'; cA.globalAlpha = cfg.tintAlpha ?? 1;
+    cA.fillStyle = cfg.tint; cA.fillRect(0, 0, W, H); cA.restore();
+  }
+  const edgePass = (dx, dy, col, comp, blurPx = 0) => {
+    const cvB = _getLayer(d0 + 1, W, H), cB = cvB.getContext('2d');
+    cB.save(); cB.setTransform(1, 0, 0, 1, 0, 0); cB.clearRect(0, 0, W, H);
+    cB.drawImage(cvA, 0, 0);
+    cB.globalCompositeOperation = 'destination-out'; cB.drawImage(cvA, dx, dy);
+    cB.globalCompositeOperation = 'source-in'; cB.fillStyle = col; cB.fillRect(0, 0, W, H);
+    cB.restore();
+    cA.save(); cA.setTransform(1, 0, 0, 1, 0, 0); cA.globalCompositeOperation = comp;
+    if (blurPx > .05) cA.filter = `blur(${blurPx.toFixed(1)}px)`;
+    cA.drawImage(cvB, 0, 0); cA.restore();
+  };
+  if (cfg.shade) edgePass(lx * (cfg.shadePx ?? 14), ly * (cfg.shadePx ?? 14), cfg.shade, 'source-atop', cfg.shadeBlur ?? 0);
+  if (cfg.rim) edgePass(-lx * (cfg.rimPx ?? 5), -ly * (cfg.rimPx ?? 5), cfg.rim, cfg.rimComp || 'source-atop', cfg.rimBlur ?? 0);
+}
+// Paint fn() with directional rim highlight, cel shadow, and environmental tint; returns fn()'s anchors unchanged.
+function lit(fn, o) {
+  const cfg = o ? (LIGHT ? { ...LIGHT, ...o } : o) : LIGHT;
+  if (!cfg || !fxEnabled('m3') || _isVectorCtx()) return fn();
+  const d0 = _layerDepth, cvA = _getLayer(d0, W, H), cA = cvA.getContext('2d'), outer = X;
+  cA.setTransform(1, 0, 0, 1, 0, 0); cA.clearRect(0, 0, W, H); cA.setTransform(outer.getTransform());
+  X = cA; _layerDepth = d0 + 1;
+  let res;
+  try { res = fn(); } finally { _layerDepth = d0; X = outer; }
+  _applyLight(cvA, cA, d0, cfg);
+  X.save(); X.setTransform(1, 0, 0, 1, 0, 0); X.drawImage(cvA, 0, 0); X.restore();
+  return res;
+}
+// Paint a projected ground shadow (and optional glossy floor/ice reflection) anchored at (footX, footY),
+// then draw the subject (optionally lit by the active LIGHT) on top. Runs fn() only once and returns its anchors.
+function castShadow(fn, footX, footY, o = {}) {
+  if (!fxEnabled('m3') || _isVectorCtx()) return o.drawSubject === false ? undefined : fn();
+  const cfg = o.light === false ? null : (o.light ? (LIGHT ? { ...LIGHT, ...o.light } : o.light) : LIGHT);
+  const d0 = _layerDepth, cvA = _getLayer(d0, W, H), cA = cvA.getContext('2d'), outer = X;
+  cA.setTransform(1, 0, 0, 1, 0, 0); cA.clearRect(0, 0, W, H); cA.setTransform(outer.getTransform());
+  X = cA; _layerDepth = d0 + 1;
+  let res;
+  try { res = fn(); } finally { _layerDepth = d0; X = outer; }
+  const m = outer.getTransform(), sx = m.a * footX + m.c * footY + m.e, sy = m.b * footX + m.d * footY + m.f;
+  if (o.reflect > .01) {
+    X.save(); X.setTransform(1, 0, 0, 1, 0, 0);
+    X.translate(sx, sy + (o.reflectDy ?? 0)); X.scale(1, -(o.reflectScale ?? .4)); X.translate(-sx, -sy);
+    X.globalAlpha *= o.reflect;
+    if (o.reflectBlur > .05) X.filter = `blur(${o.reflectBlur.toFixed(1)}px)`;
+    X.drawImage(cvA, 0, 0);
+    X.restore();
+  }
+  const cvB = _getLayer(d0 + 1, W, H), cB = cvB.getContext('2d');
+  cB.save(); cB.setTransform(1, 0, 0, 1, 0, 0); cB.clearRect(0, 0, W, H);
+  cB.drawImage(cvA, 0, 0);
+  cB.globalCompositeOperation = 'source-in';
+  cB.fillStyle = o.color ?? cfg?.shadowColor ?? 'rgba(38,20,34,.22)';
+  cB.fillRect(0, 0, W, H);
+  cB.restore();
+  const dir = cfg?.dir || [-.7, -.7];
+  const skew = o.skew ?? cfg?.shadowSkew ?? clamp(dir[0] * .65, -1.2, 1.2);
+  const scaleY = o.scaleY ?? cfg?.shadowScaleY ?? .26;
+  const blurPx = o.blur ?? 2;
+  X.save(); X.setTransform(1, 0, 0, 1, 0, 0);
+  X.translate(sx, sy + (o.dy ?? 2));
+  X.transform(1, 0, skew, scaleY, 0, 0);
+  X.translate(-sx, -sy);
+  if (blurPx > .05) X.filter = `blur(${blurPx.toFixed(1)}px)`;
+  X.drawImage(cvB, 0, 0);
+  X.restore();
+  if (o.drawSubject !== false) {
+    if (cfg && (cfg.tint || cfg.rim || cfg.shade)) _applyLight(cvA, cA, d0, cfg);
+    X.save(); X.setTransform(1, 0, 0, 1, 0, 0); X.drawImage(cvA, 0, 0); X.restore();
+  }
+  return res;
+}
+
+// ---------- shot/scene colour grade (applied before grain & overlays, skipped on transparent exports) ----------
+let GRADE = null;
+function grade(o) { GRADE = o ? { ...(GRADE || {}), ...o } : null; }
+function applyGrade() {
+  const g = GRADE; GRADE = null;
+  if (!g || _isVectorCtx()) return;
+  X.save(); X.setTransform(1, 0, 0, 1, 0, 0);
+  if (g.warmth) {
+    X.globalCompositeOperation = 'soft-light';
+    X.globalAlpha = clamp(Math.abs(g.warmth), 0, 1) * .45;
+    X.fillStyle = g.warmth > 0 ? '#FFBF73' : '#7AB8FF';
+    X.fillRect(0, 0, W, H);
+  }
+  if (g.tint) {
+    X.globalCompositeOperation = g.mode || 'soft-light';
+    X.globalAlpha = g.alpha ?? .22;
+    X.fillStyle = g.tint;
+    X.fillRect(0, 0, W, H);
+  }
+  if (g.topGrad) {
+    X.globalCompositeOperation = g.topMode || 'source-over';
+    X.globalAlpha = g.topAlpha ?? 1;
+    X.fillStyle = linGrad(0, 0, 0, H, g.topGrad);
+    X.fillRect(0, 0, W, H);
+  }
+  X.restore();
 }
 
 // Run a draw call off-screen and return its result: use it to get a character's anchors (mouth, head…) before
 // deciding its final pose, without painting it twice. measure(() => pearl(x, y, s, o)).mouth
-let _probe = null;
 function measure(fn) {
   _probe ??= Object.assign(document.createElement('canvas'), { width: 1, height: 1 }).getContext('2d');
   const outer = X, ov = OVERLAYS.length, rs = _rnd; _probe.setTransform(outer.getTransform()); X = _probe;

@@ -34,7 +34,8 @@ function drawCharacterView(entry, pose, t, o = {}) {
     const P = persp({ x: m.x, y, z, f: 1000, hy: H * .9 - y * k });
     layer(() => loc.back(P, t, { splitZ: m.z }), { blur: 2.4 });
     const [sx, sy] = P.p(m.x, 0, m.z);
-    drawPose(entry, pose, sx, sy, entry.unit * k, t);
+    if (loc.light) withLight(loc.light, () => lit(() => drawPose(entry, pose, sx, sy, entry.unit * k, t)));
+    else drawPose(entry, pose, sx, sy, entry.unit * k, t);
     loc.front(P, t, { splitZ: m.z });
   } else {
     if (o.location !== 'transparent') paperBackdrop();
