@@ -3,9 +3,11 @@ import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import vm from 'node:vm';
 const source = await readFile(new URL('../studio/javascript-export.js', import.meta.url), 'utf8');
+const calloutSource = await readFile(new URL('../engine/callout.js', import.meta.url), 'utf8');
 function harness(sound, { synthesized = false, prepare = async () => ({}), playError = null } = {}) {
   let preparations = 0;
   let now = 0, callback, audio;
+  const fontListeners = new Set();
   const element = () => ({ value: '', textContent: '', hidden: false, attributes: {}, setAttribute(k,v) { this.attributes[k]=v; } });
   const nodes = Object.fromEntries(['canvas','.play','.status','.seek','.mute','.speed','.time','.controls'].map(k=>[k,element()]));
   nodes.canvas.getContext = () => ({});
@@ -21,14 +23,20 @@ function harness(sound, { synthesized = false, prepare = async () => ({}), playE
     removeAttribute() { this.src=''; }
     load() {}
   }
-  const context=vm.createContext({ document: { createElement: tag=>tag==='div'?box:element() }, Audio:FakeAudio,
+  const context=vm.createContext({ document: { createElement: tag=>tag==='div'?box:element(), fonts: {
+    addEventListener: (type, fn) => { if (type === 'loadingdone') fontListeners.add(fn); },
+    removeEventListener: (type, fn) => { if (type === 'loadingdone') fontListeners.delete(fn); },
+  } }, Audio:FakeAudio,
     synthesizeSceneAudio: () => { preparations++; return prepare(); }, sceneWavBlob: () => ({}), URL: { createObjectURL: () => 'blob:test', revokeObjectURL() {} },
     performance: { now:()=>now }, requestAnimationFrame: fn=>{callback=fn;return 1;}, cancelAnimationFrame:()=>{callback=null;},
     W:1920,H:1080,SCENES:{demo:{title:'Demo',duration:30}},SCENE:null,X:null,
     useScene() { context.SCENE=context.SCENES.demo; },drawFrame:()=>{},clamp:(v,a,b)=>Math.max(a,Math.min(b,v)) });
+  vm.runInContext(calloutSource,context);
+  vm.runInContext("_BUBBLE_CACHE.set('test', {});", context);
+  assert.equal(fontListeners.size, 1);
   vm.runInContext(source,context);
   return { mount: options=>context.sceneJavaScriptPlayer({id:'demo',sound,synthesized,audio:sound && !synthesized?'data:audio/wav;base64,test':null},host,{autoplay:false,...options},async()=>{}),
-    nodes,box,get preparations(){return preparations;},get audio(){return audio;},advance(seconds){now+=seconds*1000;const tick=callback;callback=null;tick?.(now);} };
+    nodes,box,fontListeners,get cacheSize(){return vm.runInContext('_BUBBLE_CACHE.size',context);},get preparations(){return preparations;},get audio(){return audio;},advance(seconds){now+=seconds*1000;const tick=callback;callback=null;tick?.(now);} };
 }
 const silent=harness(false), p=await silent.mount();
 assert.equal(p.muted,true);assert.equal(silent.nodes['.mute'].disabled,true);
@@ -45,6 +53,8 @@ assert.throws(()=>p.setPlaybackRate(0));assert.throws(()=>p.setPlaybackRate(NaN)
 p.seek(29);silent.advance(3);assert.equal(p.currentTime,30);assert.equal(p.playing,false);
 assert.equal(silent.nodes['.play'].textContent,'Replay');
 await p.play();assert.equal(p.currentTime,0);p.destroy();p.destroy();assert.equal(silent.box.removed,true);
+assert.equal(silent.fontListeners.size,0,'destroy must remove the instance font listener');
+assert.equal(silent.cacheSize,0,'destroy must clear cached bubble layouts');
 const voiced=harness(true), v=await voiced.mount();
 assert.equal(voiced.audio.muted,true);assert.equal(voiced.nodes['.mute'].textContent,'Unmute');
 voiced.nodes['.mute'].onclick();assert.equal(v.muted,false);assert.equal(voiced.audio.muted,false);

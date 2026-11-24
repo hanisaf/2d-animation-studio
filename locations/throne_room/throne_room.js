@@ -59,6 +59,15 @@ const throneRoom = (() => {
   const DAIS_RUG = Array.from({ length: 21 }, (_, j) => { const a = Math.PI * j / 20; return [300 * Math.cos(a), 109, BACK - 20 - 300 * .5 * Math.sin(a)]; });
   const CHAND_CANDS = CHAND.map(c => Array.from({ length: 7 }, (_, i) => { const an = Math.PI * (i + .5) / 7; return [c.x - Math.cos(an) * c.r, -c.y - 30 + Math.sin(an) * 14]; }));
 
+  const FOUNTAIN_JETS = new Map([-400, 400].map(x => [x, Array.from({ length: 6 }, (_, j) => {
+    const dir = j < 3 ? -1 : 1, spread = 30 + (j % 3) * 18;
+    const pts = Array.from({ length: 11 }, (_, i) => {
+      const u = i / 10;
+      return [x + dir * spread * u * 1.6, -160 - 60 * Math.sin(u * Math.PI * .8) + 110 * u * u];
+    });
+    return { dir, spread, pts };
+  })]));
+
   // ---------- big surfaces ----------
   function ceiling(P, t) {
     const z0 = P.cam.z - 200, zs = []; for (let z = z0; z < BACK; z += 180) zs.push(z); zs.push(BACK);
@@ -107,19 +116,9 @@ const throneRoom = (() => {
     }
     return (_glassTilesCv = cv);
   }
-  function stainedGlass(t) {
-    const path = () => { X.beginPath(); X.moveTo(-250, -150); X.lineTo(-250, -820); X.bezierCurveTo(-250, -960, -120, -1040, 0, -1085); X.bezierCurveTo(120, -1040, 250, -960, 250, -820); X.lineTo(250, -150); X.closePath(); };
-    X.save(); path(); X.clip();
-    const isVec = typeof _isVectorCtx === 'function' && _isVectorCtx();
-    if (isVec) {
-      for (let k = 0; k < GLASS_TILES.length; k++) { const [x, y, c] = GLASS_TILES[k]; X.fillStyle = c; X.fillRect(x, y, 50, 50); }
-    } else {
-      X.drawImage(_getGlassTiles(), -250, -1100, 500, 950);
-    }
-    // shimmer: a slow band of light sweeping across the glass (under castle & lead lines, matching original layering)
-    const sx = -400 + ((t * 90) % 900);
-    X.fillStyle = linGrad(sx - 120, 0, sx + 120, 0, [[0, 'rgba(255,255,255,0)'], [.5, 'rgba(255,255,255,.35)'], [1, 'rgba(255,255,255,0)']]); X.fillRect(-260, -1100, 520, 960);
-    // castle
+  function drawGlassArt(screenScale) {
+    // Castle and bolt widths remain in screen pixels at the caller's projection scale.
+    const S = (pts, o) => shape(pts, { stroke: C.line, ...o, lw: (o.lwPx ?? 1.6) / screenScale, lwPx: null });
     const tower = (x, w, y0, h, cone, win) => {
       S(rectPts(x - w / 2, y0 - h, w, h), { fill: '#FAF1E4', lwPx: 1.4 });
       S([[x - w / 2 - 8, y0 - h], [x + w / 2 + 8, y0 - h], [x, y0 - h - cone]], { fill: '#E88FAE', lwPx: 1.4 });
@@ -132,12 +131,48 @@ const throneRoom = (() => {
     S([[-30, -430], [30, -430], [30, -480], [0, -505], [-30, -480]], { fill: '#C9A27A', lwPx: 1.2 });
     // the zigzag bolt
     const bolt = [[210, -1060], [120, -860], [175, -845], [70, -650], [120, -640], [30, -470]];
-    line(bolt, { stroke: C.line, lwPx: 22 }); line(bolt, { stroke: '#BDE6F2', lwPx: 16 });
+    line(bolt, { stroke: C.line, lw: 22 / screenScale }); line(bolt, { stroke: '#BDE6F2', lw: 16 / screenScale });
     // lead lines
     X.strokeStyle = 'rgba(90,70,80,.45)'; X.lineWidth = 1.6; X.beginPath();
     for (let x = -250; x <= 250; x += 50) { X.moveTo(x, -1100); X.lineTo(x, -150); }
     for (let y = -1100; y <= -150; y += 50) { X.moveTo(-260, y); X.lineTo(260, y); }
     X.stroke();
+  }
+  // Separate transparent foreground keeps the shimmer behind the castle/bolt/lead lines.
+  // A bounded cache handles different camera scales without changing screen-space outline widths.
+  const _glassArt = new Map();
+  function getGlassArt(screenScale) {
+    let cv = _glassArt.get(screenScale);
+    if (cv) { _glassArt.delete(screenScale); _glassArt.set(screenScale, cv); return cv; }
+    if (_glassArt.size >= 4) {
+      const oldest = _glassArt.keys().next().value;
+      cv = _glassArt.get(oldest); _glassArt.delete(oldest);
+    } else cv = document.createElement('canvas');
+    const resolution = clamp(screenScale, 1, 2);
+    const width = Math.ceil(520 * resolution), height = Math.ceil(960 * resolution);
+    if (cv.width !== width || cv.height !== height) { cv.width = width; cv.height = height; }
+    const c = cv.getContext('2d'), outer = X;
+    c.setTransform(1, 0, 0, 1, 0, 0); c.clearRect(0, 0, width, height);
+    c.setTransform(cv.width / 520, 0, 0, cv.height / 960, 0, 0); c.translate(260, 1100);
+    X = c;
+    try { drawGlassArt(screenScale); } finally { X = outer; }
+    _glassArt.set(screenScale, cv);
+    return cv;
+  }
+  function stainedGlass(t) {
+    const path = () => { X.beginPath(); X.moveTo(-250, -150); X.lineTo(-250, -820); X.bezierCurveTo(-250, -960, -120, -1040, 0, -1085); X.bezierCurveTo(120, -1040, 250, -960, 250, -820); X.lineTo(250, -150); X.closePath(); };
+    X.save(); path(); X.clip();
+    const isVec = typeof _isVectorCtx === 'function' && _isVectorCtx();
+    if (isVec) {
+      for (let k = 0; k < GLASS_TILES.length; k++) { const [x, y, c] = GLASS_TILES[k]; X.fillStyle = c; X.fillRect(x, y, 50, 50); }
+    } else {
+      X.drawImage(_getGlassTiles(), -250, -1100, 500, 950);
+    }
+    // shimmer: a slow band of light sweeping across the glass (under castle & lead lines, matching original layering)
+    const sx = -400 + ((t * 90) % 900);
+    X.fillStyle = linGrad(sx - 120, 0, sx + 120, 0, [[0, 'rgba(255,255,255,0)'], [.5, 'rgba(255,255,255,.35)'], [1, 'rgba(255,255,255,0)']]); X.fillRect(-260, -1100, 520, 960);
+    if (isVec || JIT) drawGlassArt(pxScale());
+    else X.drawImage(getGlassArt(pxScale()), -260, -1100, 520, 960);
     X.restore();
     // frame + mullions
     [-85, 85].forEach(x => line([[x, -150], [x, -930]], { stroke: C.gold, lwPx: 3 }));
@@ -330,8 +365,7 @@ const throneRoom = (() => {
       S(rectPts(x - 10, -150, 20, 100), { fill: C.col, lwPx: 1.2 });
       ellipse(x, -150, 36, 10, { fill: C.cream, stroke: C.line, lwPx: 1.2 });
       for (let j = 0; j < 6; j++) {                                    // arcing jets with droplets
-        const dir = j < 3 ? -1 : 1, spread = 30 + (j % 3) * 18, pts = [];
-        for (let i = 0; i <= 10; i++) { const u = i / 10; pts.push([x + dir * spread * u * 1.6, -160 - 60 * Math.sin(u * Math.PI * .8) + 110 * u * u]); }
+        const { dir, spread, pts } = FOUNTAIN_JETS.get(x)[j];
         line(pts, { stroke: 'rgba(170,230,240,.9)', lwPx: 2.2, smooth: true });
         const u = frac(t * 1.3 + j * .17); circle(x + dir * spread * u * 1.6, -160 - 60 * Math.sin(u * Math.PI * .8) + 110 * u * u, 3.5, { fill: '#E6FAFF', stroke: null });
       }

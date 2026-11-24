@@ -105,7 +105,9 @@ const _GRAIN_PATS = new WeakMap(), _VIGNETTES = new WeakMap();
 function _makeGrainTile(seed) {
   const cv = document.createElement('canvas'); cv.width = cv.height = _GRAIN_SIZE;
   const c = cv.getContext('2d'), id = c.createImageData(_GRAIN_SIZE, _GRAIN_SIZE), d = id.data, r = mulberry(seed);
-  for (let i = 0; i < d.length; i += 4) { const v = 255 - (r() < .5 ? r() * r() * 22 : 0); d[i] = v; d[i + 1] = v; d[i + 2] = v - 2; d[i + 3] = 255; }
+  // Black with baked alpha replaces the costly full-frame multiply pass.
+  // Keep the same random samples/quantization as the old tile; only its subtle blue-channel tint is omitted.
+  for (let i = 0; i < d.length; i += 4) { const v = 255 - (r() < .5 ? r() * r() * 22 : 0); d[i + 3] = 255 - Math.round(v); }
   c.putImageData(id, 0, 0);
   return cv;
 }
@@ -130,7 +132,7 @@ function drawPaperFinish(t) {
     const f = Math.floor(t * BOIL + 1e-6), pat = _grainPatterns()[((f % 4) + 4) % 4];
     const ox = Math.floor(hash(f * 3.17 + 1) * _GRAIN_SIZE), oy = Math.floor(hash(f * 7.31 + 5) * _GRAIN_SIZE);
     X.save();
-    X.globalCompositeOperation = 'multiply';
+    X.globalCompositeOperation = 'source-over';
     if (gAmt < .999) X.globalAlpha = clamp(gAmt);
     X.translate(-ox, -oy);
     X.fillStyle = pat;

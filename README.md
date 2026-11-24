@@ -19,6 +19,23 @@ A 2D cartoon animated entirely in code. Every frame is a pure function of time, 
 | [`SERIES.md`](SERIES.md) | The series bible: premise, tone, look, and links to every character, set and episode |
 | [`ANIMATION_GUIDE.md`](ANIMATION_GUIDE.md) | How to write a scene or rig, and the style rules |
 
+## Project versioning
+
+The version in [`package.json`](package.json) is the release version for the whole project, including the engine. The current version is `0.1.0`.
+
+To prepare a release, update the package version and lockfile together without automatically committing or tagging:
+
+```bash
+npm version minor --no-git-tag-version   # for example, 0.1.0 → 0.2.0
+```
+
+Use `patch` for fixes, `minor` for new features, or an explicit version such as `1.0.0` for a major release. Run the relevant checks, commit the release changes, then tag that commit and publish release notes:
+
+```bash
+git tag -a v0.2.0 -m "Release 0.2.0"
+git push origin v0.2.0
+```
+
 ## Setup
 
 You need Node.js 18+ and Google Chrome. ffmpeg comes with the project (`ffmpeg-static`), so a system install isn't needed. On a new machine, see [docs/HANDBOOK.md §2](docs/HANDBOOK.md#2-moving-to-a-new-machine).

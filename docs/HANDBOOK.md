@@ -195,7 +195,7 @@ render.mjs calls window.renderAt(t) ─────────────▶ d
                                                         character(sx, sy, s, pose)           rigs
                                                         set.front(P, t)                      near pillars over the characters
                                                         callout(...) / sfx(...) / iris(...)  queued overlays
-                                                  3. multiply paper grain + vignette
+                                                  3. alpha paper grain + vignette
                                                   4. paint overlays (bubbles, SFX, iris) in screen space
                                                   │
                           ◀──── canvas.toDataURL (JPEG) ─────┘
@@ -342,6 +342,21 @@ set.front(P, t, { splitZ: charZ });                              // pillars near
 ```
 
 `back()` paints everything farther than `splitZ`, and `front()` paints what is nearer. Blur of about 0 px suits wide shots and 2–4.5 px suits medium and close shots. A background character (e.g. Pearl behind Fester) can be painted **inside** the layer so it softens too.
+
+`layer()` automatically reduces resolution smoothly over `blur: 0.5–1.5`, reaching half resolution at 1.5 px. Blur radius scales with the buffer, preserving screen-space softness; pass `scale: 1` to force full resolution. `castShadow()` also bakes its soft silhouette blur at half resolution before projecting it; the sharp subject and lighting remain full resolution.
+
+For a static camera and static set, cache the background rather than drawing and filtering it on every frame:
+
+```js
+const setOptions = { splitZ: charZ };
+const key = JSON.stringify(['lecture-background', P.cam, setOptions]);
+staticLayer(key, () => set.back(P, 0, setOptions), { blur: 1.5 });
+character(...); // animated subjects remain outside the cache
+```
+
+Choose a set/variant with no time-dependent elements for this example. The painter must produce the same pixels for the same key and set its own drawing styles. Include all inputs it reads in the key: location, full camera, split depths, variant/options, palette, lighting, and text/font if applicable. The cache already includes scene ID, effective M2/M3 flags, drawing transform, blur/filter, and resolution. Alpha and composite mode apply when the cached bitmap is drawn, so they can change without rebaking it.
+
+The LRU holds at most four canvases and clears on `useScene()`; call `clearStaticLayers()` after changing external assets or fonts that a cached painter uses. Passing `null` as the key bypasses caching, and SVG/probe contexts always call the painter directly. Keep shimmer, flames, swaying banners, particles, boiling strokes, speech bubbles, and other time-dependent or side-effecting drawing in `layer()` or outside the cached painter. The character browser deliberately freezes its cached backdrop at `t = 0` while animating the character and foreground normally.
 
 ### 6.5 Overlays
 

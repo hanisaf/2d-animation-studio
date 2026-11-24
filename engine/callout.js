@@ -110,8 +110,15 @@ function lipFlap(t, talking, rest = 'smile', shapes = ['grin', 'open', 'o', 'gri
 // Memoized speech-bubble layout & per-character width cache (invalidated automatically when web fonts finish loading).
 const _BUBBLE_CACHE = new Map(), _BUBBLE_MAX = 256;
 let _bubbleFontGen = 0;
+function _bubbleFontsLoaded() { _bubbleFontGen++; _BUBBLE_CACHE.clear(); }
 if (typeof document !== 'undefined' && document.fonts && typeof document.fonts.addEventListener === 'function') {
-  document.fonts.addEventListener('loadingdone', () => { _bubbleFontGen++; _BUBBLE_CACHE.clear(); });
+  document.fonts.addEventListener('loadingdone', _bubbleFontsLoaded);
+}
+// Exported players own their engine scope. Remove its document listener on destroy so
+// document.fonts cannot retain a discarded player's drawing state and asset caches.
+function disposeCalloutCache() {
+  if (typeof document !== 'undefined') document.fonts?.removeEventListener?.('loadingdone', _bubbleFontsLoaded);
+  _BUBBLE_CACHE.clear();
 }
 function _bubbleLayout(text, font, maxW) {
   const fSize = (typeof document !== 'undefined' && document.fonts) ? document.fonts.size : 0;

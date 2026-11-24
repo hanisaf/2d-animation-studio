@@ -420,7 +420,8 @@ function iris(cx, cy, r, col = '#140C12') {
 
 // ---------- layers (depth of field, bloom, lighting, cast shadows, colour grading) ----------
 // Paint fn() into an offscreen layer, then composite it with a CSS filter, blend mode, or downscaled blur.
-// o: { blur, filter, composite, alpha, scale (auto 0.5 when blur >= 2) }
+// o: { blur, filter, composite, alpha, scale (auto ramps from 1 to 0.5 over blur 0.5–1.5) }
+const _blurScale = blur => 1 - .5 * ease(blur - .5);
 const _layers = [];
 let _layerDepth = 0;
 let _probe = null;
@@ -434,7 +435,7 @@ function _getLayer(depth, w = W, h = H) {
 }
 function layer(fn, o = {}) {
   const blur = o.blur || 0, comp = o.composite || 'source-over', alpha = o.alpha ?? 1;
-  const scale = o.scale ?? (blur >= 2 ? .5 : 1);
+  const scale = o.scale ?? _blurScale(blur);
   const f = [blur > .05 ? `blur(${(blur * scale).toFixed(2)}px)` : '', o.filter || ''].join(' ').trim();
   const needBuf = !!(f || comp !== 'source-over' || alpha < .999 || scale !== 1);
   if (!needBuf || _isVectorCtx()) return fn();
@@ -446,11 +447,18 @@ function layer(fn, o = {}) {
   X = c; _layerDepth++;
   let res;
   try { res = fn(); } finally { _layerDepth--; X = outer; }
+  let source = cv;
+  if (f) {
+    const filtered = _getLayer(_layerDepth + 1, lw, lh), fc = filtered._ctx;
+    fc.save(); fc.setTransform(1, 0, 0, 1, 0, 0); fc.clearRect(0, 0, lw, lh);
+    fc.filter = f; fc.drawImage(cv, 0, 0); fc.restore();
+    source = filtered;
+  }
   X.save(); X.setTransform(1, 0, 0, 1, 0, 0);
-  if (f) X.filter = f;
+  if (f) X.filter = 'none';
   X.globalCompositeOperation = comp;
   X.globalAlpha *= alpha;
-  X.drawImage(cv, 0, 0, lw, lh, 0, 0, W, H);
+  X.drawImage(source, 0, 0, lw, lh, 0, 0, W, H);
   X.restore();
   return res;
 }
@@ -461,10 +469,12 @@ function clearStaticLayers() { for (const v of _STATIC_LAYERS.values()) { v.cv.w
 function staticLayer(key, fn, o = {}) {
   if (key == null || _isVectorCtx()) return layer(fn, o);
   const blur = o.blur || 0, comp = o.composite || 'source-over', alpha = o.alpha ?? 1;
-  const scale = o.scale ?? (blur >= 2 ? .5 : 1);
+  const scale = o.scale ?? _blurScale(blur);
   const f = [blur > .05 ? `blur(${(blur * scale).toFixed(2)}px)` : '', o.filter || ''].join(' ').trim();
   const sid = typeof SCENE !== 'undefined' && SCENE ? SCENE.id : '';
-  const k = `${sid}|${FX.m2 ? 1 : 0}${FX.m3 ? 1 : 0}|${scale}|${f}|${key}`;
+  const matrix = X[_MTRACK] || X.getTransform();
+  const k = JSON.stringify([sid, fxEnabled('m2'), fxEnabled('m3'), scale, f,
+    matrix.a, matrix.b, matrix.c, matrix.d, matrix.e, matrix.f, key]);
   let entry = _STATIC_LAYERS.get(k);
   if (entry) {
     _STATIC_LAYERS.delete(k); _STATIC_LAYERS.set(k, entry);
@@ -594,6 +604,15 @@ function castShadow(fn, footX, footY, o = {}) {
   cB.fillStyle = o.color ?? cfg?.shadowColor ?? 'rgba(38,20,34,.22)';
   cB.fillRect(0, 0, sw, sh);
   cB.restore();
+  // Bake the blur at silhouette resolution before projecting/upscaling it. A filter on X
+  // would still allocate a full-resolution filtered surface despite the smaller cvB.
+  let shadow = cvB;
+  if (blurPx > .05) {
+    const cvC = _getLayer(d0 + 2, sw, sh), cC = cvC._ctx;
+    cC.save(); cC.setTransform(1, 0, 0, 1, 0, 0); cC.clearRect(0, 0, sw, sh);
+    cC.filter = `blur(${(blurPx * shScale).toFixed(2)}px)`; cC.drawImage(cvB, 0, 0); cC.restore();
+    shadow = cvC;
+  }
   const dir = cfg?.dir || [-.7, -.7];
   const skew = o.skew ?? cfg?.shadowSkew ?? clamp(dir[0] * .65, -1.2, 1.2);
   const scaleY = o.scaleY ?? cfg?.shadowScaleY ?? .26;
@@ -601,8 +620,7 @@ function castShadow(fn, footX, footY, o = {}) {
   X.translate(sx, sy + (o.dy ?? 2));
   X.transform(1, 0, skew, scaleY, 0, 0);
   X.translate(-sx, -sy);
-  if (blurPx > .05) X.filter = `blur(${blurPx.toFixed(1)}px)`;
-  X.drawImage(cvB, 0, 0, sw, sh, 0, 0, W, H);
+  X.drawImage(shadow, 0, 0, sw, sh, 0, 0, W, H);
   X.restore();
   if (o.drawSubject !== false) {
     if (cfg && (cfg.tint || cfg.rim || cfg.shade)) _applyLight(cvA, cA, d0, cfg);

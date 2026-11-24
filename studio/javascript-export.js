@@ -292,6 +292,7 @@ async function sceneJavaScriptPlayer(config, target, options, loadFonts) {
     if (webAudioCtx) { try { webAudioCtx.close(); } catch {} webAudioCtx = null; webAudioBuf = null; }
     if (audioBlobUrl) { try { URL.revokeObjectURL(audioBlobUrl); } catch {} audioBlobUrl = null; }
     if (audio) { audio.removeAttribute('src'); audio.load(); }
+    if (typeof disposeCalloutCache === 'function') disposeCalloutCache();
     if (typeof clearStaticLayers === 'function') clearStaticLayers();
     if (typeof _layers !== 'undefined') {
       for (let i = 0; i < _layers.length; i++) if (_layers[i]) { _layers[i].width = 0; _layers[i].height = 0; }
