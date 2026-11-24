@@ -215,7 +215,7 @@
 
   // ---------- sidebar ----------
   const META = (kind, id) => ASSETS[kind][id] || { id, title: id, refs: [] };
-  const PROJECT_DOCS = [['README.md', 'Project README'], ['SERIES.md', 'Series bible'], ['ANIMATION_GUIDE.md', 'Animation guide'], ['docs/HANDBOOK.md', 'Handbook']];
+  const PROJECT_DOCS = [['README.md', 'Project README'], ['SERIES.md', 'Series bible'], ['ANIMATION_GUIDE.md', 'Animation guide'], ['COMIC_GUIDE.md', 'Comic guide'], ['docs/HANDBOOK.md', 'Handbook']];
   // The sidebar is built from the manifests; the counts in each item's subtitle fill in once that asset's code has loaded.
   const sub = (mode, id) => {
     if (mode === 'scene') { const n = REGISTRY.movie.indexOf(id); return [n >= 0 && '#' + (n + 1), SCENES[id] && SCENES[id].duration + 's'].filter(Boolean).join(' · '); }
