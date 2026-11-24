@@ -253,7 +253,99 @@
     }
     $('#list-docs').innerHTML = PROJECT_DOCS.map(([f, t]) => li('doc', f, '📄', t, f)).join('');
     $('#cnt-docs').textContent = PROJECT_DOCS.length;
-    document.querySelectorAll('#side li[data-mode]').forEach(el => el.addEventListener('click', () => select(el.dataset.mode, el.dataset.id)));
+    document.querySelectorAll('#side li[data-mode]').forEach(el => el.addEventListener('click', () => {
+      if (mobileMQ.matches) closeDrawer({ restoreFocus: false });
+      select(el.dataset.mode, el.dataset.id);
+    }));
+  }
+
+  // ---------- responsive navigation drawer (acts as sidebar on desktop, swipeable drawer on mobile) ----------
+  const mobileMQ = matchMedia('(max-width: 768px), (max-height: 500px) and (pointer: coarse)');
+  const drawer = $('#drawer'), drawerScroller = drawer?.querySelector('.Drawer-scroller'), drawerSheet = $('#side');
+  const drawerOpenBtn = $('#drawer-open'), drawerCloseBtn = $('#drawer-close');
+  const mobileBar = $('#mobile-bar'), mobileTitle = $('#mobile-title'), mobileDocsBtn = $('#mobile-docs'), mainEl = $('main');
+  let drawerRestoreFocus = true;
+
+  function setPageInert(flag) {
+    if (mainEl) mainEl.inert = flag;
+    if (mobileBar) mobileBar.inert = flag;
+  }
+  function forceCloseDrawer() {
+    if (!drawer) return;
+    if (drawer.matches(':popover-open')) { try { drawer.hidePopover(); } catch {} }
+    setPageInert(false);
+    drawer.removeAttribute('aria-modal');
+    drawerOpenBtn?.setAttribute('aria-expanded', 'false');
+  }
+  function syncDrawerMode() {
+    if (!drawer) return;
+    if (mobileMQ.matches) {
+      if (!drawer.hasAttribute('popover')) drawer.setAttribute('popover', 'manual');
+      drawer.setAttribute('role', 'dialog');
+    } else {
+      forceCloseDrawer();
+      drawer.removeAttribute('popover');
+      drawer.removeAttribute('role');
+    }
+  }
+  async function openDrawer() {
+    if (!drawer || !mobileMQ.matches || drawer.hasAttribute('aria-modal')) return;
+    drawerRestoreFocus = true;
+    drawer.showPopover();
+    setPageInert(true);
+    drawer.setAttribute('aria-modal', 'true');
+    if (!CSS.supports('scroll-initial-target', 'nearest') && drawerScroller) {
+      drawerScroller.scrollTo({ left: drawerScroller.offsetWidth, behavior: 'instant' });
+      await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
+    }
+    drawerScroller?.scrollTo({ left: 0, behavior: 'auto' });
+  }
+  function closeDrawer({ restoreFocus = true } = {}) {
+    if (!drawer || !drawer.hasAttribute('aria-modal')) return;
+    drawerRestoreFocus = restoreFocus;
+    if (!drawerScroller || drawerScroller.offsetWidth === 0) { onDrawerClosed(); return; }
+    drawerScroller.scrollTo({ left: drawerScroller.offsetWidth, behavior: 'auto' });
+  }
+  function onDrawerOpened() {
+    if (!drawer?.hasAttribute('aria-modal')) return;
+    drawerOpenBtn?.setAttribute('aria-expanded', 'true');
+  }
+  function onDrawerClosed() {
+    if (!drawer?.hasAttribute('aria-modal')) return;
+    try { drawer.hidePopover(); } catch {}
+    setPageInert(false);
+    drawer.removeAttribute('aria-modal');
+    drawerOpenBtn?.setAttribute('aria-expanded', 'false');
+    if (drawerRestoreFocus) drawerOpenBtn?.focus();
+    drawerRestoreFocus = true;
+  }
+  if (drawer && drawerScroller && drawerSheet) {
+    syncDrawerMode();
+    mobileMQ.addEventListener('change', syncDrawerMode);
+    drawerOpenBtn?.addEventListener('click', openDrawer);
+    drawerCloseBtn?.addEventListener('click', () => closeDrawer());
+    drawer.addEventListener('click', e => {
+      if (mobileMQ.matches && !drawerSheet.contains(e.target)) closeDrawer();
+    });
+    document.addEventListener('keydown', e => {
+      if (e.key === 'Escape' && drawer.hasAttribute('aria-modal')) {
+        e.preventDefault(); e.stopImmediatePropagation(); closeDrawer();
+      }
+    });
+    const visibleThreshold = 1 / Math.max(window.innerWidth, 320);
+    new IntersectionObserver(entries => {
+      if (!mobileMQ.matches) return;
+      const entry = entries.at(-1);
+      if (entry.intersectionRatio < visibleThreshold) onDrawerClosed();
+      if (entry.intersectionRatio === 1) onDrawerOpened();
+    }, { root: drawer, threshold: [visibleThreshold, 1] }).observe(drawerSheet);
+    if (!CSS.supports('animation-timeline: scroll()')) {
+      drawerScroller.addEventListener('scroll', () => {
+        if (!mobileMQ.matches || !drawerSheet.offsetWidth) return;
+        const ratio = clamp(1 - drawerScroller.scrollLeft / drawerSheet.offsetWidth, 0, 1);
+        drawer.style.setProperty('--drawer-backdrop', String(ratio));
+      }, { passive: true });
+    }
   }
 
   // Load what a view needs before showing it: a scene and everything it uses, a comic, a character, a location, or every scene
@@ -276,12 +368,15 @@
       stageEl.classList.toggle('comic-fit-width', S.comic.fit === 'width');
       stageEl.classList.toggle('comic-split', S.comic.view === 'split');
       canvas.classList.toggle('comic-pick', S.comic.panel == null);
+      canvas.classList.add('comic-swipe');
+      compareCanvas.classList.add('comic-swipe');
       compareCanvas.hidden = S.comic.view !== 'split';
       return;
     }
     stageEl.style.setProperty('--stage-ar', '16 / 9');
     stageEl.classList.remove('comic-fit-width', 'comic-split');
-    canvas.classList.remove('comic-pick');
+    canvas.classList.remove('comic-pick', 'comic-swipe');
+    compareCanvas.classList.remove('comic-swipe');
     compareCanvas.hidden = true;
     if (canvas.width !== W || canvas.height !== H) {
       canvas.width = W; canvas.height = H;
@@ -321,10 +416,16 @@
     document.querySelectorAll('#side li').forEach(li => li.classList.toggle('on', li.dataset.mode === mode && li.dataset.id === id));
     if (reveal && item) {
       for (let d = item.closest('details'); d; d = d.parentElement?.closest('details')) d.open = true;
-      item.scrollIntoView({ block: 'nearest' });
+      if (!mobileMQ.matches) item.scrollIntoView({ block: 'nearest' });
     }
     canvas.classList.toggle('grab', mode === 'location');
     $('#work').hidden = mode === 'doc'; $('#docs').classList.toggle('full', mode === 'doc');
+    if (mobileTitle) {
+      mobileTitle.textContent = mode === 'movie' ? 'Movie composer'
+        : mode === 'doc' ? ((PROJECT_DOCS.find(d => d[0] === id) || [])[1] || id)
+        : (META(mode, id).title || id);
+    }
+    if (mobileDocsBtn) mobileDocsBtn.hidden = mode === 'movie' || mode === 'doc';
     if (mode === 'doc') { showDoc(id, (PROJECT_DOCS.find(d => d[0] === id) || [])[1] || id, true); history.replaceState(null, '', `?doc=${id}`); return; }
     syncStageCanvas();
     if (mode === 'scene') { useScene(id); scenePanel(SCENES[id]); }
@@ -354,7 +455,14 @@
   }
 
   // ---------- docs pane: each asset's README (and the project docs), rendered from Markdown ----------
-  S.docsOpen = (() => { try { return localStorage.getItem('studio.docs') !== '0'; } catch { return true; } })();
+  S.docsOpen = (() => {
+    try {
+      const saved = localStorage.getItem('studio.docs');
+      if (saved !== null) return saved !== '0';
+    } catch {}
+    return !mobileMQ.matches;
+  })();
+  if (mobileDocsBtn) mobileDocsBtn.onclick = toggleDocs;
   let docPath = null;
   async function showDoc(path, title, open) {
     const pane = $('#docs'); docPath = path;
@@ -601,7 +709,7 @@
         return `<div class="seg" data-i="${i}" data-t="${t0}" style="left:${t0 / sc.duration * 100}%;width:${(t1 - t0) / sc.duration * 100}%" title="${esc(fn.name || 'shot ' + (i + 1))} · ${fmt(t0)}–${fmt(t1)} s">${esc(fn.name || 'shot ' + (i + 1))}</div>`; }).join('')}</div>
         <input type="range" id="scrub" min="0" max="${sc.duration}" step="${1 / fps}" value="0"></div>
       <div class="row">
-        <button id="start" title="Home">⏮</button><button id="prev" title="←">◀︎</button><button id="play" class="primary">▶ Play</button><button id="audio-action" hidden>🔊 Enable sound</button><button id="next" title="→">▶︎</button><button id="end" title="End">⏭</button>
+        <button id="start" title="Home" aria-label="Jump to start"><span aria-hidden="true">⏮</span></button><button id="prev" title="←" aria-label="Previous frame"><span aria-hidden="true">◀︎</span></button><button id="play" class="primary">▶ Play</button><button id="audio-action" hidden>🔊 Enable sound</button><button id="next" title="→" aria-label="Next frame"><span aria-hidden="true">▶︎</span></button><button id="end" title="End" aria-label="Jump to end"><span aria-hidden="true">⏭</span></button>
         <select id="speed" title="playback speed"><option value=".25">¼×</option><option value=".5">½×</option><option value="1" selected>1×</option><option value="2">2×</option></select>
         <label class="ck"><input type="checkbox" id="loopck"> loop</label>
         ${fxTogglesHtml()}
@@ -892,12 +1000,12 @@
       </div>
       ${pagePanels.length ? `<div class="row">
         <span class="muted">Panels</span>
-        <button id="comic-panel-prev" title="Previous panel (← in panel view)" ${S.comic.panel == null ? 'disabled' : ''}>◀︎</button>
+        <button id="comic-panel-prev" title="Previous panel (← in panel view)" aria-label="Previous panel" ${S.comic.panel == null ? 'disabled' : ''}><span aria-hidden="true">◀︎</span></button>
         <div class="chips" id="comic-panels">
           <button class="chip${S.comic.panel == null ? ' on' : ''}" data-cpanel="all" title="Show the full page (Esc)">Full page</button>
           ${pagePanels.map(slot => `<button class="chip${S.comic.panel === slot.index ? ' on' : ''}" data-cpanel="${slot.index}" title="${esc(`${slot.id} · ${slot.w}×${slot.h}`)}">${esc(comicPanelLabel(slot))}</button>`).join('')}
         </div>
-        <button id="comic-panel-next" title="Next panel (→ in panel view)" ${S.comic.panel != null && S.comic.panel >= pagePanels.length - 1 ? 'disabled' : ''}>▶︎</button>
+        <button id="comic-panel-next" title="Next panel (→ in panel view)" aria-label="Next panel" ${S.comic.panel != null && S.comic.panel >= pagePanels.length - 1 ? 'disabled' : ''}><span aria-hidden="true">▶︎</span></button>
       </div>` : ''}
       <div class="row">
         <button id="snap">📷 Snapshot PNG</button>
@@ -1051,21 +1159,102 @@
     }
   }
 
-  // ---------- canvas mouse + keyboard ----------
-  let drag = null;
-  canvas.addEventListener('pointerdown', e => { if (S.mode !== 'location') return; drag = { x: e.clientX, y: e.clientY, cam: { ...S.loc.cam } }; canvas.setPointerCapture(e.pointerId); });
+  // ---------- canvas mouse, touch + keyboard ----------
+  let drag = null, pinch = null, comicSwipe = null, suppressComicClickUntil = 0;
+  const activePointers = new Map();
+  async function stepComicSwipe(dir) {
+    const c = COMICS[S.id];
+    if (!c) return;
+    const goPage = async (idx, initialPanel = null) => {
+      const next = clamp(idx, 0, Math.max(0, c.pages.length - 1));
+      if (next === S.comic.page) return;
+      S.comic.page = next; S.comic.panel = initialPanel; S.comic.take = 'approved';
+      await loadActiveComicImages(); comicPanel(c); syncComicUrl();
+    };
+    if (S.comic.panel != null) {
+      const count = computePageLayout(c, S.comic.page).panels.length;
+      if (dir > 0) {
+        if (S.comic.panel < count - 1) setComicPanel(c, S.comic.panel + 1);
+        else if (S.comic.page < c.pages.length - 1) await goPage(S.comic.page + 1, 0);
+      } else {
+        if (S.comic.panel > 0) setComicPanel(c, S.comic.panel - 1);
+        else if (S.comic.page > 0) {
+          const prevCount = computePageLayout(c, S.comic.page - 1).panels.length;
+          await goPage(S.comic.page - 1, Math.max(0, prevCount - 1));
+        } else setComicPanel(c, null);
+      }
+      return;
+    }
+    await goPage(S.comic.page + dir, null);
+  }
+  function bindComicSwipe(el) {
+    if (!el) return;
+    el.addEventListener('pointerdown', e => {
+      if (S.mode !== 'comic' || e.pointerType === 'mouse' || !e.isPrimary) return;
+      comicSwipe = { id: e.pointerId, x: e.clientX, y: e.clientY, t: performance.now() };
+    });
+    el.addEventListener('pointerup', e => {
+      if (!comicSwipe || comicSwipe.id !== e.pointerId) return;
+      const dx = e.clientX - comicSwipe.x, dy = e.clientY - comicSwipe.y, dt = performance.now() - comicSwipe.t;
+      comicSwipe = null;
+      if (S.mode !== 'comic' || dt > 650) return;
+      if (Math.abs(dx) >= 50 && Math.abs(dx) > Math.abs(dy) * 1.4) {
+        suppressComicClickUntil = performance.now() + 350;
+        stepComicSwipe(dx < 0 ? 1 : -1);
+      }
+    });
+    el.addEventListener('pointercancel', e => { if (comicSwipe?.id === e.pointerId) comicSwipe = null; });
+  }
+  bindComicSwipe(canvas);
+  bindComicSwipe(compareCanvas);
+
+  canvas.addEventListener('pointerdown', e => {
+    if (S.mode !== 'location') return;
+    activePointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    canvas.setPointerCapture(e.pointerId);
+    if (activePointers.size === 1) {
+      drag = { x: e.clientX, y: e.clientY, cam: { ...S.loc.cam } };
+      pinch = null;
+    } else if (activePointers.size === 2) {
+      const [a, b] = [...activePointers.values()];
+      pinch = { dist: Math.hypot(b.x - a.x, b.y - a.y) || 1, z: S.loc.cam.z, dir: S.loc.cam.dir < 0 ? -1 : 1 };
+      drag = null;
+    }
+  });
   canvas.addEventListener('pointermove', e => {
-    if (!drag) return; const k = W / canvas.clientWidth, dir = drag.cam.dir < 0 ? -1 : 1, dz = Math.max(200, (1200 - drag.cam.z) * dir);
+    if (S.mode !== 'location' || !activePointers.has(e.pointerId)) return;
+    activePointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    if (pinch && activePointers.size >= 2) {
+      const [a, b] = [...activePointers.values()];
+      const dist = Math.hypot(b.x - a.x, b.y - a.y);
+      S.loc.cam.z = clamp(pinch.z + (dist - pinch.dist) * 3.5 * pinch.dir, -800, 2380);
+      camUI();
+      return;
+    }
+    if (!drag) return;
+    const k = W / canvas.clientWidth, dir = drag.cam.dir < 0 ? -1 : 1, dz = Math.max(200, (1200 - drag.cam.z) * dir);
     S.loc.cam.x = clamp(drag.cam.x - (e.clientX - drag.x) * k * dz / drag.cam.f * dir, -900, 900);
     S.loc.cam.hy = clamp(drag.cam.hy + (e.clientY - drag.y) * k, -1000, 3000); camUI();
   });
-  canvas.addEventListener('pointerup', () => { drag = null; });
+  const endLocPointer = e => {
+    activePointers.delete(e.pointerId);
+    if (activePointers.size < 2) pinch = null;
+    if (activePointers.size === 1 && S.mode === 'location') {
+      const [p] = activePointers.values();
+      drag = { x: p.x, y: p.y, cam: { ...S.loc.cam } };
+    } else if (activePointers.size === 0) {
+      drag = null;
+    }
+  };
+  canvas.addEventListener('pointerup', endLocPointer);
+  canvas.addEventListener('pointercancel', endLocPointer);
   canvas.addEventListener('wheel', e => {
     if (S.mode !== 'location') return; e.preventDefault(); const c = S.loc.cam;
     if (e.shiftKey || e.altKey) c.f = clamp(c.f * Math.exp(-(e.deltaY || e.deltaX) * .0015), 300, 3000); else c.z = clamp(c.z - e.deltaY * 1.2 * (c.dir < 0 ? -1 : 1), -800, 2380);
     camUI();
   }, { passive: false });
   canvas.addEventListener('click', e => {
+    if (performance.now() < suppressComicClickUntil) return;
     if (S.mode !== 'comic' || S.comic.panel != null || !COMICS[S.id]) return;
     const c = COMICS[S.id], rect = canvas.getBoundingClientRect();
     if (!rect.width || !rect.height) return;
