@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>Safadi Animation Studio</title>
 <link rel="icon" href="data:,">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Luckiest+Guy&family=Fira+Mono:wght@500&display=block">
@@ -10,8 +10,23 @@
 </head>
 <body>
 <div id="app">
-  <aside id="side">
-    <header>Safadi Animation Studio<small>characters · locations · scenes · comics · movie · docs</small></header>
+  <header id="mobile-bar">
+    <button id="drawer-open" type="button" aria-label="Open studio menu" aria-expanded="false" aria-controls="drawer"><span aria-hidden="true">☰</span></button>
+    <span id="mobile-title">Safadi Animation Studio</span>
+    <button id="mobile-docs" type="button" class="docbtn" aria-label="Toggle documentation"><span aria-hidden="true">📄</span><span>Docs</span></button>
+    <a id="mobile-home" href="index.html">Home</a>
+  </header>
+  <div class="Drawer" id="drawer" aria-label="Studio navigation">
+    <div class="Drawer-scroller">
+      <aside id="side" class="Drawer-sheet">
+        <header>
+          <div class="side-title-row">
+            <span>Safadi Animation Studio</span>
+            <button id="drawer-close" type="button" aria-label="Close menu" autofocus><span aria-hidden="true">✕</span></button>
+          </div>
+          <small>characters · locations · scenes · comics · movie · docs</small>
+          <a class="side-home" href="index.html">← Movies, comics &amp; games</a>
+        </header>
     <nav class="side-nav" aria-label="Studio navigation">
       <details class="nav-group" id="group-characters">
         <summary><span class="lbl">Characters</span><span class="cnt" id="cnt-characters"></span></summary>
@@ -51,14 +66,16 @@
       <kbd>Space</kbd> play/pause · <kbd>←</kbd><kbd>→</kbd> frame · <kbd>⇧</kbd>+arrows 1 s · <kbd>Home</kbd>/<kbd>End</kbd><br>
       Locations: drag to pan/tilt, wheel to dolly, <kbd>⇧</kbd>+wheel to zoom, <kbd>W A S D Q E</kbd> to fly
     </footer>
-  </aside>
+      </aside>
+    </div>
+  </div>
   <main>
     <div id="work">
       <div class="stage"><canvas id="out" width="1920" height="1080"></canvas><canvas id="out-compare" width="1700" height="2200" hidden></canvas></div>
       <section id="panel"></section>
     </div>
     <aside id="docs" hidden>
-      <div class="docbar"><span id="doctitle">Docs</span><a id="docraw" target="_blank" title="open the Markdown file">source</a><button id="docclose" title="close">✕</button></div>
+      <div class="docbar"><span id="doctitle">Docs</span><a id="docraw" target="_blank" title="open the Markdown file">source</a><button id="docclose" type="button" aria-label="Close documentation" title="close"><span aria-hidden="true">✕</span></button></div>
       <article id="doc" class="md"></article>
     </aside>
   </main>
