@@ -9,15 +9,17 @@ A 2D cartoon animated entirely in code. Every frame is a pure function of time, 
 | [`characters/`](characters/) | One self-contained folder per character: `asset.js` (manifest), `README.md` (who they are, look, rig API), the rig code and reference art |
 | [`locations/`](locations/) | One folder per set: `asset.js`, `README.md` (description, layout, spots, cameras), the 3D set code and reference art |
 | [`scenes/`](scenes/) | One folder per series (`series.js`: title, category, scene order), and inside it one folder per scene: `asset.js` (title, cast, locations, optional synthesized music or audio), `README.md` (synopsis, script, shot list), `scene.js` |
-| [`engine/`](engine/) | Shared code: drawing primitives and timing (`core.js`), 3D perspective (`persp.js`), speech bubbles (`callout.js`), scene registry and frame dispatch (`timeline.js`) |
-| [`registry.js`](registry.js) | The asset folder names, the scene series, and which series make the movie |
-| [`studio.html`](studio.html) + [`studio/`](studio/) | **The studio**: browse scenes, characters and locations; play; export MP4 right in the browser |
-| [`serve.mjs`](serve.mjs) | Tiny local server for the studio (`npm run studio`) |
+| [`comics/`](comics/) | One folder per book (`book.js`: trim size, art style prompt & refs, comic order), and inside it one folder per comic: `asset.js`, `README.md`, `comic.js`, and optional `illustrated/` outputs |
+| [`engine/`](engine/) | Shared code: drawing primitives and timing (`core.js`), 3D perspective (`persp.js`), speech bubbles (`callout.js`), comic layout & lettering (`comic.js`, `books.js`), scene/comic registry and frame dispatch (`timeline.js`) |
+| [`registry.js`](registry.js) | The asset folder names, the scene series, comic books, and which series make the movie |
+| [`studio.html`](studio.html) + [`studio/`](studio/) | **The studio**: browse scenes, comics, characters and locations; play; print PDFs; export MP4 right in the browser |
+| [`serve.mjs`](serve.mjs) | Tiny local server for the studio (`npm run studio`) + local `/api/illustrate-comic` refinement route |
 | [`render.mjs`](render.mjs) | Renderer: contact sheets, stills, clips, full frames, encoding, movie assembly |
-| [`scripts/`](scripts/) | Shell shortcuts: build a scene, build the movie, preview, scaffold new assets |
+| [`scripts/`](scripts/) | Shell & Node shortcuts: build scenes/movie/comics, illustrate comics with Gemini, preview, scaffold new assets |
 | [`docs/HANDBOOK.md`](docs/HANDBOOK.md) | **Complete documentation:** moving to a new machine, architecture, full API, scenes, workflows, troubleshooting |
 | [`SERIES.md`](SERIES.md) | The series bible: premise, tone, look, and links to every character, set and episode |
 | [`ANIMATION_GUIDE.md`](ANIMATION_GUIDE.md) | How to write a scene or rig, and the style rules |
+| [`COMIC_GUIDE.md`](COMIC_GUIDE.md) | How to write, build, and illustrate comics (Studio blueprints → Gemini Nano Banana 2.1) |
 
 ## Project versioning
 
@@ -166,6 +168,7 @@ npm run studio                                 # → http://localhost:5173
 ```
 
 - **Scenes**: play/scrub with a shot timeline and audio preview; **Export scene MP4** straight from the browser (WebCodecs; Chrome/Edge). Scene 01 synthesizes music and cartoon dialogue from `scenes/scene01_juggling/asset.js`. **Copy play link** gives a URL such as `studio.html?scene=scene01_juggling&play=true`, which starts playback in a full-window view without the tools. If the browser blocks autoplay with sound, click **Tap for sound**; after the scene ends, **Replay with sound** starts it again.
+- **Comics**: browse books and multi-page comics built from the same character rigs (`studio.html?comic=ice_skating`). Switch between **Studio (Code)**, **Illustrated (Gemini)**, and **Side by Side**, toggle **Fit page / Fit width** and lettering, print/save multi-page PDFs, or trigger local Gemini Nano Banana 2.1 refinement when running `npm run studio` with `GEMINI_API_KEY`.
 - **Movie composer**: choose scenes, set in/out points, reorder or remove clips, preview the cut, and export the selected movie as MP4. The composition is saved in this browser.
 - **Characters**: every pose (on paper or standing in a location at true scale) and the full model sheet, next to the reference art. Choose **Backdrop → Transparent** for a checkerboard preview and transparent PNG snapshots or GIF exports, including model sheets. **Export SVG** downloads the current animation frame as editable vector paths on a transparent 1920×1080 canvas. Pose view exports the selected pose at the current zoom; model-sheet view exports the model-sheet poses (excluding fight poses). Backdrops, grain, and sheet labels are omitted. Canvas glow/shadow and additive blending effects may look different, and text props use fonts installed in the viewer.
 - **📄 Docs**: each asset's `README.md` (description, script, shot list, API) beside its preview, cross-linked (a scene ↔ its cast ↔ its locations); project docs in the sidebar.
@@ -203,6 +206,16 @@ scripts/preview.sh sheet scene01_juggling 1,5,9.5,14,21.6,28.9
 scripts/preview.sh clip scene01_juggling 20:26
 ```
 
+## Build & illustrate comics
+
+```bash
+npm run comic:build -- ice_skating --panels --pdf       # Studio PNGs, clean panel PNGs, and print PDFs
+npm run comic:illustrate -- ice_skating --dry-run       # inspect refs, aspect ratio, and cache hash
+GEMINI_API_KEY=... npm run comic:illustrate -- ice_skating  # refine with Gemini Nano Banana 2.1
+```
+
+See [COMIC_GUIDE.md](COMIC_GUIDE.md) for the full `book.js`, `asset.js`, and `engine/comic.js` authoring guide.
+
 ## Add new things
 
 ```bash
@@ -210,6 +223,8 @@ scripts/new.sh character princess_petunia     # characters/princess_petunia/ {as
 scripts/new.sh location castle_kitchen        # locations/castle_kitchen/ {asset.js, README.md, set} + registry
 scripts/new.sh series auditions "Professor Safadi Studio"   # scenes/auditions/series.js + registry (add to movieSeries for the movie)
 scripts/new.sh scene auditions scene45_auditions  # scenes/auditions/scene45_auditions/ {asset.js, README.md, scene.js} + series.js
+scripts/new.sh book family_tales "Sami's Studio"            # comics/family_tales/ {book.js, style_refs/} + registry
+scripts/new.sh comic sami_and_jenna snow_day                # comics/sami_and_jenna/snow_day/ {asset.js, README.md, comic.js} + book.js
 ```
 
 Each new folder is self-contained: describe the asset in its `README.md` (for a scene: synopsis, script, shot list), put reference art in the folder and list it in `asset.js`, then write the code. See [ANIMATION_GUIDE.md](ANIMATION_GUIDE.md) and [docs/HANDBOOK.md §8](docs/HANDBOOK.md#8-assets-characters-locations-scenes).

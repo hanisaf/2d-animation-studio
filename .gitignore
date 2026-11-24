@@ -30,6 +30,29 @@ brag-output/
 !scenes/**/costumes/*.png
 !scenes/the_trolls/scene47_troll_analytics/alma_monsters.jpg
 
+# comic source art, style anchors, studio picture outputs, and active/approved illustrated outputs
+!comics/**/style_refs/*.png
+!comics/**/style_refs/*.jpg
+!comics/**/style_refs/*.jpeg
+!comics/**/style_refs/*.webp
+!comics/*/*/*.png
+!comics/*/*/*.jpg
+!comics/*/*/*.jpeg
+!comics/*/*/*.webp
+!comics/**/studio/*.png
+!comics/**/studio/*.jpg
+!comics/**/studio/*.jpeg
+!comics/**/studio/*.webp
+!comics/**/illustrated/*.png
+!comics/**/illustrated/*.jpg
+!comics/**/illustrated/*.jpeg
+!comics/**/illustrated/*.webp
+
+# regenerable comic PDFs and historical Gemini take cache
+comics/**/out/
+comics/**/illustrated/takes/
+comics/**/illustrated/index.json
+
 # ---- dependencies (reinstall with: npm install; ffmpeg-static is OS-specific) ----
 node_modules/
 

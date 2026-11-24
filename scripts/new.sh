@@ -4,12 +4,37 @@
 #   scripts/new.sh location  castle_kitchen               → locations/castle_kitchen/{asset.js, README.md, castle_kitchen.js} (+ registry.js)
 #   scripts/new.sh series    auditions ["Professor Safadi Studio"]  → scenes/auditions/series.js (+ registry.js series; add it to movieSeries by hand)
 #   scripts/new.sh scene     auditions scene37_auditions  → scenes/auditions/scene37_auditions/{asset.js, README.md, scene.js} (+ the series' scene list)
+#   scripts/new.sh book      family_tales ["Sami's Studio"] → comics/family_tales/{book.js, style_refs/} (+ registry.js books)
+#   scripts/new.sh comic     sami_and_jenna snow_day      → comics/sami_and_jenna/snow_day/{asset.js, README.md, comic.js} (+ book.js comics list)
 # Then: fill in README.md (description / script), put reference art in the folder and list it in asset.js.
 set -euo pipefail
 cd "$(dirname "$0")/.."
-usage() { sed -n '2,7p' "$0"; exit 1; }
-kind="${1:-}"; [[ "$kind" =~ ^(character|location|series|scene)$ ]] || usage
+usage() { sed -n '2,9p' "$0"; exit 1; }
+kind="${1:-}"; [[ "$kind" =~ ^(character|location|series|scene|book|comic)$ ]] || usage
 titled() { python3 -c "import sys; print(' '.join(w.capitalize() for w in sys.argv[1].split('_') if not (w.startswith('scene') and w[5:].isdigit())))" "$1"; }
+
+if [ "$kind" = book ]; then
+  name="${2:-}"; category="${3:-}"; [[ "$name" =~ ^[a-z0-9_]+$ ]] || usage
+  dir="comics/$name"; [ -e "$dir" ] && { echo "$dir already exists"; exit 1; }
+  mkdir -p "$dir/style_refs"
+  python3 - "$name" "$(titled "$name")" "$category" <<'PY'
+import sys, re
+name, title, category = sys.argv[1:]
+esc = lambda v: v.replace('\\', '\\\\').replace("'", "\\'")
+t = open('scripts/templates/book/book.js').read()
+open(f'comics/{name}/book.js', 'w').write(t.replace('__NAME__', name).replace('__TITLE__', esc(title)).replace('__CATEGORY__', esc(category)))
+s = open('registry.js').read()
+s, n = re.subn(
+    r"(\n  books: \[)(.*?)(\],?)",
+    lambda m: m.group(1) + (m.group(2).rstrip() + (", " if m.group(2).strip() and not m.group(2).rstrip().endswith(',') else "") + f"'{name}'" if '\n' not in m.group(2) else m.group(2) + f"\n    '{name}',") + m.group(3),
+    s, count=1, flags=re.S
+)
+assert n, 'could not find the books list in registry.js'
+open('registry.js', 'w').write(s)
+PY
+  echo "created $dir/book.js and $dir/style_refs/ and registered it in registry.js"
+  exit 0
+fi
 
 if [ "$kind" = series ]; then
   name="${2:-}"; category="${3:-}"; [[ "$name" =~ ^[a-z0-9_]+$ ]] || usage
@@ -34,28 +59,36 @@ if [ "$kind" = scene ]; then
   series="${2:-}"; name="${3:-}"; [[ "$series" =~ ^[a-z0-9_]+$ && "$name" =~ ^[a-z0-9_]+$ ]] || usage
   [ -f "scenes/$series/series.js" ] || { echo "no series scenes/$series (create it first: scripts/new.sh series $series)"; exit 1; }
   if grep -qr --include=series.js "'$name'" scenes; then echo "scene id $name is already used (ids are unique across all series)"; exit 1; fi
-  dir="scenes/$series/$name"
+  dir="scenes/$series/$name"; book=""
+elif [ "$kind" = comic ]; then
+  book="${2:-}"; name="${3:-}"; [[ "$book" =~ ^[a-z0-9_]+$ && "$name" =~ ^[a-z0-9_]+$ ]] || usage
+  [ -f "comics/$book/book.js" ] || { echo "no book comics/$book (create it first: scripts/new.sh book $book)"; exit 1; }
+  if grep -qr --include=book.js "'$name'" comics; then echo "comic id $name is already used (ids are unique across all books)"; exit 1; fi
+  dir="comics/$book/$name"; series=""
 else
   name="${2:-}"; [[ "$name" =~ ^[a-z0-9_]+$ ]] || usage
-  dir="${kind}s/$name"; series=""
+  dir="${kind}s/$name"; series=""; book=""
 fi
 [ -e "$dir" ] && { echo "$dir already exists"; exit 1; }
 title="$(titled "$name")"
 mkdir -p "$dir"
 for f in scripts/templates/"$kind"/*; do
   out="$dir/$(basename "$f" | sed "s/__NAME__/$name/")"
-  sed -e "s/__NAME__/$name/g" -e "s/__TITLE__/$title/g" -e "s/__SERIES__/$series/g" "$f" > "$out"
+  sed -e "s/__NAME__/$name/g" -e "s/__TITLE__/$title/g" -e "s/__SERIES__/$series/g" -e "s/__BOOK__/$book/g" "$f" > "$out"
 done
-python3 - "$kind" "$name" "$series" <<'PY'
+python3 - "$kind" "$name" "$series" "$book" <<'PY'
 import sys, re
-kind, name, series = sys.argv[1:]
+kind, name, series, book = sys.argv[1:]
 if kind == 'scene':
     p = f'scenes/{series}/series.js'
     s, n = re.subn(r"(\n  scenes: \[)(.*?)(\n  \],)", lambda m: m.group(1) + m.group(2) + f"\n    '{name}'," + m.group(3), open(p).read(), count=1, flags=re.S)
+elif kind == 'comic':
+    p = f'comics/{book}/book.js'
+    s, n = re.subn(r"(\n  comics: \[)(.*?)(\n  \],)", lambda m: m.group(1) + m.group(2) + f"\n    '{name}'," + m.group(3), open(p).read(), count=1, flags=re.S)
 else:
     p, sec = 'registry.js', kind + 's'
     s, n = re.subn(r"(\n  %s: \[)(.*?)(\])" % sec, lambda m: m.group(1) + (m.group(2) + ", '%s'" % name if m.group(2).strip() else "'%s'" % name) + m.group(3), open(p).read(), count=1)
 assert n, f'could not find the list to add {name} to in {p}'
 open(p, 'w').write(s)
 PY
-echo "created $dir/ ($(ls "$dir" | tr '\n' ' ')) and registered it$([ -n "$series" ] && echo " in scenes/$series/series.js" || echo " in registry.js")"
+echo "created $dir/ ($(ls "$dir" | tr '\n' ' ')) and registered it$([ -n "$series" ] && echo " in scenes/$series/series.js" || ([ -n "$book" ] && echo " in comics/$book/book.js" || echo " in registry.js"))"

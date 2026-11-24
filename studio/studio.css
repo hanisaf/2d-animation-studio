@@ -56,9 +56,24 @@ kbd { background: var(--panel2); border: 1px solid var(--line); border-radius: 4
 /* ---- main ---- */
 main { display: flex; min-width: 0; min-height: 0; }
 #work { flex: 1 1 auto; display: flex; flex-direction: column; min-width: 0; min-height: 0; }
-.stage { flex: 1 1 auto; min-height: 0; display: flex; align-items: center; justify-content: center; padding: 12px; background: #0f0b10; container-type: size; }
-#out { width: min(100cqw, calc(100cqh * 16 / 9)); height: auto; aspect-ratio: 16 / 9; max-width: 100%; max-height: 100%; border-radius: 6px; background: repeating-conic-gradient(#ddd 0% 25%, #aaa 0% 50%) 0 0 / 20px 20px; box-shadow: 0 10px 40px rgba(0,0,0,.5); touch-action: none; }
+.stage { flex: 1 1 auto; min-height: 0; display: flex; align-items: center; justify-content: center; gap: 14px; padding: 12px; background: #0f0b10; container-type: size; --stage-ar: 16 / 9; }
+#out, #out-compare { width: min(100cqw, calc(100cqh * var(--stage-ar))); height: auto; aspect-ratio: var(--stage-ar); max-width: 100%; max-height: 100%; border-radius: 6px; background: repeating-conic-gradient(#ddd 0% 25%, #aaa 0% 50%) 0 0 / 20px 20px; box-shadow: 0 10px 40px rgba(0,0,0,.5); touch-action: none; }
 #out.grab { cursor: grab; } #out.grab:active { cursor: grabbing; }
+#out.comic-pick { cursor: zoom-in; }
+.stage.comic-split #out, .stage.comic-split #out-compare { width: min(calc(50cqw - 18px), calc(100cqh * var(--stage-ar))); }
+.stage.comic-fit-width { container-type: inline-size; overflow: auto; align-items: flex-start; justify-content: center; }
+.stage.comic-fit-width #out, .stage.comic-fit-width #out-compare { width: min(100%, 960px); max-height: none; flex: 0 0 auto; }
+.stage.comic-fit-width.comic-split #out, .stage.comic-fit-width.comic-split #out-compare { width: min(calc(50% - 8px), 840px); }
+#comic-print { display: none; }
+@media print {
+  @page { margin: 0.2in; }
+  html, body { height: auto; background: #fff; }
+  #app, #lightbox, #sound-unlock, #err { display: none !important; }
+  #comic-print { display: block !important; }
+  #comic-print .print-page { break-after: page; page-break-after: always; display: flex; align-items: center; justify-content: center; }
+  #comic-print .print-page:last-child { break-after: auto; page-break-after: auto; }
+  #comic-print img { max-width: 100%; max-height: 10.6in; width: auto; height: auto; display: block; object-fit: contain; }
+}
 #panel { flex: 0 0 auto; background: var(--panel); border-top: 1px solid var(--line); padding: 12px 16px 14px; display: grid; gap: 10px; max-height: 48vh; overflow-y: auto; }
 
 .head { display: flex; gap: 16px; align-items: flex-start; }

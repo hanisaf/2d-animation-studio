@@ -21,5 +21,7 @@ const REGISTRY = {
     'fall_festival',
   ],
   movieSeries: ['early_episodes', 'soccer_showdown', 'halloween', 'book_fair', 'talent_show', 'lectures', 'cleaning_up', 'screen_time', 'the_trolls', 'pokemon', 'fall_festival'],   // their scenes, in order, are the default composer order and node render.mjs --movie
-  // Filled in from the series files by expandSeries() (engine/series.js): scenes (every scene id), movie (scene ids), sceneSeries (id → series).
+  books: ['sami_and_jenna'],
+  // Filled in from the series/book files by expandSeries() (engine/series.js) & expandBooks() (engine/books.js):
+  //   scenes, movie, sceneSeries (id → series), comics, comicBook (id → book).
 };
