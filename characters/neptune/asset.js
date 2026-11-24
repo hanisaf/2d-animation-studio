@@ -3,6 +3,7 @@ asset({
   title: 'Neptune',
   logline: 'A plush blue dolphin with a rainbow-striped belly who calls himself "King Neptune" (he is not a king). Hilarious, kind, and packing ultra-awesome water powers.',
   files: ['neptune.js', '../fighting-poses.js'],                        // code, in load order
+  uses: ['character:jester_fester'],            // shares jfEmote()
   docs: 'README.md',                            // description, look, personality, rig API
   refs: ['reference.webp'],                     // reference art in this folder
   voice: {

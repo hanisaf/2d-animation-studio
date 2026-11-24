@@ -17,12 +17,36 @@
 
   // ---------- renderer API (used by render.mjs) ----------
   const q = new URLSearchParams(location.search);
+  const parseBool = v => !(v === '0' || v === 'false' || v === 'off');
+  if (q.has('m2')) FX.m2 = parseBool(q.get('m2'));
+  if (q.has('m3')) FX.m3 = parseBool(q.get('m3'));
   const first = ASSETS.scene[q.get('scene')] ? q.get('scene') : REGISTRY.movie[0];
   if (q.has('render')) { await requireScene(first); useScene(first); }
   window.setScene = async id => { if (!ASSETS.scene[id]) throw new Error('unknown scene ' + id); await requireScene(id); useScene(id); return sceneInfo(); };
-  window.loadAsset = loadAsset; window.requireScene = requireScene; window.loadAll = loadAll;
+  window.setFx = setFx; window.loadAsset = loadAsset; window.requireScene = requireScene; window.loadAll = loadAll;
   window.sceneInfo = () => ({ id: SCENE.id, title: SCENE.title, duration: SCENE.duration, fps: SCENE.fps, audio: SCENE.audio || null, synthesizedAudio: !!(SCENE.music || SCENE.dialogue?.length) });
   window.renderAt = async (t, type = 'image/png', qual = .92) => { drawFrame(t); return canvas.toDataURL(type, qual); };
+  window.probeVideoCodec = probeVideoCodec;
+  window.exportVideoRange = exportVideoRange;
+  window.uploadVideoRange = async (opts, url) => {
+    const buf = await exportVideoRange(opts);
+    const res = await fetch(url, { method: 'POST', body: buf });
+    if (!res.ok) throw new Error('upload failed: HTTP ' + res.status);
+    return buf.byteLength;
+  };
+  window.renderBlobTo = async (t, url, type = 'image/jpeg', qual = .95) => {
+    drawFrame(t);
+    const blob = await new Promise((resolve, reject) => canvas.toBlob(b => b ? resolve(b) : reject(new Error('toBlob failed')), type, qual));
+    const res = await fetch(url, { method: 'POST', body: blob });
+    if (!res.ok) throw new Error('upload failed: HTTP ' + res.status);
+  };
+  window.uploadAudioWav = async (id, url) => {
+    const buf = await synthesizeSceneAudio(SCENES[id]);
+    if (!buf) return false;
+    const res = await fetch(url, { method: 'POST', body: sceneWavBlob(buf) });
+    if (!res.ok) throw new Error('audio upload failed: HTTP ' + res.status);
+    return true;
+  };
   window.renderSheet = async (times, cols = 3, w = 640) => {
     const h = Math.round(w * 9 / 16), rows = Math.ceil(times.length / cols), sc = document.createElement('canvas');
     sc.width = cols * w; sc.height = rows * h; const c = sc.getContext('2d'), ms = [];
@@ -38,6 +62,23 @@
 
   // =====================================================================================
   // Interactive studio
+  try {
+    const savedFx = JSON.parse(localStorage.getItem('studio.fx') || '{}');
+    if (!q.has('m2') && typeof savedFx.m2 === 'boolean') FX.m2 = savedFx.m2;
+    if (!q.has('m3') && typeof savedFx.m3 === 'boolean') FX.m3 = savedFx.m3;
+  } catch {}
+  const saveFx = () => { try { localStorage.setItem('studio.fx', JSON.stringify({ m2: FX.m2, m3: FX.m3 })); } catch {} };
+  const fxTogglesHtml = () =>
+    `<label class="ck" title="M2: tapered brush strokes, motion trails, smears & spring overshoot"><input type="checkbox" id="fx-m2"${FX.m2 ? ' checked' : ''}> brush &amp; motion (M2)</label>` +
+    `<label class="ck" title="M3: directional rim lighting, cel-shading, cast floor shadows & reflections"><input type="checkbox" id="fx-m3"${FX.m3 ? ' checked' : ''}> lighting &amp; shadows (M3)</label>`;
+  function bindFxToggles() {
+    for (const key of ['m2', 'm3']) {
+      const el = $(`#fx-${key}`);
+      if (!el) continue;
+      el.checked = FX[key];
+      el.onchange = e => { FX[key] = e.target.checked; saveFx(); S.dirty = true; };
+    }
+  }
   const S = { mode: 'scene', id: null, t: 0, playing: false, speed: 1, loop: false, dirty: true, exporting: false, playMode: q.get('play') === 'true', movieActive: -1,
     char: { pose: null, view: 'pose', backdrop: '', zoom: 1 }, loc: { cam: null, character: '', pose: '', spot: '', variant: '' } };
   const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
@@ -72,17 +113,24 @@
   };
   const refreshSubs = () => document.querySelectorAll('#side li[data-mode]').forEach(el => { const s = el.querySelector('.sub'); if (s) s.textContent = sub(el.dataset.mode, el.dataset.id); });
   function buildSidebar() {
-    const li = (mode, id, ico, title, tip) => `<li data-mode="${mode}" data-id="${esc(id)}" title="${esc(tip || '')}"><span class="ico">${ico}</span>${esc(title)}<span class="sub">${esc(sub(mode, id))}</span></li>`;
-    // Scenes grouped by category, then series (headings are plain items without data-mode, so they don't select anything).
+    const li = (mode, id, ico, title, tip) => `<li data-mode="${mode}" data-id="${esc(id)}" title="${esc(tip || '')}"><span class="ico" aria-hidden="true">${ico}</span>${esc(title)}<span class="sub">${esc(sub(mode, id))}</span></li>`;
+    const chars = REGISTRY.characters.filter(id => ASSETS.character[id]);
+    const locs = REGISTRY.locations.filter(id => ASSETS.location[id]);
+    $('#list-characters').innerHTML = chars.map(id => { const m = META('character', id); return li('character', id, '🎭', m.title, m.logline); }).join('');
+    $('#cnt-characters').textContent = chars.length;
+    $('#list-locations').innerHTML = locs.map(id => { const m = META('location', id); return li('location', id, '🏰', m.title, m.logline); }).join('');
+    $('#cnt-locations').textContent = locs.length;
+    // Scenes grouped by category, with each series as a collapsible <details> dropdown.
     const sceneLi = id => { const m = META('scene', id); return li('scene', id, '🎬', m.title, m.logline); };
     const categories = [...new Set(REGISTRY.series.map(sid => SERIES[sid].category))];
-    $('#list-scenes').innerHTML = categories.map(cat => `<li class="grp cat">${esc(cat || 'Uncategorized')}</li>` +
-      REGISTRY.series.filter(sid => SERIES[sid].category === cat).map(sid => `<li class="grp" title="${esc(SERIES[sid].logline || '')}">${esc(SERIES[sid].title)}</li>` +
-        SERIES[sid].scenes.filter(id => ASSETS.scene[id]).map(sceneLi).join('')).join('')).join('');
-    $('#list-characters').innerHTML = REGISTRY.characters.filter(id => ASSETS.character[id]).map(id => { const m = META('character', id); return li('character', id, '🎭', m.title, m.logline); }).join('');
-    $('#list-locations').innerHTML = REGISTRY.locations.filter(id => ASSETS.location[id]).map(id => { const m = META('location', id); return li('location', id, '🏰', m.title, m.logline); }).join('');
+    $('#list-scenes').innerHTML = categories.map(cat => `<div class="scene-cat">${esc(cat || 'Uncategorized')}</div>` +
+      REGISTRY.series.filter(sid => SERIES[sid].category === cat).map(sid => {
+        const scenes = SERIES[sid].scenes.filter(id => ASSETS.scene[id]);
+        return `<details class="nav-sub" data-series="${esc(sid)}"><summary><span class="lbl">${esc(SERIES[sid].title)}</span><span class="cnt">${scenes.length}</span></summary><ul>${scenes.map(sceneLi).join('')}</ul></details>`;
+      }).join('')).join('');
     $('#list-docs').innerHTML = PROJECT_DOCS.map(([f, t]) => li('doc', f, '📄', t, f)).join('');
-    document.querySelectorAll('#side li[data-mode]').forEach(el => el.onclick = () => select(el.dataset.mode, el.dataset.id));
+    $('#cnt-docs').textContent = PROJECT_DOCS.length;
+    document.querySelectorAll('#side li[data-mode]').forEach(el => el.addEventListener('click', () => select(el.dataset.mode, el.dataset.id)));
   }
 
   // Load what a view needs before showing it: a scene and everything it uses, a character, a location, or every scene
@@ -93,7 +141,7 @@
     : mode === 'location' ? Promise.all([loadAsset(mode, id), S.loc.character && loadAsset('character', S.loc.character)])
     : mode === 'movie' ? Promise.all(movieClips.map(c => requireScene(c.id)))
     : Promise.resolve();
-  async function select(mode, id, keepT = false) {
+  async function select(mode, id, keepT = false, { reveal = true } = {}) {
     if (S.exporting) return;
     const ticket = ++selecting, item = document.querySelector(`#side li[data-mode="${mode}"][data-id="${CSS.escape(id)}"]`);
     item?.classList.add('loading');
@@ -105,6 +153,10 @@
     if (S.mode !== 'doc' && S.id) S.last = [S.mode, S.id];
     pause(); S.mode = mode; S.id = id; if (!keepT) S.t = 0;
     document.querySelectorAll('#side li').forEach(li => li.classList.toggle('on', li.dataset.mode === mode && li.dataset.id === id));
+    if (reveal && item) {
+      for (let d = item.closest('details'); d; d = d.parentElement?.closest('details')) d.open = true;
+      item.scrollIntoView({ block: 'nearest' });
+    }
     canvas.classList.toggle('grab', mode === 'location');
     $('#work').hidden = mode === 'doc'; $('#docs').classList.toggle('full', mode === 'doc');
     if (mode === 'doc') { showDoc(id, (PROJECT_DOCS.find(d => d[0] === id) || [])[1] || id, true); history.replaceState(null, '', `?doc=${id}`); return; }
@@ -179,9 +231,12 @@
     paintedFrame = frameKey();
     hud();
   }
+  const PREVIEW_FPS = 24;
   function frameKey() {
     if (S.mode === 'scene') return `scene:${S.id}:${Math.floor(S.t * SCENES[S.id].fps)}`;
     if (S.mode === 'movie') { const at = movieAt(S.t); return at ? `movie:${at.index}:${Math.floor(at.local * SCENES[at.clip.id].fps)}` : 'movie:empty'; }
+    if (S.mode === 'character') return `char:${S.id}:${Math.floor(S.t * PREVIEW_FPS)}`;
+    if (S.mode === 'location') return `loc:${S.id}:${Math.floor(S.t * PREVIEW_FPS)}`;
     return null;
   }
   let last = performance.now(), paintedFrame = null;
@@ -207,7 +262,7 @@
           const d = movieDuration();
           if (S.t >= d) { if (S.loop && d) { S.t = 0; S.movieActive = -1; } else { S.t = d; pause(); } }
         } else S.t += dt;
-        S.dirty ||= (S.mode === 'scene' || S.mode === 'movie') ? frameKey() !== paintedFrame : true;
+        S.dirty ||= frameKey() !== paintedFrame;
       }
       if (S.dirty) { render(); S.dirty = false; }
     }
@@ -302,6 +357,7 @@
         <button id="start" title="Home">⏮</button><button id="prev" title="←">◀︎</button><button id="play" class="primary">▶ Play</button><button id="audio-action" hidden>🔊 Enable sound</button><button id="next" title="→">▶︎</button><button id="end" title="End">⏭</button>
         <select id="speed" title="playback speed"><option value=".25">¼×</option><option value=".5">½×</option><option value="1" selected>1×</option><option value="2">2×</option></select>
         <label class="ck"><input type="checkbox" id="loopck"> loop</label>
+        ${fxTogglesHtml()}
         <span class="spacer"></span><span id="tt" class="mono"></span>
       </div>
       ${exportRow(true)}`;
@@ -315,14 +371,17 @@
     $('#exp-js-silent').onclick = () => runJavaScriptExport(sc.id, false);
     $('#exp-js-sound').onclick = () => runJavaScriptExport(sc.id, true);
     $('#share-scene').onclick = async () => {
-      const url = new URL(location.href); url.search = new URLSearchParams({ scene: sc.id, play: 'true' }).toString();
+      const url = new URL(location.href), params = { scene: sc.id, play: 'true' };
+      if (!FX.m2) params.m2 = '0';
+      if (!FX.m3) params.m3 = '0';
+      url.search = new URLSearchParams(params).toString();
       try { await navigator.clipboard.writeText(url.href); status('Play link copied', 'ok'); }
       catch { const input = document.createElement('input'); input.value = url.href; document.body.appendChild(input); input.select(); document.execCommand('copy'); input.remove(); status('Play link copied', 'ok'); }
     };
     $('#exp-movie').onclick = () => select('movie', 'composer');
     $('#audio-action').onclick = () => S.playing ? startAudio(S.t) : play();
     bindSnap(() => `${sc.id}_f${String(Math.round(S.t * fps)).padStart(5, '0')}`);
-    setupAudio(sc); playBtn(); bindLinks();
+    bindFxToggles(); setupAudio(sc); playBtn(); bindLinks();
   }
 
   function moviePanel() {
@@ -331,7 +390,7 @@
       <div class="head"><div class="txt"><h2>Movie composer</h2><div class="muted">Choose scenes, trim each clip, and arrange the movie in playback order. Changes are saved in this browser.</div></div></div>
       <div class="row"><select id="add-scene" aria-label="Scene to add">${REGISTRY.scenes.filter(id => ASSETS.scene[id]).map(id => `<option value="${esc(id)}">${esc(META('scene', id).title)}</option>`).join('')}</select><button id="add-clip" class="accent">Add scene</button><button id="load-movie">Load registry order</button><button id="clear-movie" ${movieClips.length ? '' : 'disabled'}>Clear</button><span class="spacer"></span><span class="muted mono">${movieClips.length} clips · ${fmt(duration)} s</span></div>
       <ol class="movie-clips">${movieClips.map((c, i) => `<li data-clip="${i}"><button class="clip-preview" title="Preview from this clip">▶</button><span class="clip-title">${esc(META('scene', c.id).title)}<small>${esc(c.id)}</small></span><label>In <input class="clip-in" type="number" min="0" max="${SCENES[c.id].duration}" step="0.01" value="${fmt(c.start)}" aria-label="Clip ${i + 1} in point"></label><label>Out <input class="clip-out" type="number" min="0" max="${SCENES[c.id].duration}" step="0.01" value="${fmt(c.end)}" aria-label="Clip ${i + 1} out point"></label><span class="muted mono clip-length">${fmt(c.end - c.start)} s</span><button class="clip-up" title="Move up" ${i ? '' : 'disabled'}>↑</button><button class="clip-down" title="Move down" ${i < movieClips.length - 1 ? '' : 'disabled'}>↓</button><button class="clip-remove" title="Remove clip">✕</button></li>`).join('') || '<li class="muted">Add a scene to start your movie.</li>'}</ol>
-      <div class="row"><button id="start" title="Start">⏮</button><button id="play" class="primary" ${movieClips.length ? '' : 'disabled'}>▶ Play</button><button id="audio-action" hidden>🔊 Enable sound</button><label class="ck"><input type="checkbox" id="loopck"> loop</label><input id="scrub" type="range" min="0" max="${duration}" step="0.01" value="${Math.min(S.t, duration)}" ${movieClips.length ? '' : 'disabled'}><span id="tt" class="mono"></span></div>
+      <div class="row"><button id="start" title="Start">⏮</button><button id="play" class="primary" ${movieClips.length ? '' : 'disabled'}>▶ Play</button><button id="audio-action" hidden>🔊 Enable sound</button><label class="ck"><input type="checkbox" id="loopck"> loop</label>${fxTogglesHtml()}<input id="scrub" type="range" min="0" max="${duration}" step="0.01" value="${Math.min(S.t, duration)}" ${movieClips.length ? '' : 'disabled'}><span id="tt" class="mono"></span></div>
       <div class="row"><button id="exp-movie" class="accent" ${movieClips.length ? '' : 'disabled'}>⬇ Export movie MP4</button><select id="quality" title="video bitrate"><option value="16000000">High · 16 Mbps</option><option value="8000000" selected>Standard · 8 Mbps</option><option value="4000000">Small · 4 Mbps</option></select><div class="progress" id="progress" hidden><div class="track"><div class="bar"></div></div><button id="cancel">Cancel</button></div><span id="status"></span></div>`;
     $('#add-clip').onclick = async () => { const id = $('#add-scene').value; status('Loading…'); await requireScene(id); refreshSubs(); movieClips.push({ id, start: 0, end: SCENES[id].duration }); movieChanged(); };
     $('#load-movie').onclick = async () => { status('Loading every movie scene…'); await Promise.all(REGISTRY.movie.map(requireScene)); refreshSubs(); movieClips.splice(0, movieClips.length, ...REGISTRY.movie.filter(id => SCENES[id]).map(id => ({ id, start: 0, end: SCENES[id].duration }))); movieChanged(); };
@@ -354,7 +413,7 @@
     $('#loopck').checked = S.loop; $('#loopck').onchange = e => { S.loop = e.target.checked; };
     $('#scrub').oninput = e => { pause(); seek(+e.target.value); };
     $('#exp-movie').onclick = () => runExport(movieClips.map(c => ({ ...c })), 'movie.mp4');
-    playBtn(); hud();
+    bindFxToggles(); playBtn(); hud();
   }
   function movieChanged() {
     pause(); S.t = 0; S.movieActive = -1; saveMovie(); moviePanel(); S.dirty = true;
@@ -371,6 +430,7 @@
         <label class="ck">Backdrop <select id="bd"><option value="">Paper</option><option value="transparent">Transparent</option>${locs.map(id => `<option value="${id}">${esc(META('location', id).title)} (true scale)</option>`).join('')}</select></label>
         <label class="ck">Zoom <input type="range" id="zoom" min=".5" max="2.5" step=".05" value="${S.char.zoom}"></label>
         <label class="ck"><input type="checkbox" id="anim" checked> animate</label>
+        ${fxTogglesHtml()}
       </div>
       <div class="chips" id="poses">${Object.keys(e.poses || {}).map(p => `<button class="chip" data-p="${esc(p)}">${esc(p)}</button>`).join('')}</div>
       ${exportRow(false, true)}`;
@@ -396,7 +456,7 @@
         status(`Saved ${name()}.svg · editable vectors · transparent background`, 'ok');
       } catch (error) { status('⚠ ' + error.message, 'warn'); console.error(error); }
     };
-    bindSnap(name); $('#exp-gif').onclick = () => runGifExport(name()); bindRefs(); bindLinks(); mark();
+    bindSnap(name); bindFxToggles(); $('#exp-gif').onclick = () => runGifExport(name()); bindRefs(); bindLinks(); mark();
   }
 
   const CAM_RANGES = { x: [-900, 900, 1], y: [0, 1300, 1], z: [-800, 2380, 1], f: [300, 3000, 10], hy: [-1000, 3000, 1] };
@@ -416,6 +476,7 @@
         <select id="whopose" hidden></select>
         <select id="spot" hidden title="where the stand-in goes">${Object.keys(l.spots || {}).map(p => `<option>${esc(p)}</option>`).join('')}</select>
         <label class="ck"><input type="checkbox" id="anim" checked> animate</label>
+        ${fxTogglesHtml()}
       </div>
       ${exportRow(false)}`;
     document.querySelectorAll('[data-c]').forEach(b => b.onclick = () => { S.loc.cam = { ...l.cameras[b.dataset.c] }; camUI(); });
@@ -439,7 +500,7 @@
     if (!l.spots?.[S.loc.spot]) S.loc.spot = Object.keys(l.spots || {})[0] || '';
     $('#spot').value = S.loc.spot; $('#spot').onchange = ev => { S.loc.spot = ev.target.value; S.dirty = true; };
     $('#anim').onchange = ev => ev.target.checked ? play() : pause();
-    bindSnap(() => `${S.id}_z${Math.round(S.loc.cam.z)}`); bindRefs(); bindLinks(); whoUI(); camUI();
+    bindSnap(() => `${S.id}_z${Math.round(S.loc.cam.z)}`); bindFxToggles(); bindRefs(); bindLinks(); whoUI(); camUI();
   }
   function camUI() {
     const c = S.loc.cam;
@@ -479,9 +540,12 @@
     try {
       const blob = await exportSceneJavaScript({ id, sound, signal: ctrl.signal,
         onProgress: (p, msg) => { bar.style.width = (p * 100).toFixed(1) + '%'; status(msg); } });
-      const name = id + (sound ? '.with-sound.js' : '.silent.js');
+      const base = id + (sound ? '.with-sound' : '.silent');
+      const name = base + '.js', htmlName = base + '.html';
+      const htmlBlob = sceneJavaScriptHtmlBlob({ id, scriptName: name, title: META('scene', id).title || id });
       downloadBlob(blob, name);
-      status('Saved ' + name + ' · ' + (blob.size / 1e6).toFixed(1) + ' MB · Embed with <script src="' + name + '" data-mount="#animation"></script>', 'ok');
+      setTimeout(() => downloadBlob(htmlBlob, htmlName), 150);
+      status('Saved ' + name + ' + ' + htmlName + ' · ' + (blob.size / 1e6).toFixed(1) + ' MB · Open ' + htmlName + ' in a browser to test', 'ok');
     } catch (e) {
       status(e.name === 'AbortError' ? 'Export cancelled' : '⚠ ' + e.message, 'warn');
       if (e.name !== 'AbortError') console.error(e);
@@ -584,9 +648,10 @@
   else if (q.has('movie')) await select('movie', 'composer');
   else if (q.has('doc')) { await select('scene', REGISTRY.movie[0]); await select('doc', q.get('doc')); }
   else {
+    const hasQuery = q.has('character') || q.has('location') || q.has('scene');
     const [mode, id] = q.has('character') ? ['character', q.get('character')] : q.has('location') ? ['location', q.get('location')] : ['scene', q.get('scene') || REGISTRY.movie[0]];
     const ok = ASSETS[mode][id];
-    await select(ok ? mode : 'scene', ok ? id : REGISTRY.movie[0]);
+    await select(ok ? mode : 'scene', ok ? id : REGISTRY.movie[0], false, { reveal: hasQuery });
   }
   if (q.has('t') && !S.playMode) seek(+q.get('t'));
   window.studio = { S, select, seek, runExport };

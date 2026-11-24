@@ -1,7 +1,7 @@
 asset({
   title: 'A Day on the Ice',
   logline: 'Sami takes his daughter Jenna and her plush giraffe Fafy ice-skating. Jenna finds her balance, shows her tricks, and encourages Dad to try.',
-  files: ['scene.js'], docs: 'README.md', cast: ['sami', 'jenna'], locations: [],
+  files: ['scene.js'], docs: 'README.md', cast: ['sami', 'jenna'], locations: ['living_room'],
   music: {
     prompt: 'Warm family cartoon: gentle bell melody and soft chords at home, sparkling playful skating music for the glide, jump and spin, and a tender cheerful finish. Quiet under the dialogue.',
     bpm: 108, tonic: 62, motif: [0, 2, 4, 7, 9, 7, 4, 2], chords: [0, 3, 4, 0],

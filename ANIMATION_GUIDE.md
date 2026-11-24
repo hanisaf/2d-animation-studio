@@ -26,24 +26,30 @@ Every asset is a self-contained folder (see `docs/HANDBOOK.md` §8): a scene is 
 - **Sets are 3D** (`engine/persp.js`). World axes are X right, Y up (floor = 0) and Z into the screen; a person is about 170 units tall. A shot builds a camera: `const P = persp({ x, y: eyeHeight, z, f: 1000, hy: horizonY })`.
   - `P.p(X, Y, Z)` returns `[sx, sy, k]`, where `k` is px per world unit at that depth.
   - To dolly, move `z`. To tilt up, raise `hy`. For a telephoto look, raise `f`.
+  - Optional 3D camera angles: pass `yaw`, `pitch`, `roll` (radians) or `lookAt: [X, Y, Z]` for orbiting / 2-point / 3-point perspective shots (when omitted, the fast 1-point path runs unchanged).
   - To keep a character's feet at a fixed screen height while dollying, solve `hy = feetY - y * k` (see `camA` / `camB`).
-- **Layers:** call `set.back(P, t, { splitZ })`, then the characters, then `set.front(P, t, { splitZ })`. Anything nearer than `splitZ` (columns, for example) is painted over the characters.
-- **Depth of field:** wrap the set in `layer(() => set.back(...), { blur })`. Blur by about 0 px in wide shots and 3–4.5 px in close ones.
+- **Layers & depth sorting:** call `set.back(P, t, { splitZ })`, then the characters, then `set.front(P, t, { splitZ })`. Anything nearer than `splitZ` (columns, for example) is painted over the characters. For scenes with multiple characters/props at arbitrary depths, use `const st = depthStage(P); st.add(zOrPt, fn); st.flush();`.
+- **Depth of field, bloom & grading:** wrap the set in `layer(() => set.back(...), { blur })` (resolution ramps smoothly from full to half over `blur: 0.5–1.5`; supports `composite`, `alpha`, and explicit `scale`, including `scale: 1` for full resolution). Use `bloom(fn, { radius, strength })` for glowing lights/magic/sparkles and `grade({ warmth, tint, mode, alpha })` for shot-level colour grading (applied before grain and speech bubbles).
+- **Static backgrounds:** `staticLayer(key, fn, options)` caches up to four layers, including baked blur/filter effects. Use it only for painters whose pixels stay fixed for the same key; include every camera, split-depth, palette, lighting, and set-option input in the key. Scene, effective M2/M3 flags, transform, blur/filter, and resolution are included automatically; scene selection clears the cache. Keep animated sets and boiling linework in `layer()` instead. See [the handbook example](docs/HANDBOOK.md#64-layers-depth-of-field-and-draw-order).
+- **Lighting & cast shadows (M3):** wrap a shot or character in `withLight({ dir, rim, rimPx, shade, shadePx, tint, shadowColor, shadowSkew }, () => ...)`, then draw subjects with `lit(() => ...)` or `castShadow(() => ..., footX, footY, { reflect, reflectScale, blur })` (runs the character painter once and returns its anchors). Pass `noShadow: fxEnabled('m3')` to the character rig when using `castShadow`.
+- **Feature toggles (M2 / M3):** both M2 (`taperStroke`, `trail`, `smear`, `spring`) and M3 (`lit`, `castShadow`) default to **on** and can be toggled in the Studio UI (`brush & motion (M2)`, `lighting & shadows (M3)`), via URL (`?m2=0&m3=0`), CLI (`node render.mjs ... --no-m2 --no-m3`), standalone embeds (`data-m2="false"` / `{ m2: false }`), or per scene (`scene({ fx: { m2: false, m3: false }, ... })`).
 - **2D camera** for shake or roll on top: `camBegin(cx, cy, zoom, rot)` … `camEnd()`, with `shakeXY(t, amount)`.
 
 ## Drawing API (`engine/core.js`)
 
 - `shape(pts, { fill, stroke, lw | lwPx, smooth, closed, alpha, dash })` fills or strokes a point list. Pass `smooth: true` for a Catmull-Rom curve and `stroke: null` for no outline. `lw` is in local units (it scales with the character); `lwPx` is in screen px.
+- `taperStroke(pts, { w0, wMid, w1, lwPx, profile, fill, smooth, alpha })` paints a variable-width brush ribbon (pure vector path; SVG-export safe).
 - `line(pts, o)`, `ellipse(cx, cy, rx, ry, o)`, `circle`, `rectPts`, `ellPts`, `starPts`, `linGrad`, `radGrad`, `mixCol`, `rgba`.
 - `ik2(root, target, a, b, prefDir)` is two-bone IK for arms and legs. `polyAt` and `polySlice` walk along limbs.
-- `withBoil(px, fn)` sets the linework jitter (characters use about 0.7 px; sets use 0).
-- Timing helpers:
+- `withBoil(px, fn, seed)` sets the linework jitter (characters use about 0.7 px; sets use 0). Pass a stable `seed` (e.g. `'jester'`) to isolate a character's jitter from earlier draw calls.
+- Timing & motion helpers:
   - `seg(t, a, b)` gives 0..1 progress through [a, b].
   - `kf(t, [[t0, v0], [t1, v1]…], ease)` interpolates keyframes; values may be numbers or arrays.
   - Easings: `ease`, `easeIn`, `easeOut`, `backOut` (overshoot), `elasticOut`.
-  - `kick(t, t0, decay)` is an impulse, and `boing(t, t0, freq, decay)` is a damped wobble.
+  - `spring(t, t0, { freq, damp })` transitions 0 → 1 with damped spring overshoot; `kick(t, t0, decay)` is an impulse; `boing(t, t0, freq, decay)` is a damped wobble.
+  - `trail(t, fn, { steps, dt, alpha })` paints sub-frame motion afterimages; `smear(ptsNow, ptsPrev, o)` paints a swept motion-blur hull.
   - `wob(t, freq, phase)` is a sine, and `pulse(t)` hits on the beat of `bpm`.
-- **Callouts:** `callout(text, ax, ay, age, { dx, dy, size, cps, hold, kind: 'talk' | 'shout' | 'think' | 'whisper' | 'robot' })` draws a speech bubble whose tail points at (ax, ay). Wrap `*words*` in asterisks to colour them. It returns `{ talking }`; feed that to `lipFlap(t, talking, restMouth)` for the mouth.
+- **Callouts & lip sync:** `callout(text, ax, ay, age, { dx, dy, size, cps, hold, speaker, kind: 'talk' | 'shout' | 'think' | 'whisper' | 'robot' })` draws a speech bubble whose tail points at (ax, ay). Wrap `*words*` in asterisks to colour them. It returns `{ talking, visible, viseme, mouth }`; pass `said` or `said.talking` to `lipFlap(t, said, restMouth)` to sync mouth shapes directly to dialogue syllables (or recorded TTS envelopes in `voice.js`).
 - **Effects:**
   - `sfx(txt, x, y, size, colour, age)` is a comic sound effect that pops in and fades out.
   - `flash(k)` is a full-frame flash, and `iris(cx, cy, r)` is an iris-out.

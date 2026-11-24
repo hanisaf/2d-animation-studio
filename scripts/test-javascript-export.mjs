@@ -1,6 +1,7 @@
 // Integration check: real studio exports, then isolated players with networking blocked.
 import assert from 'node:assert/strict';
 import { createServer } from 'node:http';
+import { existsSync } from 'node:fs';
 import { readFile, mkdir, writeFile } from 'node:fs/promises';
 import { resolve, extname } from 'node:path';
 import { pathToFileURL } from 'node:url';
@@ -21,7 +22,11 @@ await new Promise(r => server.listen(0, '127.0.0.1', r));
 const base = 'http://127.0.0.1:' + server.address().port;
 let browser;
 try {
-  browser = await puppeteer.launch({ executablePath: process.env.CHROME || 'C:/Program Files/Google/Chrome/Application/chrome.exe', headless: true });
+  const chromePath = process.env.CHROME || [
+    '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
+    'C:/Program Files/Google/Chrome/Application/chrome.exe', '/usr/bin/google-chrome', '/usr/bin/chromium',
+  ].find(p => existsSync(p));
+  browser = await puppeteer.launch({ executablePath: chromePath, headless: true });
   const studio = await browser.newPage();
   const errors = []; studio.on('pageerror', e => errors.push(e.message));
   await studio.evaluateOnNewDocument(() => {
@@ -37,13 +42,20 @@ try {
   await downloads.send('Page.setDownloadBehavior', { behavior: 'allow', downloadPath: output });
   await studio.click('#exp-js-silent');
   await studio.waitForFunction(() => document.querySelector('#status').textContent.startsWith('Saved scene01_juggling.silent.js'), { timeout: 120000 });
-  let silent;
+  let silent, silentHtml;
   for (let i = 0; i < 100; i++) {
-    try { silent = await readFile(resolve(output, 'scene01_juggling.silent.js'), 'utf8'); break; }
-    catch { await new Promise(r => setTimeout(r, 100)); }
+    try {
+      silent ??= await readFile(resolve(output, 'scene01_juggling.silent.js'), 'utf8');
+      silentHtml ??= await readFile(resolve(output, 'scene01_juggling.silent.html'), 'utf8');
+      if (silent && silentHtml) break;
+    } catch { await new Promise(r => setTimeout(r, 100)); }
   }
   assert.ok(silent?.includes('window.SafadiScenes'));
+  assert.ok(silentHtml?.includes('src="scene01_juggling.silent.js"'));
+  assert.ok(silentHtml?.includes('data-mount="#animation"'));
   assert.ok(!silent.includes('function buildSceneAudio'));
+  assert.ok(!silent.includes('LOCATIONS.family_kitchen'), 'silent export must only bundle required locations');
+  assert.ok(!silent.includes('CHARACTERS.robo_safadi'), 'silent export must only bundle required characters');
   await studio.click('#exp-js-sound');
   try { await studio.waitForFunction(() => document.querySelector('#status').textContent.startsWith('Saved scene01_juggling.with-sound.js'), { timeout: 60000 }); }
   catch(error) { console.error(await studio.evaluate(() => ({ status: document.querySelector('#status').textContent, contexts: testOfflineContexts.map(c => ({state:c.state,currentTime:c.currentTime,length:c.length})) }))); throw error; }
@@ -54,7 +66,7 @@ try {
   }
   assert.ok(sound);
   assert.ok(!sound.includes('function buildSceneAudio'));
-  assert.ok(sound.includes('data:audio/wav;base64,'));
+  assert.match(sound, /data:audio\/(mp4|wav);base64,/);
   // Reproduce embedding in an actual index.html, including deferred head scripts.
   const embed = await browser.newPage();
   embed.on('pageerror', e => errors.push(e.message));
@@ -125,13 +137,20 @@ try {
   // Unmute DURING playback; merely advancing the visual clock is not evidence of sound.
   await page.click('#first >>> .mute');
   await page.waitForFunction(() => !voiced.muted && !lastAudio.muted && !lastAudio.paused && lastAudio.currentTime > 8.1 && document.querySelector('#first').firstChild.shadowRoot.querySelector('.status').textContent === '', { timeout: 5000 });
-  const signal = await page.evaluate(() => {
-    const bytes = Uint8Array.from(atob(lastAudio.src.split(',')[1]), c => c.charCodeAt(0));
-    const view = new DataView(bytes.buffer); let peak = 0;
-    for (let i = 44; i < bytes.length; i += 64) peak = Math.max(peak, Math.abs(view.getInt16(i, true)));
-    return { peak, sampleRate: view.getUint32(24, true), channels: view.getUint16(22, true) };
+  const audioBytes = await page.evaluate(async () => {
+    const res = await fetch(lastAudio.src);
+    return Array.from(new Uint8Array(await res.arrayBuffer()));
   });
-  assert.ok(signal.peak > 100, 'Embedded soundtrack must contain non-silent samples');
+  const signal = await studio.evaluate(async arr => {
+    const bytes = new Uint8Array(arr);
+    const ctx = new OfflineAudioContext(2, 48000, 48000);
+    const buf = await ctx.decodeAudioData(bytes.buffer);
+    const data = buf.getChannelData(0);
+    let peak = 0;
+    for (let i = 0; i < data.length; i += 32) peak = Math.max(peak, Math.abs(data[i]));
+    return { peak, sampleRate: buf.sampleRate, channels: buf.numberOfChannels, duration: buf.duration };
+  }, audioBytes);
+  assert.ok(signal.peak > .01, 'Embedded soundtrack must contain non-silent samples: ' + JSON.stringify(signal));
   assert.equal(signal.sampleRate, 48000); assert.equal(signal.channels, 2);
   await page.click('#first >>> .mute');
   assert.equal(await page.evaluate(() => voiced.playing && voiced.muted && lastAudio.muted && lastAudio.paused), true);
@@ -166,7 +185,7 @@ try {
     try { lesson = await readFile(resolve(output, 'scene40_access_recirculation.with-sound.js'), 'utf8'); break; }
     catch { await new Promise(r => setTimeout(r, 100)); }
   }
-  assert.ok(lesson?.includes('data:audio/wav;base64,'));
+  assert.match(lesson || '', /data:audio\/(mp4|wav);base64,/);
   console.log('Full lesson soundtrack embedded. Checking playback...');
   await page.bringToFront();
   await page.addScriptTag({ content: lesson });

@@ -4,7 +4,7 @@
 
 Sarah is a rebellious **ninth-grade teenager** who loves woodworking, texting on her phone, and playing volleyball. She is independent, quick with a dry remark, and proud of the things she builds.
 
-The supplied reference guides her long, center-parted wavy brown hair, brown eyes and lashes, warm skin, dusty pink hoodie with drawstrings and a kangaroo pocket, gold chain, light gray joggers, and cream canvas sneakers. Her teenage silhouette is about 35 local units tall; `SARAH_UNIT = 4.8` gives a standing height of roughly 168 world units. The studio reserves 40 units of height for upright rebellion hair and volleyball poses.
+The supplied reference guides her long, center-parted wavy brown hair, brown eyes and lashes, warm skin, dusty pink hoodie with drawstrings and a kangaroo pocket, gold chain, light gray joggers, and cream canvas sneakers. Her teenage silhouette is about 35 local units tall; `SARAH_UNIT = 4.8` gives a standing height of roughly 168 world units. The studio reserves 44 units of height for upright rebellion hair and high-flying volleyball poses.
 
 ## Drawing and poses
 
@@ -16,7 +16,12 @@ const A = sarah(x, y, s, {
   flip: false, hairSwing: 0,
   handL: [-2.9, -14.9], handR: [2.9, -14.9],
   footL: [-1.65, -1.05], footR: [1.65, -1.05],
-  handPoseL: 'open', handPoseR: 'open', // open | palm | fist
+  handPoseL: 'open', handPoseR: 'open', // open | palm | set | fist
+  handAngL: undefined, handAngR: undefined, // optional wrist angle override
+  elbowL: undefined, elbowR: undefined, // optional IK elbow bend hint
+  kneeDirL: undefined, kneeDirR: undefined, // optional IK knee bend hint
+  shoeRotL: undefined, shoeRotR: undefined, // optional ankle/shoe angle
+  armsFront: false, // draw arms in front of front hair strands
   eyes: 'open', // open | wide | happy | closed | wink
   brows: 'normal', // normal | up | angry
   mouth: 'grin', // grin | open | shout (wide scream) | smile | smirk | flat | frown
@@ -51,7 +56,7 @@ sarahPerform(x, y, s, t, 'rebellion', { k: 1 });
 // Pose options alone, for composing custom movements:
 sarah(x, y, s, { ...sarahAbility(t, 'rebellion', { k: .7 }), t });
 // Screen-space prop for custom ball paths:
-sarahVolleyball(ballX, ballY, s, { spin: t * 2, radius: 1.35 });
+sarahVolleyball(ballX, ballY, s, { spin: t * 2, radius: 2.75 });
 ```
 
 `phone` and `woodworking` props inherit the character transform, including flipping and jumping. The volleyball supplied by `sarahPerform` follows a screen-space path above her; use `sarahVolleyball` for custom scene choreography.

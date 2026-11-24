@@ -19,6 +19,23 @@ A 2D cartoon animated entirely in code. Every frame is a pure function of time, 
 | [`SERIES.md`](SERIES.md) | The series bible: premise, tone, look, and links to every character, set and episode |
 | [`ANIMATION_GUIDE.md`](ANIMATION_GUIDE.md) | How to write a scene or rig, and the style rules |
 
+## Project versioning
+
+The version in [`package.json`](package.json) is the release version for the whole project, including the engine. The current version is `0.2.0`. See the [0.2.0 change summary](docs/0.2.0_CHANGES.md) for the engine, Studio, export, and scene updates.
+
+To prepare a release, update the package version and lockfile together without automatically committing or tagging:
+
+```bash
+npm version minor --no-git-tag-version   # for example, 0.1.0 → 0.2.0
+```
+
+Use `patch` for fixes, `minor` for new features, or an explicit version such as `1.0.0` for a major release. Run the relevant checks, commit the release changes, then tag that commit and publish release notes:
+
+```bash
+git tag -a v0.2.0 -m "Release 0.2.0"
+git push origin v0.2.0
+```
+
 ## Setup
 
 You need Node.js 18+ and Google Chrome. ffmpeg comes with the project (`ffmpeg-static`), so a system install isn't needed. On a new machine, see [docs/HANDBOOK.md §2](docs/HANDBOOK.md#2-moving-to-a-new-machine).
@@ -150,7 +167,7 @@ npm run studio                                 # → http://localhost:5173
 
 - **Scenes**: play/scrub with a shot timeline and audio preview; **Export scene MP4** straight from the browser (WebCodecs; Chrome/Edge). Scene 01 synthesizes music and cartoon dialogue from `scenes/scene01_juggling/asset.js`. **Copy play link** gives a URL such as `studio.html?scene=scene01_juggling&play=true`, which starts playback in a full-window view without the tools. If the browser blocks autoplay with sound, click **Tap for sound**; after the scene ends, **Replay with sound** starts it again.
 - **Movie composer**: choose scenes, set in/out points, reorder or remove clips, preview the cut, and export the selected movie as MP4. The composition is saved in this browser.
-- **Characters**: every pose (on paper or standing in a location at true scale) and the full model sheet, next to the reference art. Choose **Backdrop → Transparent** for a checkerboard preview and transparent PNG snapshots or GIF exports, including model sheets. **Export SVG** downloads the current animation frame as editable vector paths on a transparent 1920×1080 canvas. Pose view exports the selected pose at the current zoom; model-sheet view exports all poses. Backdrops, grain, and sheet labels are omitted. Canvas glow/shadow and additive blending effects may look different, and text props use fonts installed in the viewer.
+- **Characters**: every pose (on paper or standing in a location at true scale) and the full model sheet, next to the reference art. Choose **Backdrop → Transparent** for a checkerboard preview and transparent PNG snapshots or GIF exports, including model sheets. **Export SVG** downloads the current animation frame as editable vector paths on a transparent 1920×1080 canvas. Pose view exports the selected pose at the current zoom; model-sheet view exports the model-sheet poses (excluding fight poses). Backdrops, grain, and sheet labels are omitted. Canvas glow/shadow and additive blending effects may look different, and text props use fonts installed in the viewer.
 - **📄 Docs**: each asset's `README.md` (description, script, shot list, API) beside its preview, cross-linked (a scene ↔ its cast ↔ its locations); project docs in the sidebar.
 - **Locations**: fly a camera through the set (presets, sliders, drag/wheel, WASD, **⇄ Reverse** for a reverse angle), drop a character on a spot for scale, and **Copy camera** as code for your scene.
 

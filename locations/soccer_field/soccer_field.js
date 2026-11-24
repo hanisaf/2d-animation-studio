@@ -50,8 +50,13 @@ const soccerField = (() => {
 
   // ---------- a box with back-face culling ----------
   // col: one colour, or { top, nz (faces −Z), pz (faces +Z), side, bot }
+  const _boxCols = new Map();
   function box(P, x0, x1, y0, y1, z0, z1, col, o = {}) {
-    const c = typeof col === 'string' ? { top: mixCol(col, '#ffffff', .18), nz: col, pz: col, side: mixCol(col, '#000000', .14) } : col;
+    let c = col;
+    if (typeof col === 'string') {
+      c = _boxCols.get(col);
+      if (!c) { c = { top: mixCol(col, '#ffffff', .18), nz: col, pz: col, side: mixCol(col, '#000000', .14) }; _boxCols.set(col, c); }
+    }
     const cam = P.cam, lw = o.lwPx ?? px(P, 1.2), stroke = o.stroke === undefined ? C.line : o.stroke, skip = o.skip || '';
     const face = (pts, fill) => { const q = P.poly(pts); if (q) S(q, { fill, stroke: stroke || fill, lwPx: stroke ? lw : .6 }); };
     if (cam.z < z0 && !skip.includes('nz')) face([[x0, y0, z0], [x1, y0, z0], [x1, y1, z0], [x0, y1, z0]], c.nz ?? c.pz);
@@ -93,20 +98,24 @@ const soccerField = (() => {
     for (const sx of [-1, 1]) for (const e of [0, LEN]) pl(sx * HW, e, 150, 3);
     return S3;
   }
-  let _casters = null;
-  function shadows(P, t) {
+  let _staticHulls = null;
+  function _getStaticHulls() {
+    if (_staticHulls) return _staticHulls;
     const polys = [];
-    for (const pts of (_casters ??= shadowCasters())) polys.push(hull(pts.map(cast)));
+    for (const pts of shadowCasters()) polys.push(hull(pts.map(cast)));
     for (const tr of TREES) {                                                 // canopy ellipse + trunk
       const cx = tr.x + tr.h * .7 * SUN.x, cz = tr.z + tr.h * .7 * SUN.z, r = tr.h * .27, e = [];
       for (let i = 0; i < 14; i++) { const a = i / 14 * TAU; e.push([cx + Math.cos(a) * r, cz + Math.sin(a) * r * .8]); }
       polys.push(e, hull([[tr.x - 20, tr.z], [tr.x + 20, tr.z], ...[[tr.x - 15, tr.h * .5, tr.z], [tr.x + 15, tr.h * .5, tr.z]].map(cast)]));
     }
     for (const c of CARS) polys.push(hull([[c.x - 88, c.z - 210], [c.x + 88, c.z - 210], [c.x - 88, c.z + 210], [c.x + 88, c.z + 210], ...[[c.x - 80, 150, c.z - 100], [c.x + 80, 150, c.z - 100], [c.x - 80, 150, c.z + 90], [c.x + 80, 150, c.z + 90]].map(cast)]));
+    return (_staticHulls = polys.filter(h => h.length >= 3).map(h => h.map(([x, z]) => [x, .6, z])));
+  }
+  function shadows(P, t) {
+    const polys = _getStaticHulls();
     X.beginPath();
-    for (const h of polys) {
-      if (h.length < 3) continue;
-      const q = P.poly(h.map(([x, z]) => [x, .6, z])); if (!q) continue;
+    for (let k = 0; k < polys.length; k++) {
+      const q = P.poly(polys[k]); if (!q) continue;
       X.moveTo(q[0][0], q[0][1]); for (let i = 1; i < q.length; i++) X.lineTo(q[i][0], q[i][1]); X.closePath();
     }
     X.fillStyle = 'rgba(28,52,24,.24)'; X.fill('nonzero');
@@ -123,14 +132,17 @@ const soccerField = (() => {
       P.plane(z, k => { for (let j = 0; j < 5; j++) ellipse(x + (j - 2) * 1500, -y - Math.sin(j / 4 * Math.PI) * 1100, 1900, 1200, { fill: C.cloud, stroke: null, alpha: .55 }); });
     }
   }
+  const HILL_POLYS = [[72000, C.hillFar, 3200, 1400, 2], [52000, C.hillNear, 2100, 900, 7]].map(([d, col, amp, amp2, seed]) => {
+    const pts = [[-90000, 400]];
+    for (let x = -90000; x <= 90000; x += 3000) pts.push([x, -(amp * .55 + amp * .45 * Math.sin(x / 14000 + seed) + amp2 * Math.sin(x / 5200 + seed * 2.3))]);
+    pts.push([90000, 400]);
+    return { d, col, pts };
+  });
   function hills(P) {
-    [[72000, C.hillFar, 3200, 1400, 2], [52000, C.hillNear, 2100, 900, 7]].forEach(([d, col, amp, amp2, seed]) => {
-      P.plane(P.cam.z + P.dir * d, () => {
-        const pts = [[-90000, 400]];
-        for (let x = -90000; x <= 90000; x += 3000) pts.push([x, -(amp * .55 + amp * .45 * Math.sin(x / 14000 + seed) + amp2 * Math.sin(x / 5200 + seed * 2.3))]);
-        pts.push([90000, 400]); S(pts, { fill: col, stroke: null });
-      });
-    });
+    for (let i = 0; i < HILL_POLYS.length; i++) {
+      const h = HILL_POLYS[i];
+      P.plane(P.cam.z + P.dir * h.d, () => S(h.pts, { fill: h.col, stroke: null }));
+    }
   }
 
   // ---------- the ground ----------
@@ -173,20 +185,30 @@ const soccerField = (() => {
   }
   const arcPts = (cx, cz, r, a0, a1, n = 24) => Array.from({ length: n + 1 }, (_, i) => { const a = lerp(a0, a1, i / n); return [cx + Math.sin(a) * r, cz + Math.cos(a) * r]; });
   function spot(P, x, z) { const q = P.floorCircle(x, z, 22, .5, 10); if (q) S(q, { fill: C.paint, stroke: null }); }
-  function markings(P) {
-    ln(P, [[-HW, 0], [HW, 0], [HW, LEN], [-HW, LEN]], true);
-    ln(P, [[-HW, MID], [HW, MID]]);
-    ln(P, arcPts(0, MID, 915, 0, TAU, 48));
-    spot(P, 0, MID);
+  const MARKING_LINES = (() => {
+    const out = [
+      { pts: [[-HW, 0], [HW, 0], [HW, LEN], [-HW, LEN]], closed: true },
+      { pts: [[-HW, MID], [HW, MID]], closed: false },
+      { pts: arcPts(0, MID, 915, 0, TAU, 48), closed: false },
+    ];
+    const a0 = Math.acos(550 / 915);
     for (const e of [0, LEN]) {
-      const s = e ? -1 : 1;                                                   // s: direction into the pitch
-      ln(P, [[-2016, e], [-2016, e + s * 1650], [2016, e + s * 1650], [2016, e]]);
-      ln(P, [[-916, e], [-916, e + s * 550], [916, e + s * 550], [916, e]]);
-      spot(P, 0, e + s * 1100);
-      const a0 = Math.acos(550 / 915);                                        // the D: the part of the arc outside the box
-      ln(P, arcPts(0, e + s * 1100, 915, -a0, a0, 16).map(([x, z]) => [x, e + s * 1100 + (z - (e + s * 1100)) * s]));
-      for (const sx of [-1, 1]) { const q = arcPts(sx * HW, e, 100, 0, TAU, 12); ln(P, q.filter(([x, z]) => Math.abs(x) <= HW + 1 && s * (z - e) >= -1)); }
+      const s = e ? -1 : 1;
+      out.push({ pts: [[-2016, e], [-2016, e + s * 1650], [2016, e + s * 1650], [2016, e]], closed: false });
+      out.push({ pts: [[-916, e], [-916, e + s * 550], [916, e + s * 550], [916, e]], closed: false });
+      out.push({ pts: arcPts(0, e + s * 1100, 915, -a0, a0, 16).map(([x, z]) => [x, e + s * 1100 + (z - (e + s * 1100)) * s]), closed: false });
+      for (const sx of [-1, 1]) {
+        const q = arcPts(sx * HW, e, 100, 0, TAU, 12);
+        out.push({ pts: q.filter(([x, z]) => Math.abs(x) <= HW + 1 && s * (z - e) >= -1), closed: false });
+      }
     }
+    return out;
+  })();
+  function markings(P) {
+    for (let i = 0; i < MARKING_LINES.length; i++) ln(P, MARKING_LINES[i].pts, MARKING_LINES[i].closed);
+    spot(P, 0, MID);
+    spot(P, 0, 1100);
+    spot(P, 0, LEN - 1100);
   }
 
   // ---------- goals ----------

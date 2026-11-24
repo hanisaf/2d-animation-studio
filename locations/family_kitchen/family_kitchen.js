@@ -71,8 +71,13 @@ const family_kitchen = (() => {
   const lwk = k => clamp(k * .32, .5, 1.6);
 
   // ---------- building blocks (as in the living room) ----------
+  const _boxCols = new Map(), _colCache = new Map();
   function box(P, x0, x1, y0, y1, z0, z1, col, o = {}) {
-    const c = typeof col === 'string' ? { top: mixCol(col, '#ffffff', .18), nz: col, pz: col, side: mixCol(col, '#000000', .1) } : col;
+    let c = col;
+    if (typeof col === 'string') {
+      c = _boxCols.get(col);
+      if (!c) { c = { top: mixCol(col, '#ffffff', .18), nz: col, pz: col, side: mixCol(col, '#000000', .1) }; _boxCols.set(col, c); }
+    }
     const cam = P.cam, lw = o.lwPx ?? px(P, 1.1), stroke = o.stroke === undefined ? C.line : o.stroke;
     const face = (pts, fill) => { const q = P.poly(pts); if (q) S(q, { fill, stroke: stroke || fill, lwPx: stroke ? lw : .6 }); };
     if (cam.z < z0) face([[x0, y0, z0], [x1, y0, z0], [x1, y1, z0], [x0, y1, z0]], c.nz ?? c.pz);
@@ -82,7 +87,11 @@ const family_kitchen = (() => {
     if (cam.y > y1) face([[x0, y1, z0], [x1, y1, z0], [x1, y1, z1], [x0, y1, z1]], c.top);
     if (cam.y < y0) face([[x0, y0, z0], [x1, y0, z0], [x1, y0, z1], [x0, y0, z1]], c.bot ?? c.side);
   }
-  const COL = (c, k = .1) => ({ top: mixCol(c, '#ffffff', .2), nz: c, pz: c, side: mixCol(c, '#000000', k) });
+  const COL = (c, k = .1) => {
+    const key = c + '|' + k; let v = _colCache.get(key);
+    if (!v) { v = { top: mixCol(c, '#ffffff', .2), nz: c, pz: c, side: mixCol(c, '#000000', k) }; _colCache.set(key, v); }
+    return v;
+  };
   function sprite(P, x, y, z, fn) { if (!P.visible(z)) return; const [sx, sy, k] = P.p(x, y, z); X.save(); X.translate(sx, sy); X.scale(k, k); fn(k); X.restore(); }
   const readable = (P, x, y, fn) => { X.save(); X.translate(x, y); X.scale(P.dir, 1); fn(); X.restore(); };
   const label = (txt, x, y, size, col, weight = 700, font = FONT_TALK) => { X.font = `${weight} ${size}px ${font}`; X.fillStyle = col; X.textAlign = 'center'; X.textBaseline = 'middle'; X.fillText(txt, x, y); };
@@ -165,13 +174,30 @@ const family_kitchen = (() => {
       S(rectPts(x0, -RAIL - 5, x1 - x0, 7), { fill: C.trim, stroke: C.trimDk, lwPx: px(P, .8) }); S(rectPts(x0, -12, x1 - x0, 12), { fill: C.trim, stroke: C.trimDk, lwPx: px(P, .8) }); }
     S(rectPts(x0, -CEIL, x1 - x0, 12), { fill: C.trim, stroke: C.trimDk, lwPx: px(P, .8) });
   }
+  const FLOOR_JOINTS = [];
+  for (let i = 0; i < 24; i++) for (let z = (hash(i + 9) * 260) | 0; z < FRONT; z += 260) {
+    FLOOR_JOINTS.push({ x0: -HW + i * 50, z, light: hash(i * 7 + z) < .3 });
+  }
   function floor(P, o) {
     const q = P.poly([[-HW, 0, BACK], [HW, 0, BACK], [HW, 0, FRONT], [-HW, 0, FRONT]]); if (q) S(q, { fill: C.floor, stroke: null });
-    for (let i = 0; i <= 24; i++) { const x = -HW + i * 50, l = P.line([[x, 0, BACK], [x, 0, FRONT]]); if (l) line(l, { stroke: C.floorDk, lwPx: px(P, .9) }); }
-    for (let i = 0; i < 24; i++) for (let z = (hash(i + 9) * 260) | 0; z < FRONT; z += 260) {
-      const l = P.line([[-HW + i * 50, 0, z], [-HW + i * 50 + 50, 0, z]]); if (l) line(l, { stroke: C.floorDk, lwPx: px(P, .7) });
-      if (hash(i * 7 + z) < .3) { const p = frect(P, .2, -HW + i * 50 + 2, -HW + i * 50 + 48, z + 4, z + 150); if (p) S(p, { fill: C.floorLt, stroke: null, alpha: .45 }); }
+    const sc = pxScale();
+    X.strokeStyle = C.floorDk; X.lineCap = 'round'; X.lineJoin = 'round';
+    X.lineWidth = px(P, .9) / sc; X.beginPath();
+    for (let i = 0; i <= 24; i++) { const x = -HW + i * 50, l = P.line([[x, 0, BACK], [x, 0, FRONT]]); if (l) { X.moveTo(l[0][0], l[0][1]); X.lineTo(l[1][0], l[1][1]); } }
+    X.stroke();
+    X.lineWidth = px(P, .7) / sc; X.beginPath();
+    for (let k = 0; k < FLOOR_JOINTS.length; k++) {
+      const { x0, z } = FLOOR_JOINTS[k], l = P.line([[x0, 0, z], [x0 + 50, 0, z]]);
+      if (l) { X.moveTo(l[0][0], l[0][1]); X.lineTo(l[1][0], l[1][1]); }
     }
+    X.stroke();
+    X.save(); X.globalAlpha *= .45; X.fillStyle = C.floorLt; X.beginPath();
+    for (let k = 0; k < FLOOR_JOINTS.length; k++) {
+      const { x0, z, light } = FLOOR_JOINTS[k]; if (!light) continue;
+      const p = frect(P, .2, x0 + 2, x0 + 48, z + 4, z + 150);
+      if (p) { X.moveTo(p[0][0], p[0][1]); for (let j = 1; j < p.length; j++) X.lineTo(p[j][0], p[j][1]); X.closePath(); }
+    }
+    X.fill(); X.restore();
     // the dining rug: rust field, cream border, mustard diamonds
     for (const [ins, col, y] of [[0, C.rugDk, .3], [16, C.cream, .4], [26, C.rug, .5]]) { const r = frect(P, y, -540 + ins, 540 - ins, 70 + ins, 450 - ins); if (r) S(r, { fill: col, stroke: ins ? null : C.line, lwPx: px(P, .9) }); }
     for (let i = 0; i < 9; i++) { const x = -440 + i * 110; for (const z of [110, 410]) { const d = fpoly(P, .6, [[x, z - 16], [x + 16, z], [x, z + 16], [x - 16, z]]); if (d) S(d, { fill: C.mustard, stroke: null }); } }
@@ -215,8 +241,14 @@ const family_kitchen = (() => {
     P.plane(FRONT, () => {
       wallBand(P, -HW, HW, { noWainscot: true });
       S(rectPts(-HW, -150, HW * 2, 60), { fill: C.tile, stroke: null });                  // white subway tile backsplash
-      for (let y = 92; y < 150; y += 9) line([[-HW, -y], [HW, -y]], { stroke: C.tileLn, lwPx: px(P, .6) });
-      for (let r = 0; r < 7; r++) for (let x = -HW + (r % 2) * 9; x < HW; x += 18) line([[x, -92 - r * 9], [x, -101 - r * 9]], { stroke: C.tileLn, lwPx: px(P, .5) });
+      const sc = pxScale();
+      X.strokeStyle = C.tileLn; X.lineCap = 'round';
+      X.lineWidth = px(P, .6) / sc; X.beginPath();
+      for (let y = 92; y < 150; y += 9) { X.moveTo(-HW, -y); X.lineTo(HW, -y); }
+      X.stroke();
+      X.lineWidth = px(P, .5) / sc; X.beginPath();
+      for (let r = 0; r < 7; r++) for (let x = -HW + (r % 2) * 9; x < HW; x += 18) { X.moveTo(x, -92 - r * 9); X.lineTo(x, -101 - r * 9); }
+      X.stroke();
       // the window over the sink
       const w = KWIN; S(rectPts(w.x0 - 8, -w.y1 - 8, w.x1 - w.x0 + 16, w.y1 - w.y0 + 16), { fill: C.trim, stroke: C.trimDk, lwPx: px(P, 1) });
       X.save(); X.beginPath(); X.rect(w.x0, -w.y1, w.x1 - w.x0, w.y1 - w.y0); X.clip(); garden(P, -w.y1, -w.y0, w.x0, w.x1, t, o, 3);

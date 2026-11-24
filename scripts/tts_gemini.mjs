@@ -19,17 +19,76 @@ import { REGISTRY, sceneDir } from './registry.mjs';
 process.chdir(resolve(import.meta.dirname, '..'));
 const args = process.argv.slice(2), id = args.find(a => !a.startsWith('--'));
 const force = args.includes('--force'), retime = !args.includes('--no-retime');
-if (!id) { console.log('usage: node scripts/tts_gemini.mjs <scene_id> [--no-retime] [--force]'); process.exit(1); }
-if (!REGISTRY.scenes.includes(id)) { console.error(`unknown scene "${id}"`); process.exit(1); }
+const envOnly = args.includes('--envelopes'), allEnvs = args.includes('--all-envelopes');
+if (!id && !allEnvs) { console.log('usage: node scripts/tts_gemini.mjs <scene_id> [--no-retime] [--force] [--envelopes]\n       node scripts/tts_gemini.mjs --all-envelopes'); process.exit(1); }
+if (id && !REGISTRY.scenes.includes(id)) { console.error(`unknown scene "${id}"`); process.exit(1); }
 const KEY = process.env.GEMINI_API_KEY;
-if (!KEY) { console.error('GEMINI_API_KEY is not set'); process.exit(1); }
+if (!envOnly && !allEnvs && !KEY) { console.error('GEMINI_API_KEY is not set'); process.exit(1); }
 const FFMPEG = process.env.FFMPEG || (spawnSync('ffmpeg', ['-version']).status === 0 ? 'ffmpeg' : (await import('ffmpeg-static')).default);
+const RATE = 24000, ENV_FPS = 24;
+
+// Quantize 24 kHz 16-bit LE mono PCM into a compact 24 fps mouth-shape envelope string:
+// '.' = closed/pause, 's' = slight/spread, 'o' = rounded/low-ZCR, 'a' = wide open.
+function computeEnvelope(pcm, rate = RATE, fps = ENV_FPS) {
+  const s = new Int16Array(pcm.buffer, pcm.byteOffset, pcm.length >> 1);
+  const win = Math.max(1, Math.round(rate / fps)), n = Math.ceil(s.length / win);
+  const rms = new Float32Array(n), zcr = new Float32Array(n);
+  for (let f = 0; f < n; f++) {
+    const a = f * win, b = Math.min(s.length, a + win), len = b - a || 1;
+    let sum = 0, cross = 0, prev = s[a] >= 0;
+    for (let i = a; i < b; i++) {
+      const v = s[i] / 32768; sum += v * v;
+      const cur = s[i] >= 0; if (cur !== prev) { cross++; prev = cur; }
+    }
+    rms[f] = Math.sqrt(sum / len);
+    zcr[f] = cross / len;
+  }
+  const sorted = Array.from(rms).filter(v => v > .005).sort((a, b) => a - b);
+  const ref = sorted[Math.floor(sorted.length * .88)] || .15;
+  let out = '';
+  for (let f = 0; f < n; f++) {
+    const e = rms[f] / ref;
+    if (e < .16) out += '.';
+    else if (e >= .62) out += 'a';
+    else if (zcr[f] < .11) out += 'o';
+    else out += 's';
+  }
+  return out;
+}
+function mp3ToPcm(buf) {
+  const r = spawnSync(FFMPEG, ['-loglevel', 'error', '-f', 'mp3', '-i', 'pipe:0', '-ar', String(RATE), '-ac', '1', '-f', 's16le', 'pipe:1'], { input: buf, maxBuffer: 1 << 26 });
+  if (r.status) throw new Error(`ffmpeg decode: ${r.stderr}`);
+  return r.stdout;
+}
+function backfillVoiceFile(sceneId) {
+  const vPath = `${sceneDir(sceneId)}/voice.js`;
+  if (!existsSync(vPath)) return false;
+  const raw = readFileSync(vPath, 'utf8'), header = raw.split('\n')[0];
+  let recorded = null;
+  vm.runInNewContext(raw, { voiceClips: c => { recorded = c; } });
+  if (!recorded) return false;
+  const rows = Object.entries(recorded).map(([text, c]) => {
+    const mp3Buf = Buffer.from(c.src.slice(c.src.indexOf(',') + 1), 'base64');
+    const env = computeEnvelope(mp3ToPcm(mp3Buf));
+    return `  ${JSON.stringify(text)}: { dur: ${c.dur}, env: ${JSON.stringify(env)}, src: '${c.src}' },`;
+  });
+  writeFileSync(vPath, `${header}\nvoiceClips({\n${rows.join('\n')}\n});\n`);
+  console.log(`updated envelopes in ${vPath} (${rows.length} clips)`);
+  return true;
+}
+if (allEnvs || envOnly) {
+  const targets = allEnvs ? REGISTRY.scenes : [id];
+  let count = 0;
+  for (const sid of targets) if (backfillVoiceFile(sid)) count++;
+  console.log(`backfilled lip-sync envelopes for ${count} scene${count === 1 ? '' : 's'}`);
+  process.exit(0);
+}
 
 const dir = sceneDir(id), assetPath = `${dir}/asset.js`, voiceDir = `${dir}/voice`;
 let meta = null;
 vm.runInNewContext(readFileSync(assetPath, 'utf8'), { asset: m => { meta = m; } });
 const tts = { model: 'gemini-3.1-flash-tts-preview', voice: 'Charon', style: '', gap: .45, panelGap: 1.5, tempo: 1, ...meta.tts };
-const RATE = 24000, plain = l => l.text.replace(/\*/g, '');
+const plain = l => l.text.replace(/\*/g, '');
 mkdirSync(voiceDir, { recursive: true });
 const indexPath = `${voiceDir}/index.json`, index = existsSync(indexPath) ? JSON.parse(readFileSync(indexPath, 'utf8')) : {};
 
@@ -88,8 +147,10 @@ function take(key) {                                          // the take as it 
   if (r.status) throw new Error(`ffmpeg: ${r.stderr}`);
   return r.stdout;
 }
-const body = Object.entries(clips).map(([text, c]) =>
-  `  ${JSON.stringify(text)}: { dur: ${c.dur}, src: 'data:audio/mpeg;base64,${take(c.key).toString('base64')}' },`).join('\n');
+const body = Object.entries(clips).map(([text, c]) => {
+  const buf = take(c.key), env = computeEnvelope(mp3ToPcm(buf));
+  return `  ${JSON.stringify(text)}: { dur: ${c.dur}, env: ${JSON.stringify(env)}, src: 'data:audio/mpeg;base64,${buf.toString('base64')}' },`;
+}).join('\n');
 writeFileSync(`${dir}/voice.js`, `// Recorded voice for ${id}: generated by scripts/tts_gemini.mjs (${tts.model}, voice ${tts.voice}, tempo ${tts.tempo}). Don't edit by hand.\nvoiceClips({\n${body}\n});\n`);
 console.log(`wrote ${dir}/voice.js (${Object.keys(clips).length} clips, ${(Object.values(clips).reduce((s, c) => s + c.dur, 0) / 60).toFixed(1)} min of speech)`);
 

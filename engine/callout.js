@@ -10,21 +10,139 @@
 //            monospaced capitals) · accent: colour for *words* · fill: bubble colour }
 // While `talking` is true the words are still appearing: flap the speaker's mouth (see lipFlap).
 
+// Shared deterministic syllable timeline for cartoon voices and audio-driven lip sync.
+const _SYL_CACHE = new Map();
+function dialogueSyllables(line, voice = {}) {
+  const text = line.text || '', plain = text.replace(/\*/g, ''), cps = line.cps ?? 18, style = voice.style || 'bouncy';
+  const key = `${plain}|${line.at ?? 0}|${cps}|${style}`;
+  let list = _SYL_CACHE.get(key);
+  if (list) return list;
+  const length = { measured: 1.08, sporty: .67, melodic: 1, bouncy: .85, regal: .76, rumble: 1.14 }[style] ?? .85;
+  const wordPattern = /[A-Za-z]+(?:'[A-Za-z]+)?/g;
+  list = [];
+  let word;
+  while ((word = wordPattern.exec(plain))) {
+    const vowels = word[0].match(/[aeiouy]+/gi) || [];
+    const count = Math.min(3, Math.max(1, vowels.length));
+    const spacing = word[0].length / cps / count;
+    for (let i = 0; i < count; i++) {
+      const at = (line.at ?? 0) + .2 + (word.index + (i + .18) * word[0].length / count) / cps;
+      const dur = Math.min(.28, Math.max(.07, spacing * length));
+      list.push({ at, dur, vowel: (vowels[i]?.[0] || 'a').toLowerCase() });
+    }
+  }
+  _SYL_CACHE.set(key, list);
+  return list;
+}
+
+const _VISEME_PREF = {
+  wide: ['O', 'open', 'grin', 'o'],
+  round: ['o', 'O', 'open', 'grin'],
+  spread: ['grin', 'teeth', 'open', 'smile', 'o'],
+};
+function _pickViseme(bucket, rest, shapes) {
+  if (!bucket || bucket === 'rest') return rest;
+  const pref = _VISEME_PREF[bucket] || _VISEME_PREF.wide;
+  for (const s of pref) if (shapes.includes(s)) return s;
+  return shapes[0] ?? rest;
+}
+function _visemeForLine(t, line, sceneId) {
+  if (!line || line.kind === 'think' || line.silent) return null;
+  const clip = sceneId && typeof voiceClipFor === 'function' ? voiceClipFor(sceneId, line) : null;
+  if (clip?.env) {
+    const age = t - ((line.at ?? 0) + .2), idx = Math.floor(age * (clip.envFps || 24));
+    if (idx < 0 || idx >= clip.env.length) return 'rest';
+    const ch = clip.env[idx];
+    return ch === 'a' ? 'wide' : ch === 'o' ? 'round' : ch === 's' ? 'spread' : 'rest';
+  }
+  const voice = typeof ASSETS !== 'undefined' && line.speaker ? (ASSETS.character[line.speaker]?.voice || {}) : {};
+  const syls = dialogueSyllables(line, voice);
+  for (let i = 0; i < syls.length; i++) {
+    const s = syls[i];
+    if (t >= s.at && t <= s.at + s.dur) {
+      if (s.vowel === 'o' || s.vowel === 'u') return 'round';
+      if (s.vowel === 'e' || s.vowel === 'i' || s.vowel === 'y') return 'spread';
+      return 'wide';
+    }
+  }
+  return 'rest';
+}
+
 function callout(text, ax, ay, age, o = {}) {
   const cps = o.cps ?? 18, plain = text.replace(/\*/g, ''), typeDur = plain.length / cps;
   const dur = o.dur ?? (.25 + typeDur + (o.hold ?? 1.6));
-  if (age < 0 || age > dur) return { talking: false, visible: false };
+  if (age < 0 || age > dur) return { talking: false, visible: false, viseme: 'rest', mouth: 'smile' };
   [ax, ay] = toScreen(ax, ay);
   const typed = (age - .2) * cps, talking = typed > 0 && typed < plain.length;
   const k = backOut(age / .28) * (1 - easeIn(seg(age, dur - .22, dur)));
   overlay(() => drawBubble(text, ax, ay, typed, k, o));
-  return { talking, visible: true };
+  const viseme = talking && o.kind !== 'think'
+    ? _visemeForLine(T, { text, at: T - age, cps, speaker: o.speaker, kind: o.kind }, typeof SCENE !== 'undefined' ? SCENE?.id : null)
+    : 'rest';
+  const mouth = _pickViseme(viseme, 'smile', ['grin', 'open', 'o', 'grin', 'smile', 'open']);
+  return { talking, visible: true, viseme, mouth };
 }
 
-// Lip flap while talking: cycles mouth shapes ~9x/s (stable per frame); otherwise returns `rest`.
+// Lip flap while talking: syncs to active dialogue syllables / TTS envelopes when available, otherwise cycles ~9x/s.
+// `talking` may be a boolean, the object returned by callout(), or { line, speaker }.
 function lipFlap(t, talking, rest = 'smile', shapes = ['grin', 'open', 'o', 'grin', 'smile', 'open']) {
   if (!talking) return rest;
+  if (typeof talking === 'object') {
+    if (talking.viseme !== undefined) return talking.talking ? _pickViseme(talking.viseme, rest, shapes) : rest;
+    if (talking.line) return _pickViseme(_visemeForLine(t, talking.line, typeof SCENE !== 'undefined' ? SCENE?.id : null), rest, shapes);
+    if (!talking.talking) return rest;
+  }
+  if (typeof SCENE !== 'undefined' && SCENE?.dialogue?.length) {
+    const spk = typeof talking === 'object' ? talking.speaker : null;
+    for (const l of SCENE.dialogue) {
+      if (l.kind === 'think' || l.silent) continue;
+      if (spk && l.speaker !== spk) continue;
+      const clip = typeof voiceClipFor === 'function' ? voiceClipFor(SCENE.id, l) : null;
+      const dur = clip ? clip.dur : l.text.replace(/\*/g, '').length / (l.cps ?? 18);
+      if (t >= l.at + .2 && t <= l.at + .2 + dur) {
+        return _pickViseme(_visemeForLine(t, l, SCENE.id), rest, shapes);
+      }
+    }
+  }
   return shapes[Math.floor(hash(Math.floor(t * 9)) * shapes.length)];
+}
+
+// Memoized speech-bubble layout & per-character width cache (invalidated automatically when web fonts finish loading).
+const _BUBBLE_CACHE = new Map(), _BUBBLE_MAX = 256;
+let _bubbleFontGen = 0;
+function _bubbleFontsLoaded() { _bubbleFontGen++; _BUBBLE_CACHE.clear(); }
+if (typeof document !== 'undefined' && document.fonts && typeof document.fonts.addEventListener === 'function') {
+  document.fonts.addEventListener('loadingdone', _bubbleFontsLoaded);
+}
+// Exported players own their engine scope. Remove its document listener on destroy so
+// document.fonts cannot retain a discarded player's drawing state and asset caches.
+function disposeCalloutCache() {
+  if (typeof document !== 'undefined') document.fonts?.removeEventListener?.('loadingdone', _bubbleFontsLoaded);
+  _BUBBLE_CACHE.clear();
+}
+function _bubbleLayout(text, font, maxW) {
+  const fSize = (typeof document !== 'undefined' && document.fonts) ? document.fonts.size : 0;
+  const key = `${_bubbleFontGen}:${fSize}|${font}|${maxW}|${text}`;
+  let lay = _BUBBLE_CACHE.get(key);
+  if (lay) return lay;
+  const words = []; let emph = false;
+  for (const raw of text.split(' ')) {
+    let w = '', f = [];
+    for (const ch of raw) { if (ch === '*') { emph = !emph; continue; } w += ch; f.push(emph); }
+    const charWidths = new Float32Array(w.length);
+    for (let ci = 0; ci < w.length; ci++) charWidths[ci] = X.measureText(w[ci]).width;
+    const ww = X.measureText(w).width;
+    words.push({ w, f, ww, charWidths });
+  }
+  const sp = X.measureText(' ').width, lines = [[]], widths = [0]; let lw = 0;
+  for (const wd of words) {
+    if (lines[lines.length - 1].length && lw + sp + wd.ww > maxW) { lines.push([]); widths.push(0); lw = 0; }
+    lines[lines.length - 1].push(wd); lw += (lw ? sp : 0) + wd.ww; widths[widths.length - 1] = lw;
+  }
+  lay = { sp, lines, widths, maxLineW: Math.max(...widths) };
+  if (_BUBBLE_CACHE.size >= _BUBBLE_MAX) _BUBBLE_CACHE.delete(_BUBBLE_CACHE.keys().next().value);
+  _BUBBLE_CACHE.set(key, lay);
+  return lay;
 }
 
 function drawBubble(text, ax, ay, typed, k, o) {
@@ -34,21 +152,8 @@ function drawBubble(text, ax, ay, typed, k, o) {
   const font = kind === 'robot' ? `700 ${size}px "Courier New", "Menlo", monospace` : kind === 'whisper' ? `italic 600 ${size}px ${FONT_TALK}` : `600 ${size}px ${FONT_TALK}`;
   X.save();
   X.font = font;
-  // tokens with emphasis flags, then greedy word wrap
-  const words = []; let emph = false;
-  for (const raw of text.split(' ')) {
-    let w = '', f = [];
-    for (const ch of raw) { if (ch === '*') { emph = !emph; continue; } w += ch; f.push(emph); }
-    words.push({ w, f });
-  }
-  const sp = X.measureText(' ').width, lines = [[]]; let lw = 0;
-  for (const wd of words) {
-    const ww = X.measureText(wd.w).width;
-    if (lines[lines.length - 1].length && lw + sp + ww > maxW) { lines.push([]); lw = 0; }
-    lines[lines.length - 1].push(wd); lw += (lw ? sp : 0) + ww;
-  }
-  const widths = lines.map(L => L.reduce((s, wd, i) => s + X.measureText(wd.w).width + (i ? sp : 0), 0));
-  const bw = Math.max(...widths) + pad * 2, bh = lines.length * lh + pad * 1.3;
+  const { sp, lines, widths, maxLineW } = _bubbleLayout(text, font, maxW);
+  const bw = maxLineW + pad * 2, bh = lines.length * lh + pad * 1.3;
   const box = kind === 'robot', rx = bw / 2 * (box ? 1.04 : 1.1), ry = bh / 2 * (box ? 1.08 : 1.22), ext = kind === 'shout' ? 1.14 : 1.06, m = 24;
   // keep the whole bubble inside the frame (the tail stretches to reach the speaker)
   const cx = clamp(ax + (o.dx ?? bw / 2 + 80), rx * ext + m, W - rx * ext - m), cy = clamp(ay + (o.dy ?? -bh / 2 - 110), ry * ext + m, H - ry * ext - m);
@@ -86,21 +191,31 @@ function drawBubble(text, ax, ay, typed, k, o) {
 
   // text, typed out character by character; the newest letter pops
   X.font = font; X.textBaseline = 'middle'; X.textAlign = 'left';
-  let shown = 0;
-  lines.forEach((L, li) => {
+  let shown = 0, lastCol = null;
+  for (let li = 0; li < lines.length; li++) {
+    const L = lines[li];
     let x = cx - widths[li] / 2; const y = cy - (lines.length - 1) * lh / 2 + li * lh + size * .04;
-    L.forEach((wd, wi) => {
+    for (let wi = 0; wi < L.length; wi++) {
+      const wd = L[wi];
       if (wi) x += sp;
-      for (let ci = 0; ci < wd.w.length; ci++) {
-        const ch = wd.w[ci], cw = X.measureText(ch).width, age = typed - shown; shown++;
+      const ws = wd.w, wf = wd.f, cwArr = wd.charWidths;
+      for (let ci = 0; ci < ws.length; ci++) {
+        const cw = cwArr[ci], age = typed - shown; shown++;
         if (age > 0) {
-          const pop = 1 + .35 * Math.max(0, 1 - age / 2.5);
-          X.save(); X.translate(x + cw / 2, y); X.scale(pop, pop);
-          X.fillStyle = wd.f[ci] ? accent : ink; X.fillText(ch, -cw / 2, 0); X.restore();
+          const col = wf[ci] ? accent : ink;
+          if (age >= 2.5) {
+            if (col !== lastCol) { X.fillStyle = col; lastCol = col; }
+            X.fillText(ws[ci], x, y);
+          } else {
+            const pop = 1 + .35 * (1 - age / 2.5);
+            X.save(); X.translate(x + cw / 2, y); X.scale(pop, pop);
+            X.fillStyle = col; X.fillText(ws[ci], -cw / 2, 0); X.restore();
+            lastCol = null;
+          }
         }
         x += cw;
       }
-    });
-  });
+    }
+  }
   X.restore();
 }

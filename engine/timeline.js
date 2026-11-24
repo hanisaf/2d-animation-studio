@@ -60,14 +60,28 @@ function loadAsset(kind, id) {
   return LOADING[kind + ':' + id] ??= runScripts([{ ...unset, CURRENT_ASSET: a }, ...a.files.map(f => `${a.dir}/${f}`), unset]);
 }
 // What a scene needs: its cast and locations (from its asset.js; a scene without a cast list gets every character and
-// location), the scenes it borrows helpers from (`uses`, followed all the way, in studio load order), then itself.
+// location), the scenes it borrows helpers from (`uses`, followed all the way, in studio load order), any cross-asset
+// `uses` declared by characters/locations (e.g. 'character:jester_fester'), then itself.
 function sceneDeps(id) {
   const m = ASSETS.scene[id]; if (!m) throw new Error('unknown scene ' + id);
   const uses = new Set(), follow = sid => (ASSETS.scene[sid]?.uses || []).forEach(dep => { if (!uses.has(dep)) { uses.add(dep); follow(dep); } });
   follow(id);
   const scenes = REGISTRY.scenes.filter(sid => uses.has(sid) && sid !== id).concat(id), all = !m.cast;
   const chars = new Set(), locs = new Set();
-  for (const sid of scenes) { (ASSETS.scene[sid].cast || []).forEach(c => chars.add(c)); (ASSETS.scene[sid].locations || []).forEach(l => locs.add(l)); }
+  const addAsset = (kind, aid) => {
+    const bucket = kind === 'character' ? chars : kind === 'location' ? locs : null;
+    if (!bucket || bucket.has(aid)) return;
+    bucket.add(aid);
+    for (const ref of ASSETS[kind]?.[aid]?.uses || []) {
+      const i = ref.indexOf(':');
+      const rk = i >= 0 ? ref.slice(0, i) : kind, rid = i >= 0 ? ref.slice(i + 1) : ref;
+      addAsset(rk, rid);
+    }
+  };
+  for (const sid of scenes) {
+    (ASSETS.scene[sid].cast || []).forEach(c => addAsset('character', c));
+    (ASSETS.scene[sid].locations || []).forEach(l => addAsset('location', l));
+  }
   return [...REGISTRY.characters.filter(c => all || chars.has(c)).map(c => ['character', c]),
     ...REGISTRY.locations.filter(l => all || locs.has(l)).map(l => ['location', l]), ...scenes.map(s => ['scene', s])];
 }
@@ -82,32 +96,73 @@ function scene(def) {
   def.id ??= a?.id; def.title ??= a?.title; def.audio ??= a?.audio; def.music ??= a?.music; def.dialogue ??= a?.dialogue; def.tts ??= a?.tts; def.dir ??= a?.dir;
   def.shots.sort((x, y) => x[0] - y[0]); def.fps ??= 24; SCENES[def.id] = def; return def;
 }
-function useScene(id) { SCENE = SCENES[id] || null; if (SCENE) { BPM = SCENE.bpm ?? 100; BEAT_OFF = SCENE.beatOffset ?? 0; } return SCENE; }
+function useScene(id) { SCENE = SCENES[id] || null; if (typeof clearStaticLayers === 'function') clearStaticLayers(); if (SCENE) { BPM = SCENE.bpm ?? 100; BEAT_OFF = SCENE.beatOffset ?? 0; } return SCENE; }
 
-let GRAIN = null;
-function makeGrain() {
-  const cv = document.createElement('canvas'); cv.width = W; cv.height = H;
-  const c = cv.getContext('2d'), id = c.createImageData(W, H), d = id.data, r = mulberry(5);
-  for (let i = 0; i < d.length; i += 4) { const v = 255 - (r() < .5 ? r() * r() * 22 : 0); d[i] = v; d[i + 1] = v; d[i + 2] = v - 2; d[i + 3] = 255; }
+// Animated 12 fps tiled paper grain (4 small tiles) + cached radial vignette.
+const _GRAIN_SIZE = 256, _GRAIN_SEEDS = [5, 17, 31, 47];
+let _GRAIN_TILES = null;
+const _GRAIN_PATS = new WeakMap(), _VIGNETTES = new WeakMap();
+function _makeGrainTile(seed) {
+  const cv = document.createElement('canvas'); cv.width = cv.height = _GRAIN_SIZE;
+  const c = cv.getContext('2d'), id = c.createImageData(_GRAIN_SIZE, _GRAIN_SIZE), d = id.data, r = mulberry(seed);
+  // Black with baked alpha replaces the costly full-frame multiply pass.
+  // Keep the same random samples/quantization as the old tile; only its subtle blue-channel tint is omitted.
+  for (let i = 0; i < d.length; i += 4) { const v = 255 - (r() < .5 ? r() * r() * 22 : 0); d[i + 3] = 255 - Math.round(v); }
   c.putImageData(id, 0, 0);
-  const g = c.createRadialGradient(W / 2, H / 2, H * .5, W / 2, H / 2, H * 1.1); g.addColorStop(0, 'rgba(255,255,255,0)'); g.addColorStop(1, 'rgba(110,80,70,.30)');
-  c.fillStyle = g; c.fillRect(0, 0, W, H);
   return cv;
 }
+function _grainPatterns() {
+  if (!_GRAIN_TILES) _GRAIN_TILES = _GRAIN_SEEDS.map(_makeGrainTile);
+  let pats = _GRAIN_PATS.get(X);
+  if (!pats) { pats = _GRAIN_TILES.map(cv => X.createPattern(cv, 'repeat')); _GRAIN_PATS.set(X, pats); }
+  return pats;
+}
+function _vignetteGrad() {
+  let g = _VIGNETTES.get(X);
+  if (!g) {
+    g = X.createRadialGradient(W / 2, H / 2, H * .5, W / 2, H / 2, H * 1.1);
+    g.addColorStop(0, 'rgba(110,80,70,0)'); g.addColorStop(1, 'rgba(110,80,70,.28)');
+    _VIGNETTES.set(X, g);
+  }
+  return g;
+}
+function drawPaperFinish(t) {
+  const gAmt = SCENE?.grain ?? 1, vAmt = SCENE?.vignette ?? 1;
+  if (gAmt > .01) {
+    const f = Math.floor(t * BOIL + 1e-6), pat = _grainPatterns()[((f % 4) + 4) % 4];
+    const ox = Math.floor(hash(f * 3.17 + 1) * _GRAIN_SIZE), oy = Math.floor(hash(f * 7.31 + 5) * _GRAIN_SIZE);
+    X.save();
+    X.globalCompositeOperation = 'source-over';
+    if (gAmt < .999) X.globalAlpha = clamp(gAmt);
+    X.translate(-ox, -oy);
+    X.fillStyle = pat;
+    X.fillRect(ox, oy, W, H);
+    X.restore();
+  }
+  if (vAmt > .01) {
+    X.save();
+    X.globalCompositeOperation = 'source-over';
+    if (vAmt < .999) X.globalAlpha = clamp(vAmt);
+    X.fillStyle = _vignetteGrad();
+    X.fillRect(0, 0, W, H);
+    X.restore();
+  }
+}
 
-// Paint one complete frame with any painter fn(): resets per-frame state, then paper grain + vignette, then overlays.
+// Paint one complete frame with any painter fn(): resets per-frame state, then colour grade, paper grain + vignette, then overlays.
 // Scenes go through drawFrame(); the studio's character / location views call paintFrame() directly.
 function paintFrame(t, fn, { transparent = false } = {}) {
-  T = t; boilSeed(t); OVERLAYS = []; CAM = null; JIT = 0;
+  if (typeof _trackCtx === 'function') _trackCtx(X);
+  T = t; boilSeed(t); OVERLAYS = []; CAM = null; JIT = 0; LIGHT = null; GRADE = null;
   X.setTransform(1, 0, 0, 1, 0, 0); X.globalAlpha = 1; X.globalCompositeOperation = 'source-over';
   if (transparent) X.clearRect(0, 0, W, H);
   else { X.fillStyle = '#1E1418'; X.fillRect(0, 0, W, H); }
   X.save(); fn(t); X.restore();
-  CAM = null; JIT = 0; X.setTransform(1, 0, 0, 1, 0, 0);
+  CAM = null; JIT = 0; LIGHT = null; X.setTransform(1, 0, 0, 1, 0, 0);
   if (!transparent) {
-    if (!GRAIN) GRAIN = makeGrain();
-    X.globalCompositeOperation = 'multiply'; X.drawImage(GRAIN, 0, 0); X.globalCompositeOperation = 'source-over';
-  }
+    applyGrade();
+    drawPaperFinish(t);
+  } else GRADE = null;
   flushOverlays();
 }
 
