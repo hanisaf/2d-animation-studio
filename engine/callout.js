@@ -55,7 +55,7 @@ function _visemeForLine(t, line, sceneId) {
     const ch = clip.env[idx];
     return ch === 'a' ? 'wide' : ch === 'o' ? 'round' : ch === 's' ? 'spread' : 'rest';
   }
-  const voice = typeof ASSETS !== 'undefined' && line.speaker ? (ASSETS.character[line.speaker]?.voice || {}) : {};
+  const voice = line.voice || (typeof ASSETS !== 'undefined' && line.speaker ? (ASSETS.character[line.speaker]?.voice || {}) : {});
   const syls = dialogueSyllables(line, voice);
   for (let i = 0; i < syls.length; i++) {
     const s = syls[i];

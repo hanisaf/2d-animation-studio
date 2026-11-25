@@ -47,6 +47,10 @@ const A = palmPals(x, y, s, {
                          // aliases also accepted: 'zelle', 'cringle', 'barret', 'red_bus'
   // body motion
   dy, jump, sq, rot, flip, sx, bounce, sway, alpha, noShadow, boil,
+  // cute plushie limbs
+  armL, armR,            // hand angles in rad (+armL lifts left hand up, -armR lifts right hand up)
+  footL, footR,          // foot angles in rad
+  noArms, noFeet,        // hide arms or feet (e.g. tucked under a blanket or behind a table)
   // face
   eyes: 'open',          // 'open' | 'happy' | 'closed' | 'wink' | 'wide' | 'sparkle' | 'star' | 'sleepy'
   lookX, lookY, blink,   // lookX/Y in -1..1; blink: 0..1 or false
@@ -59,7 +63,7 @@ const A = palmPals(x, y, s, {
   drive: 0,              // Bertie: headlight glow & puff clouds (0..1)
   party: false,          // pal: 'all' celebratory group bounce
 });
-// A (screen px): { head, mouth, top, eyeL, eyeR, chest, center, bottom }
+// A (screen px): { head, mouth, top, eyeL, eyeR, handL, handR, footL, footR, chest, center, bottom }
 
 // Dedicated convenience wrappers:
 eveEarth(x, y, s, o);

@@ -161,7 +161,7 @@ async function buildSceneAudioChunk(sc, sampleRate, musicOffset = 0) {
       src.connect(gain).connect(voiceBus); if (at < sc.duration) src.start(at);
       continue;
     }
-    const voice = ASSETS.character[line.speaker]?.voice || {};
+    const voice = line.voice || ASSETS.character[line.speaker]?.voice || {};
     const syls = dialogueSyllables(line, voice);
     for (let syllableIndex = 0; syllableIndex < syls.length; syllableIndex++) {
       const s = syls[syllableIndex];

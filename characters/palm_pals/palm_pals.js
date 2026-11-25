@@ -16,6 +16,7 @@
 //   pal:    'eve' | 'zelie' | 'kringle' | 'crumble' | 'bertie' | 'eve_dad' | 'zelie_papa' | 'all'  (aliases supported)
 //   seed:   number (picks a pal when pal is omitted, and staggers auto-blink / bob phase)
 //   Pose:   dy (+ down) · jump (units up) · sq (squash; − stretches) · rot · flip · sx · bounce (0..1 idle bob) · sway (0..1 gentle rock)
+//   Limbs:  armL / armR (rad; +armL lifts left hand up, −armR lifts right hand up) · footL / footR (rad) · noArms · noFeet
 //   Face:   eyes: 'open' | 'happy' | 'closed' | 'wink' | 'wide' | 'sparkle' | 'star' | 'sleepy'
 //           lookX / lookY (−1..1) · blink (0..1 or false) · brows: 'none' | 'up' | 'worried' | 'angry'
 //           mouth: 'smile' | 'grin' | 'laugh' | 'open' | 'o' | 'O' | 'flat' | 'frown' | 'cat' (works with lipFlap)
@@ -23,7 +24,7 @@
 //   Extras: emote: 'heart' | 'spark' | '!' | '?' | 'music' | 'zzz' with emoteK (0..1)
 //           drive: 0..1 (Bertie Red Bus headlights glow + motion puffs) · giggle: 0..1 (Zelie straw & lemon jiggle)
 //
-// Returns screen anchors: { head, mouth, top, eyeL, eyeR, chest, center, bottom }
+// Returns screen anchors: { head, mouth, top, eyeL, eyeR, handL, handR, footL, footR, chest, center, bottom }
 
 const PALM_PALS_UNIT = 4.5;
 const PALM_PALS_LIST = ['eve', 'zelie', 'kringle', 'crumble', 'bertie'];
@@ -248,10 +249,105 @@ function plpFace(o, t, lw, A, cfg = {}) {
   A.mouth = toPx(0, mouthY + .1);
 }
 
+// Cute stubby bean-stuffed plushie feet (resting on y = 0, tucked behind the lower belly).
+function plpDrawFeet(o, t, lw, A, cfg) {
+  if (o.noFeet) return;
+  const cols = cfg.footCols || cfg.cols;
+  const sc = cfg.footScale ?? 1;
+  const fx = cfg.footX ?? 1.6;
+  const fy = cfg.footY ?? -.62 * sc;
+  const seedOff = (o.seed ?? cfg.seed ?? 0) * .85;
+  const jumpKick = clamp(o.jump || 0, 0, 1.4) * .22;
+  const bounceKick = (o.bounce || 0) * Math.max(0, Math.sin(t * 3.8 + seedOff)) * .08;
+  const basePts = [
+    [-.86, -.34], [-.30, -.62], [.42, -.58], [.98, -.26],
+    [1.08, .12], [.88, .50], [.26, .62], [-.38, .60], [-.90, .42], [-1.00, .06],
+  ];
+
+  for (const sd of [-1, 1]) {
+    const custom = sd < 0 ? o.footL : o.footR;
+    const ang = custom != null ? custom : sd * (jumpKick + bounceKick);
+    const pts = basePts.map(([px, py]) => [px * sd * sc, py * sc]);
+    X.save();
+    X.translate(sd * fx, fy);
+    X.rotate(ang);
+    X.save();
+    tracePath(pts, true, .78);
+    X.fillStyle = linGrad(0, -.62 * sc, 0, .62 * sc, [[0, cols.lt], [.42, cols.base], [1, cols.dk]]);
+    X.fill();
+    X.clip();
+    withBoil(0, () => {
+      // Soft cozy belly shadow cast onto top of the foot
+      ellipse(0, -.52 * sc, 1.05 * sc, .36 * sc, { fill: 'rgba(38,18,34,.2)', stroke: null });
+      // Subtle plush sheen on the rounded toe
+      ellipse(.42 * sd * sc, -.06 * sc, .36 * sc, .15 * sc, { fill: 'rgba(255,255,255,.28)', stroke: null, rot: sd * .18 });
+    });
+    X.restore();
+    shape(pts, { fill: null, stroke: PLP.ink, lw: lw * .95, smooth: .78 });
+    A[sd < 0 ? 'footL' : 'footR'] = toPx(.22 * sd * sc, .44 * sc);
+    X.restore();
+  }
+}
+
+// Cute stubby bean-stuffed plushie arms / mitten-hands (tucked cleanly behind the body sides).
+// Angle convention: +armL lifts the left hand up, −armR lifts the right hand up.
+function plpDrawArms(o, t, lw, A, cfg) {
+  if (o.noArms) return;
+  const cols = cfg.armCols || cfg.cols;
+  const sc = cfg.armScale ?? 1;
+  const ax = cfg.armX ?? 4.0;
+  const ay = cfg.armY ?? -3.55;
+  const seedOff = (o.seed ?? cfg.seed ?? 0) * .85;
+  const wiggle = (o.bounce || 0) * Math.sin(t * 3.8 + seedOff) * .16
+    + (o.sway || 0) * Math.sin(t * 2.2 + seedOff) * .12
+    + (o.giggle || 0) * Math.sin(t * 14) * .26;
+  const jumpLift = clamp(o.jump || 0, 0, 1.5) * .42;
+  const defL = cfg.defArmL ?? .26;
+  const defR = cfg.defArmR ?? -.26;
+  const basePts = [
+    [0, -.42], [.55, -.50], [1.18, -.58], [1.56, -.30],
+    [1.64, .06], [1.44, .44], [.92, .56], [.32, .48], [0, .40],
+  ];
+
+  for (const sd of [-1, 1]) {
+    const custom = sd < 0 ? o.armL : o.armR;
+    const ang = custom != null
+      ? custom
+      : (sd < 0 ? defL + jumpLift + wiggle : defR - jumpLift + wiggle);
+    const pts = basePts.map(([px, py]) => [px * sd * sc, py * sc]);
+    X.save();
+    X.translate(sd * ax, ay);
+    X.rotate(ang);
+    X.save();
+    tracePath(pts, true, .78);
+    X.fillStyle = linGrad(0, -.6 * sc, 0, .6 * sc, [[0, cols.lt], [.44, cols.base], [1, cols.dk]]);
+    X.fill();
+    X.clip();
+    withBoil(0, () => {
+      // Soft shoulder seam shadow where the hand meets the plush body
+      ellipse(.06 * sd * sc, 0, .34 * sc, .52 * sc, { fill: 'rgba(40,18,36,.16)', stroke: null });
+      // Tiny plush sheen on the upper mitten curve
+      ellipse(.92 * sd * sc, -.24 * sc, .46 * sc, .17 * sc, { fill: 'rgba(255,255,255,.3)', stroke: null });
+    });
+    X.restore();
+    shape(pts, { fill: null, stroke: PLP.ink, lw: lw * .95, smooth: .78 });
+    A[sd < 0 ? 'handL' : 'handR'] = toPx(1.44 * sd * sc, 0);
+    X.restore();
+  }
+}
+
 // ---------- 1. Eve Earth ----------
 function plpDrawEve(o, t, lw, A) {
   const rx = 4.35, h = 8.2;
+  const lift = o.noFeet ? 0 : .62;
+  const cols = { lt: PLP.eveOceanLt, base: PLP.eveOcean, dk: PLP.eveOceanDk };
   const body = plpPlushPts(rx, h, .76, .95, 0, 1);
+
+  plpDrawFeet(o, t, lw, A, { cols, footX: 1.58, seed: 1 });
+
+  X.save();
+  X.translate(0, -lift);
+  plpDrawArms(o, t, lw, A, { cols, armX: 3.95, armY: -3.55, seed: 1 });
 
   X.save();
   tracePath(body, true, .9);
@@ -290,13 +386,22 @@ function plpDrawEve(o, t, lw, A) {
   A.top = toPx(0, -h);
   A.chest = toPx(0, -2.6);
   A.center = toPx(0, -h * .5);
+  X.restore();
   A.bottom = toPx(0, 0);
 }
 
 // ---------- 2. Zelie Pink Lemonade ----------
 function plpDrawZelie(o, t, lw, A) {
   const cupH = 7.6;
+  const lift = o.noFeet ? 0 : .62;
+  const cols = { lt: PLP.zelieCupLt, base: PLP.zelieCup, dk: PLP.zelieCupDk };
   const jig = (o.giggle || 0) * Math.sin(t * 14) * .12 + (o.bounce || 0) * Math.sin(t * 4.5) * .05;
+
+  plpDrawFeet(o, t, lw, A, { cols, footX: 1.42, footScale: .96, seed: 2 });
+
+  X.save();
+  X.translate(0, -lift);
+  plpDrawArms(o, t, lw, A, { cols, armX: 3.48, armY: -3.5, armScale: .95, defArmL: .18, defArmR: -.18, seed: 2 });
 
   // Pink striped straw sticking out of the foam (behind foam rim)
   X.save();
@@ -399,13 +504,22 @@ function plpDrawZelie(o, t, lw, A) {
   A.top = toPx(0, -10.8);
   A.chest = toPx(0, -2.5);
   A.center = toPx(0, -4.1);
+  X.restore();
   A.bottom = toPx(0, 0);
 }
 
 // ---------- 3. Kringle Cookie (Holiday Cookie with Red & Green Candy Dots) ----------
 function plpDrawKringle(o, t, lw, A) {
   const rx = 4.45, h = 8.15;
+  const lift = o.noFeet ? 0 : .62;
+  const cols = { lt: PLP.kringleLt, base: PLP.kringleBase, dk: PLP.kringleDk };
   const body = plpPlushPts(rx, h, .76, .95, .11, 1.4);
+
+  plpDrawFeet(o, t, lw, A, { cols, footX: 1.62, seed: 3 });
+
+  X.save();
+  X.translate(0, -lift);
+  plpDrawArms(o, t, lw, A, { cols, armX: 4.08, armY: -3.55, seed: 3 });
 
   X.save();
   tracePath(body, true, .92);
@@ -450,13 +564,22 @@ function plpDrawKringle(o, t, lw, A) {
   A.top = toPx(0, -h);
   A.chest = toPx(0, -2.5);
   A.center = toPx(0, -h * .5);
+  X.restore();
   A.bottom = toPx(0, 0);
 }
 
 // ---------- 4. Crumble Cookie (Frosted Cookie with Rainbow Sprinkles) ----------
 function plpDrawCrumble(o, t, lw, A) {
   const rx = 4.45, h = 8.15;
+  const lift = o.noFeet ? 0 : .62;
+  const cols = { lt: PLP.crumbleCrustLt, base: PLP.crumbleCrust, dk: PLP.crumbleCrustDk };
   const body = plpPlushPts(rx, h, .76, .95, .1, 2.6);
+
+  plpDrawFeet(o, t, lw, A, { cols, footX: 1.62, seed: 4 });
+
+  X.save();
+  X.translate(0, -lift);
+  plpDrawArms(o, t, lw, A, { cols, armX: 4.08, armY: -3.55, seed: 4 });
 
   // Warm golden-yellow cookie crust
   X.save();
@@ -521,19 +644,21 @@ function plpDrawCrumble(o, t, lw, A) {
   A.top = toPx(0, -h);
   A.chest = toPx(0, -2.5);
   A.center = toPx(0, -h * .5);
+  X.restore();
   A.bottom = toPx(0, 0);
 }
 
 // ---------- 5. Bertie Red Bus (London Double-Decker Red Bus) ----------
 function plpDrawBertie(o, t, lw, A) {
   const drive = clamp(o.drive || 0);
+  const cols = { lt: PLP.bertieRedLt, base: PLP.bertieRed, dk: PLP.bertieRedDk };
 
   // Cute puff clouds when driving
   if (drive > .05) {
     withBoil(0, () => {
       for (let i = 0; i < 3; i++) {
         const u = frac(t * 1.4 + i / 3);
-        const px = -4.9 - u * 2.2;
+        const px = -5.6 - u * 2.2;
         const py = -1.2 - u * 1.4 - Math.sin(u * Math.PI) * .35;
         const pr = (.34 + u * .38) * Math.sin(u * Math.PI) * drive;
         if (pr > .06) circle(px, py, pr, { fill: 'rgba(255,252,246,.82)', stroke: rgba(PLP.ink, .35), lw: lw * .55 });
@@ -546,11 +671,16 @@ function plpDrawBertie(o, t, lw, A) {
     const wx = sd * 2.85, wy = -.72;
     ellipse(wx, wy, 1.05, .72, { fill: PLP.bertieWheel, stroke: PLP.ink, lw: lw * .9 });
     circle(wx, wy, .32, { fill: PLP.bertieHub, stroke: null });
+    A[sd < 0 ? 'footL' : 'footR'] = toPx(wx, 0);
   }
 
-  // Cute tiny plush wing mirrors sticking out on the upper-middle sides
+  // Cute stubby plushie arms matching the Palm Pals pack
+  plpDrawArms(o, t, lw, A, { cols, armX: 4.35, armY: -3.45, armScale: .96, defArmL: .22 + drive * .32, defArmR: -.22 - drive * .32, seed: 5 });
+
+  // Cute tiny plush wing mirrors perched beside the upper deck
   for (const sd of [-1, 1]) {
-    ellipse(sd * 4.55, -5.55, .45, .62, { fill: PLP.bertieRed, stroke: PLP.ink, lw: lw * .85 });
+    line([[sd * 4.25, -6.55], [sd * 4.72, -6.78]], { stroke: PLP.ink, lw: lw * .85 });
+    ellipse(sd * 4.82, -6.92, .34, .50, { fill: PLP.bertieRed, stroke: PLP.ink, lw: lw * .82 });
   }
 
   // Main pillowy rounded-rectangle London double-decker bus body
@@ -648,7 +778,15 @@ function plpSquigglyMustache(cy, halfW, lw) {
 // ---------- 6. Eve's Dad (Larger Deep-Ocean Earth Globe Plushie with Squiggly Mustache) ----------
 function plpDrawEveDad(o, t, lw, A) {
   const rx = 4.5, h = 8.6;
+  const lift = o.noFeet ? 0 : .64;
+  const cols = { lt: PLP.eveDadOceanLt, base: PLP.eveDadOcean, dk: PLP.eveDadOceanDk };
   const body = plpPlushPts(rx, h, .76, .95, 0, 2);
+
+  plpDrawFeet(o, t, lw, A, { cols, footX: 1.72, footScale: 1.04, seed: 9 });
+
+  X.save();
+  X.translate(0, -lift);
+  plpDrawArms(o, t, lw, A, { cols, armX: 4.12, armY: -3.75, armScale: 1.04, defArmL: .22, defArmR: -.22, seed: 9 });
 
   X.save();
   tracePath(body, true, .9);
@@ -678,12 +816,21 @@ function plpDrawEveDad(o, t, lw, A) {
   A.top = toPx(0, -h);
   A.chest = toPx(0, -2.6);
   A.center = toPx(0, -h * .5);
+  X.restore();
   A.bottom = toPx(0, 0);
 }
 
 // ---------- 7. Zelie's Papa (Taller Coral-Red Punch Cup Plushie with Yellow Straw & Squiggly Mustache) ----------
 function plpDrawZeliePapa(o, t, lw, A) {
+  const lift = o.noFeet ? 0 : .64;
+  const cols = { lt: PLP.zeliePapaCupLt, base: PLP.zeliePapaCup, dk: PLP.zeliePapaCupDk };
   const jig = (o.bounce || 0) * Math.sin(t * 4.2) * .04;
+
+  plpDrawFeet(o, t, lw, A, { cols, footX: 1.56, footScale: 1.02, seed: 12 });
+
+  X.save();
+  X.translate(0, -lift);
+  plpDrawArms(o, t, lw, A, { cols, armX: 3.65, armY: -4.0, armScale: 1.02, defArmL: .16, defArmR: -.16, seed: 12 });
 
   // Golden-yellow straw sticking out of foam
   X.save();
@@ -727,6 +874,7 @@ function plpDrawZeliePapa(o, t, lw, A) {
   A.top = toPx(0, -11.4);
   A.chest = toPx(0, -2.7);
   A.center = toPx(0, -4.7);
+  X.restore();
   A.bottom = toPx(0, 0);
 }
 
@@ -772,19 +920,19 @@ function plpEmote(kind, A, s, k, t) {
   });
 }
 
-// Group portrait of all 5 Palm Pals arranged neatly in two cozy rows so they fit inside [11, 11] local units.
+// Group portrait of all 5 Palm Pals arranged neatly in two cozy rows so they fit inside [12, 12] local units.
 function plpDrawGroup(x, y, s, o = {}) {
   const t = o.t ?? T;
   const party = !!o.party;
-  const sub = s * .42;
+  const sub = s * .37;
   const layout = [
     // Back row (slightly raised, nestled behind front row)
-    { pal: 'eve', dx: -2.2, dy: -3.65, ph: 0 },
-    { pal: 'zelie', dx: 2.2, dy: -3.65, ph: .2 },
+    { pal: 'eve', dx: -2.55, dy: -3.95, ph: 0 },
+    { pal: 'zelie', dx: 2.55, dy: -3.95, ph: .2 },
     // Front row
-    { pal: 'kringle', dx: -3.7, dy: 0, ph: .4 },
+    { pal: 'kringle', dx: -4.55, dy: 0, ph: .4 },
     { pal: 'crumble', dx: 0, dy: .22, ph: .6 },
-    { pal: 'bertie', dx: 3.7, dy: 0, ph: .8 },
+    { pal: 'bertie', dx: 4.55, dy: 0, ph: .8 },
   ];
   const anchors = {};
   for (const item of layout) {
@@ -795,6 +943,8 @@ function plpDrawGroup(x, y, s, o = {}) {
       sway: party ? .6 : .25,
       jump: party ? wave * 1.1 : 0,
       sq: party ? -.08 * wave + .09 * Math.max(0, -Math.sin((t * 1.45 - item.ph) * TAU)) : 0,
+      armL: party ? .28 + wave * .55 : undefined,
+      armR: party ? -.28 - wave * .55 : undefined,
       eyes: party && wave > .45 ? 'happy' : (o.eyes || 'open'),
       mouth: party ? (wave > .35 ? 'grin' : 'smile') : (o.mouth || 'smile'),
       giggle: item.pal === 'zelie' && party ? 1 : 0,
@@ -876,7 +1026,7 @@ CHARACTERS.palm_pals = {
   draw: palmPals,
   unit: PALM_PALS_UNIT,
   palette: PLP,
-  size: [11, 11],
+  size: [12, 12],
   poses: {
     'all five': (x, y, s, t) => palmPals(x, y, s, { t, pal: 'all' }),
     'Eve Earth': (x, y, s, t) => eveEarth(x, y, s, { t, sway: .55, bounce: .25 }),
@@ -889,8 +1039,8 @@ CHARACTERS.palm_pals = {
     'party bounce': (x, y, s, t) => palmPals(x, y, s, { t, pal: 'all', party: true }),
     'Eve · calm': (x, y, s, t) => eveEarth(x, y, s, { t, eyes: 'happy', mouth: 'smile', sway: .7, emote: 'heart', emoteK: .75 + .25 * Math.sin(t * 2.6) }),
     'Zelie · giggle': (x, y, s, t) => zelieLemonade(x, y, s, { t, eyes: 'happy', mouth: 'laugh', giggle: 1, bounce: 1, sq: .08 * Math.abs(Math.sin(t * 9)), emote: 'music', emoteK: 1 }),
-    'Kringle · cheer': (x, y, s, t) => kringleCookie(x, y, s, { t, eyes: 'sparkle', mouth: 'grin', jump: 1.15 * Math.abs(Math.sin(t * 3.6)), emote: 'spark', emoteK: 1 }),
-    'Crumble · talk': (x, y, s, t) => crumbleCookie(x, y, s, { t, mouth: lipFlap(t + .22, true, 'smile', ['open', 'o', 'grin', 'smile']), lookX: .38 * Math.cos(t * 1.8), rot: -.05 + .04 * Math.sin(t * 3), bounce: .55 }),
+    'Kringle · cheer': (x, y, s, t) => kringleCookie(x, y, s, { t, eyes: 'sparkle', mouth: 'grin', armL: .78, armR: -.78, jump: 1.15 * Math.abs(Math.sin(t * 3.6)), emote: 'spark', emoteK: 1 }),
+    'Crumble · talk': (x, y, s, t) => crumbleCookie(x, y, s, { t, mouth: lipFlap(t + .22, true, 'smile', ['open', 'o', 'grin', 'smile']), armL: .22 + .28 * Math.sin(t * 5.2), armR: -.22 + .24 * Math.cos(t * 4.4), lookX: .38 * Math.cos(t * 1.8), rot: -.05 + .04 * Math.sin(t * 3), bounce: .55 }),
     'Bertie · drive': (x, y, s, t) => bertieRedBus(x, y, s, { t, drive: 1, eyes: 'happy', mouth: 'grin', bounce: .85, rot: .05 * Math.sin(t * 7.5), sq: .06 * Math.abs(Math.sin(t * 7.5)) }),
   },
 };

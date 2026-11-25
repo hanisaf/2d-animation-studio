@@ -26,7 +26,10 @@ import { REGISTRY, SERIES } from './scripts/registry.mjs';
 const args = Object.fromEntries(process.argv.slice(2).map(a => { const [k, ...v] = a.replace(/^--/, '').split('='); return [k, v.length ? v.join('=') : true]; }));
 const CHROME = args.chrome || process.env.CHROME || [
   '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
-  'C:/Program Files/Google/Chrome/Application/chrome.exe', '/usr/bin/google-chrome', '/usr/bin/chromium',
+  '/Applications/Microsoft Edge.app/Contents/MacOS/Microsoft Edge',
+  'C:/Program Files/Google/Chrome/Application/chrome.exe',
+  'C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe',
+  '/usr/bin/google-chrome', '/usr/bin/chromium', '/usr/bin/chromium-browser',
 ].find(p => existsSync(p));
 const FFMPEG = process.env.FFMPEG || (spawnSync('ffmpeg', ['-version']).status === 0 ? 'ffmpeg' : (await import('ffmpeg-static')).default);
 
@@ -87,12 +90,26 @@ async function ensureServer() {
       mkdirSync(dirname(slot.file), { recursive: true });
       const dest = slot.atomic ? slot.file + '.tmp' : slot.file;
       const ws = createWriteStream(dest);
+      let aborted = false;
+      const abortUpload = () => {
+        if (aborted) return;
+        aborted = true;
+        ws.destroy();
+        if (slot.atomic) try { rmSync(dest, { force: true }); } catch {}
+      };
+      req.on('aborted', abortUpload);
+      req.on('error', abortUpload);
       req.pipe(ws);
       ws.on('finish', () => {
+        if (aborted || !req.complete) {
+          if (slot.atomic) try { rmSync(dest, { force: true }); } catch {}
+          if (!res.writableEnded) res.writeHead(499).end('upload aborted');
+          return;
+        }
         try { if (slot.atomic) renameSync(dest, slot.file); res.writeHead(200).end('ok'); }
         catch (e) { res.writeHead(500).end(e.message); }
       });
-      ws.on('error', e => { res.writeHead(500).end(e.message); });
+      ws.on('error', e => { if (!res.writableEnded) res.writeHead(500).end(e.message); });
       return;
     }
     const p = decodeURIComponent(u.pathname);
@@ -112,14 +129,37 @@ async function ensureServer() {
   return baseUrl;
 }
 
-let browser = null;
+let browser = null, browserLaunch = null, lastBrowserExit = null;
+async function ensureBrowser() {
+  if (browser?.connected) return browser;
+  if (!browserLaunch) {
+    lastBrowserExit = null;
+    browserLaunch = puppeteer.launch({
+      executablePath: CHROME, headless: true, protocolTimeout: 0,
+      args: ['--window-size=1920,1080', '--disable-renderer-backgrounding', '--disable-background-timer-throttling'],
+    }).then(b => {
+      browser = b;
+      const proc = b.process?.();
+      if (proc) proc.once('exit', (code, signal) => { lastBrowserExit = { code, signal }; });
+      b.once('disconnected', () => { if (browser === b) browser = null; });
+      return b;
+    }).finally(() => { browserLaunch = null; });
+  }
+  return browserLaunch;
+}
+function isBrowserDisconnectError(e) {
+  if (!browser?.connected) return true;
+  if (e?.name === 'ConnectionClosedError' || e?.name === 'TargetCloseError') return true;
+  return /Connection closed|Target closed|Session closed|Browser has disconnected/i.test(e?.message || '');
+}
+async function safeClosePage(page) {
+  if (!page || page.isClosed?.()) return;
+  try { await page.close(); } catch {}
+}
 async function openPage(sceneId, tag = '') {
   await ensureServer();
-  browser ??= await puppeteer.launch({
-    executablePath: CHROME, headless: true, protocolTimeout: 0,
-    args: ['--window-size=1920,1080', '--disable-renderer-backgrounding', '--disable-background-timer-throttling'],
-  });
-  const page = await browser.newPage();
+  const b = await ensureBrowser();
+  const page = await b.newPage();
   page.on('console', m => { if (['error', 'warn'].includes(m.type())) console.log(`[page${tag}]`, m.text()); });
   page.on('pageerror', e => console.log(`[page error${tag}]`, e.message));
   const fxQ = [
@@ -148,9 +188,11 @@ async function soundtrackPath(page, info, id) {
   } finally { freeSlot(slot.token); }
 }
 
-function splitChunks(startFrame, endFrame, maxWorkers) {
+function splitChunks(startFrame, endFrame, maxWorkers, maxChunkFrames = Infinity) {
   const total = endFrame - startFrame;
-  const count = Math.max(1, Math.min(maxWorkers, Math.ceil(total / 24)));
+  const minByWorkers = Math.min(maxWorkers, Math.ceil(total / 24));
+  const minBySize = Number.isFinite(maxChunkFrames) ? Math.ceil(total / maxChunkFrames) : 1;
+  const count = Math.max(1, minByWorkers, minBySize);
   const chunks = [];
   for (let w = 0; w < count; w++) {
     const a = startFrame + Math.floor(w * total / count);
@@ -199,58 +241,110 @@ async function buildScene(id, {
   const startFrame = Math.max(0, Math.round(startSec * fps));
   const endFrame = endSec == null ? totalSceneFrames : Math.min(totalSceneFrames, Math.round(endSec * fps));
   const nFrames = endFrame - startFrame;
-  if (nFrames <= 0) { await page0.close(); throw new Error(`invalid frame range for ${id}`); }
+  if (nFrames <= 0) { await safeClosePage(page0); throw new Error(`invalid frame range for ${id}`); }
 
   const codec = encoder === 'ffmpeg' ? null : await page0.evaluate((fps, bitrate) => window.probeVideoCodec({ fps, bitrate }), fps, bitrate);
   const useWebCodecs = !!codec;
   if (encoder !== 'ffmpeg' && !useWebCodecs) console.log(`${id}: WebCodecs H.264 unavailable, falling back to piped ffmpeg`);
 
-  const chunks = splitChunks(startFrame, endFrame, workers);
+  const maxChunkFrames = Math.max(48, Math.round(fps * 10));
+  const chunks = splitChunks(startFrame, endFrame, workers, maxChunkFrames);
   const partsDir = `out/${id}/parts_${Date.now()}`;
   mkdirSync(partsDir, { recursive: true });
-  const parts = chunks.map(c => `${partsDir}/part_${String(c.w).padStart(2, '0')}.mp4`);
-  console.log(`${id}: building ${nFrames} frames (${chunks.length} worker${chunks.length > 1 ? 's' : ''}, ${useWebCodecs ? `WebCodecs ${codec}` : `piped libx264 crf=${crf}`})`);
+  const parts = chunks.map(c => `${partsDir}/part_${String(c.w).padStart(3, '0')}.mp4`);
+  const poolSize = Math.max(1, Math.min(workers, chunks.length));
+  console.log(`${id}: building ${nFrames} frames (${poolSize} worker${poolSize > 1 ? 's' : ''}, ${chunks.length} chunk${chunks.length > 1 ? 's' : ''}, ${useWebCodecs ? `WebCodecs ${codec}` : `piped libx264 crf=${crf}`})`);
 
-  let sound = null;
+  const isPartReady = idx => existsSync(parts[idx]) && statSync(parts[idx]).size > 0;
+  let sound = info.synthesizedAudio ? null : (info.audio && existsSync(info.audio) ? info.audio : null);
+  let soundDone = !info.synthesizedAudio;
+  let initialPage = page0;
+  let stalledRetries = 0;
   try {
-    await Promise.all(chunks.map(async (ch, idx) => {
-      const page = idx === 0 ? page0 : (await openPage(id, '#' + ch.w)).page;
-      const partPath = parts[idx];
-      try {
-        if (useWebCodecs) {
-          const slot = regFileSlot(partPath, true);
-          try {
-            await page.evaluate(
-              (opts, url) => window.uploadVideoRange(opts, url),
-              { id, startFrame: ch.startFrame, endFrame: ch.endFrame, fps, bitrate, codec },
-              slot.url,
-            );
-          } finally { freeSlot(slot.token); }
+    while (true) {
+      const pending = chunks.map((_, idx) => idx).filter(idx => !isPartReady(idx));
+      if (!pending.length && soundDone) break;
+      const beforeDone = chunks.length - pending.length + (soundDone ? 1 : 0);
+      let cursor = 0, needAudio = !soundDone;
+      const activeWorkers = Math.max(1, Math.min(workers, pending.length + (needAudio ? 1 : 0)));
+      const results = await Promise.allSettled(Array.from({ length: activeWorkers }, async (_, w) => {
+        let page = null;
+        if (w === 0 && initialPage && !initialPage.isClosed?.() && browser?.connected) {
+          page = initialPage;
+          initialPage = null;
         } else {
-          const ff = spawn(FFMPEG, [
-            '-y', '-loglevel', 'error', '-f', 'image2pipe', '-framerate', String(fps), '-c:v', 'mjpeg', '-i', '-',
-            '-c:v', 'libx264', '-preset', preset, '-crf', crf, '-pix_fmt', 'yuv420p', partPath,
-          ], { stdio: ['pipe', 'inherit', 'inherit'] });
-          const ffDone = new Promise((ok, bad) => { ff.on('error', bad); ff.on('close', c => c ? bad(new Error(`ffmpeg worker #${ch.w} exited ${c}`)) : ok()); });
-          const slot = regStreamSlot(ff.stdin);
-          try {
-            for (let f = ch.startFrame; f < ch.endFrame; f++) {
-              await page.evaluate((t, url) => window.renderBlobTo(t, url, 'image/jpeg', .95), f / fps, slot.url);
-            }
-          } finally { freeSlot(slot.token); ff.stdin.end(); }
-          await ffDone;
+          page = (await openPage(id, '#' + w)).page;
         }
-        if (idx === 0) sound = await soundtrackPath(page, info, id);
-      } finally {
-        await page.close();
+        try {
+          if (w === 0 && needAudio) {
+            needAudio = false;
+            sound = await soundtrackPath(page, info, id);
+            soundDone = true;
+          }
+          while (cursor < pending.length) {
+            const idx = pending[cursor++];
+            const ch = chunks[idx], partPath = parts[idx];
+            if (useWebCodecs) {
+              const slot = regFileSlot(partPath, true);
+              try {
+                await page.evaluate(
+                  (opts, url) => window.uploadVideoRange(opts, url),
+                  { id, startFrame: ch.startFrame, endFrame: ch.endFrame, fps, bitrate, codec },
+                  slot.url,
+                );
+              } finally { freeSlot(slot.token); }
+            } else {
+              const tmpPath = partPath + '.tmp';
+              const ff = spawn(FFMPEG, [
+                '-y', '-loglevel', 'error', '-f', 'image2pipe', '-framerate', String(fps), '-c:v', 'mjpeg', '-i', '-',
+                '-c:v', 'libx264', '-preset', preset, '-crf', crf, '-pix_fmt', 'yuv420p', tmpPath,
+              ], { stdio: ['pipe', 'inherit', 'inherit'] });
+              const ffDone = new Promise((ok, bad) => { ff.on('error', bad); ff.on('close', c => c ? bad(new Error(`ffmpeg worker #${w} exited ${c}`)) : ok()); });
+              const slot = regStreamSlot(ff.stdin);
+              try {
+                for (let f = ch.startFrame; f < ch.endFrame; f++) {
+                  await page.evaluate((t, url) => window.renderBlobTo(t, url, 'image/jpeg', .95), f / fps, slot.url);
+                }
+              } catch (e) {
+                freeSlot(slot.token); ff.stdin.end();
+                await ffDone.catch(() => {});
+                rmSync(tmpPath, { force: true });
+                throw e;
+              } finally { freeSlot(slot.token); if (!ff.stdin.writableEnded) ff.stdin.end(); }
+              await ffDone;
+              renameSync(tmpPath, partPath);
+            }
+          }
+        } finally {
+          await safeClosePage(page);
+        }
+      }));
+      const failed = results.find(r => r.status === 'rejected');
+      if (failed) {
+        const err = failed.reason;
+        if (initialPage) { await safeClosePage(initialPage); initialPage = null; }
+        const remaining = chunks.filter((_, idx) => !isPartReady(idx)).length;
+        const afterDone = chunks.length - remaining + (soundDone ? 1 : 0);
+        if (!isBrowserDisconnectError(err)) throw err;
+        if (remaining === 0 && soundDone) break;
+        if (afterDone <= beforeDone && ++stalledRetries > 1) {
+          const exitNote = lastBrowserExit ? ` (exit code=${lastBrowserExit.code}, signal=${lastBrowserExit.signal})` : '';
+          throw new Error(`browser disconnected without progress${exitNote}: ${err.message}. Try --workers=4 or --chrome="<path to Edge/Chromium>"`);
+        }
+        if (afterDone > beforeDone) stalledRetries = 0;
+        const exitNote = lastBrowserExit ? ` (code=${lastBrowserExit.code}${lastBrowserExit.signal ? `, signal=${lastBrowserExit.signal}` : ''})` : '';
+        const todo = [remaining && `${remaining} chunk${remaining > 1 ? 's' : ''}`, !soundDone && 'soundtrack'].filter(Boolean).join(' + ');
+        console.log(`${id}: browser exited mid-build${exitNote}, relaunching for remaining ${todo}…`);
+        if (browser) { try { await browser.close(); } catch {} browser = null; }
       }
-    }));
+    }
 
     await muxParts({ parts, sound, info, duration: nFrames / fps, out, audioStart: startFrame / fps });
     const sec = ((Date.now() - start) / 1000).toFixed(2);
     console.log(`wrote ${out}  (${sec} s, ${((Date.now() - start) / nFrames).toFixed(1)} ms/frame)`);
     return out;
   } finally {
+    if (initialPage) await safeClosePage(initialPage);
     rmSync(partsDir, { recursive: true, force: true });
   }
 }
@@ -266,7 +360,7 @@ async function renderFrames(id, range, { workers = Math.max(2, Math.min(8, cpus(
   const first = Math.round(a * fps), last = Math.min(n - 1, Math.round(b * fps) - 1), todo = [];
   for (let i = first; i <= last; i++) { const f = `${dir}/f${pad(i)}.jpg`; if (!existsSync(f) || statSync(f).size < 1000) todo.push(i); }
   console.log(`${id}: ${todo.length} frames to paint (${last - first + 1 - todo.length} already done), ${workers} workers`);
-  if (!todo.length) { await page0.close(); return { info, fps }; }
+  if (!todo.length) { await safeClosePage(page0); return { info, fps }; }
   let next = 0, done = 0; const start = Date.now();
   const count = Math.min(workers, todo.length);
   await Promise.all(Array.from({ length: count }, async (_, w) => {
@@ -283,7 +377,7 @@ async function renderFrames(id, range, { workers = Math.max(2, Math.min(8, cpus(
           console.log(`  frame ${done}/${todo.length}  ${(el / done * 1000).toFixed(0)} ms/frame  eta ${((todo.length - done) * el / done).toFixed(0)} s`);
         }
       }
-    } finally { await page.close(); }
+    } finally { await safeClosePage(page); }
   }));
   return { info, fps };
 }
@@ -291,9 +385,9 @@ async function encode(id) {
   const { page, info } = await openPage(id);
   const fps = +(args.fps || info.fps), dir = `out/${id}/frames`, out = `out/${id}/${id}.mp4`;
   const n = readdirSync(dir).filter(f => f.endsWith('.jpg')).length;
-  if (!n) { await page.close(); throw new Error(`no frames in ${dir}: run --frames first`); }
+  if (!n) { await safeClosePage(page); throw new Error(`no frames in ${dir}: run --frames first`); }
   const sound = await soundtrackPath(page, info, id);
-  await page.close();
+  await safeClosePage(page);
   const audio = sound ? ['-i', sound] : ['-f', 'lavfi', '-i', 'anullsrc=r=48000:cl=stereo'];
   if (!sound && info.audio) console.log(`(audio ${info.audio} not found, using silence)`);
   console.log(`encoding ${n} frames → ${out}`);
@@ -400,6 +494,6 @@ try {
     }
   }
 } finally {
-  if (browser) await browser.close();
+  if (browser) try { await browser.close(); } catch {}
   if (server) await new Promise(ok => server.close(ok));
 }

@@ -257,37 +257,6 @@
 
   // ---------- Character Helpers (Canonical Palm Pals + Story Accessories & Dads) ----------
 
-  function drawStubbyLimbs(x, y, s, bodyCol, opts = {}) {
-    const flip = opts.flip ? -1 : 1;
-    const armY = y - s * (opts.armH ?? 3.6);
-    const footY = y + s * 0.1;
-    const armDist = s * (opts.armDX ?? 4.15);
-    const footDX = s * (opts.footDX ?? 1.55);
-    const lwPx = clamp(s * 0.16, 2.2, 4.8);
-
-    // Stubby plush feet
-    if (!opts.noFeet) {
-      ellipse(x - footDX, footY, s * 1.05, s * 0.72, { fill: bodyCol, stroke: INK, lwPx });
-      ellipse(x + footDX, footY, s * 1.05, s * 0.72, { fill: bodyCol, stroke: INK, lwPx });
-    }
-    // Stubby plush arms
-    if (!opts.noArms) {
-      const aL = opts.armL ?? 0.35;
-      const aR = opts.armR ?? -0.35;
-      X.save();
-      X.translate(x - armDist * flip, armY);
-      X.rotate(aL * flip);
-      ellipse(-s * 0.55 * flip, 0, s * 0.98, s * 0.62, { fill: bodyCol, stroke: INK, lwPx });
-      X.restore();
-
-      X.save();
-      X.translate(x + armDist * flip, armY);
-      X.rotate(aR * flip);
-      ellipse(s * 0.55 * flip, 0, s * 0.98, s * 0.62, { fill: bodyCol, stroke: INK, lwPx });
-      X.restore();
-    }
-  }
-
   function drawScuffs(x, y, s) {
     // Cute dusty adventure scuffs & tiny bandage for "10 hours later"
     for (const [dx, dy, ang] of [[-2.3, -5.2, -0.3], [2.4, -4.6, 0.25], [-1.2, -1.6, 0.15]]) {
@@ -321,11 +290,11 @@
   function drawEve(x, y, s, opts = {}) {
     const air = (opts.jump || 0) * s;
     const drawY = y - s * 0.42;
+    const rigY = opts.noFeet ? drawY : drawY + s * 0.62;
     if (!opts.noShadow) {
       ellipse(x, y + s * 0.65, s * 4.1, s * 0.82, { fill: 'rgba(42, 24, 38, 0.2)', stroke: null });
     }
-    drawStubbyLimbs(x, drawY - air, s, PLP.eveOcean, { ...opts, armDX: 4.05, armH: 3.55 });
-    const A = eveEarth(x, drawY, s, { boil: 0, noShadow: true, ...opts });
+    const A = eveEarth(x, rigY, s, { boil: 0, noShadow: true, ...opts });
 
     // Optional heart eyes (for pancake bliss!)
     if (opts.heartEyes) {
@@ -375,11 +344,11 @@
   function drawZelie(x, y, s, opts = {}) {
     const air = (opts.jump || 0) * s;
     const drawY = y - s * 0.42;
+    const rigY = opts.noFeet ? drawY : drawY + s * 0.62;
     if (!opts.noShadow) {
       ellipse(x, y + s * 0.65, s * 3.6, s * 0.78, { fill: 'rgba(42, 24, 38, 0.2)', stroke: null });
     }
-    drawStubbyLimbs(x, drawY - air, s, PLP.zelieCup, { ...opts, armDX: 3.55, armH: 3.45, footDX: 1.35 });
-    const A = zelieLemonade(x, drawY, s, { boil: 0, noShadow: true, ...opts });
+    const A = zelieLemonade(x, rigY, s, { boil: 0, noShadow: true, ...opts });
 
     // Optional wide-eyed deadpan "bro." expression overlay
     if (opts.deadpan) {
@@ -400,16 +369,16 @@
     return A;
   }
 
-  // Eve's Dad — canonical promoted Palm Pals parent rig (`eveDad`) + stubby limbs & optional spatula
+  // Eve's Dad — canonical promoted Palm Pals parent rig (`eveDad`) + optional spatula
   function drawEveDad(x, y, s, opts = {}) {
     const drawY = y - s * 0.45;
+    const rigY = opts.noFeet ? drawY : drawY + s * 0.64;
     const flip = opts.flip ? -1 : 1;
 
     if (!opts.noShadow) {
       ellipse(x, y + s * 0.72, s * 4.5, s * 0.88, { fill: 'rgba(42, 24, 38, 0.22)', stroke: null });
     }
-    drawStubbyLimbs(x, drawY, s, PLP.eveDadOcean, { ...opts, armDX: 4.2, armH: 3.7, footDX: 1.65 });
-    const A = eveDad(x, drawY, s, { boil: 0, noShadow: true, blink: false, ...opts });
+    const A = eveDad(x, rigY, s, { boil: 0, noShadow: true, blink: false, ...opts });
 
     // Optional spatula in hand
     if (opts.spatula) {
@@ -425,15 +394,15 @@
     return A;
   }
 
-  // Zelie's Papa — canonical promoted Palm Pals parent rig (`zeliePapa`) + stubby limbs
+  // Zelie's Papa — canonical promoted Palm Pals parent rig (`zeliePapa`)
   function drawZeliePapa(x, y, s, opts = {}) {
     const drawY = y - s * 0.45;
+    const rigY = opts.noFeet ? drawY : drawY + s * 0.64;
 
     if (!opts.noShadow) {
       ellipse(x, y + s * 0.72, s * 3.9, s * 0.85, { fill: 'rgba(42, 24, 38, 0.22)', stroke: null });
     }
-    drawStubbyLimbs(x, drawY, s, PLP.zeliePapaCup, { ...opts, armDX: 3.7, armH: 3.9, footDX: 1.5 });
-    return zeliePapa(x, drawY, s, { boil: 0, noShadow: true, blink: false, ...opts });
+    return zeliePapa(x, rigY, s, { boil: 0, noShadow: true, blink: false, ...opts });
   }
 
   // ---------- Background Painters ----------
