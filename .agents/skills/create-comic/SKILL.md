@@ -88,7 +88,11 @@ Inspect only the files needed for the task:
 
 Only run Stage 2 once the user approves the Studio Edition (or explicitly asks to illustrate right away):
 
-1. **Dry-run first** (zero API cost) to verify reference budgets (`<= 4` character refs, `<= 14` total), snapped aspect ratios, and extracted verbatim dialogue:
+0. **Lock Character & Setting Consistency FIRST (Stage 1.5)**:
+   - Ensure `comics/<book_id>/book.js` defines `castBible` (per-character descriptions, `traits`, `avoid` rules, and painted `ref` portraits), `invariants` (book-wide visual rules), `style.castSheet` (a single illustrated model sheet showing every recurring character in the book's exact medium), and `locationRefs` for recurring rooms/skies.
+   - Tag every panel in `comic.js` with `cast: [...]` and (where relevant) `location: '...'` so `scripts/illustrate_comic.mjs` routes only the matching character and location references and injects focused design locks into every prompt.
+   - For multi-page books in `mode: 'page'`, enable `chainPreviousPage: true` in `book.js` so Page `N` stays visually anchored to Page `N-1`. For maximum face/eye fidelity and zero lettering typos, prefer `mode: 'panel'` (per-panel `2K` art + vector lettering on top).
+1. **Dry-run first** (zero API cost) to verify reference budgets (`<= 4` character refs, `<= 14` total), snapped aspect ratios, routed `castBibleKeys`, and extracted verbatim dialogue:
    ```sh
    npm run comic:illustrate -- <comic_id> --dry-run
    ```
@@ -104,8 +108,8 @@ Only run Stage 2 once the user approves the Studio Edition (or explicitly asks t
    - Re-roll individual pages/panels or promote a better take with `--approve=<take_id>` if needed.
    - Rebuild PDFs (`npm run comic:build -- <comic_id> --pdf`) so `out/illustrated.pdf` stays current.
 5. **Respect Git tracking rules**:
-   - Keep `comics/<book_id>/style_refs/*`, top-level `Original Drawing*` files, `studio/*.png` picture outputs, active/approved `illustrated/*.png`, and `illustrated/manifest.js` ready to commit.
-   - Never force-add gitignored regenerable directories (`out/`, `illustrated/takes/`, `illustrated/index.json`).
+   - Keep `comics/<book_id>/style_refs/*`, top-level `Original Drawing*` files, `studio/*.png` picture outputs, active/approved `illustrated/*.png`, `illustrated/manifest.js`, and `out/*.pdf` print PDFs ready to commit.
+   - Never force-add gitignored cache files (`illustrated/takes/`, `illustrated/index.json`).
 
 ---
 

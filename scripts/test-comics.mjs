@@ -32,6 +32,21 @@ for (const ref of BOOKS.sami_and_jenna.style.refs) {
   assert.ok(existsSync(join(ROOT, ref)), `style ref exists: ${ref}`);
 }
 
+assert.ok(REGISTRY.books.includes('palm_pals_adventures'), 'palm_pals_adventures book registered');
+assert.ok(REGISTRY.comics.includes('the_adventure'), 'the_adventure comic registered');
+assert.equal(REGISTRY.comicBook.the_adventure, 'palm_pals_adventures');
+assert.ok(BOOKS.palm_pals_adventures.style.castSheet, 'castSheet configured for palm_pals_adventures');
+assert.ok(existsSync(join(ROOT, BOOKS.palm_pals_adventures.style.castSheet)), 'castSheet file exists');
+assert.ok(BOOKS.palm_pals_adventures.invariants.length >= 3, 'book invariants configured');
+for (const cid of ['eve', 'zelie', 'eve_dad', 'zelie_papa']) {
+  const entry = BOOKS.palm_pals_adventures.castBible[cid];
+  assert.ok(entry && entry.ref, `castBible entry with ref exists for ${cid}`);
+  assert.ok(existsSync(join(ROOT, entry.ref)), `castBible ref exists on disk: ${entry.ref}`);
+}
+for (const [lid, locPath] of Object.entries(BOOKS.palm_pals_adventures.locationRefs)) {
+  assert.ok(existsSync(join(ROOT, locPath)), `locationRef exists on disk (${lid}): ${locPath}`);
+}
+
 // 2. index.html 3-card verification
 const indexHtml = readFileSync(join(ROOT, 'index.html'), 'utf8');
 assert.ok(indexHtml.includes('href="studio.html"'), 'Movies card link present');
@@ -228,6 +243,23 @@ assert.equal(dryPanel.targets.length, 1);
 assert.equal(dryPanel.targets[0].aspectRatio, '4:1');
 assert.ok(dryPanel.targets[0].refs.length <= 14);
 assert.ok(dryPanel.targets[0].refs.filter(r => r.kind === 'character').length <= 4);
-console.log('✔ illustrate_comic.mjs --dry-run (page + panel modes) passed');
+
+// 7. Consistency pipeline checks (castBible routing, locationRefs, invariants, chainPreviousPage)
+const dryP4Panel7 = await illustrateComic('the_adventure', { dryRun: true, mode: 'panel', page: 4, panel: 7, quiet: true });
+assert.equal(dryP4Panel7.targets.length, 1);
+assert.deepEqual(
+  dryP4Panel7.targets[0].castBibleKeys.sort(),
+  ['eve', 'eve_dad', 'zelie', 'zelie_papa'],
+  'Page 4 Panel 7 routes all 4 castBible entries',
+);
+assert.equal(dryP4Panel7.targets[0].refs.filter(r => r.kind === 'character').length, 4, 'Routes all 4 individual character refs');
+assert.ok(dryP4Panel7.targets[0].invariantsCount >= 3, 'Injects book invariants');
+
+const dryP2Page = await illustrateComic('the_adventure', { dryRun: true, mode: 'page', page: 2, quiet: true });
+assert.equal(dryP2Page.targets.length, 1);
+assert.ok(dryP2Page.targets[0].refs.some(r => r.kind === 'continuity'), 'Page 2 chains Page 1 as continuity anchor');
+assert.ok(dryP2Page.targets[0].refs.some(r => r.kind === 'location'), 'Page 2 attaches bedroom/kitchen location refs');
+assert.ok(dryP2Page.targets[0].refs.length <= 14);
+console.log('✔ illustrate_comic.mjs --dry-run (page + panel modes + castBible/location/continuity routing) passed');
 
 console.log('ALL COMICS ENGINE TESTS PASSED!');

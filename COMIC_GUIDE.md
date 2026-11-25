@@ -39,17 +39,22 @@ comics/
         │   ├── page-01.png         # Active/approved illustrated PNG(s) (git-tracked)
         │   ├── index.json          # Local SHA-1 cache & take metadata (gitignored)
         │   └── takes/              # Historical takes (gitignored)
-        └── out/                    # Regenerable print PDFs: studio.pdf, illustrated.pdf (gitignored)
+        └── out/                    # Print PDFs: studio.pdf, illustrated.pdf (git-tracked)
 ```
 
-Studio PNG outputs (`studio/`), active/approved `illustrated/*.png`, `illustrated/manifest.js`, `style_refs/`, and top-level comic reference images are tracked in git; `out/`, `illustrated/takes/`, and `illustrated/index.json` remain gitignored.
+Studio PNG outputs (`studio/`), active/approved `illustrated/*.png`, `illustrated/manifest.js`, `style_refs/`, top-level comic reference images, and print PDFs (`out/*.pdf`) are tracked in git; `illustrated/takes/` and `illustrated/index.json` remain gitignored.
 
 ---
 
 ## 3. Authoring `book.js` & `asset.js`
 
-- **`comics/<book_id>/book.js`** owns trim size (`{ width, height, trim, dpi }`), art style (`style: { prompt, refs }`), default cast/illustration settings, and the ordered `comics: [...]` list.
-- **`comics/<book_id>/<comic_id>/asset.js`** declares `title`, `logline`, `cast`, `locations`, `files: ['comic.js']`, `docs: 'README.md'`, optional `refs`, optional `illustrated: 'illustrated/manifest.js'` (automatically set by `scripts/illustrate_comic.mjs`), and `illustration: { model, mode, resolution, stylePrompt, thinkingLevel }`.
+- **`comics/<book_id>/book.js`** owns trim size (`{ width, height, trim, dpi }`), art style (`style: { prompt, refs, castSheet }`), character design locks (`castBible`), book-wide rules (`invariants`), recurring setting anchors (`locationRefs`), default cast/illustration settings (`defaults.illustration.chainPreviousPage`), and the ordered `comics: [...]` list.
+  - **`style.castSheet`**: Optional path (relative to `comics/<book_id>/`) to a single illustrated Cast Model Sheet showing every recurring character in the book's exact medium; automatically included in `style.refs`.
+  - **`castBible`**: Map of character ID → `{ name, description, traits, avoid, ref }`. When panels list `cast: ['eve', 'eve_dad']`, `scripts/illustrate_comic.mjs` automatically attaches the matching painted character refs (`ref`, falling back to `characters/<id>/asset.js`) and injects only those characters' visual locks into the Gemini prompt.
+  - **`invariants`**: Array of strict book-wide visual rules injected into every page/panel prompt (e.g., mustache shape, prop rules, time-of-day window fidelity).
+  - **`locationRefs`**: Map of location tag → path (e.g., `bedroom_day: 'style_refs/loc_bedroom_day.png'`). Panels tagged with `location: 'bedroom_day'` automatically attach that setting anchor.
+  - **`defaults.illustration.chainPreviousPage`**: When `true` in `mode: 'page'`, each page `N > 1` also attaches `illustrated/page-(N-1).png` as a continuity anchor if present.
+- **`comics/<book_id>/<comic_id>/asset.js`** declares `title`, `logline`, `cast`, `locations`, `files: ['comic.js']`, `docs: 'README.md'`, optional `refs`, optional `illustrated: 'illustrated/manifest.js'` (automatically set by `scripts/illustrate_comic.mjs`), and `illustration: { model, mode, resolution, stylePrompt, thinkingLevel, chainPreviousPage }`.
 - **Important**: Only list registered `LOCATIONS` IDs in `asset.locations` that `comic.js` actually draws. Custom 2D panel backgrounds do not need entries in `locations`.
 
 ---

@@ -10,7 +10,7 @@
 // The studio reads every asset.js up front but loads an asset's code on demand: a scene brings its cast, locations and uses.
 
 const REGISTRY = {
-  characters: ['jester_fester', 'princess_pearl', 'safadi', 'alma', 'dragon', 'housam', 'danny', 'sami', 'jenna', 'robo_safadi', 'clawd', 'student', 'neptune', 'sarah', 'roudaynah', 'patrick', 'dr_g'],
+  characters: ['jester_fester', 'princess_pearl', 'safadi', 'alma', 'dragon', 'housam', 'danny', 'sami', 'jenna', 'robo_safadi', 'clawd', 'student', 'neptune', 'sarah', 'roudaynah', 'patrick', 'dr_g', 'palm_pals'],
   locations: ['throne_room', 'dces', 'lecture_hall', 'soccer_field', 'umn', 'house', 'science_room', 'school_library', 'safadi_study', 'sami_clinic', 'school_gym', 'alma_bedroom', 'roman_bath', 'ancient_athens', 'living_room', 'housam_bedroom', 'meadow-ridge-elementary-school', 'home_clinic', 'family_kitchen'],
   series: [
     // Professor Safadi Studio
@@ -21,7 +21,7 @@ const REGISTRY = {
     'fall_festival',
   ],
   movieSeries: ['early_episodes', 'soccer_showdown', 'halloween', 'book_fair', 'talent_show', 'lectures', 'cleaning_up', 'screen_time', 'the_trolls', 'pokemon', 'fall_festival'],   // their scenes, in order, are the default composer order and node render.mjs --movie
-  books: ['sami_and_jenna'],
+  books: ['sami_and_jenna', 'palm_pals_adventures'],
   // Filled in from the series/book files by expandSeries() (engine/series.js) & expandBooks() (engine/books.js):
   //   scenes, movie, sceneSeries (id → series), comics, comicBook (id → book).
 };

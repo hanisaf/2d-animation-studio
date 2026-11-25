@@ -38,6 +38,7 @@ Each character's folder holds its description, look, personality and rig notes (
 | 💜 | [Roudaynah](characters/roudaynah/README.md) | A loving, busy mom and avid programmer with superpowers of love and original ideas from her laptop |
 | 🏐 | [Sarah](characters/sarah/README.md) | A rebellious ninth grader who loves woodworking, texting, and volleyball |
 | 📚 | [Dr. P](characters/patrick/README.md) | A fictional, officious clinic administrator whose idea of employment etiquette arrives by drone |
+| 🧸 | [Palm Pals](characters/palm_pals/README.md) | Five squishy palm-sized bean-filled plushies in one panel: Eve Earth, Zelie Pink Lemonade, Kringle Cookie, Crumble Cookie, and Bertie Red Bus |
 
 ## Sets
 

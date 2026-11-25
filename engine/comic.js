@@ -137,7 +137,84 @@ function drawSpeechBubble(text, cx, cy, tx, ty, opts = {}) {
   const ry = Math.max((lines.length * lh) / 2 + padY, opts.minRy ?? 32);
 
   const hasTail = tx != null && ty != null && opts.tail !== false;
+  const isThought = opts.thought === true || opts.type === 'thought';
   const fill = opts.fill || '#FFFDF8';
+
+  if (isThought) {
+    // Fluffy scalloped comic thought cloud + trailing circular thought dots
+    const lobes = Math.max(8, Math.round((rx + ry) / 14));
+    const puff = Math.max(12, Math.min(rx, ry) * 0.42);
+    const traceCloud = () => {
+      X.beginPath();
+      X.ellipse(cx, cy, rx * 0.92, ry * 0.88, 0, 0, TAU);
+      for (let i = 0; i < lobes; i++) {
+        const a = (i / lobes) * TAU;
+        const bx = cx + Math.cos(a) * rx * 0.84;
+        const by = cy + Math.sin(a) * ry * 0.82;
+        X.moveTo(bx + puff, by);
+        X.arc(bx, by, puff, 0, TAU);
+      }
+    };
+
+    let dots = [];
+    if (hasTail) {
+      const ang = Math.atan2(ty - cy, tx - cx);
+      const dist = Math.hypot(tx - cx, ty - cy);
+      const rimDist = Math.hypot(Math.cos(ang) * rx * 0.95, Math.sin(ang) * ry * 0.95) + puff * 0.7;
+      const tipDist = Math.max(rimDist + 16, dist - (opts.tailGap ?? 8));
+      dots = [
+        [lerp(rimDist, tipDist, 0.2), 10],
+        [lerp(rimDist, tipDist, 0.58), 6.5],
+        [lerp(rimDist, tipDist, 0.92), 4],
+      ].map(([d, r]) => [cx + Math.cos(ang) * d, cy + Math.sin(ang) * d, r]);
+    }
+
+    // Drop shadow
+    X.save();
+    X.translate(5, 6);
+    X.fillStyle = 'rgba(59, 37, 48, 0.18)';
+    traceCloud();
+    X.fill();
+    for (const [dx, dy, dr] of dots) {
+      X.beginPath();
+      X.arc(dx, dy, dr, 0, TAU);
+      X.fill();
+    }
+    X.restore();
+
+    // Outer ink stroke
+    X.strokeStyle = ink;
+    X.lineWidth = opts.borderWidth ?? 8.5;
+    X.lineJoin = 'round';
+    traceCloud();
+    X.stroke();
+    for (const [dx, dy, dr] of dots) {
+      X.beginPath();
+      X.arc(dx, dy, dr, 0, TAU);
+      X.stroke();
+    }
+
+    // Interior fill (hides inner lobe seams)
+    X.fillStyle = fill;
+    traceCloud();
+    X.fill();
+    for (const [dx, dy, dr] of dots) {
+      X.beginPath();
+      X.arc(dx, dy, dr, 0, TAU);
+      X.fill();
+    }
+
+    // Text
+    X.fillStyle = opts.color || ink;
+    X.textAlign = 'center';
+    X.textBaseline = 'middle';
+    lines.forEach((l, i) => {
+      const ly = cy - ((lines.length - 1) * lh) / 2 + i * lh + 1;
+      X.fillText(l, cx, ly);
+    });
+    X.restore();
+    return;
+  }
 
   let tailPts = null;
   if (hasTail) {
@@ -429,12 +506,15 @@ function extractPageScript(comicDef, pageIndex = 0) {
   return {
     pageId: layout.pageId,
     masthead: layout.page.masthead || null,
+    cast: layout.page.cast || null,
+    location: layout.page.location || null,
     panels: layout.panels.map(({ id, index, w, h, panel }) => ({
       id,
       index: index + 1,
       width: w,
       height: h,
       cast: panel.cast || null,
+      location: panel.location || null,
       prompt: panel.prompt || '',
       captions: (panel.lettering?.captions || []).map(c => c.text),
       bubbles: (panel.lettering?.bubbles || []).map(b => ({ speaker: b.speaker || '', text: b.text })),
