@@ -55,6 +55,16 @@ comics/*/*/out/*
 comics/**/illustrated/takes/
 comics/**/illustrated/index.json
 
+# regenerable comic-to-video frames, overlays, Veo take cache & assembled subtitles (keep video/storyboard.json tracked)
+comics/**/video/frames/
+comics/**/video/overlays/
+comics/**/video/takes/
+comics/**/video/clips/
+comics/**/video/index.json
+comics/**/video/frames_sheet*.jpg
+comics/**/video/.assemble_tmp/
+comics/**/out/*.srt
+
 # ---- dependencies (reinstall with: npm install; ffmpeg-static is OS-specific) ----
 node_modules/
 

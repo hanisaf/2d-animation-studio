@@ -500,7 +500,7 @@ function computePageLayout(comicDef, pageIndex = 0) {
   };
 }
 
-// Extract structured verbatim dialogue / captions / SFX from declarative panels (used by Gemini page-mode prompts).
+// Extract structured verbatim dialogue / captions / SFX from declarative panels (used by Gemini page-mode & video prompts).
 function extractPageScript(comicDef, pageIndex = 0) {
   const layout = computePageLayout(comicDef, pageIndex);
   return {
@@ -508,6 +508,7 @@ function extractPageScript(comicDef, pageIndex = 0) {
     masthead: layout.page.masthead || null,
     cast: layout.page.cast || null,
     location: layout.page.location || null,
+    video: layout.page.video || null,
     panels: layout.panels.map(({ id, index, w, h, panel }) => ({
       id,
       index: index + 1,
@@ -516,11 +517,40 @@ function extractPageScript(comicDef, pageIndex = 0) {
       cast: panel.cast || null,
       location: panel.location || null,
       prompt: panel.prompt || '',
+      video: panel.video || null,
       captions: (panel.lettering?.captions || []).map(c => c.text),
       bubbles: (panel.lettering?.bubbles || []).map(b => ({ speaker: b.speaker || '', text: b.text })),
       sfx: (panel.lettering?.sfx || []).map(s => s.text),
     })),
   };
+}
+
+// Compute virtual drawing dimensions for recomposing an arbitrary comic panel into a target video aspect ratio.
+function computeVideoCanvasSize(nativeW, nativeH, targetW, targetH, framing = 'recompose') {
+  if (!targetW || !targetH || framing === 'native') {
+    return { vw: nativeW, vh: nativeH, outW: nativeW, outH: nativeH, framing: 'native' };
+  }
+  if (framing === 'pad' || framing === 'crop') {
+    return { vw: nativeW, vh: nativeH, outW: targetW, outH: targetH, framing };
+  }
+  const targetAr = targetW / Math.max(1, targetH);
+  const nativeAr = nativeW / Math.max(1, nativeH);
+  if (nativeAr <= targetAr) {
+    // Narrower than target (typical 3x3 or square comic panel -> 16:9): preserve native height so rig scales stay faithful.
+    return { vw: Math.max(40, Math.round(nativeH * targetAr)), vh: nativeH, outW: targetW, outH: targetH, framing: 'recompose' };
+  }
+  // Wider than target (e.g. wide comic banner -> 16:9, or landscape -> 9:16): area-preserving recomposition.
+  const vh = Math.max(40, Math.round(Math.sqrt((nativeW * nativeH) / targetAr)));
+  const vw = Math.max(40, Math.round(vh * targetAr));
+  return { vw, vh, outW: targetW, outH: targetH, framing: 'recompose' };
+}
+
+let _comicPanelBufCanvas = null;
+function _getComicPanelBuf(w, h) {
+  if (!_comicPanelBufCanvas) _comicPanelBufCanvas = document.createElement('canvas');
+  if (_comicPanelBufCanvas.width !== w) _comicPanelBufCanvas.width = w;
+  if (_comicPanelBufCanvas.height !== h) _comicPanelBufCanvas.height = h;
+  return _comicPanelBufCanvas;
 }
 
 function renderComicPage(canvas, comicDef, pageIndex = 0, opts = {}) {
@@ -533,6 +563,7 @@ function renderComicPage(canvas, comicDef, pageIndex = 0, opts = {}) {
   const paper = page.paper || comicDef.paper || '#FFFDF7';
   const images = opts.images || {};
   const mode = opts.mode || (images.panels && Object.keys(images.panels).length ? 'panel' : 'page');
+  const transparentLetteringOnly = opts.transparentLetteringOnly === true;
 
   const prevX = X;
   const target = panelFilter != null ? panels[panelFilter] : null;
@@ -540,8 +571,12 @@ function renderComicPage(canvas, comicDef, pageIndex = 0, opts = {}) {
     throw new Error(`panelIndex ${panelFilter} out of range for "${comicDef.id}" page ${pageIndex + 1} (${panels.length} panels)`);
   }
 
-  const cw = target ? target.w : width;
-  const ch = target ? target.h : height;
+  const videoGeom = target && opts.targetWidth && opts.targetHeight
+    ? computeVideoCanvasSize(target.w, target.h, opts.targetWidth, opts.targetHeight, opts.framing || target.panel.video?.framing || 'recompose')
+    : null;
+
+  const cw = videoGeom ? videoGeom.outW : (target ? target.w : width);
+  const ch = videoGeom ? videoGeom.outH : (target ? target.h : height);
   if (canvas.width !== cw) canvas.width = cw;
   if (canvas.height !== ch) canvas.height = ch;
 
@@ -562,19 +597,21 @@ function renderComicPage(canvas, comicDef, pageIndex = 0, opts = {}) {
     X.globalAlpha = 1;
     X.globalCompositeOperation = 'source-over';
 
-    // Single-panel borderless view / export mode (used by Studio panel switcher, build_comic.mjs --panels, and per-panel Gemini mode)
+    // Single-panel borderless view / export mode (Studio panel switcher, build_comic.mjs --panels, Gemini mode, and Veo video frames)
     if (target) {
-      X.fillStyle = paper;
-      X.fillRect(0, 0, cw, ch);
-      const prevOx = _panelOx, prevOy = _panelOy;
-      _panelOx = 0; _panelOy = 0;
-      try {
+      const paintPanel = (pw, ph) => {
+        if (transparentLetteringOnly) {
+          X.clearRect(0, 0, pw, ph);
+          drawPanelLettering(target.panel, pw, ph, { ink });
+          return;
+        }
+        X.fillStyle = paper;
+        X.fillRect(0, 0, pw, ph);
         const panelImg = edition === 'illustrated' ? images.panels?.[target.id] : null;
         if (panelImg) {
-          drawImageCover(X, panelImg, 0, 0, cw, ch);
-          if (lettering) drawPanelLettering(target.panel, cw, ch, { ink });
+          drawImageCover(X, panelImg, 0, 0, pw, ph);
+          if (lettering) drawPanelLettering(target.panel, pw, ph, { ink });
         } else if (edition === 'illustrated' && images.page) {
-          // Crop the matching panel rectangle from the full-page illustrated image (already contains illustrated lettering)
           const iw = images.page.naturalWidth || images.page.width;
           const ih = images.page.naturalHeight || images.page.height;
           if (iw && ih) {
@@ -585,17 +622,56 @@ function renderComicPage(canvas, comicDef, pageIndex = 0, opts = {}) {
             const sy = (target.y - dy) / scale;
             const sw = target.w / scale;
             const sh = target.h / scale;
-            X.drawImage(images.page, sx, sy, sw, sh, 0, 0, cw, ch);
+            X.drawImage(images.page, sx, sy, sw, sh, 0, 0, pw, ph);
           }
         } else {
           if (typeof target.panel.draw === 'function') {
-            target.panel.draw(cw, ch);
+            target.panel.draw(pw, ph);
           }
           if (lettering) {
-            drawPanelLettering(target.panel, cw, ch, { ink });
+            drawPanelLettering(target.panel, pw, ph, { ink });
           }
         }
+      };
+
+      const prevOx = _panelOx, prevOy = _panelOy;
+      _panelOx = 0; _panelOy = 0;
+      try {
+        if (videoGeom) {
+          const buf = _getComicPanelBuf(videoGeom.vw, videoGeom.vh);
+          const bctx = buf.getContext('2d');
+          if (typeof _trackCtx === 'function') _trackCtx(bctx);
+          bctx.setTransform(1, 0, 0, 1, 0, 0);
+          bctx.globalAlpha = 1;
+          bctx.globalCompositeOperation = 'source-over';
+          bctx.clearRect(0, 0, videoGeom.vw, videoGeom.vh);
+          X = bctx;
+          paintPanel(videoGeom.vw, videoGeom.vh);
+          X = ctx;
+          ctx.setTransform(1, 0, 0, 1, 0, 0);
+          ctx.clearRect(0, 0, cw, ch);
+          ctx.imageSmoothingEnabled = true;
+          ctx.imageSmoothingQuality = 'high';
+          if (videoGeom.framing === 'pad') {
+            if (!transparentLetteringOnly) {
+              // Edge-matched soft backdrop fill instead of black letterbox bars
+              ctx.save();
+              ctx.filter = 'blur(24px) saturate(0.9)';
+              drawImageCover(ctx, buf, -24, -24, cw + 48, ch + 48);
+              ctx.restore();
+            }
+            drawImageContain(ctx, buf, 0, 0, cw, ch);
+          } else if (videoGeom.framing === 'crop') {
+            drawImageCover(ctx, buf, 0, 0, cw, ch);
+          } else {
+            // 'recompose': buf already matches target aspect ratio
+            ctx.drawImage(buf, 0, 0, videoGeom.vw, videoGeom.vh, 0, 0, cw, ch);
+          }
+        } else {
+          paintPanel(cw, ch);
+        }
       } finally {
+        X = ctx;
         _panelOx = prevOx; _panelOy = prevOy;
       }
       return layout;

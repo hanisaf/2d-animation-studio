@@ -5,6 +5,7 @@
 //
 // Usage:
 //   node scripts/build_comic.mjs <comic_id> [--page=1] [--no-lettering] [--panels] [--pdf] [--edition=studio|illustrated|both]
+//   node scripts/build_comic.mjs <comic_id> --video-frames [--aspect=16:9|9:16] [--resolution=720p|1080p] [--framing=recompose|pad|crop] [--overlays] [--sheet]
 
 import { createServer } from 'node:http';
 import { createReadStream, createWriteStream, existsSync, mkdirSync, readFileSync, renameSync, statSync } from 'node:fs';
@@ -133,12 +134,76 @@ ${imgsHtml}
   }
 }
 
+export function videoDimensions(aspect = '16:9', resolution = '720p') {
+  const normAspect = aspect === '9:16' ? '9:16' : '16:9';
+  const normRes = resolution === '1080p' ? '1080p' : '720p';
+  const shortSide = normRes === '1080p' ? 1080 : 720;
+  const longSide = normRes === '1080p' ? 1920 : 1280;
+  return normAspect === '9:16'
+    ? { width: shortSide, height: longSide, aspect: normAspect, resolution: normRes }
+    : { width: longSide, height: shortSide, aspect: normAspect, resolution: normRes };
+}
+
+async function writeContactSheet(page, items, outPath, regSlot, { cols = 3, thumbW = 480 } = {}) {
+  if (!items.length) return null;
+  const slot = regSlot(outPath);
+  try {
+    const payload = items.map(it => ({
+      label: it.label,
+      dataUrl: `data:image/png;base64,${readFileSync(it.path).toString('base64')}`,
+    }));
+    await page.evaluate(async (entries, uploadUrl, colsCount, cellW) => {
+      const imgs = await Promise.all(entries.map(e => new Promise((ok, bad) => {
+        const im = new Image();
+        im.onload = () => ok({ label: e.label, im });
+        im.onerror = () => bad(new Error('Failed to decode ' + e.label));
+        im.src = e.dataUrl;
+      })));
+      const first = imgs[0].im;
+      const cellH = Math.round(cellW * (first.naturalHeight / Math.max(1, first.naturalWidth)));
+      const labelH = 30;
+      const pad = 12;
+      const actualCols = Math.min(colsCount, imgs.length);
+      const rows = Math.ceil(imgs.length / actualCols);
+      const c = document.createElement('canvas');
+      c.width = pad + actualCols * (cellW + pad);
+      c.height = pad + rows * (cellH + labelH + pad);
+      const ctx = c.getContext('2d');
+      ctx.fillStyle = '#1B1921';
+      ctx.fillRect(0, 0, c.width, c.height);
+      ctx.font = '600 15px system-ui, -apple-system, sans-serif';
+      ctx.textBaseline = 'middle';
+      imgs.forEach(({ label, im }, idx) => {
+        const col = idx % actualCols;
+        const row = Math.floor(idx / actualCols);
+        const x = pad + col * (cellW + pad);
+        const y = pad + row * (cellH + labelH + pad);
+        ctx.drawImage(im, x, y, cellW, cellH);
+        ctx.strokeStyle = 'rgba(255,255,255,0.25)';
+        ctx.lineWidth = 2;
+        ctx.strokeRect(x, y, cellW, cellH);
+        ctx.fillStyle = '#F5F2FA';
+        ctx.fillText(label, x + 6, y + cellH + labelH / 2);
+      });
+      const blob = await new Promise((ok, bad) => c.toBlob(b => b ? ok(b) : bad(new Error('sheet toBlob failed')), 'image/jpeg', 0.9));
+      const res = await fetch(uploadUrl, { method: 'POST', body: blob });
+      if (!res.ok) throw new Error('sheet upload failed: HTTP ' + res.status);
+    }, payload, slot.url, cols, thumbW);
+  } finally {
+    slot.free();
+  }
+  return outPath;
+}
+
 export async function buildComic(comicId, opts = {}) {
   if (!REGISTRY.comics?.includes(comicId)) {
     throw new Error(`Unknown comic "${comicId}". Registered comics: ${(REGISTRY.comics || []).join(', ') || '(none)'}`);
   }
   const dir = resolve(ROOT, comicDir(comicId));
   const studioDir = join(dir, 'studio');
+  const videoDir = join(dir, 'video');
+  const videoFramesDir = join(videoDir, 'frames');
+  const videoOverlaysDir = join(videoDir, 'overlays');
   const outDir = join(dir, 'out');
   const chrome = findChrome(opts.chrome);
   const { server, baseUrl, regSlot } = await startEphemeralServer();
@@ -171,17 +236,28 @@ export async function buildComic(comicId, opts = {}) {
     }
 
     const lettering = opts.lettering !== false;
-    const wantPanels = opts.panels === true || (opts.panels == null && info.illustration?.mode === 'panel');
+    const wantVideoFrames = !!opts.videoFrames;
+    const wantOverlays = !!opts.overlays;
+    const wantContactSheet = opts.contactSheet === true || (wantVideoFrames && opts.contactSheet !== false);
+    const wantPanels = opts.panels === true || (opts.panels == null && !wantVideoFrames && info.illustration?.mode === 'panel');
+    const renderPages = opts.renderPages ?? !wantVideoFrames;
     const edition = opts.edition || 'both';
     const wantPdf = !!opts.pdf;
-    const rendered = { pages: [], panels: [], pdfs: [] };
+    const vDims = wantVideoFrames || wantOverlays
+      ? videoDimensions(opts.aspect || info.video?.aspect || '16:9', opts.resolution || info.video?.resolution || '720p')
+      : null;
+    const framing = opts.framing || info.video?.framing || 'recompose';
+    const rendered = { pages: [], panels: [], videoFrames: [], overlays: [], contactSheet: null, pdfs: [] };
 
     if (!opts.infoOnly) {
-      mkdirSync(studioDir, { recursive: true });
+      if (renderPages || wantPanels) mkdirSync(studioDir, { recursive: true });
+      if (wantVideoFrames) mkdirSync(videoFramesDir, { recursive: true });
+      if (wantOverlays) mkdirSync(videoOverlaysDir, { recursive: true });
+
       for (const pageIdx of pageIndices) {
         const pageLayout = info.pages[pageIdx].layout;
         const pagePng = join(studioDir, `${pageLayout.pageId}.png`);
-        if (opts.renderPages !== false) {
+        if (renderPages) {
           const slot = regSlot(pagePng);
           try {
             await page.evaluate(
@@ -212,6 +288,88 @@ export async function buildComic(comicId, opts = {}) {
             if (!opts.quiet) console.log(`✔ Wrote ${panelPng}`);
           }
         }
+
+        if (wantVideoFrames || wantOverlays) {
+          for (const p of pageLayout.panels) {
+            if (opts.panel != null && p.index + 1 !== Number(opts.panel) && p.id !== String(opts.panel)) continue;
+            const key = `${pageLayout.pageId}_${p.id}`;
+            if (wantVideoFrames) {
+              const framePng = join(videoFramesDir, `${key}.png`);
+              const slot = regSlot(framePng);
+              try {
+                await page.evaluate(
+                  (idx, url, pIdx, tw, th, fr) => window.renderComicPageTo(idx, url, {
+                    edition: 'studio',
+                    lettering: false,
+                    panelIndex: pIdx,
+                    targetWidth: tw,
+                    targetHeight: th,
+                    framing: fr,
+                  }),
+                  pageIdx, slot.url, p.index, vDims.width, vDims.height, framing
+                );
+              } finally {
+                slot.free();
+              }
+              rendered.videoFrames.push({
+                pageIndex: pageIdx,
+                pageId: pageLayout.pageId,
+                panelIndex: p.index,
+                panelId: p.id,
+                key,
+                width: vDims.width,
+                height: vDims.height,
+                aspect: vDims.aspect,
+                framing,
+                path: framePng,
+              });
+              if (!opts.quiet) console.log(`✔ Wrote ${framePng} (${vDims.width}x${vDims.height} ${framing})`);
+            }
+            if (wantOverlays) {
+              const overlayPng = join(videoOverlaysDir, `${key}.png`);
+              const slot = regSlot(overlayPng);
+              try {
+                await page.evaluate(
+                  (idx, url, pIdx, tw, th, fr) => window.renderComicPageTo(idx, url, {
+                    edition: 'studio',
+                    lettering: true,
+                    transparentLetteringOnly: true,
+                    panelIndex: pIdx,
+                    targetWidth: tw,
+                    targetHeight: th,
+                    framing: fr,
+                  }),
+                  pageIdx, slot.url, p.index, vDims.width, vDims.height, framing
+                );
+              } finally {
+                slot.free();
+              }
+              rendered.overlays.push({
+                pageIndex: pageIdx,
+                pageId: pageLayout.pageId,
+                panelIndex: p.index,
+                panelId: p.id,
+                key,
+                path: overlayPng,
+              });
+              if (!opts.quiet) console.log(`✔ Wrote ${overlayPng}`);
+            }
+          }
+        }
+      }
+
+      if (wantVideoFrames && wantContactSheet && rendered.videoFrames.length) {
+        const sheetName = opts.page != null ? `frames_sheet_page-${String(opts.page).padStart(2, '0')}.jpg` : 'frames_sheet.jpg';
+        const sheetPath = join(videoDir, sheetName);
+        await writeContactSheet(
+          page,
+          rendered.videoFrames.map((f, i) => ({ label: `#${i + 1} ${f.pageId} · ${f.panelId} (${f.width}x${f.height})`, path: f.path })),
+          sheetPath,
+          regSlot,
+          { cols: vDims.aspect === '9:16' ? 4 : 3, thumbW: vDims.aspect === '9:16' ? 300 : 480 }
+        );
+        rendered.contactSheet = sheetPath;
+        if (!opts.quiet) console.log(`✔ Wrote ${sheetPath}`);
       }
 
       if (wantPdf) {
@@ -258,7 +416,7 @@ export async function buildComic(comicId, opts = {}) {
       }
     }
 
-    return { info, dir, studioDir, outDir, rendered };
+    return { info, dir, studioDir, videoDir, videoFramesDir, videoOverlaysDir, outDir, rendered };
   } finally {
     if (browser) await browser.close();
     server.close();
@@ -272,6 +430,7 @@ if (isMain) {
   const comicId = argv.find(a => !a.startsWith('--'));
   if (!comicId || argv.includes('--help') || argv.includes('-h')) {
     console.log('Usage: node scripts/build_comic.mjs <comic_id> [--page=1] [--no-lettering] [--panels] [--pdf] [--edition=studio|illustrated|both]');
+    console.log('       node scripts/build_comic.mjs <comic_id> --video-frames [--aspect=16:9|9:16] [--resolution=720p|1080p] [--framing=recompose|pad|crop] [--overlays] [--no-sheet]');
     console.log('Registered comics:', (REGISTRY.comics || []).join(', ') || '(none)');
     process.exit(comicId ? 0 : 1);
   }
@@ -282,8 +441,15 @@ if (isMain) {
   };
   const opts = {
     page: flag('page') != null ? Number(flag('page')) : undefined,
+    panel: flag('panel'),
     lettering: !argv.includes('--no-lettering'),
     panels: argv.includes('--panels') ? true : undefined,
+    videoFrames: argv.includes('--video-frames'),
+    overlays: argv.includes('--overlays'),
+    contactSheet: argv.includes('--no-sheet') ? false : (argv.includes('--sheet') ? true : undefined),
+    aspect: flag('aspect'),
+    resolution: flag('resolution'),
+    framing: flag('framing'),
     pdf: argv.includes('--pdf'),
     edition: flag('edition') || 'both',
     chrome: flag('chrome'),

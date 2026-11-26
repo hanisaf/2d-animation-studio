@@ -1,0 +1,375 @@
+{
+  "version": 1,
+  "comicId": "ice_skating",
+  "bookId": "sami_and_jenna",
+  "title": "Ice Skating Adventure",
+  "aspect": "16:9",
+  "resolution": "720p",
+  "framing": "recompose",
+  "audio": "veo",
+  "overlays": "subtitles",
+  "pageFilter": null,
+  "generatedAt": "2026-11-26T01:42:51.783Z",
+  "totalPanels": 11,
+  "totalShots": 9,
+  "estimatedDurationSeconds": 66,
+  "shots": [
+    {
+      "id": "shot-01",
+      "index": 1,
+      "pageNumber": 1,
+      "pageId": "page-01",
+      "mode": "single",
+      "durationSeconds": 8,
+      "chainedFromPrev": false,
+      "panels": [
+        "p1_at_home"
+      ],
+      "panelKeys": [
+        "page-01_p1_at_home"
+      ],
+      "firstFrame": "video/frames/page-01_p1_at_home.png",
+      "lastFrame": null,
+      "overlay": null,
+      "cast": [
+        "sami",
+        "jenna"
+      ],
+      "location": "living_room",
+      "subtitles": [
+        {
+          "kind": "caption",
+          "speaker": "",
+          "text": "AT HOME"
+        },
+        {
+          "kind": "dialogue",
+          "speaker": "sami",
+          "text": "Jenna, should we go on a walk?"
+        },
+        {
+          "kind": "dialogue",
+          "speaker": "jenna",
+          "text": "Yes! Can I bring Fafy?"
+        },
+        {
+          "kind": "dialogue",
+          "speaker": "sami",
+          "text": "Of course! Fafy is family."
+        },
+        {
+          "kind": "dialogue",
+          "speaker": "jenna",
+          "text": "Just wait, I need my jacket just in case I get cold!"
+        }
+      ],
+      "sfx": [],
+      "prompt": "2D hand-drawn cartoon animation strictly preserving the exact flat-shaded vector art style, warm dark-brown ink outlines, pastel color palette, and character proportions of the provided Studio frame(s). Keep smooth 2D cel-animation motion with expressive squash-and-stretch. NEVER render as 3D CGI, claymation, or photorealistic live-action. NEVER draw speech bubbles, caption boxes, floating text, watermarks, or comic borders.\nAnimation: Bring this 2D cartoon frame to life with expressive character acting, lively blinks, gestures, and gentle camera motion. Scene: Cozy warm family living room with snowy winter window and oval pastel rug; Jenna holds plush giraffe Fafy while Dr. Sami smiles warmly in his white coat.\nAudio: Spoken cartoon dialogue with matching lip movement: sami says \"Jenna, should we go on a walk?\" Then jenna says \"Yes! Can I bring Fafy?\" Then sami says \"Of course! Fafy is family.\" Then jenna says \"Just wait, I need my jacket just in case I get cold!\"."
+    },
+    {
+      "id": "shot-02",
+      "index": 2,
+      "pageNumber": 1,
+      "pageId": "page-01",
+      "mode": "interpolate",
+      "durationSeconds": 8,
+      "chainedFromPrev": false,
+      "panels": [
+        "p2_mud_room",
+        "p3_zip_ready"
+      ],
+      "panelKeys": [
+        "page-01_p2_mud_room",
+        "page-01_p3_zip_ready"
+      ],
+      "firstFrame": "video/frames/page-01_p2_mud_room.png",
+      "lastFrame": "video/frames/page-01_p3_zip_ready.png",
+      "overlay": null,
+      "cast": [
+        "jenna"
+      ],
+      "location": "mudroom",
+      "subtitles": [
+        {
+          "kind": "caption",
+          "speaker": "",
+          "text": "MUD ROOM"
+        },
+        {
+          "kind": "dialogue",
+          "speaker": "jenna",
+          "text": "I'm ready!"
+        }
+      ],
+      "sfx": [
+        "ZIP!"
+      ],
+      "prompt": "2D hand-drawn cartoon animation strictly preserving the exact flat-shaded vector art style, warm dark-brown ink outlines, pastel color palette, and character proportions of the provided Studio frame(s). Keep smooth 2D cel-animation motion with expressive squash-and-stretch. NEVER render as 3D CGI, claymation, or photorealistic live-action. NEVER draw speech bubbles, caption boxes, floating text, watermarks, or comic borders.\nAnimation: Smoothly animate the continuous 2D cartoon action from the starting frame to the ending frame. Start: Cozy mint-walled mud room with coat hooks; Jenna reaches for her teal-and-pink winter jacket while plush giraffe Fafy sits waiting on the floor. Transition fluidly into: Jenna happily zipping up her teal-and-pink winter jacket in the mud room while holding Fafy.\nAudio: Spoken cartoon dialogue with matching lip movement: jenna says \"I'm ready!\". Cartoon sound effects: ZIP!."
+    },
+    {
+      "id": "shot-03",
+      "index": 3,
+      "pageNumber": 1,
+      "pageId": "page-01",
+      "mode": "single",
+      "durationSeconds": 4,
+      "chainedFromPrev": false,
+      "panels": [
+        "p4_doorway"
+      ],
+      "panelKeys": [
+        "page-01_p4_doorway"
+      ],
+      "firstFrame": "video/frames/page-01_p4_doorway.png",
+      "lastFrame": null,
+      "overlay": null,
+      "cast": [
+        "sami",
+        "jenna"
+      ],
+      "location": "doorway",
+      "subtitles": [
+        {
+          "kind": "dialogue",
+          "speaker": "jenna",
+          "text": "Bye, fishy!"
+        },
+        {
+          "kind": "dialogue",
+          "speaker": "sami",
+          "text": "Let's go ice skating!"
+        }
+      ],
+      "sfx": [],
+      "prompt": "2D hand-drawn cartoon animation strictly preserving the exact flat-shaded vector art style, warm dark-brown ink outlines, pastel color palette, and character proportions of the provided Studio frame(s). Keep smooth 2D cel-animation motion with expressive squash-and-stretch. NEVER render as 3D CGI, claymation, or photorealistic live-action. NEVER draw speech bubbles, caption boxes, floating text, watermarks, or comic borders.\nAnimation: Bring this 2D cartoon frame to life with expressive character acting, lively blinks, gestures, and gentle camera motion. Scene: Warm hallway doorway opening to snowy Minnesota yard; Jenna in winter jacket waves to a cute goldfish in a glass bowl while Dr. Sami points cheerfully outside.\nAudio: Spoken cartoon dialogue with matching lip movement: jenna says \"Bye, fishy!\" Then sami says \"Let's go ice skating!\"."
+    },
+    {
+      "id": "shot-04",
+      "index": 4,
+      "pageNumber": 1,
+      "pageId": "page-01",
+      "mode": "interpolate",
+      "durationSeconds": 8,
+      "chainedFromPrev": false,
+      "panels": [
+        "p5_ice_arena",
+        "p6_dip"
+      ],
+      "panelKeys": [
+        "page-01_p5_ice_arena",
+        "page-01_p6_dip"
+      ],
+      "firstFrame": "video/frames/page-01_p5_ice_arena.png",
+      "lastFrame": "video/frames/page-01_p6_dip.png",
+      "overlay": null,
+      "cast": [
+        "sami",
+        "jenna"
+      ],
+      "location": "rink",
+      "subtitles": [
+        {
+          "kind": "caption",
+          "speaker": "",
+          "text": "ICE ARENA"
+        },
+        {
+          "kind": "dialogue",
+          "speaker": "spectator",
+          "text": "Woo!"
+        },
+        {
+          "kind": "dialogue",
+          "speaker": "jenna",
+          "text": "Woo!"
+        },
+        {
+          "kind": "dialogue",
+          "speaker": "jenna",
+          "text": "Don't worry, once you practice you will get the hang of it!"
+        },
+        {
+          "kind": "dialogue",
+          "speaker": "sami",
+          "text": "I feel wobbly!"
+        }
+      ],
+      "sfx": [],
+      "prompt": "2D hand-drawn cartoon animation strictly preserving the exact flat-shaded vector art style, warm dark-brown ink outlines, pastel color palette, and character proportions of the provided Studio frame(s). Keep smooth 2D cel-animation motion with expressive squash-and-stretch. NEVER render as 3D CGI, claymation, or photorealistic live-action. NEVER draw speech bubbles, caption boxes, floating text, watermarks, or comic borders.\nAnimation: Smoothly animate the continuous 2D cartoon action from the starting frame to the ending frame. Start: Bright Minnesota indoor ice skating rink with 10,000 Lakes board sign, FOOD concession stand, cheering fan behind glass, Fafy plush watching, Jenna gliding confidently in pastel jacket and pink helmet, and Dr. Sami wobbling comically in navy puffer jacket and blue helmet. Transition fluidly into: Jenna gliding low in a playful crouching dip trick on glossy ice in winter jacket, snow pants, pink helmet, and white figure skates.\nAudio: Spoken cartoon dialogue with matching lip movement: spectator says \"Woo!\" Then jenna says \"Woo!\" Then jenna says \"Don't worry, once you practice you will get the hang of it!\" Then sami says \"I feel wobbly!\"."
+    },
+    {
+      "id": "shot-05",
+      "index": 5,
+      "pageNumber": 1,
+      "pageId": "page-01",
+      "mode": "interpolate",
+      "durationSeconds": 8,
+      "chainedFromPrev": true,
+      "panels": [
+        "p6_dip",
+        "p7_jump"
+      ],
+      "panelKeys": [
+        "page-01_p6_dip",
+        "page-01_p7_jump"
+      ],
+      "firstFrame": "video/frames/page-01_p6_dip.png",
+      "lastFrame": "video/frames/page-01_p7_jump.png",
+      "overlay": null,
+      "cast": [
+        "jenna"
+      ],
+      "location": "rink",
+      "subtitles": [],
+      "sfx": [
+        "DIP!"
+      ],
+      "prompt": "2D hand-drawn cartoon animation strictly preserving the exact flat-shaded vector art style, warm dark-brown ink outlines, pastel color palette, and character proportions of the provided Studio frame(s). Keep smooth 2D cel-animation motion with expressive squash-and-stretch. NEVER render as 3D CGI, claymation, or photorealistic live-action. NEVER draw speech bubbles, caption boxes, floating text, watermarks, or comic borders.\nAnimation: Smoothly animate the continuous 2D cartoon action from the starting frame to the ending frame. Start: Jenna gliding low in a playful crouching dip trick on glossy ice in winter jacket, snow pants, pink helmet, and white figure skates. Transition fluidly into: Jenna leaping joyfully high off the ice in a star jump with motion lines and sparkles.\nAudio: Cartoon sound effects: DIP!."
+    },
+    {
+      "id": "shot-06",
+      "index": 6,
+      "pageNumber": 1,
+      "pageId": "page-01",
+      "mode": "interpolate",
+      "durationSeconds": 8,
+      "chainedFromPrev": true,
+      "panels": [
+        "p7_jump",
+        "p8_turn"
+      ],
+      "panelKeys": [
+        "page-01_p7_jump",
+        "page-01_p8_turn"
+      ],
+      "firstFrame": "video/frames/page-01_p7_jump.png",
+      "lastFrame": "video/frames/page-01_p8_turn.png",
+      "overlay": null,
+      "cast": [
+        "jenna"
+      ],
+      "location": "rink",
+      "subtitles": [],
+      "sfx": [
+        "JUMP!"
+      ],
+      "prompt": "2D hand-drawn cartoon animation strictly preserving the exact flat-shaded vector art style, warm dark-brown ink outlines, pastel color palette, and character proportions of the provided Studio frame(s). Keep smooth 2D cel-animation motion with expressive squash-and-stretch. NEVER render as 3D CGI, claymation, or photorealistic live-action. NEVER draw speech bubbles, caption boxes, floating text, watermarks, or comic borders.\nAnimation: Smoothly animate the continuous 2D cartoon action from the starting frame to the ending frame. Start: Jenna leaping joyfully high off the ice in a star jump with motion lines and sparkles. Transition fluidly into: Jenna spinning gracefully on figure skates with curved swirl motion lines and a circular skate track carved in the ice.\nAudio: Cartoon sound effects: JUMP!."
+    },
+    {
+      "id": "shot-07",
+      "index": 7,
+      "pageNumber": 1,
+      "pageId": "page-01",
+      "mode": "interpolate",
+      "durationSeconds": 8,
+      "chainedFromPrev": true,
+      "panels": [
+        "p8_turn",
+        "p9_finale"
+      ],
+      "panelKeys": [
+        "page-01_p8_turn",
+        "page-01_p9_finale"
+      ],
+      "firstFrame": "video/frames/page-01_p8_turn.png",
+      "lastFrame": "video/frames/page-01_p9_finale.png",
+      "overlay": null,
+      "cast": [
+        "jenna",
+        "sami"
+      ],
+      "location": "rink",
+      "subtitles": [],
+      "sfx": [
+        "TURN!"
+      ],
+      "prompt": "2D hand-drawn cartoon animation strictly preserving the exact flat-shaded vector art style, warm dark-brown ink outlines, pastel color palette, and character proportions of the provided Studio frame(s). Keep smooth 2D cel-animation motion with expressive squash-and-stretch. NEVER render as 3D CGI, claymation, or photorealistic live-action. NEVER draw speech bubbles, caption boxes, floating text, watermarks, or comic borders.\nAnimation: Smoothly animate the continuous 2D cartoon action from the starting frame to the ending frame. Start: Jenna spinning gracefully on figure skates with curved swirl motion lines and a circular skate track carved in the ice. Transition fluidly into: Heartwarming finale on the ice rink: Dr. Sami gives a proud thumbs-up, Fafy stands in the center, and Jenna stops with a sparkly spray of ice shavings while encouraging her dad.\nAudio: Cartoon sound effects: TURN!."
+    },
+    {
+      "id": "shot-08",
+      "index": 8,
+      "pageNumber": 1,
+      "pageId": "page-01",
+      "mode": "interpolate",
+      "durationSeconds": 8,
+      "chainedFromPrev": true,
+      "panels": [
+        "p9_finale",
+        "p10_ice_hug"
+      ],
+      "panelKeys": [
+        "page-01_p9_finale",
+        "page-02_p10_ice_hug"
+      ],
+      "firstFrame": "video/frames/page-01_p9_finale.png",
+      "lastFrame": "video/frames/page-02_p10_ice_hug.png",
+      "overlay": null,
+      "cast": [
+        "sami",
+        "jenna"
+      ],
+      "location": "rink",
+      "subtitles": [
+        {
+          "kind": "dialogue",
+          "speaker": "sami",
+          "text": "Good job Jenna, you rock! As for me, I am too old for these tricks..."
+        },
+        {
+          "kind": "dialogue",
+          "speaker": "jenna",
+          "text": "You're not old! Try your best and you will get it!"
+        },
+        {
+          "kind": "dialogue",
+          "speaker": "sami",
+          "text": "I love you, Jenna!"
+        }
+      ],
+      "sfx": [],
+      "prompt": "2D hand-drawn cartoon animation strictly preserving the exact flat-shaded vector art style, warm dark-brown ink outlines, pastel color palette, and character proportions of the provided Studio frame(s). Keep smooth 2D cel-animation motion with expressive squash-and-stretch. NEVER render as 3D CGI, claymation, or photorealistic live-action. NEVER draw speech bubbles, caption boxes, floating text, watermarks, or comic borders.\nAnimation: Smoothly animate the continuous 2D cartoon action from the starting frame to the ending frame. Start: Heartwarming finale on the ice rink: Dr. Sami gives a proud thumbs-up, Fafy stands in the center, and Jenna stops with a sparkly spray of ice shavings while encouraging her dad. Transition fluidly into: Heartwarming close-up on the Minnesota ice rink: Dr. Sami in his navy puffer winter jacket, blue helmet, and black skates leans down to share a big loving hug with Jenna in her teal-and-pink winter jacket, pink helmet, and white figure skates; Fafy the plush giraffe watches happily nearby on the ice, surrounded by warm floating pink hearts and golden sparkles.\nAudio: Spoken cartoon dialogue with matching lip movement: sami says \"Good job Jenna, you rock! As for me, I am too old for these tricks...\" Then jenna says \"You're not old! Try your best and you will get it!\" Then sami says \"I love you, Jenna!\"."
+    },
+    {
+      "id": "shot-09",
+      "index": 9,
+      "pageNumber": 2,
+      "pageId": "page-02",
+      "mode": "single",
+      "durationSeconds": 6,
+      "chainedFromPrev": false,
+      "panels": [
+        "p11_cozy_fireplace"
+      ],
+      "panelKeys": [
+        "page-02_p11_cozy_fireplace"
+      ],
+      "firstFrame": "video/frames/page-02_p11_cozy_fireplace.png",
+      "lastFrame": null,
+      "overlay": null,
+      "cast": [
+        "sami",
+        "jenna"
+      ],
+      "location": "living_room",
+      "subtitles": [
+        {
+          "kind": "caption",
+          "speaker": "",
+          "text": "AT HOME"
+        },
+        {
+          "kind": "caption",
+          "speaker": "",
+          "text": "THE END"
+        },
+        {
+          "kind": "dialogue",
+          "speaker": "sami",
+          "text": "Always good to be home."
+        }
+      ],
+      "sfx": [],
+      "prompt": "2D hand-drawn cartoon animation strictly preserving the exact flat-shaded vector art style, warm dark-brown ink outlines, pastel color palette, and character proportions of the provided Studio frame(s). Keep smooth 2D cel-animation motion with expressive squash-and-stretch. NEVER render as 3D CGI, claymation, or photorealistic live-action. NEVER draw speech bubbles, caption boxes, floating text, watermarks, or comic borders.\nAnimation: Bring this 2D cartoon frame to life with expressive character acting, lively blinks, gestures, and gentle camera motion. Scene: Cozy warm family living room at dusk: snowy twilight window and pet goldfish bowl on the left, glowing red-brick fireplace with crackling fire and iron grate on the right; back in their comfortable indoor clothes on the pastel oval rug, Dr. Sami smiles warmly and Jenna cuddles Fafy the giraffe while enjoying the warmth of home.\nAudio: Spoken cartoon dialogue with matching lip movement: sami says \"Always good to be home.\"."
+    }
+  ]
+}

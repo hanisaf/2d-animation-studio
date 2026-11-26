@@ -1,0 +1,1622 @@
+{
+  "version": 1,
+  "comicId": "the_adventure",
+  "bookId": "palm_pals_adventures",
+  "title": "The Adventure",
+  "aspect": "16:9",
+  "resolution": "720p",
+  "framing": "recompose",
+  "audio": "veo",
+  "overlays": "subtitles",
+  "pageFilter": null,
+  "generatedAt": "2026-11-26T02:01:37.600Z",
+  "totalPanels": 52,
+  "totalShots": 42,
+  "estimatedDurationSeconds": 288,
+  "shots": [
+    {
+      "id": "shot-01",
+      "index": 1,
+      "pageNumber": 1,
+      "pageId": "page-01",
+      "mode": "single",
+      "durationSeconds": 4,
+      "chainedFromPrev": false,
+      "panels": [
+        "p1_cover_splash"
+      ],
+      "panelKeys": [
+        "page-01_p1_cover_splash"
+      ],
+      "firstFrame": "video/frames/page-01_p1_cover_splash.png",
+      "lastFrame": null,
+      "overlay": null,
+      "cast": [
+        "eve",
+        "zelie"
+      ],
+      "location": "portal",
+      "subtitles": [
+        {
+          "kind": "caption",
+          "speaker": "",
+          "text": "BY JENNA SAFADI"
+        }
+      ],
+      "sfx": [
+        "THE ADVENTURE"
+      ],
+      "prompt": "2D hand-drawn cartoon animation strictly preserving the exact flat-shaded vector art style, warm dark-brown ink outlines, pastel color palette, and character proportions of the provided Studio frame(s). Keep smooth 2D cel-animation motion with expressive squash-and-stretch. NEVER render as 3D CGI, claymation, or photorealistic live-action. NEVER draw speech bubbles, caption boxes, floating text, watermarks, or comic borders.\nCharacters: Eve Earth: Small, round sky-blue planet plushie (#7AC3EB) with stitched green continent patches, cute black bead eyes with white sparkles, rosy pink cheeks, and tiny stubby blue arms and feet. Avoid: no mustache; no human hair or clothes other than the brown plaid hat when scripted | Zelie Pink Lemonade: Small tapered pink lemonade cup plushie (#F682B0) with a fluffy scalloped white foam rim, pink-and-white striped straw on the left, yellow lemon wedge garnish on the right, cute black bead eyes, rosy cheeks, and tiny stubby pink arms and feet. Avoid: no mustache; keep straw pink-striped (never yellow)\nVisual rules: Both Eve’s Dad and Zelie’s Papa ALWAYS wear a thick, dark, wavy zig-zag squiggly mustache — never a smooth curved handlebar mustache. Pancakes are plain golden-brown breakfast food with butter/syrup — NEVER draw faces, eyes, or mouths on pancakes. Keep window time-of-day strictly faithful to the Studio blueprint: starry dark sky + moon ONLY for nighttime panels, bright blue sky + golden sun for daytime panels. Preserve exact character sizes relative to each other (the two Dads are clearly larger/taller than Eve and Zelie).\nAnimation: Bring this 2D cartoon frame to life with expressive character acting, lively blinks, gestures, and gentle camera motion. Scene: Storybook comic cover splash in a sunny adventure clearing: radiant yellow sun with rays, fluffy clouds, birds, a leafy green tree on the left, a palm tree on the right, brown earth ground with a diamond portal rune crest. Eve Earth (blue plushie globe wearing a brown plaid explorer hat, worried) and Zelie Pink Lemonade (pink plushie lemonade cup with foam, lemon slice, striped straw, looking nervous) stand side-by-side.\nAudio: Warm friendly cartoon narrator says: \"BY JENNA SAFADI\" Cartoon sound effects: THE ADVENTURE."
+    },
+    {
+      "id": "shot-02",
+      "index": 2,
+      "pageNumber": 1,
+      "pageId": "page-01",
+      "mode": "single",
+      "durationSeconds": 4,
+      "chainedFromPrev": false,
+      "panels": [
+        "p1_bio_eve"
+      ],
+      "panelKeys": [
+        "page-01_p1_bio_eve"
+      ],
+      "firstFrame": "video/frames/page-01_p1_bio_eve.png",
+      "lastFrame": null,
+      "overlay": null,
+      "cast": [
+        "eve"
+      ],
+      "location": null,
+      "subtitles": [
+        {
+          "kind": "caption",
+          "speaker": "",
+          "text": "EVE EARTH"
+        },
+        {
+          "kind": "caption",
+          "speaker": "",
+          "text": "10 YEARS OLD"
+        }
+      ],
+      "sfx": [],
+      "prompt": "2D hand-drawn cartoon animation strictly preserving the exact flat-shaded vector art style, warm dark-brown ink outlines, pastel color palette, and character proportions of the provided Studio frame(s). Keep smooth 2D cel-animation motion with expressive squash-and-stretch. NEVER render as 3D CGI, claymation, or photorealistic live-action. NEVER draw speech bubbles, caption boxes, floating text, watermarks, or comic borders.\nCharacters: Eve Earth: Small, round sky-blue planet plushie (#7AC3EB) with stitched green continent patches, cute black bead eyes with white sparkles, rosy pink cheeks, and tiny stubby blue arms and feet. Avoid: no mustache; no human hair or clothes other than the brown plaid hat when scripted\nVisual rules: Both Eve’s Dad and Zelie’s Papa ALWAYS wear a thick, dark, wavy zig-zag squiggly mustache — never a smooth curved handlebar mustache. Pancakes are plain golden-brown breakfast food with butter/syrup — NEVER draw faces, eyes, or mouths on pancakes. Keep window time-of-day strictly faithful to the Studio blueprint: starry dark sky + moon ONLY for nighttime panels, bright blue sky + golden sun for daytime panels. Preserve exact character sizes relative to each other (the two Dads are clearly larger/taller than Eve and Zelie).\nAnimation: Bring this 2D cartoon frame to life with expressive character acting, lively blinks, gestures, and gentle camera motion. Scene: Bright pastel sky-blue character bio portrait card of Eve Earth, a cheerful squishy blue-and-green plushie globe waving warmly with rosy cheeks and a big smile.\nAudio: Warm friendly cartoon narrator says: \"EVE EARTH 10 YEARS OLD\""
+    },
+    {
+      "id": "shot-03",
+      "index": 3,
+      "pageNumber": 1,
+      "pageId": "page-01",
+      "mode": "single",
+      "durationSeconds": 4,
+      "chainedFromPrev": false,
+      "panels": [
+        "p1_bio_zelie"
+      ],
+      "panelKeys": [
+        "page-01_p1_bio_zelie"
+      ],
+      "firstFrame": "video/frames/page-01_p1_bio_zelie.png",
+      "lastFrame": null,
+      "overlay": null,
+      "cast": [
+        "zelie"
+      ],
+      "location": null,
+      "subtitles": [
+        {
+          "kind": "caption",
+          "speaker": "",
+          "text": "ZELIE PINK LEMONADE"
+        },
+        {
+          "kind": "caption",
+          "speaker": "",
+          "text": "6 YEARS OLD"
+        },
+        {
+          "kind": "dialogue",
+          "speaker": "Zelie",
+          "text": "Just call me Zelie"
+        }
+      ],
+      "sfx": [],
+      "prompt": "2D hand-drawn cartoon animation strictly preserving the exact flat-shaded vector art style, warm dark-brown ink outlines, pastel color palette, and character proportions of the provided Studio frame(s). Keep smooth 2D cel-animation motion with expressive squash-and-stretch. NEVER render as 3D CGI, claymation, or photorealistic live-action. NEVER draw speech bubbles, caption boxes, floating text, watermarks, or comic borders.\nCharacters: Zelie Pink Lemonade: Small tapered pink lemonade cup plushie (#F682B0) with a fluffy scalloped white foam rim, pink-and-white striped straw on the left, yellow lemon wedge garnish on the right, cute black bead eyes, rosy cheeks, and tiny stubby pink arms and feet. Avoid: no mustache; keep straw pink-striped (never yellow)\nVisual rules: Both Eve’s Dad and Zelie’s Papa ALWAYS wear a thick, dark, wavy zig-zag squiggly mustache — never a smooth curved handlebar mustache. Pancakes are plain golden-brown breakfast food with butter/syrup — NEVER draw faces, eyes, or mouths on pancakes. Keep window time-of-day strictly faithful to the Studio blueprint: starry dark sky + moon ONLY for nighttime panels, bright blue sky + golden sun for daytime panels. Preserve exact character sizes relative to each other (the two Dads are clearly larger/taller than Eve and Zelie).\nAnimation: Bring this 2D cartoon frame to life with expressive character acting, lively blinks, gestures, and gentle camera motion. Scene: Bright pastel pink character bio portrait card of Zelie Pink Lemonade, a bubbly squishy pink lemonade cup plushie with white foam, lemon slice, and striped straw grinning cheerfully.\nAudio: Spoken cartoon dialogue with matching lip movement: Zelie says \"Just call me Zelie\"."
+    },
+    {
+      "id": "shot-04",
+      "index": 4,
+      "pageNumber": 2,
+      "pageId": "page-02",
+      "mode": "interpolate",
+      "durationSeconds": 8,
+      "chainedFromPrev": false,
+      "panels": [
+        "p2_asleep",
+        "p2_yawn"
+      ],
+      "panelKeys": [
+        "page-02_p2_asleep",
+        "page-02_p2_yawn"
+      ],
+      "firstFrame": "video/frames/page-02_p2_asleep.png",
+      "lastFrame": "video/frames/page-02_p2_yawn.png",
+      "overlay": null,
+      "cast": [
+        "eve"
+      ],
+      "location": "bedroom_night",
+      "subtitles": [],
+      "sfx": [
+        "ZZZZ"
+      ],
+      "prompt": "2D hand-drawn cartoon animation strictly preserving the exact flat-shaded vector art style, warm dark-brown ink outlines, pastel color palette, and character proportions of the provided Studio frame(s). Keep smooth 2D cel-animation motion with expressive squash-and-stretch. NEVER render as 3D CGI, claymation, or photorealistic live-action. NEVER draw speech bubbles, caption boxes, floating text, watermarks, or comic borders.\nCharacters: Eve Earth: Small, round sky-blue planet plushie (#7AC3EB) with stitched green continent patches, cute black bead eyes with white sparkles, rosy pink cheeks, and tiny stubby blue arms and feet. Avoid: no mustache; no human hair or clothes other than the brown plaid hat when scripted\nVisual rules: Both Eve’s Dad and Zelie’s Papa ALWAYS wear a thick, dark, wavy zig-zag squiggly mustache — never a smooth curved handlebar mustache. Pancakes are plain golden-brown breakfast food with butter/syrup — NEVER draw faces, eyes, or mouths on pancakes. Keep window time-of-day strictly faithful to the Studio blueprint: starry dark sky + moon ONLY for nighttime panels, bright blue sky + golden sun for daytime panels. Preserve exact character sizes relative to each other (the two Dads are clearly larger/taller than Eve and Zelie).\nAnimation: Smoothly animate the continuous 2D cartoon action from the starting frame to the ending frame. Start: Cozy peach-walled bedroom at night: deep starry night sky with a glowing yellow moon visible through the window, wavy wall poster, wooden nightstand with glowing yellow lamp and mug, and Eve Earth peacefully asleep tucked inside his smiling Earth-themed bed. Transition fluidly into: Bright morning in Eve Earth's bedroom: sunny sky-blue daytime sky and a glowing golden sun with rays shining through the window as Eve wakes up in his Earth-themed bed, stretching his stubby blue plushie arms with a big sleepy yawn.\nAudio: Cartoon sound effects: ZZZZ."
+    },
+    {
+      "id": "shot-05",
+      "index": 5,
+      "pageNumber": 2,
+      "pageId": "page-02",
+      "mode": "interpolate",
+      "durationSeconds": 8,
+      "chainedFromPrev": true,
+      "panels": [
+        "p2_yawn",
+        "p2_intro"
+      ],
+      "panelKeys": [
+        "page-02_p2_yawn",
+        "page-02_p2_intro"
+      ],
+      "firstFrame": "video/frames/page-02_p2_yawn.png",
+      "lastFrame": "video/frames/page-02_p2_intro.png",
+      "overlay": null,
+      "cast": [
+        "eve"
+      ],
+      "location": "bedroom_day",
+      "subtitles": [
+        {
+          "kind": "dialogue",
+          "speaker": "Eve",
+          "text": "Mmm..."
+        },
+        {
+          "kind": "dialogue",
+          "speaker": "Eve",
+          "text": "Oh! Hi, my name is Eve Earth!"
+        }
+      ],
+      "sfx": [
+        "YAWN"
+      ],
+      "prompt": "2D hand-drawn cartoon animation strictly preserving the exact flat-shaded vector art style, warm dark-brown ink outlines, pastel color palette, and character proportions of the provided Studio frame(s). Keep smooth 2D cel-animation motion with expressive squash-and-stretch. NEVER render as 3D CGI, claymation, or photorealistic live-action. NEVER draw speech bubbles, caption boxes, floating text, watermarks, or comic borders.\nCharacters: Eve Earth: Small, round sky-blue planet plushie (#7AC3EB) with stitched green continent patches, cute black bead eyes with white sparkles, rosy pink cheeks, and tiny stubby blue arms and feet. Avoid: no mustache; no human hair or clothes other than the brown plaid hat when scripted\nVisual rules: Both Eve’s Dad and Zelie’s Papa ALWAYS wear a thick, dark, wavy zig-zag squiggly mustache — never a smooth curved handlebar mustache. Pancakes are plain golden-brown breakfast food with butter/syrup — NEVER draw faces, eyes, or mouths on pancakes. Keep window time-of-day strictly faithful to the Studio blueprint: starry dark sky + moon ONLY for nighttime panels, bright blue sky + golden sun for daytime panels. Preserve exact character sizes relative to each other (the two Dads are clearly larger/taller than Eve and Zelie).\nAnimation: Smoothly animate the continuous 2D cartoon action from the starting frame to the ending frame. Start: Bright morning in Eve Earth's bedroom: sunny sky-blue daytime sky and a glowing golden sun with rays shining through the window as Eve wakes up in his Earth-themed bed, stretching his stubby blue plushie arms with a big sleepy yawn. Transition fluidly into: Bright sunny morning in Eve Earth's bedroom with blue daytime sky and golden sun shining through the window: Eve hops cheerfully out of bed on the bedroom floor, waving happily directly at the reader.\nAudio: Spoken cartoon dialogue with matching lip movement: Eve says \"Mmm...\" Then Eve says \"Oh! Hi, my name is Eve Earth!\". Cartoon sound effects: YAWN."
+    },
+    {
+      "id": "shot-06",
+      "index": 6,
+      "pageNumber": 2,
+      "pageId": "page-02",
+      "mode": "single",
+      "durationSeconds": 4,
+      "chainedFromPrev": false,
+      "panels": [
+        "p2_dash"
+      ],
+      "panelKeys": [
+        "page-02_p2_dash"
+      ],
+      "firstFrame": "video/frames/page-02_p2_dash.png",
+      "lastFrame": null,
+      "overlay": null,
+      "cast": [
+        "eve"
+      ],
+      "location": "hallway",
+      "subtitles": [],
+      "sfx": [
+        "ZOOM!"
+      ],
+      "prompt": "2D hand-drawn cartoon animation strictly preserving the exact flat-shaded vector art style, warm dark-brown ink outlines, pastel color palette, and character proportions of the provided Studio frame(s). Keep smooth 2D cel-animation motion with expressive squash-and-stretch. NEVER render as 3D CGI, claymation, or photorealistic live-action. NEVER draw speech bubbles, caption boxes, floating text, watermarks, or comic borders.\nCharacters: Eve Earth: Small, round sky-blue planet plushie (#7AC3EB) with stitched green continent patches, cute black bead eyes with white sparkles, rosy pink cheeks, and tiny stubby blue arms and feet. Avoid: no mustache; no human hair or clothes other than the brown plaid hat when scripted\nVisual rules: Both Eve’s Dad and Zelie’s Papa ALWAYS wear a thick, dark, wavy zig-zag squiggly mustache — never a smooth curved handlebar mustache. Pancakes are plain golden-brown breakfast food with butter/syrup — NEVER draw faces, eyes, or mouths on pancakes. Keep window time-of-day strictly faithful to the Studio blueprint: starry dark sky + moon ONLY for nighttime panels, bright blue sky + golden sun for daytime panels. Preserve exact character sizes relative to each other (the two Dads are clearly larger/taller than Eve and Zelie).\nAnimation: Bring this 2D cartoon frame to life with expressive character acting, lively blinks, gestures, and gentle camera motion. Scene: Eve Earth dashing excitedly to the right out of his bedroom hallway toward the kitchen, trailing bold comic speed lines.\nAudio: Cartoon sound effects: ZOOM!."
+    },
+    {
+      "id": "shot-07",
+      "index": 7,
+      "pageNumber": 2,
+      "pageId": "page-02",
+      "mode": "interpolate",
+      "durationSeconds": 8,
+      "chainedFromPrev": false,
+      "panels": [
+        "p2_whats_for_breakfast",
+        "p2_pancakes"
+      ],
+      "panelKeys": [
+        "page-02_p2_whats_for_breakfast",
+        "page-02_p2_pancakes"
+      ],
+      "firstFrame": "video/frames/page-02_p2_whats_for_breakfast.png",
+      "lastFrame": "video/frames/page-02_p2_pancakes.png",
+      "overlay": null,
+      "cast": [
+        "eve",
+        "eve_dad"
+      ],
+      "location": "kitchen",
+      "subtitles": [
+        {
+          "kind": "dialogue",
+          "speaker": "Eve",
+          "text": "Hey Daddy, what's for breakfast?"
+        }
+      ],
+      "sfx": [
+        "sss"
+      ],
+      "prompt": "2D hand-drawn cartoon animation strictly preserving the exact flat-shaded vector art style, warm dark-brown ink outlines, pastel color palette, and character proportions of the provided Studio frame(s). Keep smooth 2D cel-animation motion with expressive squash-and-stretch. NEVER render as 3D CGI, claymation, or photorealistic live-action. NEVER draw speech bubbles, caption boxes, floating text, watermarks, or comic borders.\nCharacters: Eve Earth: Small, round sky-blue planet plushie (#7AC3EB) with stitched green continent patches, cute black bead eyes with white sparkles, rosy pink cheeks, and tiny stubby blue arms and feet. Avoid: no mustache; no human hair or clothes other than the brown plaid hat when scripted | Eve's Dad: Larger, deeper-ocean blue Earth globe plushie (#4F92C4) with darker green continents, warm bead eyes, rosy cheeks, stubby blue arms and feet, and a bold dark wavy zig-zag squiggly mustache right above his mouth. Avoid: NEVER draw a smooth curved handlebar mustache — ALWAYS draw a wavy zig-zag squiggly mustache\nVisual rules: Both Eve’s Dad and Zelie’s Papa ALWAYS wear a thick, dark, wavy zig-zag squiggly mustache — never a smooth curved handlebar mustache. Pancakes are plain golden-brown breakfast food with butter/syrup — NEVER draw faces, eyes, or mouths on pancakes. Keep window time-of-day strictly faithful to the Studio blueprint: starry dark sky + moon ONLY for nighttime panels, bright blue sky + golden sun for daytime panels. Preserve exact character sizes relative to each other (the two Dads are clearly larger/taller than Eve and Zelie).\nAnimation: Smoothly animate the continuous 2D cartoon action from the starting frame to the ending frame. Start: Cozy kitchen with wall clock and black stove. Eve's Dad (a bigger, deeper-blue Earth globe plushie with a cute squiggly mustache) holds a sizzling frying pan while little Eve Earth runs up asking what is for breakfast. Transition fluidly into: Close-up in the kitchen: Eve's Dad (larger Earth globe plushie with a squiggly mustache) grins proudly while holding up a sizzling frying pan with a golden pancake.\nAudio: Spoken cartoon dialogue with matching lip movement: Eve says \"Hey Daddy, what's for breakfast?\". Cartoon sound effects: sss."
+    },
+    {
+      "id": "shot-08",
+      "index": 8,
+      "pageNumber": 2,
+      "pageId": "page-02",
+      "mode": "interpolate",
+      "durationSeconds": 8,
+      "chainedFromPrev": true,
+      "panels": [
+        "p2_pancakes",
+        "p2_flip_toss"
+      ],
+      "panelKeys": [
+        "page-02_p2_pancakes",
+        "page-02_p2_flip_toss"
+      ],
+      "firstFrame": "video/frames/page-02_p2_pancakes.png",
+      "lastFrame": "video/frames/page-02_p2_flip_toss.png",
+      "overlay": null,
+      "cast": [
+        "eve_dad",
+        "eve"
+      ],
+      "location": "kitchen",
+      "subtitles": [
+        {
+          "kind": "dialogue",
+          "speaker": "Dad",
+          "text": "Pancakes!"
+        }
+      ],
+      "sfx": [
+        "SSSS"
+      ],
+      "prompt": "2D hand-drawn cartoon animation strictly preserving the exact flat-shaded vector art style, warm dark-brown ink outlines, pastel color palette, and character proportions of the provided Studio frame(s). Keep smooth 2D cel-animation motion with expressive squash-and-stretch. NEVER render as 3D CGI, claymation, or photorealistic live-action. NEVER draw speech bubbles, caption boxes, floating text, watermarks, or comic borders.\nCharacters: Eve's Dad: Larger, deeper-ocean blue Earth globe plushie (#4F92C4) with darker green continents, warm bead eyes, rosy cheeks, stubby blue arms and feet, and a bold dark wavy zig-zag squiggly mustache right above his mouth. Avoid: NEVER draw a smooth curved handlebar mustache — ALWAYS draw a wavy zig-zag squiggly mustache | Eve Earth: Small, round sky-blue planet plushie (#7AC3EB) with stitched green continent patches, cute black bead eyes with white sparkles, rosy pink cheeks, and tiny stubby blue arms and feet. Avoid: no mustache; no human hair or clothes other than the brown plaid hat when scripted\nVisual rules: Both Eve’s Dad and Zelie’s Papa ALWAYS wear a thick, dark, wavy zig-zag squiggly mustache — never a smooth curved handlebar mustache. Pancakes are plain golden-brown breakfast food with butter/syrup — NEVER draw faces, eyes, or mouths on pancakes. Keep window time-of-day strictly faithful to the Studio blueprint: starry dark sky + moon ONLY for nighttime panels, bright blue sky + golden sun for daytime panels. Preserve exact character sizes relative to each other (the two Dads are clearly larger/taller than Eve and Zelie).\nAnimation: Smoothly animate the continuous 2D cartoon action from the starting frame to the ending frame. Start: Close-up in the kitchen: Eve's Dad (larger Earth globe plushie with a squiggly mustache) grins proudly while holding up a sizzling frying pan with a golden pancake. Transition fluidly into: In the kitchen, Eve's Dad (larger Earth globe plushie with a squiggly mustache) stands on the left tossing a golden pancake high in the air above his frying pan while little Eve Earth watches from the right with starry sparkle eyes.\nAudio: Spoken cartoon dialogue with matching lip movement: Dad says \"Pancakes!\". Cartoon sound effects: SSSS."
+    },
+    {
+      "id": "shot-09",
+      "index": 9,
+      "pageNumber": 2,
+      "pageId": "page-02",
+      "mode": "interpolate",
+      "durationSeconds": 8,
+      "chainedFromPrev": true,
+      "panels": [
+        "p2_flip_toss",
+        "p2_doorbell"
+      ],
+      "panelKeys": [
+        "page-02_p2_flip_toss",
+        "page-02_p2_doorbell"
+      ],
+      "firstFrame": "video/frames/page-02_p2_flip_toss.png",
+      "lastFrame": "video/frames/page-02_p2_doorbell.png",
+      "overlay": null,
+      "cast": [
+        "eve",
+        "eve_dad"
+      ],
+      "location": "kitchen",
+      "subtitles": [
+        {
+          "kind": "caption",
+          "speaker": "",
+          "text": "up and down!"
+        },
+        {
+          "kind": "dialogue",
+          "speaker": "Eve",
+          "text": "Oooh, yummy!"
+        }
+      ],
+      "sfx": [],
+      "prompt": "2D hand-drawn cartoon animation strictly preserving the exact flat-shaded vector art style, warm dark-brown ink outlines, pastel color palette, and character proportions of the provided Studio frame(s). Keep smooth 2D cel-animation motion with expressive squash-and-stretch. NEVER render as 3D CGI, claymation, or photorealistic live-action. NEVER draw speech bubbles, caption boxes, floating text, watermarks, or comic borders.\nCharacters: Eve Earth: Small, round sky-blue planet plushie (#7AC3EB) with stitched green continent patches, cute black bead eyes with white sparkles, rosy pink cheeks, and tiny stubby blue arms and feet. Avoid: no mustache; no human hair or clothes other than the brown plaid hat when scripted | Eve's Dad: Larger, deeper-ocean blue Earth globe plushie (#4F92C4) with darker green continents, warm bead eyes, rosy cheeks, stubby blue arms and feet, and a bold dark wavy zig-zag squiggly mustache right above his mouth. Avoid: NEVER draw a smooth curved handlebar mustache — ALWAYS draw a wavy zig-zag squiggly mustache\nVisual rules: Both Eve’s Dad and Zelie’s Papa ALWAYS wear a thick, dark, wavy zig-zag squiggly mustache — never a smooth curved handlebar mustache. Pancakes are plain golden-brown breakfast food with butter/syrup — NEVER draw faces, eyes, or mouths on pancakes. Keep window time-of-day strictly faithful to the Studio blueprint: starry dark sky + moon ONLY for nighttime panels, bright blue sky + golden sun for daytime panels. Preserve exact character sizes relative to each other (the two Dads are clearly larger/taller than Eve and Zelie).\nAnimation: Smoothly animate the continuous 2D cartoon action from the starting frame to the ending frame. Start: In the kitchen, Eve's Dad (larger Earth globe plushie with a squiggly mustache) stands on the left tossing a golden pancake high in the air above his frying pan while little Eve Earth watches from the right with starry sparkle eyes. Transition fluidly into: Kitchen doorbell rings! Eve's Dad (with squiggly mustache) holds up a spatula excitedly while little Eve Earth narrows his eyebrows in suspicion thinking to himself.\nAudio: Spoken cartoon dialogue with matching lip movement: Eve says \"Oooh, yummy!\"."
+    },
+    {
+      "id": "shot-10",
+      "index": 10,
+      "pageNumber": 2,
+      "pageId": "page-02",
+      "mode": "interpolate",
+      "durationSeconds": 8,
+      "chainedFromPrev": true,
+      "panels": [
+        "p2_doorbell",
+        "p2_get_door"
+      ],
+      "panelKeys": [
+        "page-02_p2_doorbell",
+        "page-02_p2_get_door"
+      ],
+      "firstFrame": "video/frames/page-02_p2_doorbell.png",
+      "lastFrame": "video/frames/page-02_p2_get_door.png",
+      "overlay": null,
+      "cast": [
+        "eve",
+        "eve_dad"
+      ],
+      "location": "kitchen",
+      "subtitles": [
+        {
+          "kind": "dialogue",
+          "speaker": "Dad",
+          "text": "Oooh, the guests are here!"
+        },
+        {
+          "kind": "dialogue",
+          "speaker": "Eve",
+          "text": "Guests?"
+        }
+      ],
+      "sfx": [
+        "DING DONG!"
+      ],
+      "prompt": "2D hand-drawn cartoon animation strictly preserving the exact flat-shaded vector art style, warm dark-brown ink outlines, pastel color palette, and character proportions of the provided Studio frame(s). Keep smooth 2D cel-animation motion with expressive squash-and-stretch. NEVER render as 3D CGI, claymation, or photorealistic live-action. NEVER draw speech bubbles, caption boxes, floating text, watermarks, or comic borders.\nCharacters: Eve Earth: Small, round sky-blue planet plushie (#7AC3EB) with stitched green continent patches, cute black bead eyes with white sparkles, rosy pink cheeks, and tiny stubby blue arms and feet. Avoid: no mustache; no human hair or clothes other than the brown plaid hat when scripted | Eve's Dad: Larger, deeper-ocean blue Earth globe plushie (#4F92C4) with darker green continents, warm bead eyes, rosy cheeks, stubby blue arms and feet, and a bold dark wavy zig-zag squiggly mustache right above his mouth. Avoid: NEVER draw a smooth curved handlebar mustache — ALWAYS draw a wavy zig-zag squiggly mustache\nVisual rules: Both Eve’s Dad and Zelie’s Papa ALWAYS wear a thick, dark, wavy zig-zag squiggly mustache — never a smooth curved handlebar mustache. Pancakes are plain golden-brown breakfast food with butter/syrup — NEVER draw faces, eyes, or mouths on pancakes. Keep window time-of-day strictly faithful to the Studio blueprint: starry dark sky + moon ONLY for nighttime panels, bright blue sky + golden sun for daytime panels. Preserve exact character sizes relative to each other (the two Dads are clearly larger/taller than Eve and Zelie).\nAnimation: Smoothly animate the continuous 2D cartoon action from the starting frame to the ending frame. Start: Kitchen doorbell rings! Eve's Dad (with squiggly mustache) holds up a spatula excitedly while little Eve Earth narrows his eyebrows in suspicion thinking to himself. Transition fluidly into: Eve's Dad dashes off to the right (speed lines) leaving the frying pan on the stove; Eve Earth stands next to the unattended stove with a sneaky curious look.\nAudio: Spoken cartoon dialogue with matching lip movement: Dad says \"Oooh, the guests are here!\" Then Eve says \"Guests?\". Cartoon sound effects: DING DONG!."
+    },
+    {
+      "id": "shot-11",
+      "index": 11,
+      "pageNumber": 2,
+      "pageId": "page-02",
+      "mode": "interpolate",
+      "durationSeconds": 8,
+      "chainedFromPrev": true,
+      "panels": [
+        "p2_get_door",
+        "p3_maybe"
+      ],
+      "panelKeys": [
+        "page-02_p2_get_door",
+        "page-03_p3_maybe"
+      ],
+      "firstFrame": "video/frames/page-02_p2_get_door.png",
+      "lastFrame": "video/frames/page-03_p3_maybe.png",
+      "overlay": null,
+      "cast": [
+        "eve",
+        "eve_dad"
+      ],
+      "location": "kitchen",
+      "subtitles": [
+        {
+          "kind": "caption",
+          "speaker": "",
+          "text": "Hmmm..."
+        },
+        {
+          "kind": "dialogue",
+          "speaker": "Dad",
+          "text": "I'll get the door!"
+        }
+      ],
+      "sfx": [],
+      "prompt": "2D hand-drawn cartoon animation strictly preserving the exact flat-shaded vector art style, warm dark-brown ink outlines, pastel color palette, and character proportions of the provided Studio frame(s). Keep smooth 2D cel-animation motion with expressive squash-and-stretch. NEVER render as 3D CGI, claymation, or photorealistic live-action. NEVER draw speech bubbles, caption boxes, floating text, watermarks, or comic borders.\nCharacters: Eve Earth: Small, round sky-blue planet plushie (#7AC3EB) with stitched green continent patches, cute black bead eyes with white sparkles, rosy pink cheeks, and tiny stubby blue arms and feet. Avoid: no mustache; no human hair or clothes other than the brown plaid hat when scripted | Eve's Dad: Larger, deeper-ocean blue Earth globe plushie (#4F92C4) with darker green continents, warm bead eyes, rosy cheeks, stubby blue arms and feet, and a bold dark wavy zig-zag squiggly mustache right above his mouth. Avoid: NEVER draw a smooth curved handlebar mustache — ALWAYS draw a wavy zig-zag squiggly mustache\nVisual rules: Both Eve’s Dad and Zelie’s Papa ALWAYS wear a thick, dark, wavy zig-zag squiggly mustache — never a smooth curved handlebar mustache. Pancakes are plain golden-brown breakfast food with butter/syrup — NEVER draw faces, eyes, or mouths on pancakes. Keep window time-of-day strictly faithful to the Studio blueprint: starry dark sky + moon ONLY for nighttime panels, bright blue sky + golden sun for daytime panels. Preserve exact character sizes relative to each other (the two Dads are clearly larger/taller than Eve and Zelie).\nAnimation: Smoothly animate the continuous 2D cartoon action from the starting frame to the ending frame. Start: Eve's Dad dashes off to the right (speed lines) leaving the frying pan on the stove; Eve Earth stands next to the unattended stove with a sneaky curious look. Transition fluidly into: Eve Earth creeps up beside the black kitchen stove, staring wide-eyed at the warm pancake sizzling in the skillet.\nAudio: Spoken cartoon dialogue with matching lip movement: Dad says \"I'll get the door!\"."
+    },
+    {
+      "id": "shot-12",
+      "index": 12,
+      "pageNumber": 3,
+      "pageId": "page-03",
+      "mode": "interpolate",
+      "durationSeconds": 8,
+      "chainedFromPrev": true,
+      "panels": [
+        "p3_maybe",
+        "p3_just_a"
+      ],
+      "panelKeys": [
+        "page-03_p3_maybe",
+        "page-03_p3_just_a"
+      ],
+      "firstFrame": "video/frames/page-03_p3_maybe.png",
+      "lastFrame": "video/frames/page-03_p3_just_a.png",
+      "overlay": null,
+      "cast": [
+        "eve"
+      ],
+      "location": "kitchen",
+      "subtitles": [
+        {
+          "kind": "caption",
+          "speaker": "",
+          "text": "Maybe..."
+        }
+      ],
+      "sfx": [],
+      "prompt": "2D hand-drawn cartoon animation strictly preserving the exact flat-shaded vector art style, warm dark-brown ink outlines, pastel color palette, and character proportions of the provided Studio frame(s). Keep smooth 2D cel-animation motion with expressive squash-and-stretch. NEVER render as 3D CGI, claymation, or photorealistic live-action. NEVER draw speech bubbles, caption boxes, floating text, watermarks, or comic borders.\nCharacters: Eve Earth: Small, round sky-blue planet plushie (#7AC3EB) with stitched green continent patches, cute black bead eyes with white sparkles, rosy pink cheeks, and tiny stubby blue arms and feet. Avoid: no mustache; no human hair or clothes other than the brown plaid hat when scripted\nVisual rules: Both Eve’s Dad and Zelie’s Papa ALWAYS wear a thick, dark, wavy zig-zag squiggly mustache — never a smooth curved handlebar mustache. Pancakes are plain golden-brown breakfast food with butter/syrup — NEVER draw faces, eyes, or mouths on pancakes. Keep window time-of-day strictly faithful to the Studio blueprint: starry dark sky + moon ONLY for nighttime panels, bright blue sky + golden sun for daytime panels. Preserve exact character sizes relative to each other (the two Dads are clearly larger/taller than Eve and Zelie).\nAnimation: Smoothly animate the continuous 2D cartoon action from the starting frame to the ending frame. Start: Eve Earth creeps up beside the black kitchen stove, staring wide-eyed at the warm pancake sizzling in the skillet. Transition fluidly into: Eve Earth looks slightly startled with wide eyes and raised brows as a warm golden pancake partially flops and drapes over his outstretched stubby blue plushie hand.\nAudio: Warm friendly cartoon narrator says: \"Maybe...\""
+    },
+    {
+      "id": "shot-13",
+      "index": 13,
+      "pageNumber": 3,
+      "pageId": "page-03",
+      "mode": "interpolate",
+      "durationSeconds": 8,
+      "chainedFromPrev": true,
+      "panels": [
+        "p3_just_a",
+        "p3_bite"
+      ],
+      "panelKeys": [
+        "page-03_p3_just_a",
+        "page-03_p3_bite"
+      ],
+      "firstFrame": "video/frames/page-03_p3_just_a.png",
+      "lastFrame": "video/frames/page-03_p3_bite.png",
+      "overlay": null,
+      "cast": [
+        "eve"
+      ],
+      "location": "kitchen",
+      "subtitles": [
+        {
+          "kind": "caption",
+          "speaker": "",
+          "text": "Just a..."
+        }
+      ],
+      "sfx": [
+        "FLIP!"
+      ],
+      "prompt": "2D hand-drawn cartoon animation strictly preserving the exact flat-shaded vector art style, warm dark-brown ink outlines, pastel color palette, and character proportions of the provided Studio frame(s). Keep smooth 2D cel-animation motion with expressive squash-and-stretch. NEVER render as 3D CGI, claymation, or photorealistic live-action. NEVER draw speech bubbles, caption boxes, floating text, watermarks, or comic borders.\nCharacters: Eve Earth: Small, round sky-blue planet plushie (#7AC3EB) with stitched green continent patches, cute black bead eyes with white sparkles, rosy pink cheeks, and tiny stubby blue arms and feet. Avoid: no mustache; no human hair or clothes other than the brown plaid hat when scripted\nVisual rules: Both Eve’s Dad and Zelie’s Papa ALWAYS wear a thick, dark, wavy zig-zag squiggly mustache — never a smooth curved handlebar mustache. Pancakes are plain golden-brown breakfast food with butter/syrup — NEVER draw faces, eyes, or mouths on pancakes. Keep window time-of-day strictly faithful to the Studio blueprint: starry dark sky + moon ONLY for nighttime panels, bright blue sky + golden sun for daytime panels. Preserve exact character sizes relative to each other (the two Dads are clearly larger/taller than Eve and Zelie).\nAnimation: Smoothly animate the continuous 2D cartoon action from the starting frame to the ending frame. Start: Eve Earth looks slightly startled with wide eyes and raised brows as a warm golden pancake partially flops and drapes over his outstretched stubby blue plushie hand. Transition fluidly into: Eve Earth takes a giant happy chomp of pancake, with a bitten golden piece of pancake sticking right out of his mouth and crumbs flying around.\nAudio: Warm friendly cartoon narrator says: \"Just a...\" Cartoon sound effects: FLIP!."
+    },
+    {
+      "id": "shot-14",
+      "index": 14,
+      "pageNumber": 3,
+      "pageId": "page-03",
+      "mode": "interpolate",
+      "durationSeconds": 8,
+      "chainedFromPrev": true,
+      "panels": [
+        "p3_bite",
+        "p3_heart_eyes"
+      ],
+      "panelKeys": [
+        "page-03_p3_bite",
+        "page-03_p3_heart_eyes"
+      ],
+      "firstFrame": "video/frames/page-03_p3_bite.png",
+      "lastFrame": "video/frames/page-03_p3_heart_eyes.png",
+      "overlay": null,
+      "cast": [
+        "eve"
+      ],
+      "location": "kitchen",
+      "subtitles": [
+        {
+          "kind": "caption",
+          "speaker": "",
+          "text": "...bite!"
+        }
+      ],
+      "sfx": [
+        "MUNCH!"
+      ],
+      "prompt": "2D hand-drawn cartoon animation strictly preserving the exact flat-shaded vector art style, warm dark-brown ink outlines, pastel color palette, and character proportions of the provided Studio frame(s). Keep smooth 2D cel-animation motion with expressive squash-and-stretch. NEVER render as 3D CGI, claymation, or photorealistic live-action. NEVER draw speech bubbles, caption boxes, floating text, watermarks, or comic borders.\nCharacters: Eve Earth: Small, round sky-blue planet plushie (#7AC3EB) with stitched green continent patches, cute black bead eyes with white sparkles, rosy pink cheeks, and tiny stubby blue arms and feet. Avoid: no mustache; no human hair or clothes other than the brown plaid hat when scripted\nVisual rules: Both Eve’s Dad and Zelie’s Papa ALWAYS wear a thick, dark, wavy zig-zag squiggly mustache — never a smooth curved handlebar mustache. Pancakes are plain golden-brown breakfast food with butter/syrup — NEVER draw faces, eyes, or mouths on pancakes. Keep window time-of-day strictly faithful to the Studio blueprint: starry dark sky + moon ONLY for nighttime panels, bright blue sky + golden sun for daytime panels. Preserve exact character sizes relative to each other (the two Dads are clearly larger/taller than Eve and Zelie).\nAnimation: Smoothly animate the continuous 2D cartoon action from the starting frame to the ending frame. Start: Eve Earth takes a giant happy chomp of pancake, with a bitten golden piece of pancake sticking right out of his mouth and crumbs flying around. Transition fluidly into: Eve Earth in pure pancake bliss with giant pink heart eyes and rosy cheeks floating in pastel sparkles.\nAudio: Warm friendly cartoon narrator says: \"...bite!\" Cartoon sound effects: MUNCH!."
+    },
+    {
+      "id": "shot-15",
+      "index": 15,
+      "pageNumber": 3,
+      "pageId": "page-03",
+      "mode": "interpolate",
+      "durationSeconds": 8,
+      "chainedFromPrev": true,
+      "panels": [
+        "p3_heart_eyes",
+        "p3_daydream"
+      ],
+      "panelKeys": [
+        "page-03_p3_heart_eyes",
+        "page-03_p3_daydream"
+      ],
+      "firstFrame": "video/frames/page-03_p3_heart_eyes.png",
+      "lastFrame": "video/frames/page-03_p3_daydream.png",
+      "overlay": null,
+      "cast": [
+        "eve"
+      ],
+      "location": "kitchen",
+      "subtitles": [
+        {
+          "kind": "caption",
+          "speaker": "",
+          "text": "Mmm!!"
+        }
+      ],
+      "sfx": [],
+      "prompt": "2D hand-drawn cartoon animation strictly preserving the exact flat-shaded vector art style, warm dark-brown ink outlines, pastel color palette, and character proportions of the provided Studio frame(s). Keep smooth 2D cel-animation motion with expressive squash-and-stretch. NEVER render as 3D CGI, claymation, or photorealistic live-action. NEVER draw speech bubbles, caption boxes, floating text, watermarks, or comic borders.\nCharacters: Eve Earth: Small, round sky-blue planet plushie (#7AC3EB) with stitched green continent patches, cute black bead eyes with white sparkles, rosy pink cheeks, and tiny stubby blue arms and feet. Avoid: no mustache; no human hair or clothes other than the brown plaid hat when scripted\nVisual rules: Both Eve’s Dad and Zelie’s Papa ALWAYS wear a thick, dark, wavy zig-zag squiggly mustache — never a smooth curved handlebar mustache. Pancakes are plain golden-brown breakfast food with butter/syrup — NEVER draw faces, eyes, or mouths on pancakes. Keep window time-of-day strictly faithful to the Studio blueprint: starry dark sky + moon ONLY for nighttime panels, bright blue sky + golden sun for daytime panels. Preserve exact character sizes relative to each other (the two Dads are clearly larger/taller than Eve and Zelie).\nAnimation: Smoothly animate the continuous 2D cartoon action from the starting frame to the ending frame. Start: Eve Earth in pure pancake bliss with giant pink heart eyes and rosy cheeks floating in pastel sparkles. Transition fluidly into: Eve Earth stands with eyes closed smiling blissfully while a big fluffy thought cloud above him shows him bouncing joyfully beside a giant fluffy golden pancake with a pat of butter.\nAudio: Warm friendly cartoon narrator says: \"Mmm!!\""
+    },
+    {
+      "id": "shot-16",
+      "index": 16,
+      "pageNumber": 3,
+      "pageId": "page-03",
+      "mode": "interpolate",
+      "durationSeconds": 8,
+      "chainedFromPrev": true,
+      "panels": [
+        "p3_daydream",
+        "p3_coming"
+      ],
+      "panelKeys": [
+        "page-03_p3_daydream",
+        "page-03_p3_coming"
+      ],
+      "firstFrame": "video/frames/page-03_p3_daydream.png",
+      "lastFrame": "video/frames/page-03_p3_coming.png",
+      "overlay": null,
+      "cast": [
+        "eve"
+      ],
+      "location": "kitchen",
+      "subtitles": [
+        {
+          "kind": "dialogue",
+          "speaker": "Dad",
+          "text": "Eve Earth! Eve Earth!!"
+        },
+        {
+          "kind": "dialogue",
+          "speaker": "Dad",
+          "text": "Eve Earth, come meet the guests!"
+        },
+        {
+          "kind": "dialogue",
+          "speaker": "Eve",
+          "text": "Shoot! I am coming!"
+        }
+      ],
+      "sfx": [],
+      "prompt": "2D hand-drawn cartoon animation strictly preserving the exact flat-shaded vector art style, warm dark-brown ink outlines, pastel color palette, and character proportions of the provided Studio frame(s). Keep smooth 2D cel-animation motion with expressive squash-and-stretch. NEVER render as 3D CGI, claymation, or photorealistic live-action. NEVER draw speech bubbles, caption boxes, floating text, watermarks, or comic borders.\nCharacters: Eve Earth: Small, round sky-blue planet plushie (#7AC3EB) with stitched green continent patches, cute black bead eyes with white sparkles, rosy pink cheeks, and tiny stubby blue arms and feet. Avoid: no mustache; no human hair or clothes other than the brown plaid hat when scripted\nVisual rules: Both Eve’s Dad and Zelie’s Papa ALWAYS wear a thick, dark, wavy zig-zag squiggly mustache — never a smooth curved handlebar mustache. Pancakes are plain golden-brown breakfast food with butter/syrup — NEVER draw faces, eyes, or mouths on pancakes. Keep window time-of-day strictly faithful to the Studio blueprint: starry dark sky + moon ONLY for nighttime panels, bright blue sky + golden sun for daytime panels. Preserve exact character sizes relative to each other (the two Dads are clearly larger/taller than Eve and Zelie).\nAnimation: Smoothly animate the continuous 2D cartoon action from the starting frame to the ending frame. Start: Eve Earth stands with eyes closed smiling blissfully while a big fluffy thought cloud above him shows him bouncing joyfully beside a giant fluffy golden pancake with a pat of butter. Transition fluidly into: Eve Earth snaps out of his daydream looking startled, hurriedly shoving the rest of the golden pancake into his wide-open mouth with his stubby blue hand while calling out \"Shoot! I am coming!\" toward the hallway.\nAudio: Spoken cartoon dialogue with matching lip movement: Dad says \"Eve Earth! Eve Earth!!\" Then Dad says \"Eve Earth, come meet the guests!\" Then Eve says \"Shoot! I am coming!\"."
+    },
+    {
+      "id": "shot-17",
+      "index": 17,
+      "pageNumber": 3,
+      "pageId": "page-03",
+      "mode": "single",
+      "durationSeconds": 4,
+      "chainedFromPrev": false,
+      "panels": [
+        "p3_meet_guests"
+      ],
+      "panelKeys": [
+        "page-03_p3_meet_guests"
+      ],
+      "firstFrame": "video/frames/page-03_p3_meet_guests.png",
+      "lastFrame": null,
+      "overlay": null,
+      "cast": [
+        "eve",
+        "zelie",
+        "eve_dad",
+        "zelie_papa"
+      ],
+      "location": "doorway",
+      "subtitles": [
+        {
+          "kind": "caption",
+          "speaker": "",
+          "text": "No."
+        },
+        {
+          "kind": "dialogue",
+          "speaker": "Dad",
+          "text": "Here are the guests!"
+        }
+      ],
+      "sfx": [],
+      "prompt": "2D hand-drawn cartoon animation strictly preserving the exact flat-shaded vector art style, warm dark-brown ink outlines, pastel color palette, and character proportions of the provided Studio frame(s). Keep smooth 2D cel-animation motion with expressive squash-and-stretch. NEVER render as 3D CGI, claymation, or photorealistic live-action. NEVER draw speech bubbles, caption boxes, floating text, watermarks, or comic borders.\nCharacters: Eve Earth: Small, round sky-blue planet plushie (#7AC3EB) with stitched green continent patches, cute black bead eyes with white sparkles, rosy pink cheeks, and tiny stubby blue arms and feet. Avoid: no mustache; no human hair or clothes other than the brown plaid hat when scripted | Zelie Pink Lemonade: Small tapered pink lemonade cup plushie (#F682B0) with a fluffy scalloped white foam rim, pink-and-white striped straw on the left, yellow lemon wedge garnish on the right, cute black bead eyes, rosy cheeks, and tiny stubby pink arms and feet. Avoid: no mustache; keep straw pink-striped (never yellow) | Eve's Dad: Larger, deeper-ocean blue Earth globe plushie (#4F92C4) with darker green continents, warm bead eyes, rosy cheeks, stubby blue arms and feet, and a bold dark wavy zig-zag squiggly mustache right above his mouth. Avoid: NEVER draw a smooth curved handlebar mustache — ALWAYS draw a wavy zig-zag squiggly mustache | Zelie's Papa: Taller coral-red fruit punch cup plushie (#D95448) with a fluffy cream foam rim, solid golden-yellow straw tilted right, warm bead eyes, rosy cheeks, stubby red arms and feet, and a bold dark wavy zig-zag squiggly mustache right above his mouth. Avoid: NEVER draw a smooth curved handlebar mustache — ALWAYS draw a wavy zig-zag squiggly mustache; no lemon slice\nVisual rules: Both Eve’s Dad and Zelie’s Papa ALWAYS wear a thick, dark, wavy zig-zag squiggly mustache — never a smooth curved handlebar mustache. Pancakes are plain golden-brown breakfast food with butter/syrup — NEVER draw faces, eyes, or mouths on pancakes. Keep window time-of-day strictly faithful to the Studio blueprint: starry dark sky + moon ONLY for nighttime panels, bright blue sky + golden sun for daytime panels. Preserve exact character sizes relative to each other (the two Dads are clearly larger/taller than Eve and Zelie).\nAnimation: Bring this 2D cartoon frame to life with expressive character acting, lively blinks, gestures, and gentle camera motion. Scene: Entryway: Eve's Dad (larger Earth globe with squiggly mustache) gestures cheerfully to the two guests — Zelie's tall crimson-coral Papa cup plushie (with a squiggly mustache) and Zelie Pink Lemonade (circled with a dramatic red spotlight ring). Little Eve Earth freezes in shock on the left.\nAudio: Spoken cartoon dialogue with matching lip movement: Dad says \"Here are the guests!\"."
+    },
+    {
+      "id": "shot-18",
+      "index": 18,
+      "pageNumber": 3,
+      "pageId": "page-03",
+      "mode": "single",
+      "durationSeconds": 6,
+      "chainedFromPrev": false,
+      "panels": [
+        "p3_enemy"
+      ],
+      "panelKeys": [
+        "page-03_p3_enemy"
+      ],
+      "firstFrame": "video/frames/page-03_p3_enemy.png",
+      "lastFrame": null,
+      "overlay": null,
+      "cast": [
+        "eve",
+        "zelie"
+      ],
+      "location": "hallway",
+      "subtitles": [
+        {
+          "kind": "caption",
+          "speaker": "",
+          "text": "No way, no way... it was\nmy enemy: Zelie."
+        }
+      ],
+      "sfx": [],
+      "prompt": "2D hand-drawn cartoon animation strictly preserving the exact flat-shaded vector art style, warm dark-brown ink outlines, pastel color palette, and character proportions of the provided Studio frame(s). Keep smooth 2D cel-animation motion with expressive squash-and-stretch. NEVER render as 3D CGI, claymation, or photorealistic live-action. NEVER draw speech bubbles, caption boxes, floating text, watermarks, or comic borders.\nCharacters: Eve Earth: Small, round sky-blue planet plushie (#7AC3EB) with stitched green continent patches, cute black bead eyes with white sparkles, rosy pink cheeks, and tiny stubby blue arms and feet. Avoid: no mustache; no human hair or clothes other than the brown plaid hat when scripted | Zelie Pink Lemonade: Small tapered pink lemonade cup plushie (#F682B0) with a fluffy scalloped white foam rim, pink-and-white striped straw on the left, yellow lemon wedge garnish on the right, cute black bead eyes, rosy cheeks, and tiny stubby pink arms and feet. Avoid: no mustache; keep straw pink-striped (never yellow)\nVisual rules: Both Eve’s Dad and Zelie’s Papa ALWAYS wear a thick, dark, wavy zig-zag squiggly mustache — never a smooth curved handlebar mustache. Pancakes are plain golden-brown breakfast food with butter/syrup — NEVER draw faces, eyes, or mouths on pancakes. Keep window time-of-day strictly faithful to the Studio blueprint: starry dark sky + moon ONLY for nighttime panels, bright blue sky + golden sun for daytime panels. Preserve exact character sizes relative to each other (the two Dads are clearly larger/taller than Eve and Zelie).\nAnimation: Bring this 2D cartoon frame to life with expressive character acting, lively blinks, gestures, and gentle camera motion. Scene: Eve Earth and Zelie Pink Lemonade face off in the hallway glaring furiously at each other.\nAudio: Warm friendly cartoon narrator says: \"No way, no way... it was\nmy enemy: Zelie.\""
+    },
+    {
+      "id": "shot-19",
+      "index": 19,
+      "pageNumber": 3,
+      "pageId": "page-03",
+      "mode": "single",
+      "durationSeconds": 6,
+      "chainedFromPrev": false,
+      "panels": [
+        "p3_papa_table"
+      ],
+      "panelKeys": [
+        "page-03_p3_papa_table"
+      ],
+      "firstFrame": "video/frames/page-03_p3_papa_table.png",
+      "lastFrame": null,
+      "overlay": null,
+      "cast": [
+        "eve",
+        "zelie",
+        "zelie_papa"
+      ],
+      "location": null,
+      "subtitles": [
+        {
+          "kind": "dialogue",
+          "speaker": "Papa",
+          "text": "Honey, I will be at the table."
+        },
+        {
+          "kind": "dialogue",
+          "speaker": "Zelie",
+          "text": "Ok, Papa!"
+        }
+      ],
+      "sfx": [],
+      "prompt": "2D hand-drawn cartoon animation strictly preserving the exact flat-shaded vector art style, warm dark-brown ink outlines, pastel color palette, and character proportions of the provided Studio frame(s). Keep smooth 2D cel-animation motion with expressive squash-and-stretch. NEVER render as 3D CGI, claymation, or photorealistic live-action. NEVER draw speech bubbles, caption boxes, floating text, watermarks, or comic borders.\nCharacters: Eve Earth: Small, round sky-blue planet plushie (#7AC3EB) with stitched green continent patches, cute black bead eyes with white sparkles, rosy pink cheeks, and tiny stubby blue arms and feet. Avoid: no mustache; no human hair or clothes other than the brown plaid hat when scripted | Zelie Pink Lemonade: Small tapered pink lemonade cup plushie (#F682B0) with a fluffy scalloped white foam rim, pink-and-white striped straw on the left, yellow lemon wedge garnish on the right, cute black bead eyes, rosy cheeks, and tiny stubby pink arms and feet. Avoid: no mustache; keep straw pink-striped (never yellow) | Zelie's Papa: Taller coral-red fruit punch cup plushie (#D95448) with a fluffy cream foam rim, solid golden-yellow straw tilted right, warm bead eyes, rosy cheeks, stubby red arms and feet, and a bold dark wavy zig-zag squiggly mustache right above his mouth. Avoid: NEVER draw a smooth curved handlebar mustache — ALWAYS draw a wavy zig-zag squiggly mustache; no lemon slice\nVisual rules: Both Eve’s Dad and Zelie’s Papa ALWAYS wear a thick, dark, wavy zig-zag squiggly mustache — never a smooth curved handlebar mustache. Pancakes are plain golden-brown breakfast food with butter/syrup — NEVER draw faces, eyes, or mouths on pancakes. Keep window time-of-day strictly faithful to the Studio blueprint: starry dark sky + moon ONLY for nighttime panels, bright blue sky + golden sun for daytime panels. Preserve exact character sizes relative to each other (the two Dads are clearly larger/taller than Eve and Zelie).\nAnimation: Bring this 2D cartoon frame to life with expressive character acting, lively blinks, gestures, and gentle camera motion. Scene: Zelie's tall crimson-coral Papa plushie (with a squiggly mustache) smiles down at Zelie as he heads toward the dining table, while Eve Earth stands on the left frowning.\nAudio: Spoken cartoon dialogue with matching lip movement: Papa says \"Honey, I will be at the table.\" Then Zelie says \"Ok, Papa!\"."
+    },
+    {
+      "id": "shot-20",
+      "index": 20,
+      "pageNumber": 4,
+      "pageId": "page-04",
+      "mode": "single",
+      "durationSeconds": 6,
+      "chainedFromPrev": false,
+      "panels": [
+        "p4_doing_here"
+      ],
+      "panelKeys": [
+        "page-04_p4_doing_here"
+      ],
+      "firstFrame": "video/frames/page-04_p4_doing_here.png",
+      "lastFrame": null,
+      "overlay": null,
+      "cast": [
+        "eve",
+        "zelie"
+      ],
+      "location": "hallway",
+      "subtitles": [
+        {
+          "kind": "dialogue",
+          "speaker": "Zelie",
+          "text": "Eve Earth, what are you doing here?!"
+        },
+        {
+          "kind": "dialogue",
+          "speaker": "Eve",
+          "text": "This is my house, what do you think?!"
+        }
+      ],
+      "sfx": [],
+      "prompt": "2D hand-drawn cartoon animation strictly preserving the exact flat-shaded vector art style, warm dark-brown ink outlines, pastel color palette, and character proportions of the provided Studio frame(s). Keep smooth 2D cel-animation motion with expressive squash-and-stretch. NEVER render as 3D CGI, claymation, or photorealistic live-action. NEVER draw speech bubbles, caption boxes, floating text, watermarks, or comic borders.\nCharacters: Eve Earth: Small, round sky-blue planet plushie (#7AC3EB) with stitched green continent patches, cute black bead eyes with white sparkles, rosy pink cheeks, and tiny stubby blue arms and feet. Avoid: no mustache; no human hair or clothes other than the brown plaid hat when scripted | Zelie Pink Lemonade: Small tapered pink lemonade cup plushie (#F682B0) with a fluffy scalloped white foam rim, pink-and-white striped straw on the left, yellow lemon wedge garnish on the right, cute black bead eyes, rosy cheeks, and tiny stubby pink arms and feet. Avoid: no mustache; keep straw pink-striped (never yellow)\nVisual rules: Both Eve’s Dad and Zelie’s Papa ALWAYS wear a thick, dark, wavy zig-zag squiggly mustache — never a smooth curved handlebar mustache. Pancakes are plain golden-brown breakfast food with butter/syrup — NEVER draw faces, eyes, or mouths on pancakes. Keep window time-of-day strictly faithful to the Studio blueprint: starry dark sky + moon ONLY for nighttime panels, bright blue sky + golden sun for daytime panels. Preserve exact character sizes relative to each other (the two Dads are clearly larger/taller than Eve and Zelie).\nAnimation: Bring this 2D cartoon frame to life with expressive character acting, lively blinks, gestures, and gentle camera motion. Scene: Hallway standoff: Zelie Pink Lemonade points accusingly at Eve Earth, and Eve Earth deadpans back with unimpressed eyes.\nAudio: Spoken cartoon dialogue with matching lip movement: Zelie says \"Eve Earth, what are you doing here?!\" Then Eve says \"This is my house, what do you think?!\"."
+    },
+    {
+      "id": "shot-21",
+      "index": 21,
+      "pageNumber": 4,
+      "pageId": "page-04",
+      "mode": "interpolate",
+      "durationSeconds": 8,
+      "chainedFromPrev": false,
+      "panels": [
+        "p4_angry_clouds",
+        "p4_invited"
+      ],
+      "panelKeys": [
+        "page-04_p4_angry_clouds",
+        "page-04_p4_invited"
+      ],
+      "firstFrame": "video/frames/page-04_p4_angry_clouds.png",
+      "lastFrame": "video/frames/page-04_p4_invited.png",
+      "overlay": null,
+      "cast": [
+        "eve",
+        "zelie"
+      ],
+      "location": null,
+      "subtitles": [],
+      "sfx": [],
+      "prompt": "2D hand-drawn cartoon animation strictly preserving the exact flat-shaded vector art style, warm dark-brown ink outlines, pastel color palette, and character proportions of the provided Studio frame(s). Keep smooth 2D cel-animation motion with expressive squash-and-stretch. NEVER render as 3D CGI, claymation, or photorealistic live-action. NEVER draw speech bubbles, caption boxes, floating text, watermarks, or comic borders.\nCharacters: Eve Earth: Small, round sky-blue planet plushie (#7AC3EB) with stitched green continent patches, cute black bead eyes with white sparkles, rosy pink cheeks, and tiny stubby blue arms and feet. Avoid: no mustache; no human hair or clothes other than the brown plaid hat when scripted | Zelie Pink Lemonade: Small tapered pink lemonade cup plushie (#F682B0) with a fluffy scalloped white foam rim, pink-and-white striped straw on the left, yellow lemon wedge garnish on the right, cute black bead eyes, rosy cheeks, and tiny stubby pink arms and feet. Avoid: no mustache; keep straw pink-striped (never yellow)\nVisual rules: Both Eve’s Dad and Zelie’s Papa ALWAYS wear a thick, dark, wavy zig-zag squiggly mustache — never a smooth curved handlebar mustache. Pancakes are plain golden-brown breakfast food with butter/syrup — NEVER draw faces, eyes, or mouths on pancakes. Keep window time-of-day strictly faithful to the Studio blueprint: starry dark sky + moon ONLY for nighttime panels, bright blue sky + golden sun for daytime panels. Preserve exact character sizes relative to each other (the two Dads are clearly larger/taller than Eve and Zelie).\nAnimation: Smoothly animate the continuous 2D cartoon action from the starting frame to the ending frame. Start: Comedy beat: Eve Earth and Zelie Pink Lemonade stand side-by-side fuming furiously with tangled black scribble storm clouds hovering above both their heads. Transition fluidly into: Eve Earth leans forward complaining while Zelie Pink Lemonade puffs up indignantly snapping back.\nAudio: Light playful cartoon foley and cozy ambient sound."
+    },
+    {
+      "id": "shot-22",
+      "index": 22,
+      "pageNumber": 4,
+      "pageId": "page-04",
+      "mode": "interpolate",
+      "durationSeconds": 8,
+      "chainedFromPrev": true,
+      "panels": [
+        "p4_invited",
+        "p4_shouting"
+      ],
+      "panelKeys": [
+        "page-04_p4_invited",
+        "page-04_p4_shouting"
+      ],
+      "firstFrame": "video/frames/page-04_p4_invited.png",
+      "lastFrame": "video/frames/page-04_p4_shouting.png",
+      "overlay": null,
+      "cast": [
+        "eve",
+        "zelie"
+      ],
+      "location": null,
+      "subtitles": [
+        {
+          "kind": "dialogue",
+          "speaker": "Eve",
+          "text": "Why do you have to come..."
+        },
+        {
+          "kind": "dialogue",
+          "speaker": "Zelie",
+          "text": "I was invited!"
+        },
+        {
+          "kind": "dialogue",
+          "speaker": "Eve",
+          "text": "YOU'RE SO ANNOYING!"
+        },
+        {
+          "kind": "dialogue",
+          "speaker": "Zelie",
+          "text": "I DON'T CARE!"
+        }
+      ],
+      "sfx": [],
+      "prompt": "2D hand-drawn cartoon animation strictly preserving the exact flat-shaded vector art style, warm dark-brown ink outlines, pastel color palette, and character proportions of the provided Studio frame(s). Keep smooth 2D cel-animation motion with expressive squash-and-stretch. NEVER render as 3D CGI, claymation, or photorealistic live-action. NEVER draw speech bubbles, caption boxes, floating text, watermarks, or comic borders.\nCharacters: Eve Earth: Small, round sky-blue planet plushie (#7AC3EB) with stitched green continent patches, cute black bead eyes with white sparkles, rosy pink cheeks, and tiny stubby blue arms and feet. Avoid: no mustache; no human hair or clothes other than the brown plaid hat when scripted | Zelie Pink Lemonade: Small tapered pink lemonade cup plushie (#F682B0) with a fluffy scalloped white foam rim, pink-and-white striped straw on the left, yellow lemon wedge garnish on the right, cute black bead eyes, rosy cheeks, and tiny stubby pink arms and feet. Avoid: no mustache; keep straw pink-striped (never yellow)\nVisual rules: Both Eve’s Dad and Zelie’s Papa ALWAYS wear a thick, dark, wavy zig-zag squiggly mustache — never a smooth curved handlebar mustache. Pancakes are plain golden-brown breakfast food with butter/syrup — NEVER draw faces, eyes, or mouths on pancakes. Keep window time-of-day strictly faithful to the Studio blueprint: starry dark sky + moon ONLY for nighttime panels, bright blue sky + golden sun for daytime panels. Preserve exact character sizes relative to each other (the two Dads are clearly larger/taller than Eve and Zelie).\nAnimation: Smoothly animate the continuous 2D cartoon action from the starting frame to the ending frame. Start: Eve Earth leans forward complaining while Zelie Pink Lemonade puffs up indignantly snapping back. Transition fluidly into: Explosive comic shouting match! Eve Earth and Zelie Pink Lemonade lean toward each other yelling at full volume over a spiky pink/orange starburst background.\nAudio: Spoken cartoon dialogue with matching lip movement: Eve says \"Why do you have to come...\" Then Zelie says \"I was invited!\" Then Eve says \"YOU'RE SO ANNOYING!\" Then Zelie says \"I DON'T CARE!\"."
+    },
+    {
+      "id": "shot-23",
+      "index": 23,
+      "pageNumber": 4,
+      "pageId": "page-04",
+      "mode": "single",
+      "durationSeconds": 4,
+      "chainedFromPrev": false,
+      "panels": [
+        "p4_time_breakfast"
+      ],
+      "panelKeys": [
+        "page-04_p4_time_breakfast"
+      ],
+      "firstFrame": "video/frames/page-04_p4_time_breakfast.png",
+      "lastFrame": null,
+      "overlay": null,
+      "cast": [
+        "eve",
+        "zelie"
+      ],
+      "location": "kitchen",
+      "subtitles": [
+        {
+          "kind": "dialogue",
+          "speaker": "Dad",
+          "text": "Kids! Time for breakfast!"
+        }
+      ],
+      "sfx": [],
+      "prompt": "2D hand-drawn cartoon animation strictly preserving the exact flat-shaded vector art style, warm dark-brown ink outlines, pastel color palette, and character proportions of the provided Studio frame(s). Keep smooth 2D cel-animation motion with expressive squash-and-stretch. NEVER render as 3D CGI, claymation, or photorealistic live-action. NEVER draw speech bubbles, caption boxes, floating text, watermarks, or comic borders.\nCharacters: Eve Earth: Small, round sky-blue planet plushie (#7AC3EB) with stitched green continent patches, cute black bead eyes with white sparkles, rosy pink cheeks, and tiny stubby blue arms and feet. Avoid: no mustache; no human hair or clothes other than the brown plaid hat when scripted | Zelie Pink Lemonade: Small tapered pink lemonade cup plushie (#F682B0) with a fluffy scalloped white foam rim, pink-and-white striped straw on the left, yellow lemon wedge garnish on the right, cute black bead eyes, rosy cheeks, and tiny stubby pink arms and feet. Avoid: no mustache; keep straw pink-striped (never yellow)\nVisual rules: Both Eve’s Dad and Zelie’s Papa ALWAYS wear a thick, dark, wavy zig-zag squiggly mustache — never a smooth curved handlebar mustache. Pancakes are plain golden-brown breakfast food with butter/syrup — NEVER draw faces, eyes, or mouths on pancakes. Keep window time-of-day strictly faithful to the Studio blueprint: starry dark sky + moon ONLY for nighttime panels, bright blue sky + golden sun for daytime panels. Preserve exact character sizes relative to each other (the two Dads are clearly larger/taller than Eve and Zelie).\nAnimation: Bring this 2D cartoon frame to life with expressive character acting, lively blinks, gestures, and gentle camera motion. Scene: Eve Earth and Zelie pause mid-argument and look toward the right as Dad calls them to breakfast from off-panel.\nAudio: Spoken cartoon dialogue with matching lip movement: Dad says \"Kids! Time for breakfast!\"."
+    },
+    {
+      "id": "shot-24",
+      "index": 24,
+      "pageNumber": 4,
+      "pageId": "page-04",
+      "mode": "single",
+      "durationSeconds": 6,
+      "chainedFromPrev": false,
+      "panels": [
+        "p4_pancake_zoom"
+      ],
+      "panelKeys": [
+        "page-04_p4_pancake_zoom"
+      ],
+      "firstFrame": "video/frames/page-04_p4_pancake_zoom.png",
+      "lastFrame": null,
+      "overlay": null,
+      "cast": [
+        "eve",
+        "zelie"
+      ],
+      "location": null,
+      "subtitles": [
+        {
+          "kind": "dialogue",
+          "speaker": "Zelie",
+          "text": "Since when did he love pancakes?"
+        },
+        {
+          "kind": "dialogue",
+          "speaker": "Eve",
+          "text": "Yessss!"
+        }
+      ],
+      "sfx": [],
+      "prompt": "2D hand-drawn cartoon animation strictly preserving the exact flat-shaded vector art style, warm dark-brown ink outlines, pastel color palette, and character proportions of the provided Studio frame(s). Keep smooth 2D cel-animation motion with expressive squash-and-stretch. NEVER render as 3D CGI, claymation, or photorealistic live-action. NEVER draw speech bubbles, caption boxes, floating text, watermarks, or comic borders.\nCharacters: Eve Earth: Small, round sky-blue planet plushie (#7AC3EB) with stitched green continent patches, cute black bead eyes with white sparkles, rosy pink cheeks, and tiny stubby blue arms and feet. Avoid: no mustache; no human hair or clothes other than the brown plaid hat when scripted | Zelie Pink Lemonade: Small tapered pink lemonade cup plushie (#F682B0) with a fluffy scalloped white foam rim, pink-and-white striped straw on the left, yellow lemon wedge garnish on the right, cute black bead eyes, rosy cheeks, and tiny stubby pink arms and feet. Avoid: no mustache; keep straw pink-striped (never yellow)\nVisual rules: Both Eve’s Dad and Zelie’s Papa ALWAYS wear a thick, dark, wavy zig-zag squiggly mustache — never a smooth curved handlebar mustache. Pancakes are plain golden-brown breakfast food with butter/syrup — NEVER draw faces, eyes, or mouths on pancakes. Keep window time-of-day strictly faithful to the Studio blueprint: starry dark sky + moon ONLY for nighttime panels, bright blue sky + golden sun for daytime panels. Preserve exact character sizes relative to each other (the two Dads are clearly larger/taller than Eve and Zelie).\nAnimation: Bring this 2D cartoon frame to life with expressive character acting, lively blinks, gestures, and gentle camera motion. Scene: Eve Earth blasts off to the right in a blur of speed lines shouting excitedly, leaving Zelie Pink Lemonade standing behind looking totally confused.\nAudio: Spoken cartoon dialogue with matching lip movement: Zelie says \"Since when did he love pancakes?\" Then Eve says \"Yessss!\"."
+    },
+    {
+      "id": "shot-25",
+      "index": 25,
+      "pageNumber": 4,
+      "pageId": "page-04",
+      "mode": "interpolate",
+      "durationSeconds": 8,
+      "chainedFromPrev": false,
+      "panels": [
+        "p4_table_feast",
+        "p4_done_room"
+      ],
+      "panelKeys": [
+        "page-04_p4_table_feast",
+        "page-04_p4_done_room"
+      ],
+      "firstFrame": "video/frames/page-04_p4_table_feast.png",
+      "lastFrame": "video/frames/page-04_p4_done_room.png",
+      "overlay": null,
+      "cast": [
+        "eve",
+        "zelie",
+        "eve_dad",
+        "zelie_papa"
+      ],
+      "location": "kitchen",
+      "subtitles": [
+        {
+          "kind": "dialogue",
+          "speaker": "Papa",
+          "text": "Mm!"
+        },
+        {
+          "kind": "dialogue",
+          "speaker": "Dad",
+          "text": "Slow down, Eve Earth! Don't choke!"
+        },
+        {
+          "kind": "dialogue",
+          "speaker": "Eve",
+          "text": "Done! I'm going to my room!"
+        }
+      ],
+      "sfx": [
+        "NOM NOM NOM"
+      ],
+      "prompt": "2D hand-drawn cartoon animation strictly preserving the exact flat-shaded vector art style, warm dark-brown ink outlines, pastel color palette, and character proportions of the provided Studio frame(s). Keep smooth 2D cel-animation motion with expressive squash-and-stretch. NEVER render as 3D CGI, claymation, or photorealistic live-action. NEVER draw speech bubbles, caption boxes, floating text, watermarks, or comic borders.\nCharacters: Eve Earth: Small, round sky-blue planet plushie (#7AC3EB) with stitched green continent patches, cute black bead eyes with white sparkles, rosy pink cheeks, and tiny stubby blue arms and feet. Avoid: no mustache; no human hair or clothes other than the brown plaid hat when scripted | Zelie Pink Lemonade: Small tapered pink lemonade cup plushie (#F682B0) with a fluffy scalloped white foam rim, pink-and-white striped straw on the left, yellow lemon wedge garnish on the right, cute black bead eyes, rosy cheeks, and tiny stubby pink arms and feet. Avoid: no mustache; keep straw pink-striped (never yellow) | Eve's Dad: Larger, deeper-ocean blue Earth globe plushie (#4F92C4) with darker green continents, warm bead eyes, rosy cheeks, stubby blue arms and feet, and a bold dark wavy zig-zag squiggly mustache right above his mouth. Avoid: NEVER draw a smooth curved handlebar mustache — ALWAYS draw a wavy zig-zag squiggly mustache | Zelie's Papa: Taller coral-red fruit punch cup plushie (#D95448) with a fluffy cream foam rim, solid golden-yellow straw tilted right, warm bead eyes, rosy cheeks, stubby red arms and feet, and a bold dark wavy zig-zag squiggly mustache right above his mouth. Avoid: NEVER draw a smooth curved handlebar mustache — ALWAYS draw a wavy zig-zag squiggly mustache; no lemon slice\nVisual rules: Both Eve’s Dad and Zelie’s Papa ALWAYS wear a thick, dark, wavy zig-zag squiggly mustache — never a smooth curved handlebar mustache. Pancakes are plain golden-brown breakfast food with butter/syrup — NEVER draw faces, eyes, or mouths on pancakes. Keep window time-of-day strictly faithful to the Studio blueprint: starry dark sky + moon ONLY for nighttime panels, bright blue sky + golden sun for daytime panels. Preserve exact character sizes relative to each other (the two Dads are clearly larger/taller than Eve and Zelie).\nAnimation: Smoothly animate the continuous 2D cartoon action from the starting frame to the ending frame. Start: Cozy breakfast table loaded with stacks of golden pancakes: Zelie, Zelie's Papa, and Eve's Dad eat calmly while Eve Earth gobbles pancakes at frantic cartoon speed. Transition fluidly into: Same wide breakfast table: Zelie Pink Lemonade is happily eating her pancakes with a fork on the left, while Zelie's Papa and Eve's Dad lean toward each other chatting cheerfully in the middle — everyone completely ignoring Eve Earth, whose plate is empty and tilted chair trails speed lines off-panel to the right.\nAudio: Spoken cartoon dialogue with matching lip movement: Papa says \"Mm!\" Then Dad says \"Slow down, Eve Earth! Don't choke!\" Then Eve says \"Done! I'm going to my room!\". Cartoon sound effects: NOM NOM NOM."
+    },
+    {
+      "id": "shot-26",
+      "index": 26,
+      "pageNumber": 5,
+      "pageId": "page-05",
+      "mode": "interpolate",
+      "durationSeconds": 8,
+      "chainedFromPrev": false,
+      "panels": [
+        "p5_test_this",
+        "p5_portal_opens"
+      ],
+      "panelKeys": [
+        "page-05_p5_test_this",
+        "page-05_p5_portal_opens"
+      ],
+      "firstFrame": "video/frames/page-05_p5_test_this.png",
+      "lastFrame": "video/frames/page-05_p5_portal_opens.png",
+      "overlay": null,
+      "cast": [
+        "eve"
+      ],
+      "location": "bedroom_day",
+      "subtitles": [
+        {
+          "kind": "caption",
+          "speaker": "",
+          "text": "IN EVE EARTH'S ROOM"
+        },
+        {
+          "kind": "dialogue",
+          "speaker": "Eve",
+          "text": "Hmm... let's test this!"
+        }
+      ],
+      "sfx": [
+        "CLICK!"
+      ],
+      "prompt": "2D hand-drawn cartoon animation strictly preserving the exact flat-shaded vector art style, warm dark-brown ink outlines, pastel color palette, and character proportions of the provided Studio frame(s). Keep smooth 2D cel-animation motion with expressive squash-and-stretch. NEVER render as 3D CGI, claymation, or photorealistic live-action. NEVER draw speech bubbles, caption boxes, floating text, watermarks, or comic borders.\nCharacters: Eve Earth: Small, round sky-blue planet plushie (#7AC3EB) with stitched green continent patches, cute black bead eyes with white sparkles, rosy pink cheeks, and tiny stubby blue arms and feet. Avoid: no mustache; no human hair or clothes other than the brown plaid hat when scripted\nVisual rules: Both Eve’s Dad and Zelie’s Papa ALWAYS wear a thick, dark, wavy zig-zag squiggly mustache — never a smooth curved handlebar mustache. Pancakes are plain golden-brown breakfast food with butter/syrup — NEVER draw faces, eyes, or mouths on pancakes. Keep window time-of-day strictly faithful to the Studio blueprint: starry dark sky + moon ONLY for nighttime panels, bright blue sky + golden sun for daytime panels. Preserve exact character sizes relative to each other (the two Dads are clearly larger/taller than Eve and Zelie).\nAnimation: Smoothly animate the continuous 2D cartoon action from the starting frame to the ending frame. Start: Daytime in Eve Earth's peach-walled bedroom (bright blue daytime sky and golden sun shining through the window): Eve presses a glowing red button on a small gadget box on the floor with curious determination. Transition fluidly into: Daytime in Eve Earth's bedroom (sunny blue sky and golden sun visible through the window): a glowing swirling cobalt-blue portal vortex rips open! Eve gasps wide-eyed.\nAudio: Spoken cartoon dialogue with matching lip movement: Eve says \"Hmm... let's test this!\". Cartoon sound effects: CLICK!."
+    },
+    {
+      "id": "shot-27",
+      "index": 27,
+      "pageNumber": 5,
+      "pageId": "page-05",
+      "mode": "interpolate",
+      "durationSeconds": 8,
+      "chainedFromPrev": true,
+      "panels": [
+        "p5_portal_opens",
+        "p5_zelie_jumps"
+      ],
+      "panelKeys": [
+        "page-05_p5_portal_opens",
+        "page-05_p5_zelie_jumps"
+      ],
+      "firstFrame": "video/frames/page-05_p5_portal_opens.png",
+      "lastFrame": "video/frames/page-05_p5_zelie_jumps.png",
+      "overlay": null,
+      "cast": [
+        "eve",
+        "zelie"
+      ],
+      "location": "bedroom_day",
+      "subtitles": [
+        {
+          "kind": "dialogue",
+          "speaker": "Eve",
+          "text": "Woah! A portal?!"
+        }
+      ],
+      "sfx": [],
+      "prompt": "2D hand-drawn cartoon animation strictly preserving the exact flat-shaded vector art style, warm dark-brown ink outlines, pastel color palette, and character proportions of the provided Studio frame(s). Keep smooth 2D cel-animation motion with expressive squash-and-stretch. NEVER render as 3D CGI, claymation, or photorealistic live-action. NEVER draw speech bubbles, caption boxes, floating text, watermarks, or comic borders.\nCharacters: Eve Earth: Small, round sky-blue planet plushie (#7AC3EB) with stitched green continent patches, cute black bead eyes with white sparkles, rosy pink cheeks, and tiny stubby blue arms and feet. Avoid: no mustache; no human hair or clothes other than the brown plaid hat when scripted | Zelie Pink Lemonade: Small tapered pink lemonade cup plushie (#F682B0) with a fluffy scalloped white foam rim, pink-and-white striped straw on the left, yellow lemon wedge garnish on the right, cute black bead eyes, rosy cheeks, and tiny stubby pink arms and feet. Avoid: no mustache; keep straw pink-striped (never yellow)\nVisual rules: Both Eve’s Dad and Zelie’s Papa ALWAYS wear a thick, dark, wavy zig-zag squiggly mustache — never a smooth curved handlebar mustache. Pancakes are plain golden-brown breakfast food with butter/syrup — NEVER draw faces, eyes, or mouths on pancakes. Keep window time-of-day strictly faithful to the Studio blueprint: starry dark sky + moon ONLY for nighttime panels, bright blue sky + golden sun for daytime panels. Preserve exact character sizes relative to each other (the two Dads are clearly larger/taller than Eve and Zelie).\nAnimation: Smoothly animate the continuous 2D cartoon action from the starting frame to the ending frame. Start: Daytime in Eve Earth's bedroom (sunny blue sky and golden sun visible through the window): a glowing swirling cobalt-blue portal vortex rips open! Eve gasps wide-eyed. Transition fluidly into: Daytime in Eve's bedroom (sunny blue sky and golden sun through the window): Zelie Pink Lemonade bursts in, smacks past Eve Earth, and dives eagerly toward the swirling blue portal.\nAudio: Spoken cartoon dialogue with matching lip movement: Eve says \"Woah! A portal?!\"."
+    },
+    {
+      "id": "shot-28",
+      "index": 28,
+      "pageNumber": 5,
+      "pageId": "page-05",
+      "mode": "interpolate",
+      "durationSeconds": 8,
+      "chainedFromPrev": true,
+      "panels": [
+        "p5_zelie_jumps",
+        "p5_going_in"
+      ],
+      "panelKeys": [
+        "page-05_p5_zelie_jumps",
+        "page-05_p5_going_in"
+      ],
+      "firstFrame": "video/frames/page-05_p5_zelie_jumps.png",
+      "lastFrame": "video/frames/page-05_p5_going_in.png",
+      "overlay": null,
+      "cast": [
+        "eve",
+        "zelie"
+      ],
+      "location": "bedroom_day",
+      "subtitles": [
+        {
+          "kind": "dialogue",
+          "speaker": "Zelie",
+          "text": "Hi! Oooo!"
+        },
+        {
+          "kind": "dialogue",
+          "speaker": "Eve",
+          "text": "Zelie, no!"
+        }
+      ],
+      "sfx": [
+        "SLAP!"
+      ],
+      "prompt": "2D hand-drawn cartoon animation strictly preserving the exact flat-shaded vector art style, warm dark-brown ink outlines, pastel color palette, and character proportions of the provided Studio frame(s). Keep smooth 2D cel-animation motion with expressive squash-and-stretch. NEVER render as 3D CGI, claymation, or photorealistic live-action. NEVER draw speech bubbles, caption boxes, floating text, watermarks, or comic borders.\nCharacters: Eve Earth: Small, round sky-blue planet plushie (#7AC3EB) with stitched green continent patches, cute black bead eyes with white sparkles, rosy pink cheeks, and tiny stubby blue arms and feet. Avoid: no mustache; no human hair or clothes other than the brown plaid hat when scripted | Zelie Pink Lemonade: Small tapered pink lemonade cup plushie (#F682B0) with a fluffy scalloped white foam rim, pink-and-white striped straw on the left, yellow lemon wedge garnish on the right, cute black bead eyes, rosy cheeks, and tiny stubby pink arms and feet. Avoid: no mustache; keep straw pink-striped (never yellow)\nVisual rules: Both Eve’s Dad and Zelie’s Papa ALWAYS wear a thick, dark, wavy zig-zag squiggly mustache — never a smooth curved handlebar mustache. Pancakes are plain golden-brown breakfast food with butter/syrup — NEVER draw faces, eyes, or mouths on pancakes. Keep window time-of-day strictly faithful to the Studio blueprint: starry dark sky + moon ONLY for nighttime panels, bright blue sky + golden sun for daytime panels. Preserve exact character sizes relative to each other (the two Dads are clearly larger/taller than Eve and Zelie).\nAnimation: Smoothly animate the continuous 2D cartoon action from the starting frame to the ending frame. Start: Daytime in Eve's bedroom (sunny blue sky and golden sun through the window): Zelie Pink Lemonade bursts in, smacks past Eve Earth, and dives eagerly toward the swirling blue portal. Transition fluidly into: Daytime in Eve's bedroom (sunny blue sky and golden sun through the window): Eve Earth groans furiously on the left while Zelie has just zipped straight into the glowing swirling blue portal on the right (trailing speed lines into the portal, Zelie already gone inside).\nAudio: Spoken cartoon dialogue with matching lip movement: Zelie says \"Hi! Oooo!\" Then Eve says \"Zelie, no!\". Cartoon sound effects: SLAP!."
+    },
+    {
+      "id": "shot-29",
+      "index": 29,
+      "pageNumber": 5,
+      "pageId": "page-05",
+      "mode": "interpolate",
+      "durationSeconds": 8,
+      "chainedFromPrev": true,
+      "panels": [
+        "p5_going_in",
+        "p5_get_her"
+      ],
+      "panelKeys": [
+        "page-05_p5_going_in",
+        "page-05_p5_get_her"
+      ],
+      "firstFrame": "video/frames/page-05_p5_going_in.png",
+      "lastFrame": "video/frames/page-05_p5_get_her.png",
+      "overlay": null,
+      "cast": [
+        "eve"
+      ],
+      "location": "bedroom_day",
+      "subtitles": [
+        {
+          "kind": "dialogue",
+          "speaker": "Eve",
+          "text": "ARRG!"
+        },
+        {
+          "kind": "dialogue",
+          "speaker": "Zelie",
+          "text": "I'm going in!"
+        },
+        {
+          "kind": "dialogue",
+          "speaker": "Eve",
+          "text": "I guess I have to get her."
+        }
+      ],
+      "sfx": [],
+      "prompt": "2D hand-drawn cartoon animation strictly preserving the exact flat-shaded vector art style, warm dark-brown ink outlines, pastel color palette, and character proportions of the provided Studio frame(s). Keep smooth 2D cel-animation motion with expressive squash-and-stretch. NEVER render as 3D CGI, claymation, or photorealistic live-action. NEVER draw speech bubbles, caption boxes, floating text, watermarks, or comic borders.\nCharacters: Eve Earth: Small, round sky-blue planet plushie (#7AC3EB) with stitched green continent patches, cute black bead eyes with white sparkles, rosy pink cheeks, and tiny stubby blue arms and feet. Avoid: no mustache; no human hair or clothes other than the brown plaid hat when scripted\nVisual rules: Both Eve’s Dad and Zelie’s Papa ALWAYS wear a thick, dark, wavy zig-zag squiggly mustache — never a smooth curved handlebar mustache. Pancakes are plain golden-brown breakfast food with butter/syrup — NEVER draw faces, eyes, or mouths on pancakes. Keep window time-of-day strictly faithful to the Studio blueprint: starry dark sky + moon ONLY for nighttime panels, bright blue sky + golden sun for daytime panels. Preserve exact character sizes relative to each other (the two Dads are clearly larger/taller than Eve and Zelie).\nAnimation: Smoothly animate the continuous 2D cartoon action from the starting frame to the ending frame. Start: Daytime in Eve's bedroom (sunny blue sky and golden sun through the window): Eve Earth groans furiously on the left while Zelie has just zipped straight into the glowing swirling blue portal on the right (trailing speed lines into the portal, Zelie already gone inside). Transition fluidly into: Daytime in Eve's bedroom (sunny blue sky and golden sun through the window): action shot of the swirling blue portal vortex with dramatic comic speed lines diving right into the glowing center.\nAudio: Spoken cartoon dialogue with matching lip movement: Eve says \"ARRG!\" Then Zelie says \"I'm going in!\" Then Eve says \"I guess I have to get her.\"."
+    },
+    {
+      "id": "shot-30",
+      "index": 30,
+      "pageNumber": 5,
+      "pageId": "page-05",
+      "mode": "single",
+      "durationSeconds": 4,
+      "chainedFromPrev": false,
+      "panels": [
+        "p5_nice_hat"
+      ],
+      "panelKeys": [
+        "page-05_p5_nice_hat"
+      ],
+      "firstFrame": "video/frames/page-05_p5_nice_hat.png",
+      "lastFrame": null,
+      "overlay": null,
+      "cast": [
+        "eve",
+        "zelie"
+      ],
+      "location": "forest",
+      "subtitles": [
+        {
+          "kind": "dialogue",
+          "speaker": "Eve",
+          "text": "Zelie! Let's go back!"
+        },
+        {
+          "kind": "dialogue",
+          "speaker": "Zelie",
+          "text": "Nice hat."
+        }
+      ],
+      "sfx": [],
+      "prompt": "2D hand-drawn cartoon animation strictly preserving the exact flat-shaded vector art style, warm dark-brown ink outlines, pastel color palette, and character proportions of the provided Studio frame(s). Keep smooth 2D cel-animation motion with expressive squash-and-stretch. NEVER render as 3D CGI, claymation, or photorealistic live-action. NEVER draw speech bubbles, caption boxes, floating text, watermarks, or comic borders.\nCharacters: Eve Earth: Small, round sky-blue planet plushie (#7AC3EB) with stitched green continent patches, cute black bead eyes with white sparkles, rosy pink cheeks, and tiny stubby blue arms and feet. Avoid: no mustache; no human hair or clothes other than the brown plaid hat when scripted | Zelie Pink Lemonade: Small tapered pink lemonade cup plushie (#F682B0) with a fluffy scalloped white foam rim, pink-and-white striped straw on the left, yellow lemon wedge garnish on the right, cute black bead eyes, rosy cheeks, and tiny stubby pink arms and feet. Avoid: no mustache; keep straw pink-striped (never yellow)\nVisual rules: Both Eve’s Dad and Zelie’s Papa ALWAYS wear a thick, dark, wavy zig-zag squiggly mustache — never a smooth curved handlebar mustache. Pancakes are plain golden-brown breakfast food with butter/syrup — NEVER draw faces, eyes, or mouths on pancakes. Keep window time-of-day strictly faithful to the Studio blueprint: starry dark sky + moon ONLY for nighttime panels, bright blue sky + golden sun for daytime panels. Preserve exact character sizes relative to each other (the two Dads are clearly larger/taller than Eve and Zelie).\nAnimation: Bring this 2D cartoon frame to life with expressive character acting, lively blinks, gestures, and gentle camera motion. Scene: Sunny outdoor adventure clearing with a bare brown tree. Eve Earth stands grumpy mysteriously wearing a brown plaid explorer hat; Zelie Pink Lemonade grins cheekily complimenting his hat.\nAudio: Spoken cartoon dialogue with matching lip movement: Eve says \"Zelie! Let's go back!\" Then Zelie says \"Nice hat.\"."
+    },
+    {
+      "id": "shot-31",
+      "index": 31,
+      "pageNumber": 5,
+      "pageId": "page-05",
+      "mode": "single",
+      "durationSeconds": 6,
+      "chainedFromPrev": false,
+      "panels": [
+        "p5_locked_portal"
+      ],
+      "panelKeys": [
+        "page-05_p5_locked_portal"
+      ],
+      "firstFrame": "video/frames/page-05_p5_locked_portal.png",
+      "lastFrame": null,
+      "overlay": null,
+      "cast": [
+        "eve",
+        "zelie"
+      ],
+      "location": "portal",
+      "subtitles": [
+        {
+          "kind": "dialogue",
+          "speaker": "Zelie",
+          "text": "Look, dummy! Let's look!"
+        },
+        {
+          "kind": "dialogue",
+          "speaker": "Eve",
+          "text": "Grr... ugh, fine."
+        }
+      ],
+      "sfx": [],
+      "prompt": "2D hand-drawn cartoon animation strictly preserving the exact flat-shaded vector art style, warm dark-brown ink outlines, pastel color palette, and character proportions of the provided Studio frame(s). Keep smooth 2D cel-animation motion with expressive squash-and-stretch. NEVER render as 3D CGI, claymation, or photorealistic live-action. NEVER draw speech bubbles, caption boxes, floating text, watermarks, or comic borders.\nCharacters: Eve Earth: Small, round sky-blue planet plushie (#7AC3EB) with stitched green continent patches, cute black bead eyes with white sparkles, rosy pink cheeks, and tiny stubby blue arms and feet. Avoid: no mustache; no human hair or clothes other than the brown plaid hat when scripted | Zelie Pink Lemonade: Small tapered pink lemonade cup plushie (#F682B0) with a fluffy scalloped white foam rim, pink-and-white striped straw on the left, yellow lemon wedge garnish on the right, cute black bead eyes, rosy cheeks, and tiny stubby pink arms and feet. Avoid: no mustache; keep straw pink-striped (never yellow)\nVisual rules: Both Eve’s Dad and Zelie’s Papa ALWAYS wear a thick, dark, wavy zig-zag squiggly mustache — never a smooth curved handlebar mustache. Pancakes are plain golden-brown breakfast food with butter/syrup — NEVER draw faces, eyes, or mouths on pancakes. Keep window time-of-day strictly faithful to the Studio blueprint: starry dark sky + moon ONLY for nighttime panels, bright blue sky + golden sun for daytime panels. Preserve exact character sizes relative to each other (the two Dads are clearly larger/taller than Eve and Zelie).\nAnimation: Bring this 2D cartoon frame to life with expressive character acting, lively blinks, gestures, and gentle camera motion. Scene: In the outdoor adventure clearing, the portal is now dormant and locked with a wooden sign plaque reading FIND THE KEY TO OPEN PORTAL. Eve Earth (in his brown hat) growls while Zelie tells him to start looking.\nAudio: Spoken cartoon dialogue with matching lip movement: Zelie says \"Look, dummy! Let's look!\" Then Eve says \"Grr... ugh, fine.\"."
+    },
+    {
+      "id": "shot-32",
+      "index": 32,
+      "pageNumber": 5,
+      "pageId": "page-05",
+      "mode": "interpolate",
+      "durationSeconds": 8,
+      "chainedFromPrev": false,
+      "panels": [
+        "p5_ten_hours",
+        "p6_laughing"
+      ],
+      "panelKeys": [
+        "page-05_p5_ten_hours",
+        "page-06_p6_laughing"
+      ],
+      "firstFrame": "video/frames/page-05_p5_ten_hours.png",
+      "lastFrame": "video/frames/page-06_p6_laughing.png",
+      "overlay": null,
+      "cast": [
+        "eve",
+        "zelie"
+      ],
+      "location": "forest",
+      "subtitles": [
+        {
+          "kind": "caption",
+          "speaker": "",
+          "text": "10 HOURS LATER"
+        },
+        {
+          "kind": "dialogue",
+          "speaker": "Eve",
+          "text": "We did not find the key. I hate looking!"
+        },
+        {
+          "kind": "dialogue",
+          "speaker": "Zelie",
+          "text": "We got attacked by a bear!"
+        },
+        {
+          "kind": "dialogue",
+          "speaker": "Eve",
+          "text": "And much more..."
+        }
+      ],
+      "sfx": [],
+      "prompt": "2D hand-drawn cartoon animation strictly preserving the exact flat-shaded vector art style, warm dark-brown ink outlines, pastel color palette, and character proportions of the provided Studio frame(s). Keep smooth 2D cel-animation motion with expressive squash-and-stretch. NEVER render as 3D CGI, claymation, or photorealistic live-action. NEVER draw speech bubbles, caption boxes, floating text, watermarks, or comic borders.\nCharacters: Eve Earth: Small, round sky-blue planet plushie (#7AC3EB) with stitched green continent patches, cute black bead eyes with white sparkles, rosy pink cheeks, and tiny stubby blue arms and feet. Avoid: no mustache; no human hair or clothes other than the brown plaid hat when scripted | Zelie Pink Lemonade: Small tapered pink lemonade cup plushie (#F682B0) with a fluffy scalloped white foam rim, pink-and-white striped straw on the left, yellow lemon wedge garnish on the right, cute black bead eyes, rosy cheeks, and tiny stubby pink arms and feet. Avoid: no mustache; keep straw pink-striped (never yellow)\nVisual rules: Both Eve’s Dad and Zelie’s Papa ALWAYS wear a thick, dark, wavy zig-zag squiggly mustache — never a smooth curved handlebar mustache. Pancakes are plain golden-brown breakfast food with butter/syrup — NEVER draw faces, eyes, or mouths on pancakes. Keep window time-of-day strictly faithful to the Studio blueprint: starry dark sky + moon ONLY for nighttime panels, bright blue sky + golden sun for daytime panels. Preserve exact character sizes relative to each other (the two Dads are clearly larger/taller than Eve and Zelie).\nAnimation: Smoothly animate the continuous 2D cartoon action from the starting frame to the ending frame. Start: 10 hours later in the late-afternoon adventure clearing: Eve Earth (in brown plaid hat) and Zelie Pink Lemonade are exhausted, scuffed, dusty, and wearing tiny bandages after searching everywhere. Transition fluidly into: In the sunlit adventure clearing, Eve Earth (wearing brown plaid hat) and Zelie Pink Lemonade suddenly burst out laughing so hard joyful blue tears fly from their eyes.\nAudio: Spoken cartoon dialogue with matching lip movement: Eve says \"We did not find the key. I hate looking!\" Then Zelie says \"We got attacked by a bear!\" Then Eve says \"And much more...\"."
+    },
+    {
+      "id": "shot-33",
+      "index": 33,
+      "pageNumber": 6,
+      "pageId": "page-06",
+      "mode": "interpolate",
+      "durationSeconds": 8,
+      "chainedFromPrev": true,
+      "panels": [
+        "p6_laughing",
+        "p6_sorry"
+      ],
+      "panelKeys": [
+        "page-06_p6_laughing",
+        "page-06_p6_sorry"
+      ],
+      "firstFrame": "video/frames/page-06_p6_laughing.png",
+      "lastFrame": "video/frames/page-06_p6_sorry.png",
+      "overlay": null,
+      "cast": [
+        "eve",
+        "zelie"
+      ],
+      "location": "forest",
+      "subtitles": [
+        {
+          "kind": "dialogue",
+          "speaker": "Eve",
+          "text": "Sorry, Zelie."
+        },
+        {
+          "kind": "dialogue",
+          "speaker": "Zelie",
+          "text": "Sorry, Eve Earth. You're fun!"
+        }
+      ],
+      "sfx": [
+        "HAHAHA!"
+      ],
+      "prompt": "2D hand-drawn cartoon animation strictly preserving the exact flat-shaded vector art style, warm dark-brown ink outlines, pastel color palette, and character proportions of the provided Studio frame(s). Keep smooth 2D cel-animation motion with expressive squash-and-stretch. NEVER render as 3D CGI, claymation, or photorealistic live-action. NEVER draw speech bubbles, caption boxes, floating text, watermarks, or comic borders.\nCharacters: Eve Earth: Small, round sky-blue planet plushie (#7AC3EB) with stitched green continent patches, cute black bead eyes with white sparkles, rosy pink cheeks, and tiny stubby blue arms and feet. Avoid: no mustache; no human hair or clothes other than the brown plaid hat when scripted | Zelie Pink Lemonade: Small tapered pink lemonade cup plushie (#F682B0) with a fluffy scalloped white foam rim, pink-and-white striped straw on the left, yellow lemon wedge garnish on the right, cute black bead eyes, rosy cheeks, and tiny stubby pink arms and feet. Avoid: no mustache; keep straw pink-striped (never yellow)\nVisual rules: Both Eve’s Dad and Zelie’s Papa ALWAYS wear a thick, dark, wavy zig-zag squiggly mustache — never a smooth curved handlebar mustache. Pancakes are plain golden-brown breakfast food with butter/syrup — NEVER draw faces, eyes, or mouths on pancakes. Keep window time-of-day strictly faithful to the Studio blueprint: starry dark sky + moon ONLY for nighttime panels, bright blue sky + golden sun for daytime panels. Preserve exact character sizes relative to each other (the two Dads are clearly larger/taller than Eve and Zelie).\nAnimation: Smoothly animate the continuous 2D cartoon action from the starting frame to the ending frame. Start: In the sunlit adventure clearing, Eve Earth (wearing brown plaid hat) and Zelie Pink Lemonade suddenly burst out laughing so hard joyful blue tears fly from their eyes. Transition fluidly into: Warm friendship moment in the adventure clearing: Eve Earth (in brown hat) and Zelie Pink Lemonade smile gently and pat each other apologetically.\nAudio: Spoken cartoon dialogue with matching lip movement: Eve says \"Sorry, Zelie.\" Then Zelie says \"Sorry, Eve Earth. You're fun!\". Cartoon sound effects: HAHAHA!."
+    },
+    {
+      "id": "shot-34",
+      "index": 34,
+      "pageNumber": 6,
+      "pageId": "page-06",
+      "mode": "interpolate",
+      "durationSeconds": 8,
+      "chainedFromPrev": false,
+      "panels": [
+        "p6_itchy_hat",
+        "p6_key_reveal"
+      ],
+      "panelKeys": [
+        "page-06_p6_itchy_hat",
+        "page-06_p6_key_reveal"
+      ],
+      "firstFrame": "video/frames/page-06_p6_itchy_hat.png",
+      "lastFrame": "video/frames/page-06_p6_key_reveal.png",
+      "overlay": null,
+      "cast": [
+        "eve"
+      ],
+      "location": null,
+      "subtitles": [
+        {
+          "kind": "dialogue",
+          "speaker": "Eve",
+          "text": "My hat is itchy..."
+        }
+      ],
+      "sfx": [],
+      "prompt": "2D hand-drawn cartoon animation strictly preserving the exact flat-shaded vector art style, warm dark-brown ink outlines, pastel color palette, and character proportions of the provided Studio frame(s). Keep smooth 2D cel-animation motion with expressive squash-and-stretch. NEVER render as 3D CGI, claymation, or photorealistic live-action. NEVER draw speech bubbles, caption boxes, floating text, watermarks, or comic borders.\nCharacters: Eve Earth: Small, round sky-blue planet plushie (#7AC3EB) with stitched green continent patches, cute black bead eyes with white sparkles, rosy pink cheeks, and tiny stubby blue arms and feet. Avoid: no mustache; no human hair or clothes other than the brown plaid hat when scripted\nVisual rules: Both Eve’s Dad and Zelie’s Papa ALWAYS wear a thick, dark, wavy zig-zag squiggly mustache — never a smooth curved handlebar mustache. Pancakes are plain golden-brown breakfast food with butter/syrup — NEVER draw faces, eyes, or mouths on pancakes. Keep window time-of-day strictly faithful to the Studio blueprint: starry dark sky + moon ONLY for nighttime panels, bright blue sky + golden sun for daytime panels. Preserve exact character sizes relative to each other (the two Dads are clearly larger/taller than Eve and Zelie).\nAnimation: Smoothly animate the continuous 2D cartoon action from the starting frame to the ending frame. Start: Close-up of Eve Earth squinting uncomfortably and reaching a stubby blue hand up toward his itchy brown plaid explorer hat. Transition fluidly into: Comedic reveal! Eve Earth lifts off his brown plaid explorer hat, revealing a shiny golden key sitting right on top of his head with sparkles!\nAudio: Spoken cartoon dialogue with matching lip movement: Eve says \"My hat is itchy...\"."
+    },
+    {
+      "id": "shot-35",
+      "index": 35,
+      "pageNumber": 6,
+      "pageId": "page-06",
+      "mode": "interpolate",
+      "durationSeconds": 8,
+      "chainedFromPrev": true,
+      "panels": [
+        "p6_key_reveal",
+        "p6_bro"
+      ],
+      "panelKeys": [
+        "page-06_p6_key_reveal",
+        "page-06_p6_bro"
+      ],
+      "firstFrame": "video/frames/page-06_p6_key_reveal.png",
+      "lastFrame": "video/frames/page-06_p6_bro.png",
+      "overlay": null,
+      "cast": [
+        "eve",
+        "zelie"
+      ],
+      "location": null,
+      "subtitles": [
+        {
+          "kind": "dialogue",
+          "speaker": "Eve",
+          "text": "Oh, the key! It was under my hat!"
+        },
+        {
+          "kind": "dialogue",
+          "speaker": "Eve",
+          "text": "Sorry, I didn't know!"
+        },
+        {
+          "kind": "dialogue",
+          "speaker": "Zelie",
+          "text": "bro."
+        }
+      ],
+      "sfx": [],
+      "prompt": "2D hand-drawn cartoon animation strictly preserving the exact flat-shaded vector art style, warm dark-brown ink outlines, pastel color palette, and character proportions of the provided Studio frame(s). Keep smooth 2D cel-animation motion with expressive squash-and-stretch. NEVER render as 3D CGI, claymation, or photorealistic live-action. NEVER draw speech bubbles, caption boxes, floating text, watermarks, or comic borders.\nCharacters: Eve Earth: Small, round sky-blue planet plushie (#7AC3EB) with stitched green continent patches, cute black bead eyes with white sparkles, rosy pink cheeks, and tiny stubby blue arms and feet. Avoid: no mustache; no human hair or clothes other than the brown plaid hat when scripted | Zelie Pink Lemonade: Small tapered pink lemonade cup plushie (#F682B0) with a fluffy scalloped white foam rim, pink-and-white striped straw on the left, yellow lemon wedge garnish on the right, cute black bead eyes, rosy cheeks, and tiny stubby pink arms and feet. Avoid: no mustache; keep straw pink-striped (never yellow)\nVisual rules: Both Eve’s Dad and Zelie’s Papa ALWAYS wear a thick, dark, wavy zig-zag squiggly mustache — never a smooth curved handlebar mustache. Pancakes are plain golden-brown breakfast food with butter/syrup — NEVER draw faces, eyes, or mouths on pancakes. Keep window time-of-day strictly faithful to the Studio blueprint: starry dark sky + moon ONLY for nighttime panels, bright blue sky + golden sun for daytime panels. Preserve exact character sizes relative to each other (the two Dads are clearly larger/taller than Eve and Zelie).\nAnimation: Smoothly animate the continuous 2D cartoon action from the starting frame to the ending frame. Start: Comedic reveal! Eve Earth lifts off his brown plaid explorer hat, revealing a shiny golden key sitting right on top of his head with sparkles! Transition fluidly into: Comedy beat: Eve Earth grins sheepishly holding the golden key while Zelie Pink Lemonade stares at him in total wide-eyed deadpan disbelief.\nAudio: Spoken cartoon dialogue with matching lip movement: Eve says \"Oh, the key! It was under my hat!\" Then Eve says \"Sorry, I didn't know!\" Then Zelie says \"bro.\"."
+    },
+    {
+      "id": "shot-36",
+      "index": 36,
+      "pageNumber": 6,
+      "pageId": "page-06",
+      "mode": "single",
+      "durationSeconds": 4,
+      "chainedFromPrev": false,
+      "panels": [
+        "p6_turn_key"
+      ],
+      "panelKeys": [
+        "page-06_p6_turn_key"
+      ],
+      "firstFrame": "video/frames/page-06_p6_turn_key.png",
+      "lastFrame": null,
+      "overlay": null,
+      "cast": [
+        "eve"
+      ],
+      "location": "portal",
+      "subtitles": [],
+      "sfx": [
+        "TURN!"
+      ],
+      "prompt": "2D hand-drawn cartoon animation strictly preserving the exact flat-shaded vector art style, warm dark-brown ink outlines, pastel color palette, and character proportions of the provided Studio frame(s). Keep smooth 2D cel-animation motion with expressive squash-and-stretch. NEVER render as 3D CGI, claymation, or photorealistic live-action. NEVER draw speech bubbles, caption boxes, floating text, watermarks, or comic borders.\nCharacters: Eve Earth: Small, round sky-blue planet plushie (#7AC3EB) with stitched green continent patches, cute black bead eyes with white sparkles, rosy pink cheeks, and tiny stubby blue arms and feet. Avoid: no mustache; no human hair or clothes other than the brown plaid hat when scripted\nVisual rules: Both Eve’s Dad and Zelie’s Papa ALWAYS wear a thick, dark, wavy zig-zag squiggly mustache — never a smooth curved handlebar mustache. Pancakes are plain golden-brown breakfast food with butter/syrup — NEVER draw faces, eyes, or mouths on pancakes. Keep window time-of-day strictly faithful to the Studio blueprint: starry dark sky + moon ONLY for nighttime panels, bright blue sky + golden sun for daytime panels. Preserve exact character sizes relative to each other (the two Dads are clearly larger/taller than Eve and Zelie).\nAnimation: Bring this 2D cartoon frame to life with expressive character acting, lively blinks, gestures, and gentle camera motion. Scene: Dramatic close-up of Eve Earth's stubby sky-blue plushie hand inserting the shiny golden key into the portal lock plaque and turning it.\nAudio: Cartoon sound effects: TURN!."
+    },
+    {
+      "id": "shot-37",
+      "index": 37,
+      "pageNumber": 6,
+      "pageId": "page-06",
+      "mode": "single",
+      "durationSeconds": 4,
+      "chainedFromPrev": false,
+      "panels": [
+        "p6_gold_portal"
+      ],
+      "panelKeys": [
+        "page-06_p6_gold_portal"
+      ],
+      "firstFrame": "video/frames/page-06_p6_gold_portal.png",
+      "lastFrame": null,
+      "overlay": null,
+      "cast": [
+        "palm_pals"
+      ],
+      "location": "portal",
+      "subtitles": [
+        {
+          "kind": "dialogue",
+          "speaker": "Eve & Zelie",
+          "text": "Yay!!"
+        }
+      ],
+      "sfx": [],
+      "prompt": "2D hand-drawn cartoon animation strictly preserving the exact flat-shaded vector art style, warm dark-brown ink outlines, pastel color palette, and character proportions of the provided Studio frame(s). Keep smooth 2D cel-animation motion with expressive squash-and-stretch. NEVER render as 3D CGI, claymation, or photorealistic live-action. NEVER draw speech bubbles, caption boxes, floating text, watermarks, or comic borders.\nCharacters: Eve Earth: Small, round sky-blue planet plushie (#7AC3EB) with stitched green continent patches, cute black bead eyes with white sparkles, rosy pink cheeks, and tiny stubby blue arms and feet. Avoid: no mustache; no human hair or clothes other than the brown plaid hat when scripted | Zelie Pink Lemonade: Small tapered pink lemonade cup plushie (#F682B0) with a fluffy scalloped white foam rim, pink-and-white striped straw on the left, yellow lemon wedge garnish on the right, cute black bead eyes, rosy cheeks, and tiny stubby pink arms and feet. Avoid: no mustache; keep straw pink-striped (never yellow) | Eve's Dad: Larger, deeper-ocean blue Earth globe plushie (#4F92C4) with darker green continents, warm bead eyes, rosy cheeks, stubby blue arms and feet, and a bold dark wavy zig-zag squiggly mustache right above his mouth. Avoid: NEVER draw a smooth curved handlebar mustache — ALWAYS draw a wavy zig-zag squiggly mustache | Zelie's Papa: Taller coral-red fruit punch cup plushie (#D95448) with a fluffy cream foam rim, solid golden-yellow straw tilted right, warm bead eyes, rosy cheeks, stubby red arms and feet, and a bold dark wavy zig-zag squiggly mustache right above his mouth. Avoid: NEVER draw a smooth curved handlebar mustache — ALWAYS draw a wavy zig-zag squiggly mustache; no lemon slice\nVisual rules: Both Eve’s Dad and Zelie’s Papa ALWAYS wear a thick, dark, wavy zig-zag squiggly mustache — never a smooth curved handlebar mustache. Pancakes are plain golden-brown breakfast food with butter/syrup — NEVER draw faces, eyes, or mouths on pancakes. Keep window time-of-day strictly faithful to the Studio blueprint: starry dark sky + moon ONLY for nighttime panels, bright blue sky + golden sun for daytime panels. Preserve exact character sizes relative to each other (the two Dads are clearly larger/taller than Eve and Zelie).\nAnimation: Bring this 2D cartoon frame to life with expressive character acting, lively blinks, gestures, and gentle camera motion. Scene: A radiant swirling GOLDEN portal blasts open in the adventure clearing with comic speed lines as Eve and Zelie leap joyfully through!\nAudio: Spoken cartoon dialogue with matching lip movement: Eve & Zelie says \"Yay!!\"."
+    },
+    {
+      "id": "shot-38",
+      "index": 38,
+      "pageNumber": 6,
+      "pageId": "page-06",
+      "mode": "interpolate",
+      "durationSeconds": 8,
+      "chainedFromPrev": false,
+      "panels": [
+        "p6_home",
+        "p7_busted"
+      ],
+      "panelKeys": [
+        "page-06_p6_home",
+        "page-07_p7_busted"
+      ],
+      "firstFrame": "video/frames/page-06_p6_home.png",
+      "lastFrame": "video/frames/page-07_p7_busted.png",
+      "overlay": null,
+      "cast": [
+        "eve",
+        "zelie",
+        "eve_dad",
+        "zelie_papa"
+      ],
+      "location": "bedroom_night",
+      "subtitles": [
+        {
+          "kind": "dialogue",
+          "speaker": "Eve & Zelie",
+          "text": "Home!!"
+        },
+        {
+          "kind": "dialogue",
+          "speaker": "Dads",
+          "text": "Time out."
+        },
+        {
+          "kind": "dialogue",
+          "speaker": "Kids",
+          "text": "Awww!"
+        }
+      ],
+      "sfx": [
+        "GASP!"
+      ],
+      "prompt": "2D hand-drawn cartoon animation strictly preserving the exact flat-shaded vector art style, warm dark-brown ink outlines, pastel color palette, and character proportions of the provided Studio frame(s). Keep smooth 2D cel-animation motion with expressive squash-and-stretch. NEVER render as 3D CGI, claymation, or photorealistic live-action. NEVER draw speech bubbles, caption boxes, floating text, watermarks, or comic borders.\nCharacters: Eve Earth: Small, round sky-blue planet plushie (#7AC3EB) with stitched green continent patches, cute black bead eyes with white sparkles, rosy pink cheeks, and tiny stubby blue arms and feet. Avoid: no mustache; no human hair or clothes other than the brown plaid hat when scripted | Zelie Pink Lemonade: Small tapered pink lemonade cup plushie (#F682B0) with a fluffy scalloped white foam rim, pink-and-white striped straw on the left, yellow lemon wedge garnish on the right, cute black bead eyes, rosy cheeks, and tiny stubby pink arms and feet. Avoid: no mustache; keep straw pink-striped (never yellow) | Eve's Dad: Larger, deeper-ocean blue Earth globe plushie (#4F92C4) with darker green continents, warm bead eyes, rosy cheeks, stubby blue arms and feet, and a bold dark wavy zig-zag squiggly mustache right above his mouth. Avoid: NEVER draw a smooth curved handlebar mustache — ALWAYS draw a wavy zig-zag squiggly mustache | Zelie's Papa: Taller coral-red fruit punch cup plushie (#D95448) with a fluffy cream foam rim, solid golden-yellow straw tilted right, warm bead eyes, rosy cheeks, stubby red arms and feet, and a bold dark wavy zig-zag squiggly mustache right above his mouth. Avoid: NEVER draw a smooth curved handlebar mustache — ALWAYS draw a wavy zig-zag squiggly mustache; no lemon slice\nVisual rules: Both Eve’s Dad and Zelie’s Papa ALWAYS wear a thick, dark, wavy zig-zag squiggly mustache — never a smooth curved handlebar mustache. Pancakes are plain golden-brown breakfast food with butter/syrup — NEVER draw faces, eyes, or mouths on pancakes. Keep window time-of-day strictly faithful to the Studio blueprint: starry dark sky + moon ONLY for nighttime panels, bright blue sky + golden sun for daytime panels. Preserve exact character sizes relative to each other (the two Dads are clearly larger/taller than Eve and Zelie).\nAnimation: Smoothly animate the continuous 2D cartoon action from the starting frame to the ending frame. Start: Eve Earth and Zelie Pink Lemonade pop safely back onto Eve's cozy bedroom floor, beaming with huge relief. Transition fluidly into: Daytime in Eve's room (bright blue daytime sky and golden sun shining through the window): right outside the fading golden portal, Eve's Dad and Zelie's Papa (both with squiggly mustaches) stand waiting sternly while little Eve Earth and Zelie Pink Lemonade droop sheepishly.\nAudio: Spoken cartoon dialogue with matching lip movement: Eve & Zelie says \"Home!!\" Then Dads says \"Time out.\" Then Kids says \"Awww!\". Cartoon sound effects: GASP!."
+    },
+    {
+      "id": "shot-39",
+      "index": 39,
+      "pageNumber": 7,
+      "pageId": "page-07",
+      "mode": "interpolate",
+      "durationSeconds": 8,
+      "chainedFromPrev": false,
+      "panels": [
+        "p7_timeout_sit",
+        "p7_lets_talk"
+      ],
+      "panelKeys": [
+        "page-07_p7_timeout_sit",
+        "page-07_p7_lets_talk"
+      ],
+      "firstFrame": "video/frames/page-07_p7_timeout_sit.png",
+      "lastFrame": "video/frames/page-07_p7_lets_talk.png",
+      "overlay": null,
+      "cast": [
+        "eve",
+        "zelie"
+      ],
+      "location": null,
+      "subtitles": [
+        {
+          "kind": "caption",
+          "speaker": "",
+          "text": "TIME OUT"
+        }
+      ],
+      "sfx": [],
+      "prompt": "2D hand-drawn cartoon animation strictly preserving the exact flat-shaded vector art style, warm dark-brown ink outlines, pastel color palette, and character proportions of the provided Studio frame(s). Keep smooth 2D cel-animation motion with expressive squash-and-stretch. NEVER render as 3D CGI, claymation, or photorealistic live-action. NEVER draw speech bubbles, caption boxes, floating text, watermarks, or comic borders.\nCharacters: Eve Earth: Small, round sky-blue planet plushie (#7AC3EB) with stitched green continent patches, cute black bead eyes with white sparkles, rosy pink cheeks, and tiny stubby blue arms and feet. Avoid: no mustache; no human hair or clothes other than the brown plaid hat when scripted | Zelie Pink Lemonade: Small tapered pink lemonade cup plushie (#F682B0) with a fluffy scalloped white foam rim, pink-and-white striped straw on the left, yellow lemon wedge garnish on the right, cute black bead eyes, rosy cheeks, and tiny stubby pink arms and feet. Avoid: no mustache; keep straw pink-striped (never yellow)\nVisual rules: Both Eve’s Dad and Zelie’s Papa ALWAYS wear a thick, dark, wavy zig-zag squiggly mustache — never a smooth curved handlebar mustache. Pancakes are plain golden-brown breakfast food with butter/syrup — NEVER draw faces, eyes, or mouths on pancakes. Keep window time-of-day strictly faithful to the Studio blueprint: starry dark sky + moon ONLY for nighttime panels, bright blue sky + golden sun for daytime panels. Preserve exact character sizes relative to each other (the two Dads are clearly larger/taller than Eve and Zelie).\nAnimation: Smoothly animate the continuous 2D cartoon action from the starting frame to the ending frame. Start: Quiet comedy beat: Eve Earth and Zelie Pink Lemonade sit quietly side-by-side in the Time Out corner looking bashful. Transition fluidly into: In Time Out, Zelie Pink Lemonade turns to Eve Earth with a warm bright smile inviting him to chat, and Eve beams happily back.\nAudio: Warm friendly cartoon narrator says: \"TIME OUT\""
+    },
+    {
+      "id": "shot-40",
+      "index": 40,
+      "pageNumber": 7,
+      "pageId": "page-07",
+      "mode": "interpolate",
+      "durationSeconds": 8,
+      "chainedFromPrev": true,
+      "panels": [
+        "p7_lets_talk",
+        "p7_spying_dads"
+      ],
+      "panelKeys": [
+        "page-07_p7_lets_talk",
+        "page-07_p7_spying_dads"
+      ],
+      "firstFrame": "video/frames/page-07_p7_lets_talk.png",
+      "lastFrame": "video/frames/page-07_p7_spying_dads.png",
+      "overlay": null,
+      "cast": [
+        "eve",
+        "zelie",
+        "eve_dad",
+        "zelie_papa"
+      ],
+      "location": null,
+      "subtitles": [
+        {
+          "kind": "dialogue",
+          "speaker": "Zelie",
+          "text": "Hey Eve Earth, let's talk!"
+        },
+        {
+          "kind": "dialogue",
+          "speaker": "Eve",
+          "text": "Ok! Yeah!"
+        },
+        {
+          "kind": "caption",
+          "speaker": "",
+          "text": "1 HOUR LATER"
+        },
+        {
+          "kind": "dialogue",
+          "speaker": "Papa",
+          "text": "Should we tell them time out is over?"
+        },
+        {
+          "kind": "dialogue",
+          "speaker": "Dad",
+          "text": "Nah — plus now they're friends!"
+        }
+      ],
+      "sfx": [
+        "HA HA HA"
+      ],
+      "prompt": "2D hand-drawn cartoon animation strictly preserving the exact flat-shaded vector art style, warm dark-brown ink outlines, pastel color palette, and character proportions of the provided Studio frame(s). Keep smooth 2D cel-animation motion with expressive squash-and-stretch. NEVER render as 3D CGI, claymation, or photorealistic live-action. NEVER draw speech bubbles, caption boxes, floating text, watermarks, or comic borders.\nCharacters: Eve Earth: Small, round sky-blue planet plushie (#7AC3EB) with stitched green continent patches, cute black bead eyes with white sparkles, rosy pink cheeks, and tiny stubby blue arms and feet. Avoid: no mustache; no human hair or clothes other than the brown plaid hat when scripted | Zelie Pink Lemonade: Small tapered pink lemonade cup plushie (#F682B0) with a fluffy scalloped white foam rim, pink-and-white striped straw on the left, yellow lemon wedge garnish on the right, cute black bead eyes, rosy cheeks, and tiny stubby pink arms and feet. Avoid: no mustache; keep straw pink-striped (never yellow) | Eve's Dad: Larger, deeper-ocean blue Earth globe plushie (#4F92C4) with darker green continents, warm bead eyes, rosy cheeks, stubby blue arms and feet, and a bold dark wavy zig-zag squiggly mustache right above his mouth. Avoid: NEVER draw a smooth curved handlebar mustache — ALWAYS draw a wavy zig-zag squiggly mustache | Zelie's Papa: Taller coral-red fruit punch cup plushie (#D95448) with a fluffy cream foam rim, solid golden-yellow straw tilted right, warm bead eyes, rosy cheeks, stubby red arms and feet, and a bold dark wavy zig-zag squiggly mustache right above his mouth. Avoid: NEVER draw a smooth curved handlebar mustache — ALWAYS draw a wavy zig-zag squiggly mustache; no lemon slice\nVisual rules: Both Eve’s Dad and Zelie’s Papa ALWAYS wear a thick, dark, wavy zig-zag squiggly mustache — never a smooth curved handlebar mustache. Pancakes are plain golden-brown breakfast food with butter/syrup — NEVER draw faces, eyes, or mouths on pancakes. Keep window time-of-day strictly faithful to the Studio blueprint: starry dark sky + moon ONLY for nighttime panels, bright blue sky + golden sun for daytime panels. Preserve exact character sizes relative to each other (the two Dads are clearly larger/taller than Eve and Zelie).\nAnimation: Smoothly animate the continuous 2D cartoon action from the starting frame to the ending frame. Start: In Time Out, Zelie Pink Lemonade turns to Eve Earth with a warm bright smile inviting him to chat, and Eve beams happily back. Transition fluidly into: One hour later: Eve Earth and Zelie Pink Lemonade sit laughing together happily in the middle while Eve's Dad peeks around the left wall and Zelie's Papa peeks around the right wall smiling warmly.\nAudio: Spoken cartoon dialogue with matching lip movement: Zelie says \"Hey Eve Earth, let's talk!\" Then Eve says \"Ok! Yeah!\" Then Papa says \"Should we tell them time out is over?\" Then Dad says \"Nah — plus now they're friends!\". Cartoon sound effects: HA HA HA."
+    },
+    {
+      "id": "shot-41",
+      "index": 41,
+      "pageNumber": 7,
+      "pageId": "page-07",
+      "mode": "interpolate",
+      "durationSeconds": 8,
+      "chainedFromPrev": false,
+      "panels": [
+        "p7_the_end",
+        "p7_or_is_it"
+      ],
+      "panelKeys": [
+        "page-07_p7_the_end",
+        "page-07_p7_or_is_it"
+      ],
+      "firstFrame": "video/frames/page-07_p7_the_end.png",
+      "lastFrame": "video/frames/page-07_p7_or_is_it.png",
+      "overlay": null,
+      "cast": [
+        "palm_pals"
+      ],
+      "location": null,
+      "subtitles": [
+        {
+          "kind": "caption",
+          "speaker": "",
+          "text": "...or is it?"
+        }
+      ],
+      "sfx": [
+        "THE END"
+      ],
+      "prompt": "2D hand-drawn cartoon animation strictly preserving the exact flat-shaded vector art style, warm dark-brown ink outlines, pastel color palette, and character proportions of the provided Studio frame(s). Keep smooth 2D cel-animation motion with expressive squash-and-stretch. NEVER render as 3D CGI, claymation, or photorealistic live-action. NEVER draw speech bubbles, caption boxes, floating text, watermarks, or comic borders.\nCharacters: Eve Earth: Small, round sky-blue planet plushie (#7AC3EB) with stitched green continent patches, cute black bead eyes with white sparkles, rosy pink cheeks, and tiny stubby blue arms and feet. Avoid: no mustache; no human hair or clothes other than the brown plaid hat when scripted | Zelie Pink Lemonade: Small tapered pink lemonade cup plushie (#F682B0) with a fluffy scalloped white foam rim, pink-and-white striped straw on the left, yellow lemon wedge garnish on the right, cute black bead eyes, rosy cheeks, and tiny stubby pink arms and feet. Avoid: no mustache; keep straw pink-striped (never yellow) | Eve's Dad: Larger, deeper-ocean blue Earth globe plushie (#4F92C4) with darker green continents, warm bead eyes, rosy cheeks, stubby blue arms and feet, and a bold dark wavy zig-zag squiggly mustache right above his mouth. Avoid: NEVER draw a smooth curved handlebar mustache — ALWAYS draw a wavy zig-zag squiggly mustache | Zelie's Papa: Taller coral-red fruit punch cup plushie (#D95448) with a fluffy cream foam rim, solid golden-yellow straw tilted right, warm bead eyes, rosy cheeks, stubby red arms and feet, and a bold dark wavy zig-zag squiggly mustache right above his mouth. Avoid: NEVER draw a smooth curved handlebar mustache — ALWAYS draw a wavy zig-zag squiggly mustache; no lemon slice\nVisual rules: Both Eve’s Dad and Zelie’s Papa ALWAYS wear a thick, dark, wavy zig-zag squiggly mustache — never a smooth curved handlebar mustache. Pancakes are plain golden-brown breakfast food with butter/syrup — NEVER draw faces, eyes, or mouths on pancakes. Keep window time-of-day strictly faithful to the Studio blueprint: starry dark sky + moon ONLY for nighttime panels, bright blue sky + golden sun for daytime panels. Preserve exact character sizes relative to each other (the two Dads are clearly larger/taller than Eve and Zelie).\nAnimation: Smoothly animate the continuous 2D cartoon action from the starting frame to the ending frame. Start: Warm pastel cream storybook ending card with delicate corner stars and soft golden glow, ready for \"The End\" lettering. Transition fluidly into: Dramatic shadowy cliffhanger panel: deep midnight background with a pair of glowing crimson slanted mischievous eyes and a cheeky red grin peering out of the dark.\nAudio: Warm friendly cartoon narrator says: \"...or is it?\" Cartoon sound effects: THE END."
+    },
+    {
+      "id": "shot-42",
+      "index": 42,
+      "pageNumber": 8,
+      "pageId": "page-08",
+      "mode": "single",
+      "durationSeconds": 6,
+      "chainedFromPrev": false,
+      "panels": [
+        "p8_just_kidding"
+      ],
+      "panelKeys": [
+        "page-08_p8_just_kidding"
+      ],
+      "firstFrame": "video/frames/page-08_p8_just_kidding.png",
+      "lastFrame": null,
+      "overlay": null,
+      "cast": [
+        "eve",
+        "zelie"
+      ],
+      "location": null,
+      "subtitles": [
+        {
+          "kind": "caption",
+          "speaker": "",
+          "text": "IT'S THE END, SO..."
+        },
+        {
+          "kind": "caption",
+          "speaker": "",
+          "text": "EVE EARTH AND ZELIE"
+        },
+        {
+          "kind": "caption",
+          "speaker": "",
+          "text": "By Jenna Safadi  ·  جنى صفدي"
+        },
+        {
+          "kind": "dialogue",
+          "speaker": "Eve",
+          "text": "The."
+        },
+        {
+          "kind": "dialogue",
+          "speaker": "Zelie",
+          "text": "end."
+        }
+      ],
+      "sfx": [
+        "JUST KIDDING!",
+        "THE END"
+      ],
+      "prompt": "2D hand-drawn cartoon animation strictly preserving the exact flat-shaded vector art style, warm dark-brown ink outlines, pastel color palette, and character proportions of the provided Studio frame(s). Keep smooth 2D cel-animation motion with expressive squash-and-stretch. NEVER render as 3D CGI, claymation, or photorealistic live-action. NEVER draw speech bubbles, caption boxes, floating text, watermarks, or comic borders.\nCharacters: Eve Earth: Small, round sky-blue planet plushie (#7AC3EB) with stitched green continent patches, cute black bead eyes with white sparkles, rosy pink cheeks, and tiny stubby blue arms and feet. Avoid: no mustache; no human hair or clothes other than the brown plaid hat when scripted | Zelie Pink Lemonade: Small tapered pink lemonade cup plushie (#F682B0) with a fluffy scalloped white foam rim, pink-and-white striped straw on the left, yellow lemon wedge garnish on the right, cute black bead eyes, rosy cheeks, and tiny stubby pink arms and feet. Avoid: no mustache; keep straw pink-striped (never yellow)\nVisual rules: Both Eve’s Dad and Zelie’s Papa ALWAYS wear a thick, dark, wavy zig-zag squiggly mustache — never a smooth curved handlebar mustache. Pancakes are plain golden-brown breakfast food with butter/syrup — NEVER draw faces, eyes, or mouths on pancakes. Keep window time-of-day strictly faithful to the Studio blueprint: starry dark sky + moon ONLY for nighttime panels, bright blue sky + golden sun for daytime panels. Preserve exact character sizes relative to each other (the two Dads are clearly larger/taller than Eve and Zelie).\nAnimation: Bring this 2D cartoon frame to life with expressive character acting, lively blinks, gestures, and gentle camera motion. Scene: Joyful full-page storybook epilogue splash on a warm pastel sky-to-cream background with floating confetti and golden doodles: Eve Earth and Zelie Pink Lemonade stand smiling warmly side-by-side beneath a vibrant multicolored rainbow heart.\nAudio: Spoken cartoon dialogue with matching lip movement: Eve says \"The.\" Then Zelie says \"end.\". Cartoon sound effects: JUST KIDDING!, THE END."
+    }
+  ]
+}

@@ -92,6 +92,7 @@
       size: b?.size || { width: c.width, height: c.height, trim: 'Letter', dpi: 200 },
       style: b?.style || { prompt: '', refs: [] },
       illustration: { ...(b?.defaults?.illustration || {}), ...(m?.illustration || {}) },
+      video: { ...(b?.defaults?.video || {}), ...(m?.video || {}), ...(c.video || {}) },
       cast: m?.cast ?? b?.defaults?.cast ?? [],
       locations: m?.locations ?? b?.defaults?.locations ?? [],
       refs: m?.refs || [],

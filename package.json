@@ -12,6 +12,7 @@
     "doctor": "node render.mjs --doctor",
     "comic:build": "node scripts/build_comic.mjs",
     "comic:illustrate": "node scripts/illustrate_comic.mjs",
+    "comic:video": "node scripts/comic_to_video.mjs",
     "build:game": "node scripts/build-robo-invaders.mjs",
     "build:world-champion": "node scripts/build-world-champion.mjs",
     "build:family-fighter": "node scripts/build-family-fighter.mjs"
